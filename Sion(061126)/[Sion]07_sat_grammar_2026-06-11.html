@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT Grammar</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh;padding:16px}
+.date-label{font-size:2rem;font-weight:800;text-align:center;color:#185FA5;background:#fff;padding:10px 0 2px}
+.title{text-align:center;font-size:1.4rem;font-weight:700;color:#185FA5;background:#fff;padding:2px 0 4px}
+.attempts{text-align:center;font-size:0.9rem;color:#555;background:#fff;padding:2px 0 10px}
+.container{max-width:720px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.1);overflow:hidden}
+.dot-nav{display:flex;flex-wrap:wrap;gap:6px;padding:14px 16px;background:#f7f9fc;border-bottom:1px solid #e0e6ef;justify-content:center}
+.dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;cursor:pointer;border:2px solid #c5d2e0;background:#e8edf4;color:#333}
+.dot.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.dot.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.dot.active{border-color:#185FA5;background:#d0e4f7;color:#185FA5}
+.results-pill{background:#185FA5;color:#fff;border-radius:20px;padding:4px 14px;font-size:0.8rem;font-weight:600}
+#quizArea{display:none;padding:20px 20px 10px}
+.tag-badge{display:inline-block;background:#185FA5;color:#fff;border-radius:20px;padding:3px 12px;font-size:0.75rem;font-weight:600;margin-bottom:10px}
+.q-counter{font-size:0.85rem;color:#666;margin-bottom:6px}
+.q-text{font-size:1rem;line-height:1.7;color:#111;margin-bottom:8px}
+.sentence-box{background:#f7fbff;border:1px solid #d0e4f7;border-radius:8px;padding:12px 16px;font-size:1rem;line-height:1.7;color:#111;margin-bottom:12px}
+u{text-decoration:underline;color:#185FA5;font-weight:600}
+.options{display:grid;gap:10px}
+.opt-btn{width:100%;text-align:left;padding:12px 16px;border-radius:8px;border:2px solid transparent;background:#e8edf4;color:#111111;font-size:0.95rem;cursor:pointer;transition:.15s;line-height:1.5}
+.opt-btn:hover{border-color:#185FA5}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.opt-btn.reveal{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.explain{margin-top:14px;padding:12px;background:#f0f5ff;border-left:4px solid #185FA5;border-radius:4px;font-size:0.9rem;color:#222;line-height:1.5}
+.nav-btns{display:flex;gap:10px;margin-top:18px;padding-bottom:10px}
+.btn{padding:10px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer}
+.btn-blue{background:#185FA5;color:#fff}.btn-gray{background:#e8edf4;color:#333}
+#resultsArea{display:none;padding:20px}
+.res-header{font-size:1.2rem;font-weight:700;color:#185FA5;margin-bottom:14px;text-align:center}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:18px}
+.res-card{padding:10px;border-radius:8px;background:#f0f4f8;cursor:pointer;text-align:center;font-size:0.85rem;font-weight:600;border:2px solid transparent}
+.res-card.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.res-card.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.res-card.skipped{background:#fff3cd;border-color:#e6a817;color:#7a5500}
+.res-actions{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:12px;padding:28px;max-width:340px;width:90%;text-align:center}
+.modal h3{margin-bottom:10px;color:#185FA5}.modal p{margin-bottom:18px;color:#444;font-size:.95rem}
+.modal-btns{display:flex;gap:10px;justify-content:center}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="date-label">2026-06-11</div>
+<div class="title">[Sion] SAT Grammar</div>
+<div class="attempts" id="attemptsLabel">Total Attempts: 0</div>
+<div class="dot-nav" id="dotNav"></div>
+<div id="quizArea"></div>
+<div id="resultsArea"></div>
+</div>
+<div class="modal-overlay" id="freshModal">
+<div class="modal"><h3>Start Fresh</h3><p>This will reset all progress.</p>
+<div class="modal-btns"><button class="btn btn-blue" onclick="doFresh()">Reset</button><button class="btn btn-gray" onclick="closeFreshModal()">Cancel</button></div></div>
+</div>
+<script>
+(function(){
+const KEY='quiz_satgrammar_10_v1';
+const ATT_KEY='quiz_satgrammar_attempts_v1';
+var qs=[
+{tag:'Parallel Structure',
+ q:'The underlined portion of the following sentence contains an error. Choose the option that correctly replaces it.',
+ sent:'The scholarship committee expects applicants to demonstrate financial need, to submit three letters of recommendation, and <u>completing an interview process</u>.',
+ opts:['the completion of an interview process','they must complete an interview process','to complete an interview process','an interview process completed'],ci:2,
+ exp:'Parallel structure requires all items in a series to follow the same grammatical form. The first two items use "to + verb" (to demonstrate, to submit), so the third must also be "to complete an interview process."'},
+{tag:'Comparison',
+ q:'Which version of the underlined portion is correct?',
+ sent:'Between the two candidates for the position, Dr. Chen is clearly the <u>most qualified</u>.',
+ opts:['most qualified','more qualified','qualifiedest','very most qualified'],ci:1,
+ exp:'When comparing exactly two things, use the comparative form (-er / more). "Most qualified" (superlative) is used for three or more. With only two candidates, "more qualified" is correct.'},
+{tag:'Pronoun Agreement',
+ q:'Which version of the underlined portion is correct?',
+ sent:'Neither of the witnesses was willing to change <u>their</u> testimony despite pressure from the defense attorney.',
+ opts:['his or her','their','its','our'],ci:0,
+ exp:'"Neither of" is treated as singular. The pronoun must agree with this singular antecedent. "His or her" is the grammatically correct singular pronoun. (On the SAT, the formal singular rule still applies.)'},
+{tag:'Subject-Verb Agreement',
+ q:'Which version of the underlined portion is correct?',
+ sent:'The number of applications submitted to the scholarship program <u>have increased</u> dramatically over the past three years.',
+ opts:['have increased','are increasing','were increasing','has increased'],ci:3,
+ exp:'"The number of" is a singular subject and takes a singular verb. "Has increased" is correct. (Note: "A number of" takes a plural verb, but "The number of" takes a singular verb.)'},
+{tag:'Misplaced Modifier',
+ q:'Choose the version of the sentence that correctly places the modifier.',
+ sent:'<u>Exhausted after a twelve-hour shift, the hospital bed looked inviting to the nurse.</u>',
+ opts:['Exhausted after a twelve-hour shift, the hospital bed looked inviting to the nurse.','The hospital bed, exhausted after a twelve-hour shift, looked inviting.','Exhausted after a twelve-hour shift, the nurse found the hospital bed inviting.','The nurse, the hospital bed exhausted after a twelve-hour shift, found it inviting.'],ci:2,
+ exp:'The participial phrase "Exhausted after a twelve-hour shift" must modify the subject directly following it. The nurse was exhausted, not the hospital bed. Only option C correctly places the nurse as the subject immediately after the modifier.'},
+{tag:'Faulty Coordination',
+ q:'The underlined portion contains an error. Choose the correct replacement.',
+ sent:'The reason the negotiations failed <u>was because</u> neither side was willing to compromise.',
+ opts:['was due to the fact that','was because','was that','was for the reason that'],ci:2,
+ exp:'"The reason...was because" is redundant. "Because" introduces a reason, and "the reason" already signals one is coming. The correct form is "The reason...was that." Option C uses "was that," which is correct.'},
+{tag:'Verb Tense & Mood',
+ q:'Which version of the underlined verb is correct?',
+ sent:'The chair of the committee recommended that each delegate <u>submits</u> a written statement before the vote.',
+ opts:['submits','had submitted','will submit','submit'],ci:3,
+ exp:'After verbs of recommendation or command (recommend, require, insist, demand), the that-clause uses the subjunctive mood — the base form of the verb with no -s ending, regardless of subject. "Submit" (not "submits") is correct.'},
+{tag:'Word Choice',
+ q:'Choose the word that correctly completes the sentence.',
+ sent:'The young executive tried to <u>flaunt</u> the company\'s anti-nepotism policy by quietly hiring her brother for the position.',
+ opts:['proceed','flout','flaunt','precede'],ci:1,
+ exp:'"Flout" means to openly disregard a rule or convention. "Flaunt" means to display something ostentatiously. Since the executive is violating a rule (not showing something off), "flout" is correct. This is a commonly confused word pair on the SAT.'},
+{tag:'Pronoun Reference',
+ q:'The underlined portion creates an ambiguous pronoun reference. Choose the clearest revision.',
+ sent:'After Director Walsh reviewed Dr. Park\'s proposal, <u>she requested major revisions to the methodology section</u>.',
+ opts:['she requested major revisions to the methodology section','Director Walsh requested major revisions to the methodology section','the methodology section required her major revisions','major revisions were requested of her to the methodology section'],ci:1,
+ exp:'The pronoun "she" could refer to either Director Walsh or Dr. Park. Replacing "she" with "Director Walsh" eliminates the ambiguity and makes the sentence\'s meaning clear.'},
+{tag:'Verb Tense',
+ q:'Which version of the underlined portion correctly uses verb tense?',
+ sent:'By the time the rescue team arrived, the floodwaters had already <u>froze</u> over the lower roads.',
+ opts:['froze','frozen','been freezing','being frozen'],ci:1,
+ exp:'"Had" requires a past participle. "Froze" is the simple past tense of "freeze," not the past participle. The correct past participle is "frozen." The sentence should read "had already frozen."'}
+];
+
+var state={cur:0,answers:{},shuffles:{},showResults:false};
+function loadState(){try{var s=localStorage.getItem(KEY);if(!s)return;var p=JSON.parse(s);if(typeof p.cur!=='number'||typeof p.answers!=='object'||typeof p.shuffles!=='object')throw 0;if(p.cur<0||p.cur>=qs.length)p.cur=0;state=p;}catch(e){localStorage.removeItem(KEY);}}
+function saveState(){localStorage.setItem(KEY,JSON.stringify(state));}
+function getAttempts(){return parseInt(localStorage.getItem(ATT_KEY)||'0');}
+function incAttempts(){localStorage.setItem(ATT_KEY,String(getAttempts()+1));}
+function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function getShuffled(qi){if(!state.shuffles[qi]){state.shuffles[qi]=shuffle([0,1,2,3]);saveState();}return state.shuffles[qi];}
+function render(){document.getElementById('attemptsLabel').textContent='Total Attempts: '+getAttempts();buildDots();if(state.showResults){showResults();return;}showQuestion();}
+function buildDots(){var nav=document.getElementById('dotNav');var html='';for(var i=0;i<qs.length;i++){var cls='dot';if(state.answers[i]===undefined){}else if(state.answers[i]===qs[i].ci)cls+=' correct';else cls+=' wrong';if(i===state.cur&&!state.showResults)cls+=' active';html+='<div class="'+cls+'" onclick="goToQ('+i+')">'+(i+1)+'</div>';}if(state.showResults)html+='<span class="results-pill">Results</span>';nav.innerHTML=html;}
+function showQuestion(){var qa=document.getElementById('quizArea');document.getElementById('resultsArea').style.display='none';qa.style.display='block';var i=state.cur,q=qs[i];var order=getShuffled(i);var ans=state.answers[i];var answered=(ans!==undefined);var html='<div class="tag-badge">'+q.tag+'</div><div class="q-counter">'+(i+1)+' / '+qs.length+'</div><div class="q-text">'+q.q+'</div><div class="sentence-box">'+q.sent+'</div><div class="options">';for(var k=0;k<4;k++){var oi=order[k];var cls='opt-btn';if(answered){if(oi===q.ci)cls+=' reveal';if(oi===ans&&ans!==q.ci)cls+=' wrong';}html+='<button class="'+cls+'" onclick="pick('+oi+')">'+q.opts[oi]+'</button>';}html+='</div>';if(answered&&ans!==q.ci)html+='<div class="explain"><strong>Explanation:</strong> '+q.exp+'</div>';html+='<div class="nav-btns">';if(i>0)html+='<button class="btn btn-gray" onclick="go(-1)">Prev</button>';if(i<qs.length-1)html+='<button class="btn btn-blue" onclick="go(1)">Next</button>';else html+='<button class="btn btn-blue" onclick="finishQuiz()">See Results &#8594;</button>';html+='</div>';qa.innerHTML=html;}
+function pick(oi){var i=state.cur;if(state.answers[i]!==undefined)return;state.answers[i]=oi;saveState();showQuestion();}
+function go(d){state.cur+=d;if(state.cur<0)state.cur=0;if(state.cur>=qs.length)state.cur=qs.length-1;saveState();showQuestion();}
+function goToQ(i){if(state.showResults){state.showResults=false;state.cur=i;saveState();render();return;}state.cur=i;saveState();showQuestion();buildDots();}
+function finishQuiz(){incAttempts();state.showResults=true;saveState();render();}
+function showResults(){var qa=document.getElementById('quizArea');var ra=document.getElementById('resultsArea');qa.style.display='none';ra.style.display='block';var c=0,w=0,s=0;for(var i=0;i<qs.length;i++){var a=state.answers[i];if(a===undefined)s++;else if(a===qs[i].ci)c++;else w++;}var html='<div class="res-header">Results: '+c+' / '+qs.length+'</div><div class="res-grid">';for(var i=0;i<qs.length;i++){var a=state.answers[i];var cls='res-card ',lbl='';if(a===undefined){cls+='skipped';lbl='Skipped';}else if(a===qs[i].ci){cls+='correct';lbl='Correct';}else{cls+='wrong';lbl='Wrong';}html+='<div class="'+cls+'" onclick="goToQ('+i+')">Q'+(i+1)+': '+lbl+'</div>';}html+='</div><div class="res-actions"><button class="btn btn-blue" onclick="startRetry()">Retry Wrong Questions</button><button class="btn btn-gray" onclick="copyRes()">Copy All Results</button><button class="btn btn-gray" onclick="confirmFresh()">Start Fresh</button></div>';ra.innerHTML=html;buildDots();}
+var retryList=[],retryIdx=0,retryAnswers={};
+function startRetry(){retryList=[];for(var i=0;i<qs.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==qs[i].ci)retryList.push(i);}if(!retryList.length){alert('No wrong questions!');return;}retryIdx=0;retryAnswers={};showRetry();}
+function showRetry(){var el=document.getElementById('retryArea');if(!el){el=document.createElement('div');el.id='retryArea';el.style.cssText='padding:20px';document.querySelector('.container').appendChild(el);}document.getElementById('quizArea').style.display='none';document.getElementById('resultsArea').style.display='none';el.style.display='block';if(retryIdx>=retryList.length){var c=0;for(var x=0;x<retryList.length;x++){if(retryAnswers[x]===qs[retryList[x]].ci)c++;}el.innerHTML='<div style="font-weight:700;color:#185FA5;margin-bottom:14px">Retry Complete: '+c+'/'+retryList.length+' correct</div><button class="btn btn-blue" onclick="backToResults()">Back to Results</button>';return;}var qi=retryList[retryIdx],q=qs[qi];var order=getShuffled(qi);var ans=retryAnswers[retryIdx];var answered=(ans!==undefined);var html='<div style="font-weight:700;color:#185FA5;margin-bottom:10px">Retry '+(retryIdx+1)+'/'+retryList.length+'</div><div class="tag-badge">'+q.tag+'</div><div class="q-text">'+q.q+'</div><div class="sentence-box">'+q.sent+'</div><div class="options">';for(var k=0;k<4;k++){var oi=order[k];var cls='opt-btn';if(answered){if(oi===q.ci)cls+=' reveal';if(oi===ans&&ans!==q.ci)cls+=' wrong';}html+='<button class="'+cls+'" onclick="retryPick('+oi+')">'+q.opts[oi]+'</button>';}html+='</div>';if(answered&&ans!==q.ci)html+='<div class="explain">'+q.exp+'</div>';html+='<div class="nav-btns"><button class="btn btn-blue" onclick="retryNext()">'+(retryIdx<retryList.length-1?'Next':'Finish Retry')+'</button></div>';el.innerHTML=html;}
+function retryPick(oi){if(retryAnswers[retryIdx]!==undefined)return;retryAnswers[retryIdx]=oi;showRetry();}
+function retryNext(){retryIdx++;showRetry();}
+function backToResults(){var r=document.getElementById('retryArea');if(r)r.style.display='none';state.showResults=true;saveState();render();}
+function copyRes(){var lines=['[Sion] SAT Grammar 2026-06-11'];var c=0,w=0,s=0;for(var i=0;i<qs.length;i++){var a=state.answers[i];if(a===undefined){s++;lines.push('Q'+(i+1)+': Skipped');}else if(a===qs[i].ci){c++;lines.push('Q'+(i+1)+': Correct');}else{w++;lines.push('Q'+(i+1)+': Wrong');}}lines.splice(1,0,'Score: '+c+'/'+qs.length);var txt=lines.join('\n');if(navigator.clipboard)navigator.clipboard.writeText(txt);else{var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}}
+function confirmFresh(){document.getElementById('freshModal').classList.add('show');}
+function closeFreshModal(){document.getElementById('freshModal').classList.remove('show');}
+function doFresh(){localStorage.removeItem(KEY);state={cur:0,answers:{},shuffles:{},showResults:false};closeFreshModal();render();}
+window.pick=pick;window.go=go;window.finishQuiz=finishQuiz;window.goToQ=goToQ;
+window.startRetry=startRetry;window.copyRes=copyRes;window.confirmFresh=confirmFresh;
+window.closeFreshModal=closeFreshModal;window.doFresh=doFresh;
+window.retryPick=retryPick;window.retryNext=retryNext;window.backToResults=backToResults;
+loadState();render();
+})();
+</script>
+</body>
+</html>

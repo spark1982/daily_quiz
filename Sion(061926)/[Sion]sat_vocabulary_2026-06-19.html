@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT Vocabulary</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0 auto;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.tag-badge{display:inline-block;color:#fff;font-size:0.74rem;font-weight:700;padding:3px 10px;border-radius:12px;margin-bottom:10px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.word-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.word-text{font-size:2rem;font-weight:800;color:#111;}
+.speak-btn{background:#e8edf4;border:none;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;}
+.q-context{background:#f0f4ff;border-left:4px solid #185FA5;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.9rem;color:#333;line-height:1.6;font-style:italic;}
+.q-text{font-size:1rem;font-weight:600;color:#111;margin-bottom:14px;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#eaf1f7;color:#111;font-size:0.95rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#eaf1f7;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d6e2ec;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#eaf1f7;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#eaf1f7;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-19</div>
+<div class="title-hd">[Sion] SAT Vocabulary</div>
+<div class="instruction">Read each word in context, then choose the meaning that fits best.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 20</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="tag-badge" id="tag-badge"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="word-row">
+    <span class="word-text" id="q-word"></span>
+    <button class="speak-btn" onclick="speakWord()" title="Listen">&#128264;</button>
+  </div>
+  <div class="q-context" id="q-context"></div>
+  <div class="q-text">What does this word most nearly mean?</div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#eaf1f7;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#eaf1f7;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY   = 'quiz_satvocab_20_20260618_v1';
+var ATT_KEY    = 'quiz_satvocab_20_20260618_att_v1';
+var TTS_LANG   = 'en-US';
+var QUIZ_LABEL = '[Sion] SAT Vocabulary - Results';
+
+var qs = [
+  { tag:'New', stem:'poignant', sent:"The film's poignant ending left the entire audience in tears.",
+    opts:['evoking a keen sense of sadness; deeply moving','filled with unexpected humor','difficult to follow due to a confusing plot','lacking any real emotional impact'],
+    ci:0, exp:"Poignant means 'evoking a keen sense of sadness; deeply moving,' which is why the ending made the audience cry." },
+  { tag:'New', stem:'terse', sent:'Her terse reply made it clear she did not want to discuss the matter further.',
+    opts:['using very few words; abrupt','filled with excessive detail and explanation','warm and affectionate in tone','difficult to understand due to complexity'],
+    ci:0, exp:"Terse means 'using very few words; abrupt,' matching how her short reply shut down the conversation." },
+  { tag:'New', stem:'cultivate', sent:'She spent years cultivating relationships with mentors who later helped her career.',
+    opts:['to develop or improve through deliberate effort','to abandon a plan before completing it','to copy someone else\'s ideas exactly','to criticize a project publicly'],
+    ci:0, exp:"Cultivate means 'to develop or improve through deliberate effort,' fitting the years she spent building those relationships." },
+  { tag:'New', stem:'volatile', sent:'The volatile stock market made investors nervous about their retirement savings.',
+    opts:['liable to change rapidly and unpredictably','completely stable and unchanging over time','carefully planned in every detail','widely admired by the public'],
+    ci:0, exp:"Volatile means 'liable to change rapidly and unpredictably,' which explains why investors felt nervous." },
+  { tag:'New', stem:'perfidious', sent:"The perfidious advisor secretly leaked the company's plans to a rival.",
+    opts:['deceitful and untrustworthy; disloyal','extremely loyal and dependable','overly cautious in making decisions','skilled at public speaking'],
+    ci:0, exp:"Perfidious means 'deceitful and untrustworthy; disloyal,' matching an advisor who secretly betrayed the company." },
+  { tag:'Review', stem:'capricious', sent:"The professor's capricious grading made it impossible for students to know what to expect on exams.",
+    opts:['given to sudden and unpredictable changes in behavior or mood','extremely generous with money and gifts','deeply knowledgeable about a specific subject','slow to change one\'s opinions'],
+    ci:0, exp:"Capricious means 'given to sudden and unpredictable changes in behavior or mood,' which is why students could not predict the grading." },
+  { tag:'Review', stem:'beguile', sent:"The salesman's beguiling smile made customers forget to ask about the product's flaws.",
+    opts:['to charm or enchant, sometimes in a deceptive way','to criticize someone harshly in public','to refuse to cooperate with a plan','to organize information into clear categories'],
+    ci:0, exp:"Beguile means 'to charm or enchant, sometimes in a deceptive way,' fitting how the smile distracted customers from the flaws." },
+  { tag:'Review', stem:'truculent', sent:'The truculent customer refused to listen to any explanation and demanded to see the manager immediately.',
+    opts:['eager to argue or fight; aggressively defiant','extremely shy and reluctant to speak','overly polite to the point of insincerity','easily persuaded by others\' opinions'],
+    ci:0, exp:"Truculent means 'eager to argue or fight; aggressively defiant,' matching the customer's hostile demand." },
+  { tag:'New', stem:'hubris', sent:"The CEO's hubris led him to ignore every warning from his financial advisors.",
+    opts:['excessive pride or self-confidence','a deep sense of regret over past actions','a strong desire to help others','an inability to make decisions'],
+    ci:0, exp:"Hubris means 'excessive pride or self-confidence,' explaining why the CEO dismissed every warning." },
+  { tag:'Review', stem:'ebullient', sent:'Her ebullient personality lit up the room the moment she walked in.',
+    opts:['cheerful and full of energy','quiet and withdrawn in social situations','anxious and easily startled','stern and humorless'],
+    ci:0, exp:"Ebullient means 'cheerful and full of energy,' fitting how her personality immediately brightened the room." },
+  { tag:'New', stem:'munificent', sent:'The munificent donor funded an entire new wing of the hospital.',
+    opts:['extremely generous','highly secretive about personal matters','easily annoyed by small inconveniences','skilled at persuading others'],
+    ci:0, exp:"Munificent means 'extremely generous,' matching a donor who funded an entire hospital wing." },
+  { tag:'New', stem:'censure', sent:'The senator was censured by his colleagues for violating ethics rules.',
+    opts:['to criticize harshly or formally express disapproval','to praise someone publicly for an achievement','to ignore a problem until it resolves itself','to promote someone to a higher position'],
+    ci:0, exp:"Censure means 'to criticize harshly or formally express disapproval,' fitting the formal reprimand from colleagues." },
+  { tag:'New', stem:'zealot', sent:'The zealot refused to consider any viewpoint that differed from his own.',
+    opts:['a person fanatically committed to a cause','a person who avoids conflict at all costs','a person skilled in negotiation','a person who studies ancient history'],
+    ci:0, exp:"Zealot means 'a person fanatically committed to a cause,' matching someone who rejects all opposing views." },
+  { tag:'New', stem:'studious', sent:'The studious freshman spent every evening in the library preparing for exams.',
+    opts:['devoted to careful study; diligent in learning','careless about completing assignments','naturally gifted without needing to practice','uninterested in academic subjects'],
+    ci:0, exp:"Studious means 'devoted to careful study; diligent in learning,' fitting the freshman's nightly library visits." },
+  { tag:'New', stem:'consonant', sent:'Her actions were consonant with the values she had always claimed to hold.',
+    opts:['in agreement or harmony with something','completely opposite to expectations','loud and disruptive in nature','difficult to measure accurately'],
+    ci:0, exp:"Consonant means 'in agreement or harmony with something,' matching how her actions matched her stated values." },
+  { tag:'Review', stem:'exacerbate', sent:'Ignoring the leak only exacerbated the water damage throughout the house.',
+    opts:['to make a problem or situation worse','to resolve a conflict peacefully','to explain something in great detail','to delay an action without reason'],
+    ci:0, exp:"Exacerbate means 'to make a problem or situation worse,' fitting how ignoring the leak worsened the damage." },
+  { tag:'New', stem:'solace', sent:'She found solace in long walks along the beach after losing her job.',
+    opts:['comfort in a time of distress or sadness','a sudden burst of inspiration','a formal apology for wrongdoing','a strong disagreement between friends'],
+    ci:0, exp:"Solace means 'comfort in a time of distress or sadness,' matching the comfort she found in her walks." },
+  { tag:'New', stem:'tenuous', sent:"The lawyer's tenuous argument failed to convince the jury of his client's innocence.",
+    opts:['very weak or flimsy; lacking a firm basis','extremely convincing and well supported','delivered with great confidence and volume','based on years of careful research'],
+    ci:0, exp:"Tenuous means 'very weak or flimsy; lacking a firm basis,' fitting an argument that failed to convince the jury." },
+  { tag:'New', stem:'languid', sent:'On hot summer afternoons, the cat stretched out in a languid pose on the porch.',
+    opts:['lacking energy; slow and relaxed','tense and alert to danger','filled with nervous excitement','quick and highly efficient'],
+    ci:0, exp:"Languid means 'lacking energy; slow and relaxed,' matching the cat's relaxed pose in the heat." },
+  { tag:'New', stem:'cadence', sent:"The poet's gentle cadence made the verses feel almost like a lullaby.",
+    opts:['a rhythmic flow of sound, especially in speech or music','a sudden change in topic during a conversation','an official ranking among candidates','a written record of past events'],
+    ci:0, exp:"Cadence means 'a rhythmic flow of sound, especially in speech or music,' fitting the lullaby-like quality of the verses." }
+];
+
+var state = {};
+
+function loadState() {
+  try {
+    var s = JSON.parse(localStorage.getItem(QUIZ_KEY) || 'null');
+    if (s && typeof s.cur === 'number' && s.answers && s.shuffles) {
+      state = s;
+    } else {
+      resetState();
+    }
+  } catch(e) {
+    localStorage.removeItem(QUIZ_KEY);
+    resetState();
+  }
+}
+
+function resetState() {
+  state = { cur: 0, answers: {}, shuffles: {}, showResults: false };
+}
+
+function saveState() {
+  localStorage.setItem(QUIZ_KEY, JSON.stringify(state));
+}
+
+function getShuffle(i) {
+  if (!state.shuffles[i]) {
+    var a = [0, 1, 2, 3];
+    for (var k = 3; k > 0; k--) {
+      var j = Math.floor(Math.random() * (k + 1));
+      var t = a[k]; a[k] = a[j]; a[j] = t;
+    }
+    state.shuffles[i] = a;
+  }
+  return state.shuffles[i];
+}
+
+function getCSI(i) {
+  return getShuffle(i).indexOf(qs[i].ci);
+}
+
+function loadAttempts() {
+  return parseInt(localStorage.getItem(ATT_KEY) || '0', 10);
+}
+
+function updateNav() {
+  var ans = Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent = ans + ' / ' + qs.length;
+  document.getElementById('prog-fill').style.width = (ans / qs.length * 100).toFixed(1) + '%';
+  renderDots();
+}
+
+function toggleJump() {
+  var p = document.getElementById('dot-panel');
+  var b = document.getElementById('jump-btn');
+  if (p.style.display === 'block') {
+    p.style.display = 'none'; b.textContent = 'Jump ▾';
+  } else {
+    p.style.display = 'block'; b.textContent = 'Hide ▴'; renderDots();
+  }
+}
+
+function renderDots() {
+  var p = document.getElementById('dot-panel');
+  if (p.style.display !== 'block') return;
+  var h = '';
+  for (var i = 0; i < qs.length; i++) {
+    var bg = state.answers[i] === undefined ? '#d7dde6'
+           : (state.answers[i] === getCSI(i) ? '#1D9E75' : '#E24B4A');
+    h += '<span class="dot" style="background:' + bg + ';" onclick="goToQ(' + i + ')">' + (i + 1) + '</span>';
+  }
+  if (Object.keys(state.answers).length === qs.length) {
+    h += '<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';
+  }
+  p.innerHTML = h;
+}
+
+function goToQ(i) {
+  state.cur = i; state.showResults = false; saveState(); render();
+  document.getElementById('dot-panel').style.display = 'none';
+  document.getElementById('jump-btn').textContent = 'Jump ▾';
+}
+
+function speakWord() {
+  var w = qs[state.cur].stem;
+  var u = new SpeechSynthesisUtterance(w);
+  u.lang = TTS_LANG;
+  window.speechSynthesis.speak(u);
+}
+
+function showResults() {
+  state.showResults = true;
+  localStorage.setItem(ATT_KEY, loadAttempts() + 1);
+  saveState(); render();
+}
+
+function render() {
+  document.getElementById('att-display').textContent = 'Total Attempts: ' + loadAttempts();
+
+  if (state.showResults) { renderResults(); return; }
+
+  document.getElementById('quizArea').style.display = 'block';
+  document.getElementById('resultsArea').style.display = 'none';
+  updateNav();
+
+  var i = state.cur;
+  var q = qs[i];
+
+  document.getElementById('q-num').textContent = 'Question ' + (i + 1) + ' of ' + qs.length;
+  document.getElementById('q-word').textContent = q.stem;
+  document.getElementById('q-context').textContent = q.sent;
+
+  var tagEl = document.getElementById('tag-badge');
+  tagEl.textContent = q.tag;
+  tagEl.style.background = (q.tag === 'Review') ? '#f5a623' : '#185FA5';
+
+  var sh = getShuffle(i);
+  var ans = state.answers[i];
+  var csi = getCSI(i);
+  var html = '';
+  for (var s = 0; s < 4; s++) {
+    var oi = sh[s];
+    var cls = 'opt-btn';
+    var dis = '';
+    if (ans !== undefined) {
+      dis = 'disabled';
+      if (s === csi) cls += ' correct';
+      else if (s === ans) cls += ' wrong';
+    }
+    html += '<button class="' + cls + '" ' + dis + ' onclick="pick(' + i + ',' + s + ')">' + escHtml(q.opts[oi]) + '</button>';
+  }
+  document.getElementById('opts-area').innerHTML = html;
+
+  var eb = document.getElementById('exp-box');
+  if (ans !== undefined && ans !== csi) {
+    eb.style.display = 'block';
+    eb.textContent = q.exp;
+  } else {
+    eb.style.display = 'none';
+  }
+
+  document.getElementById('next-btn').textContent = (i === qs.length - 1) ? 'See Results →' : 'Next';
+  document.querySelector('.prev-btn').disabled = (i === 0);
+}
+
+function renderResults() {
+  document.getElementById('quizArea').style.display = 'none';
+  document.getElementById('resultsArea').style.display = 'block';
+  updateNav();
+
+  var c = 0, w = 0, sk = 0;
+  for (var i = 0; i < qs.length; i++) {
+    if (state.answers[i] === undefined) sk++;
+    else if (state.answers[i] === getCSI(i)) c++;
+    else w++;
+  }
+  document.getElementById('results-summary').innerHTML =
+    '<span style="color:#1D9E75;font-weight:700;">' + c + '</span> correct &nbsp;' +
+    '<span style="color:#E24B4A;font-weight:700;">' + w + '</span> wrong &nbsp;' +
+    '<span style="color:#888;font-weight:700;">' + sk + '</span> skipped';
+
+  var html = '';
+  for (var i = 0; i < qs.length; i++) {
+    var a = state.answers[i];
+    var label, bg, tc;
+    if (a === undefined)              { label = 'Skipped'; bg = '#d7dde6'; tc = '#555'; }
+    else if (a === getCSI(i))         { label = 'Correct'; bg = '#E1F5EE'; tc = '#085041'; }
+    else                              { label = 'Wrong';   bg = '#FCEBEB'; tc = '#501313'; }
+    html += '<div class="results-card" onclick="goToQ(' + i + ')">' +
+            '<span style="font-size:1rem;font-weight:600;color:#333;">' + escHtml(qs[i].stem) + '</span>' +
+            '<span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:' + bg + ';color:' + tc + ';">' + label + '</span>' +
+            '</div>';
+  }
+  document.getElementById('results-cards').innerHTML = html;
+}
+
+function pick(qi, si) {
+  if (state.answers[qi] !== undefined) return;
+  state.answers[qi] = si;
+  saveState(); render();
+}
+
+function go(dir) {
+  if (dir === 1 && state.cur === qs.length - 1) { showResults(); return; }
+  state.cur = Math.max(0, Math.min(qs.length - 1, state.cur + dir));
+  saveState(); render();
+}
+
+function retryWrong() {
+  var first = -1;
+  for (var i = 0; i < qs.length; i++) {
+    if (state.answers[i] !== undefined && state.answers[i] !== getCSI(i)) {
+      if (first === -1) first = i;
+      delete state.answers[i];
+    }
+  }
+  if (first !== -1) {
+    state.cur = first; state.showResults = false; saveState(); render();
+  }
+}
+
+function copyRes() {
+  var lines = [QUIZ_LABEL];
+  for (var i = 0; i < qs.length; i++) {
+    var a = state.answers[i];
+    lines.push('Q' + (i + 1) + ' ' + qs[i].stem + ': ' +
+      (a === undefined ? 'Skipped' : a === getCSI(i) ? 'Correct' : 'Wrong'));
+  }
+  var txt = lines.join('\n');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(txt).catch(function() { fallbackCopy(txt); });
+  } else {
+    fallbackCopy(txt);
+  }
+}
+
+function fallbackCopy(txt) {
+  var ta = document.createElement('textarea');
+  ta.value = txt;
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+}
+
+function openFreshModal()  { document.getElementById('freshModal').style.display = 'flex'; }
+function confirmFresh() {
+  document.getElementById('freshModal').style.display = 'none';
+  localStorage.removeItem(QUIZ_KEY);
+  resetState(); saveState(); render();
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+window.pick           = pick;
+window.go             = go;
+window.goToQ          = goToQ;
+window.toggleJump     = toggleJump;
+window.speakWord      = speakWord;
+window.retryWrong     = retryWrong;
+window.copyRes        = copyRes;
+window.openFreshModal = openFreshModal;
+window.confirmFresh   = confirmFresh;
+window.showResults    = showResults;
+
+loadState(); saveState(); render();
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT Reading</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0 auto;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.passage-label{font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;}
+.passage-box{background:#f5f7fa;border-radius:10px;padding:14px;margin-bottom:12px;font-size:0.9rem;line-height:1.7;color:#333;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:6px;}
+.q-text{font-size:0.97rem;color:#111;font-weight:600;line-height:1.5;margin-bottom:10px;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.93rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-16</div>
+<div class="title-hd">[Sion] SAT Reading</div>
+<div class="instruction">Read each passage and answer the questions below it.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 10</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump ▾</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="passage-label" id="passage-label"></div>
+  <div class="passage-box" id="passage-box"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_satreading_10_20260615_v1';
+var ATT_KEY='quiz_satreading_att_20260615_v1';
+
+var passages=[
+  {label:'Passage 1 of 5 — Science',
+   text:'Deep within the ocean, far below the reach of sunlight, certain creatures have evolved a remarkable ability: bioluminescence, or the production of their own light. This natural phenomenon is not merely decorative. Anglerfish use a glowing lure to attract prey in complete darkness. Firefly squid pulse with blue light to communicate with potential mates. Some deep-sea bacteria emit a constant glow that may deter predators or attract hosts. Scientists estimate that at least 76 percent of deep-sea organisms are capable of bioluminescence, making it far more common in the ocean than on land. Counterintuitively, the deep ocean—long thought to be a world of absolute darkness—is actually filled with light.'},
+  {label:'Passage 1 of 5 — Science',
+   text:'Deep within the ocean, far below the reach of sunlight, certain creatures have evolved a remarkable ability: bioluminescence, or the production of their own light. This natural phenomenon is not merely decorative. Anglerfish use a glowing lure to attract prey in complete darkness. Firefly squid pulse with blue light to communicate with potential mates. Some deep-sea bacteria emit a constant glow that may deter predators or attract hosts. Scientists estimate that at least 76 percent of deep-sea organisms are capable of bioluminescence, making it far more common in the ocean than on land. Counterintuitively, the deep ocean—long thought to be a world of absolute darkness—is actually filled with light.'},
+  {label:'Passage 2 of 5 — History',
+   text:'When Johannes Gutenberg introduced the movable-type printing press in the 1440s, books became accessible to people beyond the very wealthy. Before the press, books were copied by hand, a process so time-consuming that a single copy might take months to produce. With the press, a page could be reproduced hundreds of times in a single day. Within fifty years of Gutenberg\'s invention, more books had been printed in Europe than in the previous thousand years combined. This explosion of printed material helped spread new ideas rapidly across the continent, fueling the Renaissance, the Reformation, and early scientific inquiry. Historians often describe the printing press as one of the most transformative inventions in human history.'},
+  {label:'Passage 2 of 5 — History',
+   text:'When Johannes Gutenberg introduced the movable-type printing press in the 1440s, books became accessible to people beyond the very wealthy. Before the press, books were copied by hand, a process so time-consuming that a single copy might take months to produce. With the press, a page could be reproduced hundreds of times in a single day. Within fifty years of Gutenberg\'s invention, more books had been printed in Europe than in the previous thousand years combined. This explosion of printed material helped spread new ideas rapidly across the continent, fueling the Renaissance, the Reformation, and early scientific inquiry. Historians often describe the printing press as one of the most transformative inventions in human history.'},
+  {label:'Passage 3 of 5 — Social Science',
+   text:'Cities are typically warmer than surrounding rural areas—a phenomenon known as the urban heat island effect. This temperature difference, which can exceed 10 degrees Fahrenheit, results from the abundance of dark surfaces such as asphalt roads and rooftops, which absorb and retain heat. Natural vegetation, which releases moisture into the air through a process called transpiration, is largely absent from urban areas. Without this cooling effect, cities bake in the summer sun. The consequences extend beyond discomfort: elevated temperatures increase energy demand for air conditioning, worsen air quality by accelerating the formation of smog, and disproportionately impact low-income neighborhoods that have less green space. Urban planners are responding by promoting green roofs, tree-lined streets, and permeable pavement.'},
+  {label:'Passage 3 of 5 — Social Science',
+   text:'Cities are typically warmer than surrounding rural areas—a phenomenon known as the urban heat island effect. This temperature difference, which can exceed 10 degrees Fahrenheit, results from the abundance of dark surfaces such as asphalt roads and rooftops, which absorb and retain heat. Natural vegetation, which releases moisture into the air through a process called transpiration, is largely absent from urban areas. Without this cooling effect, cities bake in the summer sun. The consequences extend beyond discomfort: elevated temperatures increase energy demand for air conditioning, worsen air quality by accelerating the formation of smog, and disproportionately impact low-income neighborhoods that have less green space. Urban planners are responding by promoting green roofs, tree-lined streets, and permeable pavement.'},
+  {label:'Passage 4 of 5 — Arts',
+   text:'Haiku is a form of Japanese poetry that has been practiced for centuries. In its traditional form, a haiku consists of three lines with a syllable count of five, seven, and five respectively. But the structure alone does not define the art. Haiku seek to capture a single, fleeting moment—usually drawn from the natural world—in a way that evokes a feeling rather than explains one. A master haiku might describe a frog leaping into a pond without ever using the word "peaceful," yet leave the reader with an overwhelming sense of stillness. This economy of language, paired with sharp sensory detail, has made haiku one of the most widely translated and imitated poetic forms in the world.'},
+  {label:'Passage 4 of 5 — Arts',
+   text:'Haiku is a form of Japanese poetry that has been practiced for centuries. In its traditional form, a haiku consists of three lines with a syllable count of five, seven, and five respectively. But the structure alone does not define the art. Haiku seek to capture a single, fleeting moment—usually drawn from the natural world—in a way that evokes a feeling rather than explains one. A master haiku might describe a frog leaping into a pond without ever using the word "peaceful," yet leave the reader with an overwhelming sense of stillness. This economy of language, paired with sharp sensory detail, has made haiku one of the most widely translated and imitated poetic forms in the world.'},
+  {label:'Passage 5 of 5 — Technology',
+   text:'Autonomous, or self-driving, vehicles rely on an array of sensors—cameras, radar, and lidar—to perceive their surroundings and make real-time decisions. Proponents argue that removing human error from driving could dramatically reduce the approximately 1.35 million traffic fatalities that occur globally each year, since human error is a factor in roughly 94 percent of accidents. Skeptics, however, point to documented failures in which autonomous systems misidentified pedestrians or failed to respond appropriately in unusual scenarios. They also raise concerns about accountability: when a self-driving car causes an accident, it is unclear whether the manufacturer, the software developer, or the vehicle owner bears legal responsibility. As the technology matures, these ethical and legal questions remain unresolved.'},
+  {label:'Passage 5 of 5 — Technology',
+   text:'Autonomous, or self-driving, vehicles rely on an array of sensors—cameras, radar, and lidar—to perceive their surroundings and make real-time decisions. Proponents argue that removing human error from driving could dramatically reduce the approximately 1.35 million traffic fatalities that occur globally each year, since human error is a factor in roughly 94 percent of accidents. Skeptics, however, point to documented failures in which autonomous systems misidentified pedestrians or failed to respond appropriately in unusual scenarios. They also raise concerns about accountability: when a self-driving car causes an accident, it is unclear whether the manufacturer, the software developer, or the vehicle owner bears legal responsibility. As the technology matures, these ethical and legal questions remain unresolved.'}
+];
+
+var qs=[
+ {text:'The primary purpose of the passage is to',
+  opts:['argue that bioluminescence is more impressive than any land-based adaptation',
+        'explain what bioluminescence is and describe its various functions in the deep sea',
+        'compare how bioluminescence works in squid versus anglerfish specifically',
+        'persuade readers to support funding for deep-sea conservation efforts'],
+  ci:1,exp:'The passage introduces bioluminescence, then describes its purposes in several species (hunting, mating, defense). This is explanation and description—option B captures that goal accurately.'},
+ {text:'As used in the final sentence, "counterintuitively" most nearly suggests that',
+  opts:['the deep sea is more dangerous than scientists previously believed',
+        'scientists have made systematic errors in studying the ocean',
+        'the widespread belief that the deep sea is completely dark turns out to be wrong',
+        'light in the deep ocean originates from stars reflected through the water'],
+  ci:2,exp:'"Counterintuitively" signals that something contradicts what people would naturally expect. The sentence shows that the deep ocean—assumed to be pitch dark—is actually quite full of biological light.'},
+ {text:'Which statement best expresses the central claim of this passage?',
+  opts:['Gutenberg was the most important inventor who ever lived',
+        'The printing press mainly made books cheaper and easier to carry around',
+        'Books had little cultural importance before the printing press was invented',
+        'The printing press had a transformative effect on the spread of ideas in European society'],
+  ci:3,exp:'The passage covers how the press expanded access to books and then fueled the Renaissance, Reformation, and scientific inquiry. The central claim is about its transformative effect on society and ideas.'},
+ {text:'Based on the passage, which statement about books before the printing press is most strongly supported?',
+  opts:['Books were written only in Latin and unavailable to those who spoke other languages',
+        'Only monasteries were legally permitted to produce and own books',
+        'Copying a single book by hand could take many months to complete',
+        'Books were produced exclusively by wealthy individuals who owned large estates'],
+  ci:2,exp:'The passage directly states that hand-copying was "so time-consuming that a single copy might take months to produce." This is the only claim about pre-press books directly supported by the text.'},
+ {text:'According to the passage, why does natural vegetation help cool an area?',
+  opts:['It blocks sunlight from reaching asphalt roads and dark rooftops below',
+        'It releases moisture into the air through a process called transpiration',
+        'It prevents smog from forming near densely populated city centers',
+        'It reduces the amount of energy needed for nearby manufacturing processes'],
+  ci:1,exp:'The passage explicitly states that vegetation "releases moisture into the air through a process called transpiration" and that cities lack this cooling effect.'},
+ {text:'The author most likely concludes by mentioning urban planning solutions in order to',
+  opts:['criticize cities that have not yet started addressing the heat island effect',
+        'imply that the urban heat island effect has already been fully solved',
+        'provide additional evidence that low-income neighborhoods are hit hardest',
+        'show that practical solutions already exist and are being put into practice'],
+  ci:3,exp:'The final sentence presents active, existing responses (green roofs, tree-lined streets, permeable pavement). The author\'s purpose is to end on a constructive note—showing real solutions are underway.'},
+ {text:'The main idea of this passage is that',
+  opts:['haiku poetry is so difficult to write well that very few poets ever master it',
+        'haiku are defined entirely by their strict syllable structure of 5-7-5',
+        'haiku use concise, sensory language to evoke a feeling rather than explain it',
+        'traditional Japanese haiku are superior in quality to modern Western imitations'],
+  ci:2,exp:'The passage argues that structure alone doesn\'t define haiku—the art is about capturing a fleeting moment with concise, sensory detail that produces feeling. Option C captures that idea.'},
+ {text:'The author mentions a frog leaping into a pond most likely to illustrate that',
+  opts:['only scenes from nature are acceptable as topics in authentic haiku',
+        'a skilled haiku can convey an emotion without directly naming that emotion',
+        'gifted haiku poets always rely on animal imagery to create vivid pictures',
+        'the natural world is inherently more calming than urban environments'],
+  ci:1,exp:'The example shows that a haiku can leave the reader with "an overwhelming sense of stillness" without ever saying "peaceful." This illustrates that haiku evoke feelings indirectly—through imagery, not labels.'},
+ {text:'Based on the passage, what is the main argument made by proponents of self-driving cars?',
+  opts:['Autonomous vehicles are already demonstrably safer than human-driven cars in all situations',
+        'Eliminating human error from driving could significantly reduce traffic fatalities',
+        'Autonomous vehicles are far more affordable to own and maintain than conventional cars',
+        'Manufacturers should not be held legally responsible for accidents caused by their vehicles'],
+  ci:1,exp:'Proponents argue that since human error causes roughly 94% of accidents, removing that error could sharply cut the 1.35 million annual traffic deaths. This is the benefit case for autonomous vehicles.'},
+ {text:'The passage suggests that one major unresolved challenge with autonomous vehicles is',
+  opts:['the extremely high cost of the lidar sensors that allow cars to detect surroundings',
+        'the fact that self-driving systems cannot yet operate in rainy or snowy weather',
+        'determining who bears legal responsibility when an autonomous vehicle causes an accident',
+        'convincing large automobile manufacturers to invest in developing the technology'],
+  ci:2,exp:'The passage states that when an autonomous car causes an accident, "it is unclear whether the manufacturer, the software developer, or the vehicle owner bears legal responsibility." This accountability question is explicitly described as unresolved.'}
+];
+
+var state={};
+function loadState(){try{var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');if(s&&typeof s.cur==='number'&&s.cur>=0&&s.cur<qs.length&&s.answers&&s.shuffles)state=s;else resetState();}catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){if(!state.shuffles[i]){var a=[0,1,2,3];for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}state.shuffles[i]=a;saveState();}return state.shuffles[i];}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAtt(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function updateNav(){var ans=Object.keys(state.answers).length;document.getElementById('nav-count').textContent=ans+' / '+qs.length;document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';var p=document.getElementById('dot-panel');if(p.style.display!=='none')renderDots();}
+function toggleJump(){var p=document.getElementById('dot-panel');var b=document.getElementById('jump-btn');if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}else{p.style.display='none';b.textContent='Jump ▾';}}
+function renderDots(){var p=document.getElementById('dot-panel');var h='';for(var i=0;i<qs.length;i++){var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===getCSI(i)?'#185FA5':'#E24B4A');h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';}if(Object.keys(state.answers).length===qs.length){h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';}p.innerHTML=h;}
+function goToQ(i){state.cur=i;state.showResults=false;saveState();render();document.getElementById('dot-panel').style.display='none';document.getElementById('jump-btn').textContent='Jump ▾';}
+function showResults(){state.showResults=true;localStorage.setItem(ATT_KEY,loadAtt()+1);saveState();render();}
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAtt();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';document.getElementById('resultsArea').style.display='none';
+  updateNav();
+  var i=state.cur;var q=qs[i];var p=passages[i];
+  document.getElementById('passage-label').textContent=p.label;
+  document.getElementById('passage-box').textContent=p.text;
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-text').textContent=q.text;
+  var sh=getShuffle(i);var ans=state.answers[i];var csi=getCSI(i);
+  var html='';
+  for(var s=0;s<4;s++){var oi=sh[s];var cls='opt-btn';var dis='';if(ans!==undefined){dis='disabled ';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}html+='<button class="'+cls+'" '+dis+'onclick="pick('+i+','+s+')">'+esc(q.opts[oi])+'</button>';}
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');
+  if(ans!==undefined&&ans!==csi){eb.style.display='block';eb.textContent=q.exp;}else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';document.getElementById('resultsArea').style.display='block';updateNav();
+  var c=0,w=0,sk=0;for(var i=0;i<qs.length;i++){if(state.answers[i]===undefined)sk++;else if(state.answers[i]===getCSI(i))c++;else w++;}
+  document.getElementById('results-summary').innerHTML='<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';for(var i=0;i<qs.length;i++){var a=state.answers[i];var label,bg,tc;if(a===undefined){label='Skipped';bg='#d7dde6';tc='#555';}else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}else{label='Wrong';bg='#FCEBEB';tc='#501313';}html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.9rem;color:#333;">Q'+(i+1)+': '+esc(qs[i].text.slice(0,40))+'...</span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';}
+  document.getElementById('results-cards').innerHTML=html;
+}
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){if(dir===1&&state.cur===qs.length-1){showResults();return;}state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));saveState();render();}
+function retryWrong(){var first=-1;for(var i=0;i<qs.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){if(first===-1)first=i;delete state.answers[i];}}if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}}
+function copyRes(){var lines=['[Sion] SAT Reading - Results (2026-06-16)'];for(var i=0;i<qs.length;i++){var a=state.answers[i];var label=a===undefined?'Skipped':(a===getCSI(i)?'Correct':'Wrong');lines.push('Q'+(i+1)+': '+label);}var txt=lines.join('\n');if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fallbackCopy(txt);});}else fallbackCopy(txt);}
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;
+window.openFreshModal=openFreshModal;window.confirmFresh=confirmFresh;window.showResults=showResults;
+
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

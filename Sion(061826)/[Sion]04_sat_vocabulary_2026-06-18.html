@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT Vocabulary</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0 auto;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;text-align:center;}
+.word-row{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0 10px;}
+.q-word{font-size:2rem;font-weight:800;color:#185FA5;text-align:center;}
+.speak-btn{width:34px;height:34px;border-radius:50%;border:none;background:#e8edf4;color:#185FA5;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.q-context{background:#f5f7fa;border-left:4px solid #185FA5;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.92rem;color:#333;font-style:italic;line-height:1.6;}
+.q-text{font-size:0.97rem;font-weight:600;color:#111;margin-bottom:10px;line-height:1.6;text-align:center;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.93rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-18</div>
+<div class="title-hd">[Sion] SAT Vocabulary</div>
+<div class="instruction">Listen to or read each word, then choose its correct meaning.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 15</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="q-num" id="q-num"></div>
+  <div class="word-row">
+    <div class="q-word" id="q-word"></div>
+    <button class="speak-btn" onclick="speak()" title="Listen">&#128266;</button>
+  </div>
+  <div class="q-context" id="q-context"></div>
+  <div class="q-text">What does this word most nearly mean?</div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_satvocab_15_20260617_v1';
+var ATT_KEY='quiz_satvocab_att_20260617_v1';
+var TTS_LANG='en-US';
+
+var qs=[
+ {word:'affinity',ctx:"Despite growing up in different countries, the two musicians felt an immediate affinity for each other's style.",
+  opts:['A natural attraction or sense of closeness to something','A strong feeling of resentment or hostility','An official document granting permission','A sudden and unexpected change in plans'],
+  ci:0,exp:'Affinity means a natural liking, attraction, or close relationship between people or things.'},
+ {word:'affluent',ctx:'The affluent suburb was known for its large homes and expensive cars.',
+  opts:['Having a great deal of wealth','Lacking basic necessities','Extremely talkative','Difficult to understand'],
+  ci:0,exp:'Affluent describes someone or something wealthy or prosperous.'},
+ {word:'allay',ctx:"The doctor's calm explanation helped allay the patient's fears about the surgery.",
+  opts:['To calm or relieve a fear or worry','To increase suspicion dramatically','To delay an event indefinitely','To publicly announce something'],
+  ci:0,exp:'Allay means to ease or calm a troubling feeling such as fear or anxiety.'},
+ {word:'aloof',ctx:'Even at her own birthday party, she remained aloof, barely speaking to her guests.',
+  opts:['Distant and not friendly or sociable','Extremely enthusiastic and warm','Loud and boastful','Easily persuaded by others'],
+  ci:0,exp:'Aloof describes someone who is emotionally distant or unfriendly toward others.'},
+ {word:'ameliorate',ctx:'New irrigation techniques helped ameliorate the effects of the drought on local farms.',
+  opts:['To make a bad situation better','To make a situation significantly worse','To ignore a problem completely','To record information in great detail'],
+  ci:0,exp:'Ameliorate means to improve a situation that was previously bad or difficult.'},
+ {word:'anachronistic',ctx:"Critics called the film's depiction of medieval knights using modern slang anachronistic.",
+  opts:['Belonging to the wrong time period; out of place historically','Extremely accurate and historically correct','Related to ancient mythology','Difficult to translate into another language'],
+  ci:0,exp:'Anachronistic describes something placed in the wrong historical time period.'},
+ {word:'anecdote',ctx:'He opened his speech with a funny anecdote about his first day on the job.',
+  opts:['A short, often amusing story about a real event or person','A formal scientific study with data','A type of legal contract','A strong disagreement between two people'],
+  ci:0,exp:'An anecdote is a brief story, usually true and often entertaining, about a real person or event.'},
+ {word:'antipathy',ctx:'The two rival companies have a long history of antipathy toward each other.',
+  opts:['A deep feeling of dislike or hostility','A strong sense of admiration and respect','A formal agreement between two parties','An overwhelming feeling of joy'],
+  ci:0,exp:'Antipathy is a strong, deep-rooted feeling of dislike or opposition toward someone or something.'},
+ {word:'appease',ctx:'The manager offered a discount to appease the frustrated customer.',
+  opts:['To calm someone by giving them what they want','To provoke someone into greater anger','To carefully study a complicated subject','To formally reject a proposal'],
+  ci:0,exp:'Appease means to satisfy or calm someone, often by giving in to their demands.'},
+ {word:'apprehend',ctx:'Police were able to apprehend the suspect within hours of the robbery.',
+  opts:['To capture or arrest someone, or to grasp an idea mentally','To congratulate someone publicly','To donate money to a cause','To exaggerate the truth'],
+  ci:0,exp:'Apprehend can mean to catch or arrest a person, or to understand something mentally.'},
+ {word:'arbitrary',ctx:"The coach's arbitrary decision to bench the star player surprised everyone.",
+  opts:['Based on random whim rather than reason or rules','Carefully planned according to strict logic','Required by law in every case','Widely accepted as completely fair'],
+  ci:0,exp:'Arbitrary describes a decision made without clear reasoning, often based on personal whim.'},
+ {word:'ardor',ctx:'She pursued her painting with such ardor that she often forgot to eat lunch.',
+  opts:['Intense enthusiasm or passion for something','A feeling of complete indifference','A formal written apology','A type of musical instrument'],
+  ci:0,exp:'Ardor refers to great enthusiasm, passion, or warmth of feeling.'},
+ {word:'asylum',ctx:'The family sought asylum after fleeing the conflict in their home country.',
+  opts:['Protection or refuge granted to someone fleeing danger','A formal celebration of a national holiday','A type of architectural column','A method of preserving food'],
+  ci:0,exp:'Asylum is protection or refuge given to someone, often a person escaping danger or persecution.'},
+ {word:'audacious',ctx:"The team's audacious plan to climb the mountain in winter shocked even experienced guides.",
+  opts:['Boldly daring and willing to take risks','Extremely cautious and hesitant','Quietly observant and reserved','Easily frightened by danger'],
+  ci:0,exp:'Audacious describes behavior that is boldly daring, often surprisingly so.'},
+ {word:'auspicious',ctx:'Clear skies on opening day were seen as an auspicious sign for the festival.',
+  opts:['Suggesting a favorable or successful outcome','Suggesting a clearly negative outcome','Completely unrelated to the situation','Difficult to interpret or understand'],
+  ci:0,exp:'Auspicious describes something that seems to promise success or a good outcome.'}
+];
+
+var state={};
+function loadState(){
+  try{
+    var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');
+    if(s&&typeof s.cur==='number'&&s.cur>=0&&s.cur<qs.length&&s.answers&&s.shuffles){state=s;}
+    else resetState();
+  }catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}
+}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){
+  if(!state.shuffles[i]){
+    var a=[0,1,2,3];
+    for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}
+    state.shuffles[i]=a; saveState();
+  }
+  return state.shuffles[i];
+}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAtt(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function speak(){
+  if(!('speechSynthesis' in window))return;
+  var u=new SpeechSynthesisUtterance(qs[state.cur].word);
+  u.lang=TTS_LANG;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+}
+
+function updateNav(){
+  var ans=Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent=ans+' / '+qs.length;
+  document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';
+  var p=document.getElementById('dot-panel');
+  if(p.style.display!=='none')renderDots();
+}
+
+function toggleJump(){
+  var p=document.getElementById('dot-panel');
+  var b=document.getElementById('jump-btn');
+  if(p.style.display==='none'){p.style.display='block';b.innerHTML='Hide &#9652;';renderDots();}
+  else{p.style.display='none';b.innerHTML='Jump &#9662;';}
+}
+
+function renderDots(){
+  var p=document.getElementById('dot-panel');
+  var h='';
+  for(var i=0;i<qs.length;i++){
+    var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===getCSI(i)?'#185FA5':'#E24B4A');
+    h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';
+  }
+  if(Object.keys(state.answers).length===qs.length){
+    h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';
+  }
+  p.innerHTML=h;
+}
+
+function goToQ(i){
+  state.cur=i; state.showResults=false; saveState(); render();
+  document.getElementById('dot-panel').style.display='none';
+  document.getElementById('jump-btn').innerHTML='Jump &#9662;';
+}
+
+function showResults(){
+  state.showResults=true;
+  localStorage.setItem(ATT_KEY,loadAtt()+1);
+  saveState(); render();
+}
+
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAtt();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('resultsArea').style.display='none';
+  updateNav();
+  var i=state.cur; var q=qs[i];
+  document.getElementById('q-num').textContent='Word '+(i+1)+' of '+qs.length;
+  document.getElementById('q-word').textContent=q.word;
+  document.getElementById('q-context').textContent=q.ctx;
+  var sh=getShuffle(i); var ans=state.answers[i]; var csi=getCSI(i);
+  var html='';
+  for(var s=0;s<4;s++){
+    var oi=sh[s]; var cls='opt-btn'; var dis='';
+    if(ans!==undefined){dis='disabled ';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}
+    html+='<button class="'+cls+'" '+dis+'onclick="pick('+i+','+s+')">'+esc(q.opts[oi])+'</button>';
+  }
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');
+  if(ans!==undefined){eb.style.display='block';eb.textContent=q.exp;}
+  else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  updateNav();
+  var c=0,w=0,sk=0;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]===undefined)sk++;
+    else if(state.answers[i]===getCSI(i))c++;
+    else w++;
+  }
+  document.getElementById('results-summary').innerHTML=
+    '<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;'+
+    '<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;'+
+    '<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i]; var label,bg,tc;
+    if(a===undefined){label='Skipped';bg='#d7dde6';tc='#555';}
+    else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}
+    else{label='Wrong';bg='#FCEBEB';tc='#501313';}
+    html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.9rem;color:#333;">Q'+(i+1)+': '+esc(qs[i].word)+'</span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';
+  }
+  document.getElementById('results-cards').innerHTML=html;
+}
+
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){
+  if(dir===1&&state.cur===qs.length-1){showResults();return;}
+  state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));
+  saveState();render();
+}
+function retryWrong(){
+  var first=-1;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){
+      if(first===-1)first=i; delete state.answers[i];
+    }
+  }
+  if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}
+}
+function copyRes(){
+  var lines=['[Sion] SAT Vocabulary - Results (2026-06-18)'];
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    var label=a===undefined?'Skipped':(a===getCSI(i)?'Correct':'Wrong');
+    lines.push('Q'+(i+1)+' ('+qs[i].word+'): '+label);
+  }
+  var txt=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fallbackCopy(txt);});}
+  else fallbackCopy(txt);
+}
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;window.openFreshModal=openFreshModal;
+window.confirmFresh=confirmFresh;window.showResults=showResults;window.speak=speak;
+
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

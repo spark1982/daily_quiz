@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Advanced SAT Reading</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background:#f4f6f9; color:#111111; }
+  #timerBar { position:sticky; top:0; z-index:100; background:#1D9E75; color:#fff; padding:8px 12px; display:flex; align-items:center; justify-content:center; gap:12px; font-size:0.95rem; flex-wrap:wrap; }
+  #timerBar.orange { background:#d98a1d; }
+  #timerBar.red { background:#E24B4A; }
+  #timerBar button { border:none; background:rgba(255,255,255,0.25); color:#fff; padding:6px 12px; border-radius:6px; font-size:0.85rem; cursor:pointer; }
+  .wrap { max-width:700px; margin:0 auto; padding:14px 16px 40px; }
+  h1 { color:#1D9E75; font-size:1.4rem; text-align:center; margin:10px 0 4px; }
+  .instruction { text-align:center; font-size:0.88rem; color:#555; margin-bottom:10px; }
+  .subtitle { text-align:center; font-size:0.8rem; color:#888; margin-bottom:14px; }
+  #bottom-nav { position:sticky; bottom:0; background:#fff; border-top:1px solid #ddd; padding:8px 10px; z-index:90; }
+  .nav-row { display:flex; align-items:center; gap:8px; }
+  .nav-row .count { font-size:0.8rem; color:#555; white-space:nowrap; }
+  .progress-track { flex:1; height:8px; background:#e2e6ea; border-radius:4px; overflow:hidden; }
+  .progress-fill { height:100%; background:#1D9E75; transition:width .2s; }
+  .jump-toggle { background:#e8edf4; border:none; border-radius:6px; padding:6px 10px; font-size:0.8rem; cursor:pointer; }
+  #dotPanel { display:none; flex-wrap:wrap; gap:6px; padding:10px 0 0; max-height:140px; overflow-y:auto; }
+  #dotPanel.open { display:flex; }
+  .dot { width:32px; height:32px; border-radius:50%; border:2px solid #ccc; background:#fff; font-size:0.75rem; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#333; }
+  .dot.answered { background:#1D9E75; color:#fff; border-color:#1D9E75; }
+  .dot.current { border-color:#185FA5; border-width:3px; }
+  .navbtns { display:flex; gap:8px; margin-top:8px; }
+  .navbtns button { flex:1; padding:11px; border:none; border-radius:8px; font-size:0.95rem; cursor:pointer; }
+  #prevBtn { background:#e8edf4; color:#111; }
+  #prevBtn:disabled { opacity:0.4; cursor:not-allowed; }
+  #nextBtn { background:#1D9E75; color:#fff; }
+  .card { background:#fff; border-radius:12px; padding:18px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+  .tag { display:inline-block; background:#185FA5; color:#fff; font-size:0.72rem; padding:3px 9px; border-radius:12px; margin-bottom:10px; }
+  .passage { background:#f8f9fb; border-left:3px solid #185FA5; padding:12px 14px; font-size:0.92rem; line-height:1.55; margin-bottom:12px; border-radius:4px; }
+  .qtext { font-size:1rem; font-weight:600; margin-bottom:12px; line-height:1.4; }
+  .opt { display:block; width:100%; text-align:left; background:#e8edf4; color:#111111; border:2px solid transparent; border-radius:8px; padding:12px 14px; margin-bottom:9px; font-size:0.92rem; cursor:pointer; line-height:1.4; }
+  .opt.correct { background:#e6f7f1; border-color:#1D9E75; color:#0d6b4d; }
+  .opt.wrong { background:#fdeceb; border-color:#E24B4A; color:#a12f2e; }
+  .opt:disabled { cursor:default; }
+  .explain { margin-top:10px; padding:10px 12px; background:#fffbe8; border-left:3px solid #d98a1d; font-size:0.85rem; border-radius:4px; line-height:1.5; }
+  #resultsScreen { display:none; }
+  .summary-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:16px 0; }
+  .sum-item { padding:10px 4px; text-align:center; border-radius:8px; font-size:0.8rem; cursor:pointer; border:2px solid transparent; }
+  .sum-item.ok { background:#e6f7f1; color:#0d6b4d; border-color:#1D9E75; }
+  .sum-item.bad { background:#fdeceb; color:#a12f2e; border-color:#E24B4A; }
+  .score-box { text-align:center; padding:20px; background:#fff; border-radius:12px; margin-bottom:14px; }
+  .score-box .big { font-size:2.2rem; font-weight:700; color:#1D9E75; }
+  .actionbtns { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .actionbtns button { padding:13px; border:none; border-radius:8px; font-size:0.95rem; cursor:pointer; color:#fff; }
+  #retryBtn { background:#1D9E75; }
+  #copyBtn { background:#185FA5; }
+  #freshBtn { background:#888; }
+  #timerSetup { text-align:center; }
+  #timerSetup input { width:60px; padding:4px; border-radius:4px; border:none; text-align:center; }
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; align-items:center; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal-box { background:#fff; border-radius:12px; padding:20px; max-width:320px; text-align:center; }
+  .modal-box .mbtns { display:flex; gap:10px; margin-top:16px; }
+  .modal-box button { flex:1; padding:10px; border:none; border-radius:8px; cursor:pointer; }
+  #modalCancel { background:#e8edf4; }
+  #modalConfirm { background:#E24B4A; color:#fff; }
+</style>
+</head>
+<body>
+
+<div id="timerBar">
+  <div id="timerSetup">
+    <span>Timer: <input type="number" id="timerMinutes" value="20" min="1" max="120"></span>
+    <button id="timerStartBtn">Start</button>
+  </div>
+  <div id="timerRunning" style="display:none;">
+    <span id="timerDisplay">20:00</span>
+    <button id="timerPauseBtn">Pause</button>
+    <button id="timerResetBtn">Reset</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1>Advanced SAT Reading</h1>
+  <div class="instruction">6 high-difficulty Digital SAT Reading &amp; Writing question types, 2 questions each</div>
+  <div class="subtitle" id="subtitleLine">12 Questions | Total Attempts: 0</div>
+
+  <div id="quizArea" style="display:none;">
+    <div class="card">
+      <div class="tag" id="qTag"></div>
+      <div class="passage" id="qPassage"></div>
+      <div class="qtext" id="qText"></div>
+      <div id="qOptions"></div>
+      <div class="explain" id="qExplain" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div id="resultsScreen">
+    <div class="score-box">
+      <div class="big" id="scoreBig">0/12</div>
+      <div>Correct Answers</div>
+    </div>
+    <div class="summary-grid" id="summaryGrid"></div>
+    <div class="actionbtns">
+      <button id="retryBtn">Retry Wrong Ones</button>
+      <button id="copyBtn">Copy All Results</button>
+      <button id="freshBtn">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<div id="bottom-nav">
+  <div class="nav-row">
+    <span class="count" id="navCount">1/12</span>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%;"></div></div>
+    <button class="jump-toggle" id="jumpToggle">Jump</button>
+  </div>
+  <div id="dotPanel"></div>
+  <div class="navbtns">
+    <button id="prevBtn">← Prev</button>
+    <button id="nextBtn">Next →</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <div>Start fresh? This clears all your answers and attempt history.</div>
+    <div class="mbtns">
+      <button id="modalCancel">Cancel</button>
+      <button id="modalConfirm">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var STORAGE_KEY = 'quiz_advsatreading_v1';
+  var ATT_KEY = 'quiz_advsatreading_att_v1';
+
+  var QUESTIONS = [
+    {
+      tag: "Command of Evidence — \"If True\"",
+      passage: "A biologist studying a species of desert lizard hypothesizes that the lizards change skin color primarily to regulate body temperature: becoming darker in the cool morning to absorb heat, and lighter during the hottest part of the day to reflect it. Field data show that roughly 70% of individuals shift skin tone in step with the time of day.",
+      question: "Which finding, if true, would most seriously undermine the biologist's hypothesis?",
+      options: [
+        "Lizards that darkened in the morning were later observed basking directly in sunlight.",
+        "Lizards kept in a temperature-controlled enclosure with no light cues still shifted from dark to light on the same daily schedule.",
+        "Darker-colored lizards were found to be preferred as mates by females.",
+        "The lizards' skin contains specialized pigment cells called chromatophores."
+      ],
+      correctIndex: 1,
+      explanation: "If the lizards keep shifting color on schedule even when temperature never changes, the shift can't be explained by a need to regulate body heat — it points to an internal clock or light cue instead, which directly undermines the temperature-regulation hypothesis. The other findings either support the hypothesis or are simply irrelevant facts about lizard biology."
+    },
+    {
+      tag: "Command of Evidence — \"If True\"",
+      passage: "An economist hypothesizes that a small town's declining downtown foot traffic is caused primarily by a new shopping mall built on the town's outskirts, which drew shoppers away from downtown stores. Foot-traffic counters show downtown visits fell 30% in the six months after the mall opened.",
+      question: "Which finding, if true, would most strongly support the economist's hypothesis?",
+      options: [
+        "Survey data show that most former downtown shoppers now report doing the majority of their shopping at the new mall.",
+        "Downtown store owners raised prices by an average of 5% during the same period.",
+        "The town's population grew by 2% over the same six months.",
+        "Local newspaper coverage of downtown parking problems increased during the same period."
+      ],
+      correctIndex: 0,
+      explanation: "Direct evidence that former downtown shoppers switched to the mall confirms the causal link the economist proposed. The other options introduce competing explanations (price increases, population growth, parking complaints) that would compete with — not confirm — the mall as the cause."
+    },
+    {
+      tag: "Central Ideas and Details",
+      passage: "There is a certain hour of the evening when the fields, wearied of color, surrender themselves to a single, uniform gray, and the mind, no longer distracted by the busy particulars of the day, turns inward upon itself. It is not sorrow that visits me at such an hour, nor idle melancholy, but something nearer to gratitude — a recognition that the quiet has been earned, not merely arrived at, and that solitude, rightly used, is its own reward.",
+      question: "Which choice best describes the main idea of the text?",
+      options: [
+        "The narrator regrets that a productive day has come to an end.",
+        "The narrator experiences evening solitude as a deserved and valuable state, not as sadness.",
+        "The narrator believes the fields are more beautiful at dusk than at any other time of day.",
+        "The narrator argues that solitude should generally be avoided because it leads to melancholy."
+      ],
+      correctIndex: 1,
+      explanation: "The narrator explicitly rules out sorrow and melancholy, and instead describes the evening quiet as \"earned\" and \"its own reward\" — a positive, deserved state. The passage isn't about regret, visual beauty, or a warning against solitude."
+    },
+    {
+      tag: "Central Ideas and Details",
+      passage: "A craftsman who works only for the wage set upon his labor will, in time, produce work indistinguishable from that of any other hand; but he who works as though the object itself demanded perfection, without regard to what it might fetch, discovers that his skill increases in proportion to his indifference to reward. It is this indifference, and not talent alone, that separates the master from the merely competent.",
+      question: "Which choice best states the central claim of the text?",
+      options: [
+        "Financial reward is the most reliable measure of a craftsman's skill.",
+        "Talent alone determines whether a craftsman becomes a master.",
+        "A craftsman's devotion to the work itself, rather than to payment, is what elevates his skill.",
+        "Skilled craftsmen should refuse to accept payment for their work."
+      ],
+      correctIndex: 2,
+      explanation: "The passage contrasts working \"only for the wage\" with working as though \"the object itself demanded perfection,\" and states plainly that this indifference to reward — not talent alone — separates masters from the merely competent. It never suggests refusing payment entirely."
+    },
+    {
+      tag: "Command of Evidence — Textual Evidence",
+      passage: "Many a man mistakes restlessness for ambition, and having climbed one hill, is astonished to find another before him, taller, and beyond it another still. He calls this progress. Yet there was a farmer of my acquaintance who, having inherited a single field, worked it with such care that in twenty years its yield had doubled, though its boundaries had not moved an inch; and I confess I have never met a man who called himself more thoroughly successful.",
+      question: "Which quotation from the text most effectively illustrates the idea that true accomplishment does not require expansion or acquisition?",
+      options: [
+        "\"Many a man mistakes restlessness for ambition\"",
+        "\"having climbed one hill, is astonished to find another before him\"",
+        "\"He calls this progress\"",
+        "\"its yield had doubled, though its boundaries had not moved an inch\""
+      ],
+      correctIndex: 3,
+      explanation: "This line directly shows growth (yield doubling) happening without any expansion of territory, which is exactly the idea being illustrated. The other quotations describe the restless, hill-climbing man — the contrasting example, not the illustration of the claim itself."
+    },
+    {
+      tag: "Command of Evidence — Textual Evidence",
+      passage: "The house had not changed — the same crooked gate, the same ivy climbing past the second window — and yet I stood before it a stranger. It was not the house that had altered but the eye that beheld it, for I had gone out a boy full of certainties and returned a man stripped of most of them, so that even the ivy seemed to regard me with a kind of polite unrecognition.",
+      question: "Which quotation best supports the claim that the narrator's own perspective, rather than the house itself, has changed?",
+      options: [
+        "\"the same crooked gate, the same ivy climbing past the second window\"",
+        "\"It was not the house that had altered but the eye that beheld it\"",
+        "\"I had gone out a boy full of certainties\"",
+        "\"the ivy seemed to regard me with a kind of polite unrecognition\""
+      ],
+      correctIndex: 1,
+      explanation: "This is the narrator's direct statement of the claim: the house stayed the same, but the \"eye,\" or perspective, changed. The other lines describe the unchanged house or the narrator's past self, but don't state the claim as directly."
+    },
+    {
+      tag: "Inferences",
+      passage: "Researchers studying two neighboring populations of a songbird species found that birds in the noisier, urban population sang at a higher pitch than birds in the quiet, rural population. When researchers played recordings of rural songs through speakers in the urban habitat, urban females showed little interest, while the same females responded strongly to recordings of local, urban-pitched songs. Because urban background noise is concentrated in lower frequencies, the researchers concluded that ______.",
+      question: "Which choice most logically completes the text?",
+      options: [
+        "urban birds have evolved to prefer lower-frequency songs despite the noise around them",
+        "the shift to higher-pitched song likely helps urban birds' signals remain audible above the low-frequency background noise",
+        "rural birds are less intelligent than urban birds at recognizing potential mates",
+        "all songbird species will eventually adopt higher-pitched songs regardless of habitat"
+      ],
+      correctIndex: 1,
+      explanation: "The passage sets up a clear cause-and-effect chain: urban noise is low-frequency, urban birds sing higher-pitched songs, and urban females respond to those higher-pitched songs specifically. The logical conclusion is that higher pitch helps signals stand out above the noise. The other options either contradict the data or claim far more than the evidence supports."
+    },
+    {
+      tag: "Inferences",
+      passage: "A study tracked two groups of students preparing for a standardized test: one group reviewed practice problems immediately after getting them wrong, while the other group waited 24 hours before reviewing their mistakes. On the final exam, the delayed-review group scored higher on questions similar to those they had missed, even though both groups spent an equal number of total study hours. Because immediate review allows a mistake to be corrected before short-term memory of the original wrong answer fades, researchers suggested that ______.",
+      question: "Which choice most logically completes the text?",
+      options: [
+        "delayed review may help students form a more durable memory because it requires the material to be reconstructed rather than simply reread",
+        "students should avoid reviewing practice problems entirely",
+        "the delayed-review group must have spent more total hours studying than the immediate-review group",
+        "immediate review is ineffective for every subject other than standardized test preparation"
+      ],
+      correctIndex: 0,
+      explanation: "The passage's reasoning (immediate review corrects a mistake while it's still fresh, which may make it too easy) logically supports the idea that delay forces deeper reconstruction and more durable learning. The other options either contradict the stated equal study hours or overgeneralize far beyond what the study shows."
+    },
+    {
+      tag: "Cross-Text Connections",
+      passage: "Text 1: Urban planners have long argued that dense, mixed-use neighborhoods — where housing, shops, and offices sit within walking distance of one another — reduce a city's reliance on cars and, in turn, its carbon emissions. Cities that have redesigned their zoning laws to permit this kind of density have reported measurable drops in per-capita driving.\n\nText 2: It is easy to credit zoning reform for falling driving rates, but many cities that loosened density restrictions did so at the same time they expanded public transit funding and raised parking fees. Without isolating these variables, it is difficult to say how much of the change in driving habits is attributable to density itself rather than to the other policies enacted alongside it.",
+      question: "Based on the texts, how would the author of Text 2 most likely respond to the claim in Text 1 that zoning reform reduces driving?",
+      options: [
+        "By agreeing completely and citing additional data on density's effects",
+        "By questioning whether density reform alone can be credited with the change, given other policies enacted at the same time",
+        "By arguing that public transit funding is the only factor that matters",
+        "By dismissing any connection between city planning and driving habits"
+      ],
+      correctIndex: 1,
+      explanation: "Text 2 doesn't reject the claim outright or fully embrace it — it raises a specific methodological concern (confounding variables like transit funding and parking fees) that questions whether density reform alone deserves the credit. That's a partial, evidence-based pushback, not full agreement or full dismissal."
+    },
+    {
+      tag: "Cross-Text Connections",
+      passage: "Text 1: A recent trial found that students who took short breaks to walk outside during study sessions retained more material on follow-up tests than students who studied without breaks, leading some researchers to recommend that schools build regular outdoor breaks into the study schedule.\n\nText 2: Before recommending outdoor breaks as a general policy, it is worth noting that the trial took place in the spring, when mild weather may have made the breaks especially pleasant and low-stress; it remains unclear whether the same benefit would hold during winter months or in climates with less favorable weather.",
+      question: "Which choice best describes the relationship between the two texts?",
+      options: [
+        "Text 2 fully confirms the recommendation made in Text 1 using new evidence.",
+        "Text 2 raises a methodological limitation that qualifies how broadly the findings in Text 1 can be applied.",
+        "Text 2 argues that outdoor breaks have no benefit whatsoever.",
+        "Text 2 provides an alternative explanation unrelated to Text 1's topic."
+      ],
+      correctIndex: 1,
+      explanation: "Text 2 accepts the trial's finding but points out a limitation (favorable spring weather) that limits how confidently the result can be generalized to other seasons or climates. It neither confirms the policy fully nor rejects the benefit outright, and it stays on the same topic."
+    },
+    {
+      tag: "Transitions",
+      passage: "Critics of the new bridge design argued that its unconventional cable arrangement would prove structurally unsound. ______, engineers who reviewed the design noted that the arrangement had already been tested successfully on three bridges of similar span in other countries.",
+      question: "Which choice completes the text with the most logical transition?",
+      options: [
+        "Granted,",
+        "Fittingly,",
+        "Consequently,",
+        "Nevertheless,"
+      ],
+      correctIndex: 3,
+      explanation: "The second sentence directly opposes the critics' concern with reassuring evidence, so a contrast word is needed. \"Granted\" would require the sentence itself to concede a point before pivoting; \"Fittingly\" implies agreement or harmony, which is wrong here; \"Consequently\" wrongly implies the engineers' finding was a result of the critics' argument. \"Nevertheless\" correctly signals the contrast."
+    },
+    {
+      tag: "Transitions",
+      passage: "Many assumed that automating the factory's assembly line would eliminate jobs; ______, the number of workers employed at the plant increased over the following decade, as new roles emerged to design, monitor, and maintain the automated systems.",
+      question: "Which choice completes the text with the most logical transition?",
+      options: [
+        "Alternatively,",
+        "Granted,",
+        "By contrast,",
+        "In fact,"
+      ],
+      correctIndex: 3,
+      explanation: "The second clause corrects a mistaken assumption about the very same subject (jobs at the plant), which is exactly what \"in fact\" signals. \"Alternatively\" implies a separate option rather than a correction; \"Granted\" sets up a concession that isn't structured here; \"By contrast\" typically introduces a different, comparable subject rather than a factual correction about the same one."
+    }
+  ];
+
+  var TOTAL = QUESTIONS.length;
+  var state = { cur: 0, answers: {}, showResults: false };
+  var timerState = { running:false, paused:false, remaining:1200, total:1200, interval:null };
+
+  function loadState(){
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return;
+      var parsed = JSON.parse(raw);
+      if(typeof parsed.cur !== 'number' || parsed.cur < 0 || parsed.cur >= TOTAL) throw new Error('bad cur');
+      if(typeof parsed.answers !== 'object' || parsed.answers === null) throw new Error('bad answers');
+      state.cur = parsed.cur;
+      state.answers = parsed.answers;
+      state.showResults = !!parsed.showResults;
+    } catch(e) {
+      localStorage.removeItem(STORAGE_KEY);
+      state = { cur:0, answers:{}, showResults:false };
+    }
+  }
+  function saveState(){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+  }
+  function getAttempts(){
+    var n = parseInt(localStorage.getItem(ATT_KEY) || '0', 10);
+    return isNaN(n) ? 0 : n;
+  }
+  function incAttempts(){
+    var n = getAttempts() + 1;
+    try { localStorage.setItem(ATT_KEY, String(n)); } catch(e){}
+    return n;
+  }
+
+  function fmtTime(sec){
+    var m = Math.floor(sec/60), s = sec%60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function updateTimerUI(){
+    var bar = document.getElementById('timerBar');
+    var disp = document.getElementById('timerDisplay');
+    disp.textContent = timerState.remaining <= 0 ? "Time's Up" : fmtTime(timerState.remaining);
+    var ratio = timerState.remaining / timerState.total;
+    bar.classList.remove('orange','red');
+    if(timerState.remaining <= 0){ bar.classList.add('red'); }
+    else if(ratio <= 0.10){ bar.classList.add('red'); }
+    else if(ratio <= 0.25){ bar.classList.add('orange'); }
+  }
+  function tick(){
+    if(timerState.paused || !timerState.running) return;
+    if(timerState.remaining > 0){ timerState.remaining--; updateTimerUI(); }
+    else { clearInterval(timerState.interval); }
+  }
+  function startTimer(){
+    var mins = parseInt(document.getElementById('timerMinutes').value,10);
+    if(isNaN(mins) || mins < 1) mins = 20;
+    timerState.total = mins*60;
+    timerState.remaining = mins*60;
+    timerState.running = true;
+    timerState.paused = false;
+    document.getElementById('timerSetup').style.display = 'none';
+    document.getElementById('timerRunning').style.display = 'flex';
+    document.getElementById('timerRunning').style.gap = '10px';
+    document.getElementById('timerRunning').style.alignItems = 'center';
+    updateTimerUI();
+    if(timerState.interval) clearInterval(timerState.interval);
+    timerState.interval = setInterval(tick, 1000);
+  }
+  function togglePause(){
+    timerState.paused = !timerState.paused;
+    document.getElementById('timerPauseBtn').textContent = timerState.paused ? 'Resume' : 'Pause';
+  }
+  function resetTimer(){
+    clearInterval(timerState.interval);
+    timerState.running = false;
+    timerState.paused = false;
+    document.getElementById('timerSetup').style.display = 'block';
+    document.getElementById('timerRunning').style.display = 'none';
+    document.getElementById('timerPauseBtn').textContent = 'Pause';
+  }
+  window.qzTimerReset = resetTimer;
+
+  function selectAnswer(qIdx, optIdx){
+    if(state.answers[qIdx] !== undefined) return;
+    state.answers[qIdx] = optIdx;
+    saveState();
+    render();
+  }
+  window.qzSelectAnswer = selectAnswer;
+
+  function goto(idx){
+    if(idx < 0 || idx >= TOTAL) return;
+    state.cur = idx;
+    state.showResults = false;
+    saveState();
+    render();
+  }
+  window.qzGoto = goto;
+
+  function goNext(){
+    if(state.cur === TOTAL-1){ goResults(); return; }
+    goto(state.cur+1);
+  }
+  window.qzGoNext = goNext;
+
+  function goPrev(){ goto(state.cur-1); }
+  window.qzGoPrev = goPrev;
+
+  function goResults(){
+    state.showResults = true;
+    saveState();
+    incAttempts();
+    render();
+  }
+  window.qzGoResults = goResults;
+
+  function toggleJump(){
+    document.getElementById('dotPanel').classList.toggle('open');
+  }
+  window.qzToggleJump = toggleJump;
+
+  function retryWrong(){
+    var newAnswers = {};
+    var firstWrong = -1;
+    for(var i=0;i<TOTAL;i++){
+      var a = state.answers[i];
+      if(a !== undefined && a === QUESTIONS[i].correctIndex){
+        newAnswers[i] = a;
+      } else if(firstWrong === -1){
+        firstWrong = i;
+      }
+    }
+    state.answers = newAnswers;
+    state.showResults = false;
+    state.cur = firstWrong === -1 ? 0 : firstWrong;
+    saveState();
+    render();
+  }
+  window.qzRetryWrong = retryWrong;
+
+  function copyResults(){
+    var lines = ["Advanced SAT Reading — Results"];
+    var correct = 0;
+    for(var i=0;i<TOTAL;i++){
+      var a = state.answers[i];
+      var isCorrect = a === QUESTIONS[i].correctIndex;
+      if(isCorrect) correct++;
+      lines.push((i+1)+". ["+QUESTIONS[i].tag+"] "+(isCorrect ? "Correct" : "Incorrect"));
+    }
+    lines.push("Score: "+correct+"/"+TOTAL);
+    var text = lines.join("\n");
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).catch(function(){ fallbackCopy(text); });
+    } else {
+      fallbackCopy(text);
+    }
+  }
+  function fallbackCopy(text){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); } catch(e){}
+    document.body.removeChild(ta);
+  }
+  window.qzCopyResults = copyResults;
+
+  function openFreshModal(){ document.getElementById('freshModal').classList.add('open'); }
+  function closeFreshModal(){ document.getElementById('freshModal').classList.remove('open'); }
+  function confirmFresh(){
+    try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
+    state = { cur:0, answers:{}, showResults:false };
+    closeFreshModal();
+    qzTimerReset();
+    render();
+  }
+  window.qzOpenFresh = openFreshModal;
+  window.qzCloseFresh = closeFreshModal;
+  window.qzConfirmFresh = confirmFresh;
+
+  function renderQuestion(){
+    try {
+      var q = QUESTIONS[state.cur];
+      document.getElementById('quizArea').style.display = 'block';
+      document.getElementById('resultsScreen').style.display = 'none';
+      document.getElementById('qTag').textContent = q.tag;
+      document.getElementById('qPassage').innerHTML = q.passage.replace(/\n\n/g,'<br><br>');
+      document.getElementById('qText').textContent = q.question;
+      var optsDiv = document.getElementById('qOptions');
+      optsDiv.innerHTML = '';
+      var answered = state.answers[state.cur];
+      q.options.forEach(function(optText, i){
+        var btn = document.createElement('button');
+        btn.className = 'opt';
+        btn.textContent = optText;
+        if(answered !== undefined){
+          btn.disabled = true;
+          if(i === q.correctIndex) btn.className += ' correct';
+          else if(i === answered) btn.className += ' wrong';
+        }
+        btn.onclick = function(){ window.qzSelectAnswer(state.cur, i); };
+        optsDiv.appendChild(btn);
+      });
+      var explainDiv = document.getElementById('qExplain');
+      if(answered !== undefined){
+        explainDiv.style.display = 'block';
+        explainDiv.textContent = q.explanation;
+      } else {
+        explainDiv.style.display = 'none';
+      }
+    } catch(e){ console.error('renderQuestion error', e); }
+  }
+
+  function renderResults(){
+    try {
+      document.getElementById('quizArea').style.display = 'none';
+      document.getElementById('resultsScreen').style.display = 'block';
+      var correct = 0;
+      var grid = document.getElementById('summaryGrid');
+      grid.innerHTML = '';
+      for(var i=0;i<TOTAL;i++){
+        var a = state.answers[i];
+        var isCorrect = a === QUESTIONS[i].correctIndex;
+        if(isCorrect) correct++;
+        var item = document.createElement('div');
+        item.className = 'sum-item ' + (isCorrect ? 'ok' : 'bad');
+        item.textContent = 'Q'+(i+1);
+        item.onclick = (function(idx){ return function(){ window.qzGoto(idx); }; })(i);
+        grid.appendChild(item);
+      }
+      document.getElementById('scoreBig').textContent = correct + '/' + TOTAL;
+    } catch(e){ console.error('renderResults error', e); }
+  }
+
+  function renderNav(){
+    try {
+      document.getElementById('navCount').textContent = (state.cur+1)+'/'+TOTAL;
+      var answeredCount = Object.keys(state.answers).length;
+      document.getElementById('progressFill').style.width = Math.round((answeredCount/TOTAL)*100)+'%';
+      var dotPanel = document.getElementById('dotPanel');
+      dotPanel.innerHTML = '';
+      for(var i=0;i<TOTAL;i++){
+        var dot = document.createElement('div');
+        dot.className = 'dot' + (state.answers[i] !== undefined ? ' answered' : '') + (i===state.cur && !state.showResults ? ' current' : '');
+        dot.textContent = i+1;
+        dot.onclick = (function(idx){ return function(){ window.qzGoto(idx); }; })(i);
+        dotPanel.appendChild(dot);
+      }
+      var resDot = document.createElement('div');
+      resDot.className = 'dot' + (state.showResults ? ' current' : '');
+      resDot.textContent = 'R';
+      resDot.onclick = function(){ window.qzGoResults(); };
+      dotPanel.appendChild(resDot);
+
+      document.getElementById('prevBtn').disabled = state.cur === 0 || state.showResults;
+      var nextBtn = document.getElementById('nextBtn');
+      nextBtn.disabled = false;
+      nextBtn.textContent = (state.cur === TOTAL-1 && !state.showResults) ? 'See Results →' : 'Next →';
+    } catch(e){ console.error('renderNav error', e); }
+  }
+
+  function render(){
+    var attempts = getAttempts();
+    document.getElementById('subtitleLine').textContent = TOTAL + ' Questions | Total Attempts: ' + attempts;
+    if(state.showResults){ renderResults(); }
+    else { renderQuestion(); }
+    renderNav();
+  }
+
+  function init(){
+    loadState();
+    window.qzTimerReset();
+    document.getElementById('timerStartBtn').onclick = startTimer;
+    document.getElementById('timerPauseBtn').onclick = togglePause;
+    document.getElementById('timerResetBtn').onclick = function(){ resetTimer(); };
+    document.getElementById('prevBtn').onclick = function(){ window.qzGoPrev(); };
+    document.getElementById('nextBtn').onclick = function(){ window.qzGoNext(); };
+    document.getElementById('jumpToggle').onclick = function(){ window.qzToggleJump(); };
+    document.getElementById('retryBtn').onclick = function(){ window.qzRetryWrong(); };
+    document.getElementById('copyBtn').onclick = function(){ window.qzCopyResults(); };
+    document.getElementById('freshBtn').onclick = function(){ window.qzOpenFresh(); };
+    document.getElementById('modalCancel').onclick = function(){ window.qzCloseFresh(); };
+    document.getElementById('modalConfirm').onclick = function(){ window.qzConfirmFresh(); };
+    render();
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
+</body>
+</html>

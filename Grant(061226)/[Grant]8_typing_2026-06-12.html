@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>[Grant] Typing</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh}
+.top-bar{background:#fff;text-align:center;padding:10px 12px 6px}
+.date-lbl{font-size:2rem;font-weight:800;color:#185FA5}
+.title-lbl{font-size:1.25rem;font-weight:700;color:#185FA5;margin-top:2px;padding-bottom:6px}
+.main-area{max-width:720px;margin:16px auto;padding:0 12px 40px}
+.para-selector{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.para-btn{background:#e8edf4;border:2px solid transparent;border-radius:8px;padding:7px 16px;font-size:0.85rem;font-weight:600;cursor:pointer;color:#185FA5;font-family:inherit}
+.para-btn.active{background:#185FA5;color:#fff;border-color:#185FA5}
+.para-btn.done{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.stats-row{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.stat-box{background:#fff;border-radius:8px;padding:8px 14px;text-align:center;flex:1;min-width:70px;box-shadow:0 1px 4px rgba(0,0,0,0.07)}
+.stat-val{font-size:1.25rem;font-weight:800;color:#185FA5}
+.stat-lbl{font-size:0.72rem;color:#666}
+.passage-card{background:#fff;border-radius:12px;padding:18px 20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:10px}
+.card-label{font-size:0.78rem;font-weight:700;color:#185FA5;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.passage-text{font-family:'Courier New',monospace;font-size:0.93rem;line-height:2;white-space:pre-wrap;word-break:break-word}
+.cu{color:#bbb}
+.cc{color:#1D9E75}
+.cw{color:#E24B4A}
+.cur-char{border-bottom:2px solid #185FA5}
+.input-card{background:#fff;border-radius:12px;padding:18px 20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:12px}
+#typingInput{width:100%;font-family:'Courier New',monospace;font-size:0.93rem;line-height:2;border:2px solid #d0d9e8;border-radius:8px;padding:12px 14px;resize:none;background:#f7f9fc;color:#111;outline:none;overflow:hidden;min-height:56px}
+#typingInput:focus{border-color:#185FA5}
+.result-banner{background:#E1F5EE;border:2px solid #1D9E75;border-radius:10px;padding:14px 16px;margin-bottom:12px;display:none}
+.result-banner h3{font-size:1rem;color:#085041;margin-bottom:4px}
+.result-banner p{font-size:0.88rem;color:#333}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.action-btn{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:0.88rem;font-weight:600;cursor:pointer;font-family:inherit}
+.action-btn.sec{background:#e8edf4;color:#185FA5}
+.history-card{background:#fff;border-radius:12px;padding:18px 20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);display:none}
+.history-title{font-size:1rem;font-weight:700;color:#185FA5;margin-bottom:10px}
+.history-row{display:flex;gap:12px;padding:6px 0;border-bottom:1px solid #eee;font-size:0.85rem;flex-wrap:wrap}
+.history-row:last-child{border-bottom:none}
+.h-para{font-weight:600;color:#185FA5;min-width:70px}
+.h-wpm{color:#1D9E75;font-weight:700;min-width:65px}
+.h-acc{color:#333;min-width:65px}
+.h-date{color:#888;font-size:0.78rem}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-box{background:#fff;border-radius:12px;padding:24px;max-width:360px;width:90%;text-align:center}
+.modal-box p{font-size:1rem;color:#333;margin-bottom:18px;line-height:1.5}
+.btn-blue{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:9px 22px;font-size:0.9rem;font-weight:600;cursor:pointer;margin:4px;font-family:inherit}
+.btn-gray{background:#e8edf4;color:#333;border:none;border-radius:8px;padding:9px 22px;font-size:0.9rem;cursor:pointer;margin:4px;font-family:inherit}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <div class="date-lbl">2026-06-12</div>
+  <div class="title-lbl">[Grant] Typing</div>
+</div>
+<div class="main-area">
+  <div class="para-selector" id="paraSelector"></div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-val" id="statWpm">—</div><div class="stat-lbl">WPM</div></div>
+    <div class="stat-box"><div class="stat-val" id="statAcc">—</div><div class="stat-lbl">Accuracy</div></div>
+    <div class="stat-box"><div class="stat-val" id="statTime">0s</div><div class="stat-lbl">Time</div></div>
+    <div class="stat-box"><div class="stat-val" id="statErrors">0</div><div class="stat-lbl">Errors</div></div>
+  </div>
+  <div class="passage-card">
+    <div class="card-label">Paragraph <span id="paraNum">1</span> of 4</div>
+    <div class="passage-text" id="passageDisplay"></div>
+  </div>
+  <div class="input-card">
+    <div class="card-label">Type here</div>
+    <textarea id="typingInput" rows="3"
+      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+      placeholder="Start typing..."></textarea>
+  </div>
+  <div class="result-banner" id="resultBanner">
+    <h3 id="resultTitle"></h3>
+    <p id="resultBody"></p>
+  </div>
+  <div class="btn-row">
+    <button class="action-btn" onclick="retryPara()">Retry</button>
+    <button class="action-btn sec" onclick="nextPara()">Next Paragraph</button>
+    <button class="action-btn sec" onclick="copyHistory()">Copy Results</button>
+    <button class="action-btn sec" onclick="openClearModal()">Clear History</button>
+  </div>
+  <div class="history-card" id="historyCard">
+    <div class="history-title">Session History</div>
+    <div id="historyRows"></div>
+  </div>
+</div>
+<div class="modal-overlay" id="clearModal">
+  <div class="modal-box">
+    <p>Clear all history and start fresh?</p>
+    <button class="btn-blue" onclick="confirmClear()">Yes, Clear</button>
+    <button class="btn-gray" onclick="closeClearModal()">Cancel</button>
+  </div>
+</div>
+<script>
+(function(){
+var KEY='quiz_granttyping_v2';
+var paragraphs=[
+"Deep beneath the Earth's surface, pockets of molten rock called magma collect in chambers under intense pressure. When the pressure becomes too great for the surrounding rock to contain, the magma forces its way upward through cracks and vents. As it reaches the surface, it erupts as lava, ash, and gases. This process is what creates a volcano. Over time, repeated eruptions build up layers of hardened lava and ash that form the distinctive cone-shaped mountains we recognize today.",
+"Not all volcanoes look the same or behave the same way. Shield volcanoes, like those found in Hawaii, have gently sloping sides built from thin, fast-moving lava flows that spread over wide areas. Stratovolcanoes, also called composite volcanoes, are the towering, steep-sided peaks such as Mount Fuji in Japan and Mount St. Helens in Washington. These are built from alternating layers of ash and thick lava and are associated with more explosive eruptions. A third type, cinder cone volcanoes, are smaller and form from fragments of solidified lava that fall around the vent opening.",
+"Despite the destruction they can cause, volcanoes have played an important role in shaping life on Earth. Volcanic eruptions release gases that are believed to have contributed to Earth's early atmosphere. The ash and minerals deposited by eruptions break down over time into exceptionally fertile soil. Regions near volcanoes, such as parts of Indonesia and Central America, are known for their highly productive farmland. Many communities have thrived for centuries in the shadow of active volcanoes precisely because the land is so rich.",
+"Scientists who study volcanoes are called volcanologists. They monitor volcanic activity using a wide range of instruments, including seismographs that detect underground tremors, GPS sensors that measure the swelling of the ground as magma rises, and gas detectors that track changes in sulfur dioxide emissions. By analyzing these signals together, volcanologists can often predict when an eruption is likely and help communities prepare or evacuate in time."
+];
+
+var state={curPara:0,started:false,finished:false,startTime:null,elapsed:0,history:[]};
+var timerInterval=null;
+var inp=document.getElementById('typingInput');
+
+function loadState(){
+  try{
+    var s=JSON.parse(localStorage.getItem(KEY)||'null');
+    if(s&&Array.isArray(s.history))state.history=s.history;
+    if(s&&typeof s.curPara==='number'&&s.curPara>=0&&s.curPara<4)state.curPara=s.curPara;
+  }catch(e){}
+}
+function saveState(){localStorage.setItem(KEY,JSON.stringify({history:state.history,curPara:state.curPara}));}
+
+function selectPara(idx){
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  state.curPara=idx;state.started=false;state.finished=false;state.startTime=null;state.elapsed=0;
+  inp.value='';inp.readOnly=false;
+  document.getElementById('resultBanner').style.display='none';
+  document.getElementById('paraNum').textContent=idx+1;
+  saveState();updateStats();renderPassage();buildParaSelector();
+  autoResize();inp.focus();
+}
+function retryPara(){selectPara(state.curPara);}
+function nextPara(){selectPara((state.curPara+1)%4);}
+
+function buildParaSelector(){
+  var sel=document.getElementById('paraSelector');sel.innerHTML='';
+  for(var i=0;i<4;i++){
+    var btn=document.createElement('button');btn.className='para-btn';
+    btn.textContent='Para '+(i+1);
+    var done=state.history.some(function(h){return h.para===i;});
+    if(i===state.curPara)btn.className+=' active';
+    else if(done)btn.className+=' done';
+    (function(idx){btn.onclick=function(){selectPara(idx);};})(i);
+    sel.appendChild(btn);
+  }
+}
+
+function esc(c){if(c==='<')return '&lt;';if(c==='>')return '&gt;';if(c==='&')return '&amp;';return c;}
+
+function renderPassage(){
+  var target=paragraphs[state.curPara];
+  var typed=inp.value;
+  var html='';
+  for(var i=0;i<target.length;i++){
+    var ch=esc(target[i]);
+    if(i<typed.length){
+      html+='<span class="'+(typed[i]===target[i]?'cc':'cw')+'">'+ch+'</span>';
+    } else if(i===typed.length&&!state.finished){
+      html+='<span class="cu cur-char">'+ch+'</span>';
+    } else {
+      html+='<span class="cu">'+ch+'</span>';
+    }
+  }
+  document.getElementById('passageDisplay').innerHTML=html;
+}
+
+function updateStats(){
+  var target=paragraphs[state.curPara];var typed=inp.value;
+  if(!state.started){
+    document.getElementById('statWpm').textContent='—';
+    document.getElementById('statAcc').textContent='—';
+    document.getElementById('statTime').textContent='0s';
+    document.getElementById('statErrors').textContent='0';
+    return;
+  }
+  var elapsed=state.finished?state.elapsed:Math.max(1,Math.round((Date.now()-state.startTime)/1000));
+  var wpm=Math.round((typed.length/5)/(elapsed/60));
+  var correct=0;
+  for(var i=0;i<Math.min(typed.length,target.length);i++){if(typed[i]===target[i])correct++;}
+  var errors=typed.length-correct;
+  var acc=typed.length>0?Math.round(correct/typed.length*100):100;
+  document.getElementById('statWpm').textContent=wpm;
+  document.getElementById('statAcc').textContent=acc+'%';
+  document.getElementById('statTime').textContent=elapsed+'s';
+  document.getElementById('statErrors').textContent=errors;
+}
+
+function autoResize(){
+  inp.style.height='auto';
+  inp.style.height=Math.max(56,inp.scrollHeight)+'px';
+}
+
+inp.addEventListener('input',function(){
+  var target=paragraphs[state.curPara];
+  // Block further input when finished
+  if(state.finished){inp.value=inp.value.slice(0,target.length);return;}
+  // Cap at target length
+  if(inp.value.length>target.length)inp.value=inp.value.slice(0,target.length);
+  // Start timer on first character
+  if(!state.started&&inp.value.length>0){
+    state.started=true;state.startTime=Date.now();
+    timerInterval=setInterval(function(){
+      if(!state.started||state.finished)return;
+      state.elapsed=Math.round((Date.now()-state.startTime)/1000);
+      updateStats();
+    },500);
+  }
+  autoResize();renderPassage();updateStats();
+  if(inp.value.length>=target.length)finishPara();
+});
+
+inp.addEventListener('keydown',function(e){
+  if(e.key==='Tab')e.preventDefault();
+});
+
+function finishPara(){
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  state.finished=true;
+  state.elapsed=Math.max(1,Math.round((Date.now()-state.startTime)/1000));
+  inp.readOnly=true;
+  var target=paragraphs[state.curPara];var typed=inp.value;
+  var correct=0;
+  for(var i=0;i<Math.min(typed.length,target.length);i++){if(typed[i]===target[i])correct++;}
+  var errors=typed.length-correct;
+  var acc=typed.length>0?Math.round(correct/typed.length*100):100;
+  var wpm=Math.round((typed.length/5)/(state.elapsed/60));
+  updateStats();renderPassage();
+  var entry={para:state.curPara,wpm:wpm,acc:acc,errors:errors,time:state.elapsed,date:new Date().toLocaleTimeString()};
+  state.history.push(entry);saveState();buildParaSelector();
+  document.getElementById('resultBanner').style.display='block';
+  document.getElementById('resultTitle').textContent='Paragraph '+(state.curPara+1)+' Complete!';
+  document.getElementById('resultBody').textContent='WPM: '+wpm+'  |  Accuracy: '+acc+'%  |  Errors: '+errors;
+  buildHistory();
+}
+
+function buildHistory(){
+  if(state.history.length===0){document.getElementById('historyCard').style.display='none';return;}
+  document.getElementById('historyCard').style.display='block';
+  var rows=document.getElementById('historyRows');rows.innerHTML='';
+  state.history.forEach(function(h){
+    var row=document.createElement('div');row.className='history-row';
+    row.innerHTML='<span class="h-para">Para '+(h.para+1)+'</span><span class="h-wpm">'+h.wpm+' WPM</span><span class="h-acc">'+h.acc+'% acc</span><span class="h-date">'+h.date+'</span>';
+    rows.appendChild(row);
+  });
+}
+
+function copyHistory(){
+  var lines=['[Grant] Typing Results - 2026-06-12'];
+  state.history.forEach(function(h){lines.push('Para '+(h.para+1)+': '+h.wpm+' WPM, '+h.acc+'% accuracy, '+h.errors+' errors, '+h.time+'s');});
+  var text=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(text);}
+  else{var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+}
+
+function openClearModal(){document.getElementById('clearModal').style.display='flex';}
+function closeClearModal(){document.getElementById('clearModal').style.display='none';}
+function confirmClear(){
+  localStorage.removeItem(KEY);
+  state.history=[];
+  closeClearModal();buildHistory();buildParaSelector();
+}
+
+window.retryPara=retryPara;window.nextPara=nextPara;window.copyHistory=copyHistory;
+window.openClearModal=openClearModal;window.closeClearModal=closeClearModal;window.confirmClear=confirmClear;
+
+loadState();
+document.getElementById('paraNum').textContent=state.curPara+1;
+buildParaSelector();renderPassage();updateStats();buildHistory();
+inp.focus();
+})();
+</script>
+</body>
+</html>

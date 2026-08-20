@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Grammar</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;color:#222;min-height:100vh;}
+#app{max-width:700px;margin:0 auto;padding:16px;}
+h1{text-align:center;font-size:1.35rem;font-weight:800;color:#185FA5;padding:14px 0 4px;}
+.instr{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0 4px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;min-width:52px;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:6px;}
+.timer-bar{background:white;border:1px solid #d0dce8;border-radius:8px;padding:8px 12px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.timer-setup{display:flex;align-items:center;gap:8px;font-size:0.85rem;color:#444;}
+.timer-setup label{font-weight:700;}
+.timer-setup input[type="number"]{width:56px;padding:5px 6px;border:1.5px solid #d0dce8;border-radius:6px;font-size:0.9rem;text-align:center;}
+.timer-start-btn{background:#185FA5;color:white;border:none;border-radius:6px;padding:6px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;}
+.timer-running{display:flex;align-items:center;gap:8px;}
+.timer-label{font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;}
+.timer-display{font-size:1.1rem;font-weight:900;color:#185FA5;font-family:'Courier New',monospace;}
+.timer-display.warn{color:#f5a623;}
+.timer-display.danger{color:#E24B4A;}
+#att-bar{text-align:center;font-size:0.8rem;color:#888;margin-bottom:8px;}
+#att-bar span{font-weight:700;color:#185FA5;}
+.card{background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:20px 18px;margin-bottom:12px;}
+.q-num{font-size:0.78rem;color:#888;margin-bottom:8px;}
+.topic-tag{display:inline-block;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:10px;background:#e3f0ff;color:#185FA5;margin-bottom:10px;}
+.ctx-box{background:#f5f9ff;border-left:3px solid #185FA5;padding:10px 14px;border-radius:4px;font-style:italic;font-size:0.95rem;line-height:1.7;color:#222;margin-bottom:12px;}
+.q-text{font-size:0.95rem;line-height:1.5;margin-bottom:14px;color:#333;font-weight:600;}
+.ul{text-decoration:underline;font-style:normal;}
+.opts{display:grid;gap:8px;}
+.opt{padding:11px 14px;border:2px solid #d7dde6;border-radius:8px;cursor:pointer;font-size:0.92rem;background:white;text-align:left;line-height:1.45;transition:border-color 0.15s,background 0.15s;}
+.opt:hover:not(:disabled){border-color:#185FA5;background:#f0f6ff;}
+.opt.correct{border-color:#1D9E75;background:#e6f7f1;color:#0d6b50;font-weight:700;}
+.opt.wrong{border-color:#E24B4A;background:#fdf0f0;color:#b03030;}
+.opt:disabled{cursor:default;}
+.exp{margin-top:12px;padding:11px;background:#f5f9ff;border-left:3px solid #185FA5;border-radius:4px;font-size:0.86rem;line-height:1.55;color:#333;display:none;}
+.nav-btns{display:flex;gap:8px;margin-top:8px;}
+.nav-btns button{flex:1;padding:10px;border:1.5px solid #d7dde6;border-radius:8px;background:white;cursor:pointer;font-size:0.9rem;color:#444;}
+.nav-btns button:hover:not(:disabled){border-color:#185FA5;color:#185FA5;}
+.nav-btns button:disabled{opacity:0.4;cursor:not-allowed;}
+.results{background:white;border-radius:12px;padding:28px 20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.score-big{font-size:3rem;font-weight:900;color:#185FA5;}
+.score-lbl{color:#888;font-size:0.9rem;margin-bottom:16px;}
+.stats-row{display:flex;justify-content:center;gap:28px;margin-bottom:22px;}
+.stat-n{font-size:1.5rem;font-weight:800;}
+.stat-lbl{font-size:0.75rem;color:#888;}
+.res-btn{display:block;width:100%;padding:13px;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:10px;}
+.btn-copy{background:#7b61ff;color:white;}
+.btn-retry{background:#1D9E75;color:white;}
+.btn-fresh{background:#e8ecf0;color:#444;}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-ov.show{display:flex;}
+.modal-box{background:white;border-radius:14px;padding:24px;max-width:360px;width:90%;text-align:center;}
+.modal-box h3{color:#185FA5;margin-bottom:10px;font-size:1.05rem;}
+.modal-box p{font-size:0.88rem;color:#555;margin-bottom:18px;line-height:1.5;}
+.modal-acts{display:flex;gap:10px;}
+.modal-acts button{flex:1;padding:10px;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;cursor:pointer;}
+.modal-acts .cancel{background:#e8ecf0;color:#444;}
+.modal-acts .confirm{background:#E24B4A;color:white;}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>[Grant] Grammar</h1>
+  <div class="instr">Choose the best answer for each grammar question.</div>
+  <div id="nav-bar">
+    <span id="nav-count">0 / 20</span>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+    <button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button>
+  </div>
+  <div id="dot-panel"></div>
+  <div class="timer-bar">
+    <div class="timer-setup" id="timerSetup">
+      <label for="timerMin">Set Time Limit:</label>
+      <input type="number" id="timerMin" min="1" max="180" value="20"> min
+      <button class="timer-start-btn" onclick="startTimer()">Start</button>
+    </div>
+    <div class="timer-running" id="timerRunning" style="display:none;">
+      <span class="timer-label">Time Left</span>
+      <span class="timer-display" id="timerDisplay">20:00</span>
+    </div>
+  </div>
+  <div id="att-bar">Total Attempts: <span id="attCount">0</span></div>
+  <div id="qcard"></div>
+  <div id="freshModal" class="modal-ov">
+    <div class="modal-box">
+      <h3 id="freshTitle">Start Fresh?</h3>
+      <p id="freshText">All progress will be cleared. This cannot be undone.</p>
+      <div class="modal-acts">
+        <button class="cancel" onclick="closeFreshModal()">Cancel</button>
+        <button class="confirm" onclick="confirmFresh()">Start Fresh</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+var DATE='20260703';
+var QUIZ_KEY='quiz_grantgrammar_20_'+DATE+'_v1';
+var ATT_KEY='quiz_grantgrammar_att_'+DATE+'_v1';
+var ORDER_KEY=QUIZ_KEY+'_order_v1';
+
+var RAW_QUESTIONS=[
+  {topic:'Irregular Verbs',
+   ctx:'',
+   q:'Which sentence uses the correct past-tense form of the irregular verb?',
+   opts:['She swimmed across the lake yesterday.','She swam across the lake yesterday.','She swum across the lake yesterday.','She has swam across the lake yesterday.'],ci:1,
+   exp:'"Swam" is the correct simple past-tense form of the irregular verb "swim." "Swimmed" is not a real word, "swum" is the past participle form (used with a helping verb like "has"), and "has swam" mismatches the participle with the helping verb.'},
+  {topic:'Adverbs',
+   ctx:'The hikers moved carefully along the narrow, rocky trail.',
+   q:'Which word in the sentence is an adverb?',
+   opts:['hikers','carefully','narrow','rocky'],ci:1,
+   exp:'"Carefully" describes how the hikers moved, making it an adverb. "Narrow" and "rocky" are adjectives describing the trail, and "hikers" is a noun.'},
+  {topic:'Subject-Verb Agreement',
+   ctx:'The basket of apples _____ sitting on the kitchen counter.',
+   q:'Which verb correctly completes the sentence?',
+   opts:['is','are','were','have'],ci:0,
+   exp:'The subject of the sentence is "basket," which is singular, even though "apples" appears closer to the verb. A singular subject needs the singular verb "is." "Apples" is only part of a prepositional phrase and does not control the verb.'},
+  {topic:'Pronoun Case',
+   ctx:'_____ and Marcus finished the science project a week early.',
+   q:'Which pronoun correctly completes the sentence?',
+   opts:['Me','Her','She','Them'],ci:2,
+   exp:'"She" is the subject pronoun needed because it performs the action of finishing the project, alongside "Marcus." "Me," "her," and "them" are all object pronouns and cannot serve as the subject of the sentence.'},
+  {topic:'Contractions',
+   ctx:'_____ almost time for the bus to arrive at the corner.',
+   q:'Which contraction correctly completes the sentence?',
+   opts:['Its','It\'s','Its\'','It is\'s'],ci:1,
+   exp:'"It\'s" is the contraction of "it is," which fits the sentence meaning. "Its" (no apostrophe) shows possession instead, and "its\'" and "it is\'s" are not real forms.'},
+  {topic:'Sentence Types',
+   ctx:'Did you remember to feed the goldfish this morning',
+   q:'What type of sentence is shown, and what end punctuation should it have?',
+   opts:['Declarative, with a period','Interrogative, with a question mark','Imperative, with a period','Exclamatory, with an exclamation point'],ci:1,
+   exp:'The sentence asks a direct question, which makes it interrogative, and interrogative sentences end with a question mark. It does not state a fact (declarative), give a command (imperative), or show strong emotion (exclamatory).'},
+  {topic:'Proper Noun Capitalization',
+   ctx:'',
+   q:'Which sentence capitalizes proper nouns correctly?',
+   opts:['We are driving to lake tahoe next Friday.','We are driving to Lake Tahoe next friday.','We are driving to Lake Tahoe next Friday.','We are driving to lake Tahoe next Friday.'],ci:2,
+   exp:'"Lake Tahoe" and "Friday" are both specific, named places and days, so both words in each must be capitalized. The other choices leave at least one part of a proper noun in lowercase.'},
+  {topic:'Compound Sentence Commas',
+   ctx:'',
+   q:'Which sentence uses a comma correctly to join two independent clauses?',
+   opts:['The rain stopped, and the children ran outside to play.','The rain stopped and, the children ran outside to play.','The rain stopped and the children, ran outside to play.','The rain, stopped and the children ran outside to play.'],ci:0,
+   exp:'When two independent clauses are joined by a coordinating conjunction like "and," a comma belongs right before the conjunction. "The rain stopped, and the children ran outside to play" places the comma correctly, while the other choices place it in the wrong spot.'},
+  {topic:'Linking Verbs',
+   ctx:'After the long hike, the campers felt exhausted but happy.',
+   q:'Which word in the sentence is a linking verb?',
+   opts:['hike','felt','campers','exhausted'],ci:1,
+   exp:'"Felt" links the subject "campers" to the words that describe their condition, "exhausted" and "happy," making it a linking verb rather than an action verb.'},
+  {topic:'Comparative Adjectives',
+   ctx:'This backpack is _____ than the one I bought last year.',
+   q:'Which comparative adjective correctly completes the sentence?',
+   opts:['heavy','heavier','heaviest','more heavier'],ci:1,
+   exp:'"Heavier" is the correct comparative form used when comparing exactly two things, here this year\'s backpack and last year\'s. "Heaviest" is a superlative form used for three or more, "heavy" has no comparison at all, and "more heavier" incorrectly doubles the comparative.'},
+  {topic:'Superlative Adjectives',
+   ctx:'Of all the students in the class, Priya finished the puzzle _____.',
+   q:'Which superlative adjective correctly completes the sentence?',
+   opts:['fast','faster','fastest','most fastest'],ci:2,
+   exp:'"Fastest" is the correct superlative form, used because Priya is being compared to every other student in the whole class, not just one other person. "Faster" compares only two, "fast" makes no comparison, and "most fastest" incorrectly doubles the superlative.'},
+  {topic:'Prepositions',
+   ctx:'The cat jumped onto the shelf beside the window.',
+   q:'Which words in the sentence are prepositions?',
+   opts:['cat and jumped','onto and beside','shelf and window','jumped and onto'],ci:1,
+   exp:'"Onto" and "beside" each introduce a phrase that shows the cat\'s position, making them prepositions. "Cat," "shelf," and "window" are nouns, and "jumped" is the main verb.'},
+  {topic:'Abstract Nouns',
+   ctx:'Her courage during the storm inspired the entire neighborhood.',
+   q:'Which word in the sentence is an abstract noun?',
+   opts:['courage','storm','neighborhood','inspired'],ci:0,
+   exp:'"Courage" names a quality that cannot be seen or touched, which makes it an abstract noun. "Storm" and "neighborhood" name things that can be experienced with the senses, and "inspired" is a verb.'},
+  {topic:'Helping Verbs',
+   ctx:'By the time the movie starts, we will have eaten dinner already.',
+   q:'Which words in the sentence are helping verbs?',
+   opts:['will and have','have and eaten','movie and starts','starts and eaten'],ci:0,
+   exp:'"Will" and "have" work together with the main verb "eaten" to build the verb phrase "will have eaten," making them helping verbs. "Eaten" is the main verb itself, not a helper.'},
+  {topic:'Sentence Fragments',
+   ctx:'',
+   q:'Which choice is a complete sentence rather than a fragment?',
+   opts:['Running through the park every morning before school.','Because the bus arrived late today.','The puppy chewed on its new toy.','After the loud thunderstorm last night.'],ci:2,
+   exp:'"The puppy chewed on its new toy" has both a subject ("puppy") and a complete verb ("chewed") and expresses a full thought, making it a complete sentence. The other choices are fragments that begin with a participle or subordinating word and never form a complete thought on their own.'},
+  {topic:'Coordinating Conjunctions',
+   ctx:'Jamal wanted to join the soccer team, _____ he decided to try track instead.',
+   q:'Which coordinating conjunction correctly completes the sentence?',
+   opts:['so','but','and','for'],ci:1,
+   exp:'"But" correctly signals the contrast between Jamal wanting to join soccer and instead choosing track. "So" would show a result, "and" would show addition, and "for" would show a reason, none of which fit the contrast expressed here.'},
+  {topic:'Demonstrative Pronouns',
+   ctx:'_____ are the muddiest boots I have ever seen.',
+   q:'Which demonstrative pronoun correctly completes the sentence?',
+   opts:['This','That','These','Them'],ci:2,
+   exp:'"These" correctly points to a plural noun ("boots") that is close by, agreeing with the plural verb "are." "This" and "that" are singular, and "them" is an object pronoun, not a demonstrative pronoun.'},
+  {topic:'Adjective vs Adverb',
+   ctx:'The chef prepared the meal <span class="ul">quick</span> before the guests arrived.',
+   q:'The underlined word is used incorrectly in the sentence above. Which word should replace it?',
+   opts:['quickly','quickest','quickness','quicker'],ci:0,
+   exp:'"Quickly" is the adverb form needed to describe how the chef prepared the meal. "Quick" is an adjective and cannot describe a verb like "prepared." "Quickest," "quickness," and "quicker" do not fit the sentence\'s meaning or grammar either.'},
+  {topic:'Possessives vs Contractions',
+   ctx:'The team celebrated after _____ victory in the championship game.',
+   q:'Which choice correctly completes the sentence?',
+   opts:['it\'s','its','its\'','it is'],ci:1,
+   exp:'"Its" (no apostrophe) is the possessive form showing that the victory belongs to the team. "It\'s" and "it is" both mean "it is," which does not make sense here, and "its\'" is not a real word.'},
+  {topic:'Direct Objects',
+   ctx:'Grandma baked a chocolate cake for the family reunion.',
+   q:'Which word in the sentence is the direct object of the verb "baked"?',
+   opts:['Grandma','cake','family','reunion'],ci:1,
+   exp:'"Cake" receives the action of the verb "baked" and answers the question "baked what?", making it the direct object. "Grandma" is the subject, and "family" and "reunion" are part of the prepositional phrase "for the family reunion."'}
+];
+
+function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function identityOrder(){var o=[];for(var i=0;i<RAW_QUESTIONS.length;i++)o.push(i);return o;}
+function isValidOrder(arr){if(!Array.isArray(arr)||arr.length!==RAW_QUESTIONS.length)return false;var s=arr.slice().sort(function(a,b){return a-b;});for(var i=0;i<s.length;i++)if(s[i]!==i)return false;return true;}
+function loadOrder(){try{var r=localStorage.getItem(ORDER_KEY);if(!r)return null;var a=JSON.parse(r);if(!isValidOrder(a))throw new Error();return a;}catch(e){localStorage.removeItem(ORDER_KEY);return null;}}
+function saveOrder(o){try{localStorage.setItem(ORDER_KEY,JSON.stringify(o));}catch(e){}}
+function buildQuestions(raw,order){var out=[];for(var i=0;i<order.length;i++)out.push(raw[order[i]]);return out;}
+var currentOrder=loadOrder()||identityOrder();
+var QUESTIONS=buildQuestions(RAW_QUESTIONS,currentOrder);
+
+function defaultState(){return{cur:0,answers:{},showResults:false,timerStartedAt:null,timerTotalSec:null};}
+function saveState(s){try{localStorage.setItem(QUIZ_KEY,JSON.stringify(s));}catch(e){}}
+function loadState(){try{var r=localStorage.getItem(QUIZ_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
+var state=loadState()||defaultState();
+
+function loadAtt(){try{return parseInt(localStorage.getItem(ATT_KEY)||'0',10)||0;}catch(e){return 0;}}
+function saveAtt(n){try{localStorage.setItem(ATT_KEY,String(n));}catch(e){}}
+function renderAtt(){var el=document.getElementById('attCount');if(el)el.textContent=loadAtt();}
+
+var timerInterval=null;
+function formatTime(sec){sec=Math.max(0,Math.round(sec));var m=Math.floor(sec/60),s=sec%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+function renderTimer(){
+  var setup=document.getElementById('timerSetup'),run=document.getElementById('timerRunning'),disp=document.getElementById('timerDisplay');
+  if(!setup)return;
+  if(!state.timerStartedAt){setup.style.display='flex';run.style.display='none';return;}
+  setup.style.display='none';run.style.display='flex';
+  var elapsed=(Date.now()-state.timerStartedAt)/1000,rem=state.timerTotalSec-elapsed;
+  disp.classList.remove('warn','danger');
+  if(rem<=0){disp.textContent="Time's Up";disp.classList.add('danger');stopTimerInterval();return;}
+  disp.textContent=formatTime(rem);
+  if(rem<=state.timerTotalSec*0.1)disp.classList.add('danger');
+  else if(rem<=state.timerTotalSec*0.25)disp.classList.add('warn');
+}
+function startTimer(){var inp=document.getElementById('timerMin');var m=parseFloat(inp.value)||20;state.timerTotalSec=Math.round(m*60);state.timerStartedAt=Date.now();saveState(state);renderTimer();startTimerInterval();}
+function startTimerInterval(){stopTimerInterval();timerInterval=setInterval(renderTimer,1000);}
+function stopTimerInterval(){if(timerInterval){clearInterval(timerInterval);timerInterval=null;}}
+
+function updateNav(){
+  var ans=Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent=ans+' / '+QUESTIONS.length;
+  document.getElementById('prog-fill').style.width=(ans/QUESTIONS.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel=document.getElementById('dot-panel');if(panel.style.display==='none')return;
+  var h='';
+  for(var i=0;i<QUESTIONS.length;i++){
+    var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===QUESTIONS[i].ci?'#185FA5':'#E24B4A');
+    h+='<span onclick="goToQ('+i+')" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:'+bg+';color:#fff;font-size:11px;cursor:pointer;margin:2px;">'+(i+1)+'</span>';
+  }
+  panel.innerHTML=h;
+}
+function toggleJump(){
+  var p=document.getElementById('dot-panel'),b=document.getElementById('jump-btn');
+  if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}
+  else{p.style.display='none';b.textContent='Jump ▾';}
+}
+function goToQ(i){state.cur=i;state.showResults=false;saveState(state);document.getElementById('dot-panel').style.display='none';document.getElementById('jump-btn').textContent='Jump ▾';render();}
+function pick(optIdx){if(state.answers[state.cur]!==undefined)return;state.answers[state.cur]=optIdx;saveState(state);render();}
+function goPrev(){if(state.cur>0){state.cur--;saveState(state);render();}}
+function goNext(){
+  if(state.cur<QUESTIONS.length-1){state.cur++;saveState(state);render();}
+  else{if(!state.showResults){var a=loadAtt()+1;saveAtt(a);renderAtt();}state.showResults=true;saveState(state);render();}
+}
+function render(){
+  var c=document.getElementById('qcard');
+  if(state.showResults){renderResults();return;}
+  var q=QUESTIONS[state.cur],ans=state.answers[state.cur],done=ans!==undefined;
+  var isLast=state.cur===QUESTIONS.length-1;
+  var ctxH=q.ctx?'<div class="ctx-box">'+q.ctx+'</div>':'';
+  var optsH='';
+  for(var i=0;i<q.opts.length;i++){
+    var cls='opt';
+    if(done){if(i===q.ci)cls+=' correct';else if(i===ans)cls+=' wrong';}
+    optsH+='<button class="'+cls+'"'+(done?' disabled':'')+' onclick="pick('+i+')">'+q.opts[i]+'</button>';
+  }
+  var expH=done&&ans!==q.ci?'<div class="exp" style="display:block">'+q.exp+'</div>':'';
+  var nextLbl=isLast?'See Results &#8594;':'Next &#8594;';
+  c.innerHTML='<div class="card"><div class="q-num">Q'+(state.cur+1)+' of '+QUESTIONS.length+'</div><span class="topic-tag">'+q.topic+'</span>'+ctxH+'<div class="q-text">'+q.q+'</div><div class="opts">'+optsH+'</div>'+expH+'</div><div class="nav-btns"><button '+(state.cur===0?'disabled':'')+' onclick="goPrev()">← Prev</button><button onclick="goNext()">'+nextLbl+'</button></div>';
+  updateNav();
+}
+function renderResults(){
+  var correct=0,wrong=0,skip=0;
+  for(var i=0;i<QUESTIONS.length;i++){if(state.answers[i]===undefined)skip++;else if(state.answers[i]===QUESTIONS[i].ci)correct++;else wrong++;}
+  var pct=Math.round(correct/QUESTIONS.length*100);
+  document.getElementById('qcard').innerHTML='<div class="results"><div class="score-big">'+correct+'/'+QUESTIONS.length+'</div><div class="score-lbl">'+pct+'% correct</div><div class="stats-row"><div><div class="stat-n" style="color:#1D9E75">'+correct+'</div><div class="stat-lbl">Correct</div></div><div><div class="stat-n" style="color:#E24B4A">'+wrong+'</div><div class="stat-lbl">Wrong</div></div><div><div class="stat-n" style="color:#888">'+skip+'</div><div class="stat-lbl">Skipped</div></div></div><button class="res-btn btn-copy" onclick="copyRes()">Copy All Results</button><button class="res-btn btn-retry" onclick="retryWrong()">Retry Wrong Ones</button><button class="res-btn btn-fresh" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button><button class="res-btn btn-fresh" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button></div>';
+  updateNav();
+}
+function copyRes(){
+  var correct=0,lines=['[Grant] Grammar Results'];
+  for(var i=0;i<QUESTIONS.length;i++){var q=QUESTIONS[i],a=state.answers[i],ok=a===q.ci;if(ok)correct++;lines.push('Q'+(i+1)+' ['+q.topic+'] '+(a===undefined?'SKIP':ok?'OK':'WRONG'));}
+  lines.push('Score: '+correct+'/'+QUESTIONS.length);
+  try{navigator.clipboard.writeText(lines.join('\n'));}catch(e){alert(lines.join('\n'));}
+}
+function retryWrong(){
+  var wrong=[];
+  for(var i=0;i<QUESTIONS.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==QUESTIONS[i].ci){wrong.push(i);delete state.answers[i];}}
+  if(wrong.length>0){state.cur=wrong[0];state.showResults=false;saveState(state);render();}
+}
+var pendingFreshMode='original';
+function openFreshModalOriginal(){pendingFreshMode='original';document.getElementById('freshTitle').textContent='Start Fresh (Original Order)?';document.getElementById('freshText').textContent='Questions return to their original order and all progress is cleared.';document.getElementById('freshModal').classList.add('show');}
+function openFreshModalRandom(){pendingFreshMode='random';document.getElementById('freshTitle').textContent='Start Fresh (Random Order)?';document.getElementById('freshText').textContent='Questions will be reshuffled and all progress is cleared.';document.getElementById('freshModal').classList.add('show');}
+function closeFreshModal(){document.getElementById('freshModal').classList.remove('show');}
+function confirmFresh(){currentOrder=(pendingFreshMode==='random')?shuffle(identityOrder()):identityOrder();saveOrder(currentOrder);QUESTIONS=buildQuestions(RAW_QUESTIONS,currentOrder);state=defaultState();saveState(state);stopTimerInterval();closeFreshModal();render();renderTimer();}
+window.toggleJump=toggleJump;window.goToQ=goToQ;window.pick=pick;window.goPrev=goPrev;window.goNext=goNext;
+window.startTimer=startTimer;window.copyRes=copyRes;window.retryWrong=retryWrong;
+window.openFreshModalOriginal=openFreshModalOriginal;window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;window.confirmFresh=confirmFresh;
+render();renderTimer();if(state.timerStartedAt)startTimerInterval();renderAtt();
+</script>
+</body>
+</html>

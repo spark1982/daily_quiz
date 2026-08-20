@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>[Grant] Math Competition</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background:#ffffff; color:#111111; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 16px 16px 60px; }
+  .datebar { font-size: 1rem; text-align:center; color:#555555; margin-top: 6px; }
+  .titlebar { font-size: 2rem; font-weight: 800; text-align:center; color:#185FA5; background:#ffffff; margin: 6px 0 2px; line-height:1.25; }
+  .attempts { text-align:center; color:#185FA5; font-size: 0.95rem; margin-bottom: 14px; }
+  .dotnav { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin: 10px 0 16px; }
+  .dot { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:700; cursor:pointer; border:2px solid #cccccc; background:#e8edf4; color:#333333; }
+  .dot.correct { background:#185FA5; border-color:#185FA5; color:#ffffff; }
+  .dot.wrong { background:#E24B4A; border-color:#E24B4A; color:#ffffff; }
+  .dot.current { box-shadow: 0 0 0 3px rgba(24,95,165,0.35); }
+  .tag { display:inline-block; background:#185FA5; color:#ffffff; border-radius:999px; padding:5px 14px; font-size:0.8rem; font-weight:700; margin-bottom:12px; }
+  .qcard { background:#f7f9fc; border-radius:14px; padding:18px; margin-bottom:16px; }
+  .qtext { font-size:1.15rem; line-height:1.55; margin-bottom: 14px; }
+  .speakbtn { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:#185FA5; color:#ffffff; border:none; font-size:1rem; cursor:pointer; vertical-align:middle; margin-left:8px; }
+  .passage { background:#eef3f9; border-left:4px solid #185FA5; border-radius:8px; padding:14px; margin-bottom:16px; font-size:0.98rem; line-height:1.6; }
+  .passage h4 { margin:0 0 6px; color:#185FA5; font-size:1rem; }
+  .lineno { color:#888888; font-size:0.78rem; margin-right:6px; }
+  .opt { display:block; width:100%; text-align:left; padding:13px 16px; margin:8px 0; border-radius:10px; font-size:1rem; cursor:pointer; background:#e8edf4; color:#111111; border:2px solid transparent; line-height:1.45; }
+  .opt.correct { background:#E1F5EE; border-color:#1D9E75; color:#085041; }
+  .opt.wrong { background:#FCEBEB; border-color:#E24B4A; color:#501313; }
+  .explain { margin-top:12px; padding:14px; border-radius:10px; background:#fff7e6; border:1px solid #f0d9a8; font-size:0.95rem; line-height:1.55; color:#5a4400; display:none; }
+  .navrow { display:flex; justify-content:space-between; gap:12px; margin-top:6px; }
+  .navbtn { flex:1; padding:14px; border-radius:10px; border:none; font-size:1rem; font-weight:700; cursor:pointer; background:#185FA5; color:#ffffff; }
+  .navbtn:disabled { background:#b9c8da; cursor:default; }
+  .navbtn.secondary { background:#e8edf4; color:#185FA5; }
+  .frac { display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; margin:0 3px; line-height:1; font-size:0.95em; }
+  .frac .num, .frac .den { padding:0 4px; }
+  .frac .num { border-bottom: 2px solid currentColor; }
+  .rad { display:inline-flex; align-items:center; vertical-align:middle; line-height:1; }
+  .rad-idx { font-size:0.6em; line-height:1; align-self:flex-start; margin-top:0.1em; margin-right:1px; }
+  .rad-sign { display:inline-flex; align-items:center; line-height:1; }
+  .rad-tick { font-size:1.35em; line-height:1; position:relative; top:0.06em; }
+  .rad-body { border-top:2px solid currentColor; padding:1px 5px 1px 1px; display:inline-flex; align-items:center; line-height:1.25; flex-wrap:nowrap; gap:2px; }
+  #resultsArea { display:none; }
+  .resgrid { display:grid; grid-template-columns: repeat(auto-fill, minmax(64px,1fr)); gap:8px; margin: 16px 0; }
+  .rescell { border-radius:10px; padding:10px 4px; text-align:center; font-size:0.85rem; font-weight:700; cursor:pointer; border:2px solid transparent; }
+  .rescell.correct { background:#E1F5EE; border-color:#1D9E75; color:#085041; }
+  .rescell.wrong { background:#FCEBEB; border-color:#E24B4A; color:#501313; }
+  .rescell.skipped { background:#eeeeee; border-color:#bbbbbb; color:#555555; }
+  .scoreline { text-align:center; font-size:1.3rem; font-weight:800; color:#185FA5; margin: 10px 0; }
+  .resbtnrow { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:14px; }
+  .resbtn { padding:13px 18px; border-radius:10px; border:none; font-size:0.95rem; font-weight:700; cursor:pointer; background:#185FA5; color:#ffffff; }
+  .resbtn.secondary { background:#e8edf4; color:#185FA5; }
+  .resbtn.danger { background:#FCEBEB; color:#501313; }
+  .modalbg { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); align-items:center; justify-content:center; z-index:50; }
+  .modalbox { background:#ffffff; border-radius:14px; padding:22px; max-width:340px; width:88%; text-align:center; }
+  .modalbox p { font-size:1.02rem; line-height:1.5; margin: 6px 0 18px; color:#111111; }
+  .modalbtnrow { display:flex; gap:10px; }
+  .modalbtnrow button { flex:1; padding:12px; border-radius:10px; border:none; font-size:0.95rem; font-weight:700; cursor:pointer; }
+  .mbcancel { background:#e8edf4; color:#185FA5; }
+  .mbconfirm { background:#E24B4A; color:#ffffff; }
+  .pillbadge { display:inline-block; background:#185FA5; color:#ffffff; border-radius:999px; padding:6px 16px; font-size:0.85rem; font-weight:700; margin-bottom:10px; }
+  .counter { text-align:center; color:#555555; font-size:0.9rem; margin-bottom: 8px; }
+  .fallback { text-align:center; padding:40px 16px; color:#501313; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="datebar">Monday, June 8, 2026</div>
+  <div class="titlebar">[Grant] Math Competition</div>
+  <div class="attempts" id="attemptsLine">Total Attempts: 0</div>
+  <div class="dotnav" id="dotNav"></div>
+  <div class="counter" id="counterLine"></div>
+
+  <div id="quizArea" style="display:none;">
+    <div class="tag" id="tagBadge"></div>
+    <div class="passage" id="passageBox" style="display:none;"></div>
+    <div class="qcard">
+      <div class="qtext" id="qText"></div>
+      <div id="optsBox"></div>
+      <div class="explain" id="explainBox"></div>
+    </div>
+    <div class="navrow">
+      <button class="navbtn secondary" id="prevBtn">Prev</button>
+      <button class="navbtn" id="nextBtn">Next</button>
+    </div>
+  </div>
+
+  <div id="resultsArea">
+    <div class="pillbadge">Results</div>
+    <div class="scoreline" id="scoreLine"></div>
+    <div class="resgrid" id="resGrid"></div>
+    <div class="resbtnrow">
+      <button class="resbtn secondary" id="copyBtn">Copy All Results</button>
+      <button class="resbtn" id="retryBtn">Retry Wrong Questions</button>
+      <button class="resbtn danger" id="freshBtn">Start Fresh</button>
+    </div>
+    <div id="miniResult"></div>
+  </div>
+
+  <div class="fallback" id="fallbackArea" style="display:none;"></div>
+</div>
+
+<div class="modalbg" id="modalBg">
+  <div class="modalbox">
+    <p>This will erase all saved progress and attempts for this quiz. Are you sure you want to start fresh?</p>
+    <div class="modalbtnrow">
+      <button class="mbcancel" id="modalCancel">Cancel</button>
+      <button class="mbconfirm" id="modalConfirm">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  try {
+    var QUESTIONS = [{"tag": "Chapter 1", "q": "Solve: 1 − 2 + 3 − 4 + 5", "options": ["3", "-3", "5", "1"], "correct": 0, "explain": "Work left to right: 1 − 2 = -1; -1 + 3 = 2; 2 − 4 = -2; -2 + 5 = 3."}, {"tag": "Chapter 1", "q": "Solve: 1 + 2 × 2", "options": ["6", "5", "4", "9"], "correct": 1, "explain": "Multiplication comes before addition: 2 × 2 = 4, then 1 + 4 = 5. (6 comes from wrongly computing (1+2)×2.)"}, {"tag": "Chapter 1", "q": "Solve: 12 ÷ 2 × 3", "options": ["2", "18", "6", "4"], "correct": 1, "explain": "Division and multiplication have equal priority, so work left to right: 12 ÷ 2 = 6, then 6 × 3 = 18. (2 comes from wrongly computing 12 ÷ (2 × 3).)"}, {"tag": "Chapter 1", "q": "Solve: 1 × (2 + 3) × 4 + 5 × 6 + 7 × 8", "options": ["100", "106", "96", "116"], "correct": 1, "explain": "1 × (2+3) × 4 = 1 × 5 × 4 = 20. Then 5 × 6 = 30 and 7 × 8 = 56. Total: 20 + 30 + 56 = 106. (100 comes from ignoring the parentheses and computing 1×2 + 3×4 + 5×6 + 7×8.)"}, {"tag": "Chapter 2", "q": "The six-digit number 8A4,B57 is divisible by 11. What is the sum of A and B?", "options": ["11", "10", "21", "9"], "correct": 1, "explain": "For divisibility by 11, the alternating sum of digits (from the right) must be a multiple of 11: 7 − 5 + B − 4 + A − 8 = (A + B) − 10. Setting this equal to 0 gives A + B = 10 (21 is impossible since A and B are single digits)."}, {"tag": "Chapter 2", "q": "Jerry is thinking of a number between 1 and 100. The number is a multiple of 11 and is also a multiple of 5. What number is he thinking of?", "options": ["11", "55", "50", "5"], "correct": 1, "explain": "A number that is a multiple of both 11 and 5 must be a multiple of their product, 55 (since 11 and 5 share no common factors). The only multiple of 55 between 1 and 100 is 55."}, {"tag": "Chapter 2", "q": "How many multiples of 3 are between 11 and 302?", "options": ["96", "97", "98", "100"], "correct": 1, "explain": "The smallest multiple of 3 greater than 11 is 12, and the largest multiple of 3 less than 302 is 300. The count is (300 − 12) ÷ 3 + 1 = 288 ÷ 3 + 1 = 96 + 1 = 97."}, {"tag": "Chapter 2", "q": "The five-digit number A5,2A1 is divisible by 3. If the five-digit number is to be as large as possible, what is the value of A?", "options": ["5", "8", "2", "9"], "correct": 1, "explain": "The digit sum is A + 5 + 2 + A + 1 = 2A + 8, which must be a multiple of 3. Testing digits 0–9, this works when A = 2, 5, or 8. To make the number as large as possible, choose the greatest value, A = 8 (digits 8,5,2,8,1 sum to 24, a multiple of 3)."}, {"tag": "Chapter 3", "q": "How many prime numbers are between 1 and 50?", "options": ["14", "15", "16", "13"], "correct": 1, "explain": "The primes less than 50 are 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47 — that is 15 primes."}, {"tag": "Chapter 3", "q": "How many prime numbers are between 50 and 100?", "options": ["9", "10", "11", "8"], "correct": 1, "explain": "The primes between 50 and 100 are 53, 59, 61, 67, 71, 73, 79, 83, 89, 97 — that is 10 primes."}, {"tag": "Chapter 3", "q": "If a³ × b² = 200, and a and b are prime numbers, what is the value of a + b?", "options": ["9", "7", "12", "5"], "correct": 1, "explain": "200 = 2³ × 5², so a = 2 and b = 5 (both prime). Therefore a + b = 2 + 5 = 7."}, {"tag": "Chapter 3", "q": "How many whole numbers less than 20 have an odd number of factors?", "options": ["3", "4", "5", "6"], "correct": 1, "explain": "Only perfect squares have an odd number of factors. The perfect squares less than 20 (and at least 1) are 1, 4, 9, and 16 — that is 4 numbers."}, {"tag": "Chapter 4", "q": "Find the number of the factors for 65.", "options": ["2", "4", "3", "6"], "correct": 1, "explain": "65 = 5 × 13, so its factors are 1, 5, 13, and 65 — that is 4 factors. Using the formula, (1+1)(1+1) = 4."}, {"tag": "Chapter 4", "q": "Find the number of factors for 13⁹ 31⁴.", "options": ["36", "50", "45", "13"], "correct": 1, "explain": "For a number p<sup>m</sup> q<sup>n</sup>, the number of factors is (m+1)(n+1). Here that is (9+1)(4+1) = 10 × 5 = 50."}, {"tag": "Chapter 4", "q": "How many factors do 2¹⁴ 5⁷ 11⁵ and 3⁸ 7³ 13¹² share?", "options": ["0", "1", "3", "5"], "correct": 1, "explain": "The two numbers share no common prime factors (one uses 2, 5, 11; the other uses 3, 7, 13). The only positive integer that divides both numbers is 1, so they share exactly 1 factor."}, {"tag": "Chapter 4", "q": "How many factors does 42 and 630 share?", "options": ["6", "8", "4", "12"], "correct": 1, "explain": "42 = 2 × 3 × 7 and 630 = 2 × 3² × 5 × 7. Their greatest common factor is 2 × 3 × 7 = 42, which has (1+1)(1+1)(1+1) = 8 factors. Every common factor of 42 and 630 must be a factor of their GCF, so they share 8 factors."}, {"tag": "Chapter 5", "q": "How many perfect cubes are between 1 and 100, inclusive?", "options": ["3", "4", "5", "2"], "correct": 1, "explain": "The perfect cubes in this range are 1 = 1³, 8 = 2³, 27 = 3³, and 64 = 4³ (the next, 125 = 5³, is too large). That is 4 perfect cubes."}, {"tag": "Chapter 5", "q": "Is 64 a perfect square? A perfect cube?", "options": ["Yes, a perfect square only", "Yes, both a perfect square and a perfect cube", "Yes, a perfect cube only", "No, it is neither"], "correct": 1, "explain": "64 = 8², so it is a perfect square, and 64 = 4³, so it is also a perfect cube. It is both."}, {"tag": "Chapter 5", "q": "Find the number of factors that are perfect cubes for 2² 3⁴ 5³.", "options": ["2", "4", "6", "8"], "correct": 1, "explain": "A factor 2<sup>x</sup>3<sup>y</sup>5<sup>z</sup> is a perfect cube only when x, y, z are each multiples of 3 and within the limits 0≤2, 0≤4, 0≤3. So x can only be 0 (1 choice), y can be 0 or 3 (2 choices), and z can be 0 or 3 (2 choices). Total: 1 × 2 × 2 = 4."}, {"tag": "Chapter 5", "q": "Find the number of odd factors for 2² 3⁴ 5² 7⁴.", "options": ["100", "75", "60", "50"], "correct": 1, "explain": "Odd factors cannot include any factor of 2, so we ignore the 2² and count factors of 3⁴ 5² 7⁴: (4+1)(2+1)(4+1) = 5 × 3 × 5 = 75."}, {"tag": "Chapter 6", "q": "Hannah bought 3 pencils, which cost 28 cents each, with a one-dollar bill. How much did she receive in change? Express your answer in cents.", "options": ["14 cents", "16 cents", "84 cents", "12 cents"], "correct": 1, "explain": "3 pencils cost 3 × 28 = 84 cents. Paying with a one-dollar bill (100 cents), her change is 100 − 84 = 16 cents."}, {"tag": "Chapter 6", "q": "The tickets to a concert are priced at $154 for two or $83 for one. How much would Cassie and Jacob save if they bought the tickets for two instead of paying individually for each ticket? Express your answer in dollars.", "options": ["$14", "$12", "$9", "$17"], "correct": 1, "explain": "Buying individually costs 2 × $83 = $166. Buying the pair costs $154. The savings is $166 − $154 = $12."}, {"tag": "Chapter 6", "q": "How many ways are there to make 17 cents using pennies and/or nickels?", "options": ["3", "4", "5", "17"], "correct": 1, "explain": "Using n nickels (each worth 5 cents) and the rest in pennies, n can be 0, 1, 2, or 3 (since 4 nickels would be 20 cents, too much), giving 17, 12, 7, or 2 pennies respectively. That is 4 ways."}, {"tag": "Chapter 6", "q": "How many ways are there to make $20 using $10-bills, $5-bills and/or $1-bills?", "options": ["7", "9", "8", "12"], "correct": 1, "explain": "With 0, 1, or 2 ten-dollar bills, the remaining amount (20, 10, or 0) can be made with five-dollar and one-dollar bills in 5, 3, and 1 ways respectively (choosing 0 to (remaining/5) five-dollar bills). Total: 5 + 3 + 1 = 9 ways."}, {"tag": "Chapter 7", "q": "Simplify <span class=\"rad\"><span class=\"rad-sign\"><span class=\"rad-tick\">√</span><span class=\"rad-body\">2<sup>32</sup></span></span></span> × <span class=\"rad\"><span class=\"rad-sign\"><span class=\"rad-tick\">√</span><span class=\"rad-body\">2<sup>−32</sup></span></span></span>.", "options": ["2", "0", "2<sup>32</sup>", "1"], "correct": 3, "explain": "<span class=\"rad\"><span class=\"rad-sign\"><span class=\"rad-tick\">√</span><span class=\"rad-body\">2<sup>32</sup></span></span></span> = 2<sup>16</sup> and <span class=\"rad\"><span class=\"rad-sign\"><span class=\"rad-tick\">√</span><span class=\"rad-body\">2<sup>−32</sup></span></span></span> = 2<sup>−16</sup>. Multiplying gives 2<sup>16</sup> × 2<sup>−16</sup> = 2<sup>0</sup> = 1."}, {"tag": "Chapter 7", "q": "Find the integer portion of the decimal representation of <span class=\"rad\"><span class=\"rad-sign\"><span class=\"rad-tick\">√</span><span class=\"rad-body\">19</span></span></span>.", "options": ["3", "4", "5", "19"], "correct": 1, "explain": "Since 4² = 16 and 5² = 25, and 16 < 19 < 25, the square root of 19 is between 4 and 5 (approximately 4.36). Its integer portion is 4."}, {"tag": "Chapter 7", "q": "Simplify <span class=\"rad\"><span class=\"rad-idx\">14</span><span class=\"rad-sign\"><span class=\"rad-tick\">√</span><span class=\"rad-body\">81<sup>7</sup></span></span></span>.", "options": ["3", "9", "27", "81"], "correct": 1, "explain": "81 = 3<sup>4</sup>, so 81<sup>7</sup> = 3<sup>28</sup>. The 14th root of 3<sup>28</sup> is 3<sup>28/14</sup> = 3<sup>2</sup> = 9."}, {"tag": "Chapter 7", "q": "Find the largest perfect square less than 9,000.", "options": ["8100", "9025", "8281", "8836"], "correct": 3, "explain": "94² = 8,836 and 95² = 9,025. Since 9,025 is greater than 9,000, the largest perfect square less than 9,000 is 8,836 (= 94²)."}];
+    var TOPIC = "math_competition";
+    var STATE_KEY = "quiz_" + TOPIC + "_" + QUESTIONS.length + "_v1";
+    var ATTEMPTS_KEY = "quiz_" + TOPIC + "_attempts_v1";
+    var SPEAK_LANG = ""; // '' if none
+
+    function fy(arr){
+      var a = arr.slice();
+      for (var i=a.length-1;i>0;i--){
+        var j = Math.floor(Math.random()*(i+1));
+        var t=a[i]; a[i]=a[j]; a[j]=t;
+      }
+      return a;
+    }
+
+    function freshState(){
+      var shuffles = [];
+      for (var i=0;i<QUESTIONS.length;i++){
+        var idxs = [];
+        for (var k=0;k<QUESTIONS[i].options.length;k++) idxs.push(k);
+        shuffles.push(fy(idxs));
+      }
+      return { cur:0, answers:{}, shuffles:shuffles, showResults:false, mode:'main', wrongList:[], retry:null };
+    }
+
+    function loadState(){
+      try {
+        var raw = localStorage.getItem(STATE_KEY);
+        if (!raw) return freshState();
+        var st = JSON.parse(raw);
+        if (typeof st !== 'object' || st===null) throw new Error('bad');
+        if (typeof st.cur !== 'number' || st.cur < 0 || st.cur >= QUESTIONS.length) throw new Error('bad cur');
+        if (typeof st.answers !== 'object' || st.answers === null) throw new Error('bad answers');
+        if (!Array.isArray(st.shuffles) || st.shuffles.length !== QUESTIONS.length) throw new Error('bad shuffles');
+        for (var i=0;i<st.shuffles.length;i++){
+          if (!Array.isArray(st.shuffles[i]) || st.shuffles[i].length !== QUESTIONS[i].options.length) throw new Error('bad shuffle entry');
+        }
+        if (typeof st.showResults !== 'boolean') st.showResults = false;
+        if (typeof st.mode !== 'string') st.mode = 'main';
+        if (!Array.isArray(st.wrongList)) st.wrongList = [];
+        return st;
+      } catch(e){
+        try { localStorage.removeItem(STATE_KEY); } catch(e2){}
+        return freshState();
+      }
+    }
+
+    function saveState(){ try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch(e){} }
+
+    function getAttempts(){
+      try { var v = parseInt(localStorage.getItem(ATTEMPTS_KEY) || '0', 10); return isNaN(v)?0:v; } catch(e){ return 0; }
+    }
+    function setAttempts(v){ try { localStorage.setItem(ATTEMPTS_KEY, String(v)); } catch(e){} }
+    function bumpAttempts(){ var v = getAttempts()+1; setAttempts(v); return v; }
+
+    var state = loadState();
+
+    var quizArea = document.getElementById('quizArea');
+    var passageBox = document.getElementById('passageBox');
+    var resultsArea = document.getElementById('resultsArea');
+    var fallbackArea = document.getElementById('fallbackArea');
+
+    function activeList(){
+      if (state.mode === 'retry' && state.retry) return state.retry.questions;
+      return QUESTIONS;
+    }
+    function activeShuffles(){
+      if (state.mode === 'retry' && state.retry) return state.retry.shuffles;
+      return state.shuffles;
+    }
+    function activeAnswers(){
+      if (state.mode === 'retry' && state.retry) return state.retry.answers;
+      return state.answers;
+    }
+
+    function speakerHtml(text, lang){
+      if (!lang) return '';
+      var safe = text.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+      return '<button class="speakbtn" onclick="window.__speak(\''+safe+'\',\''+lang+'\')" aria-label="Play audio" type="button">&#128266;</button>';
+    }
+    window.__speak = function(text, lang){
+      try {
+        if (!('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
+        var u = new SpeechSynthesisUtterance(text);
+        u.lang = lang;
+        u.rate = 0.85;
+        window.speechSynthesis.speak(u);
+      } catch(e){}
+    };
+
+    function renderDots(){
+      var nav = document.getElementById('dotNav');
+      nav.innerHTML = '';
+      var list = activeList();
+      var answers = activeAnswers();
+      for (var i=0;i<list.length;i++){
+        var d = document.createElement('div');
+        d.className = 'dot';
+        var rec = answers[i];
+        if (rec){ d.className += rec.correct ? ' correct' : ' wrong'; }
+        if (!state.showResults && i === state.cur && state.mode !== 'resultsView') d.className += ' current';
+        d.textContent = (i+1);
+        (function(idx){ d.onclick = function(){ goTo(idx); }; })(i);
+        nav.appendChild(d);
+      }
+    }
+
+    function goTo(i){
+      if (state.mode==='retry' && state.retry){ state.retry.cur = i; }
+      else { state.cur = i; }
+      state.showResults = false;
+      saveState();
+      render();
+    }
+
+    function renderQuestion(){
+      var list = activeList();
+      var shuffles = activeShuffles();
+      var answers = activeAnswers();
+      var cur = (state.mode==='retry' && state.retry) ? state.retry.cur : state.cur;
+      if (cur < 0) cur = 0;
+      if (cur >= list.length) cur = list.length - 1;
+      if (state.mode==='retry' && state.retry) state.retry.cur = cur; else state.cur = cur;
+
+      var q = list[cur];
+      document.getElementById('tagBadge').textContent = q.tag || '';
+      document.getElementById('counterLine').textContent = (cur+1) + ' / ' + list.length;
+
+      if (q.passage){
+        passageBox.style.display = 'block';
+        passageBox.innerHTML = q.passage;
+      } else {
+        passageBox.style.display = 'none';
+        passageBox.innerHTML = '';
+      }
+
+      var qHtml = q.q;
+      if (q.speak){ qHtml += speakerHtml(q.speak.text, q.speak.lang); }
+      document.getElementById('qText').innerHTML = qHtml;
+
+      var order = shuffles[cur];
+      var optsBox = document.getElementById('optsBox');
+      optsBox.innerHTML = '';
+      var rec = answers[cur];
+      var explainBox = document.getElementById('explainBox');
+      explainBox.style.display = 'none';
+      explainBox.innerHTML = '';
+
+      for (var k=0;k<order.length;k++){
+        var origIdx = order[k];
+        var btn = document.createElement('button');
+        btn.className = 'opt';
+        btn.innerHTML = q.options[origIdx];
+        btn.type = 'button';
+        if (rec){
+          if (origIdx === q.correct) btn.className += ' correct';
+          else if (origIdx === rec.picked) btn.className += ' wrong';
+          btn.disabled = true;
+        }
+        (function(oi){
+          btn.onclick = function(){ selectOption(cur, oi); };
+        })(origIdx);
+        optsBox.appendChild(btn);
+      }
+
+      if (rec){
+        if (!rec.correct){
+          explainBox.style.display = 'block';
+          explainBox.innerHTML = '<strong>Explanation:</strong> ' + q.explain;
+        } else {
+          explainBox.style.display = 'none';
+        }
+      }
+
+      var prevBtn = document.getElementById('prevBtn');
+      var nextBtn = document.getElementById('nextBtn');
+      prevBtn.disabled = (cur === 0);
+      nextBtn.textContent = (cur === list.length - 1) ? 'See Results →' : 'Next';
+    }
+
+    function selectOption(qIdx, optIdx){
+      var list = activeList();
+      var answers = activeAnswers();
+      if (answers[qIdx]) return;
+      var q = list[qIdx];
+      var correct = (optIdx === q.correct);
+      answers[qIdx] = { picked: optIdx, correct: correct };
+      saveState();
+      renderQuestion();
+      renderDots();
+    }
+
+    function goNext(){
+      var list = activeList();
+      var cur = (state.mode==='retry' && state.retry) ? state.retry.cur : state.cur;
+      if (cur === list.length - 1){
+        showResults();
+      } else {
+        cur += 1;
+        if (state.mode==='retry' && state.retry) state.retry.cur = cur; else state.cur = cur;
+        state.showResults = false;
+        saveState();
+        render();
+      }
+    }
+    function goPrev(){
+      var cur = (state.mode==='retry' && state.retry) ? state.retry.cur : state.cur;
+      if (cur > 0){
+        cur -= 1;
+        if (state.mode==='retry' && state.retry) state.retry.cur = cur; else state.cur = cur;
+        saveState();
+        render();
+      }
+    }
+
+    function showResults(){
+      if (state.mode === 'retry' && state.retry){
+        state.retry.showResults = true;
+      } else {
+        state.showResults = true;
+        bumpAttempts();
+        document.getElementById('attemptsLine').textContent = 'Total Attempts: ' + getAttempts();
+      }
+      saveState();
+      render();
+    }
+
+    function buildSummaryText(){
+      var list = activeList();
+      var answers = activeAnswers();
+      var c=0,w=0,s=0;
+      for (var i=0;i<list.length;i++){
+        var rec = answers[i];
+        if (!rec) s++;
+        else if (rec.correct) c++;
+        else w++;
+      }
+      var lines = [];
+      lines.push('[Grant] Math Competition - Monday, June 8, 2026');
+      lines.push('Score: ' + c + ' / ' + list.length + ' correct (Wrong: ' + w + ', Skipped: ' + s + ')');
+      for (var j=0;j<list.length;j++){
+        var rec2 = answers[j];
+        var status = !rec2 ? 'Skipped' : (rec2.correct ? 'Correct' : 'Wrong');
+        lines.push('Q' + (j+1) + ': ' + status);
+      }
+      return lines.join('\n');
+    }
+
+    function renderResults(){
+      var list = activeList();
+      var answers = activeAnswers();
+      var c=0,w=0,s=0;
+      var grid = document.getElementById('resGrid');
+      grid.innerHTML = '';
+      for (var i=0;i<list.length;i++){
+        var rec = answers[i];
+        var cell = document.createElement('div');
+        var status;
+        if (!rec){ status='skipped'; s++; }
+        else if (rec.correct){ status='correct'; c++; }
+        else { status='wrong'; w++; }
+        cell.className = 'rescell ' + status;
+        cell.textContent = 'Q' + (i+1);
+        (function(idx){ cell.onclick = function(){
+          state.showResults = false;
+          if (state.mode==='retry' && state.retry){ state.retry.showResults = false; state.retry.cur = idx; }
+          else { state.cur = idx; }
+          saveState();
+          render();
+        }; })(i);
+        grid.appendChild(cell);
+      }
+      document.getElementById('scoreLine').textContent = 'Score: ' + c + ' / ' + list.length + '   (Correct ' + c + ' - Wrong ' + w + ' - Skipped ' + s + ')';
+      document.getElementById('miniResult').innerHTML = '';
+
+      var retryBtn = document.getElementById('retryBtn');
+      if (state.mode === 'retry'){
+        retryBtn.style.display = 'none';
+      } else {
+        retryBtn.style.display = '';
+        retryBtn.disabled = (w === 0);
+      }
+    }
+
+    function render(){
+      try {
+        document.getElementById('attemptsLine').textContent = 'Total Attempts: ' + getAttempts();
+
+        var showingResults = (state.mode === 'retry' && state.retry) ? !!state.retry.showResults : !!state.showResults;
+
+        if (showingResults){
+          quizArea.style.display = 'none';
+          passageBox.style.display = 'none';
+          resultsArea.style.display = 'block';
+          fallbackArea.style.display = 'none';
+          document.getElementById('counterLine').textContent = '';
+          renderDots();
+          renderResults();
+        } else {
+          resultsArea.style.display = 'none';
+          fallbackArea.style.display = 'none';
+          quizArea.style.display = 'block';
+          renderDots();
+          renderQuestion();
+        }
+      } catch(e){
+        quizArea.style.display = 'none';
+        resultsArea.style.display = 'none';
+        fallbackArea.style.display = 'block';
+        fallbackArea.innerHTML = '<p>Something went wrong while displaying this quiz. Please try the Start Fresh button below.</p><button class="resbtn danger" onclick="window.__hardReset()">Start Fresh</button>';
+      }
+    }
+
+    window.__hardReset = function(){
+      try { localStorage.removeItem(STATE_KEY); localStorage.removeItem(ATTEMPTS_KEY); } catch(e){}
+      location.reload();
+    };
+
+    document.getElementById('prevBtn').onclick = goPrev;
+    document.getElementById('nextBtn').onclick = goNext;
+
+    document.getElementById('copyBtn').onclick = function(){
+      var text = buildSummaryText();
+      function fallbackCopy(){
+        try {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.focus(); ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          notifyCopied();
+        } catch(e){}
+      }
+      function notifyCopied(){
+        var btn = document.getElementById('copyBtn');
+        var orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function(){ btn.textContent = orig; }, 1500);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(notifyCopied, fallbackCopy);
+      } else {
+        fallbackCopy();
+      }
+    };
+
+    document.getElementById('retryBtn').onclick = function(){
+      var wrongIdx = [];
+      for (var i=0;i<QUESTIONS.length;i++){
+        var rec = state.answers[i];
+        if (rec && !rec.correct) wrongIdx.push(i);
+      }
+      if (wrongIdx.length === 0) return;
+      var rq = wrongIdx.map(function(i){ return QUESTIONS[i]; });
+      var shuffles = [];
+      for (var j=0;j<rq.length;j++){
+        var idxs = [];
+        for (var k=0;k<rq[j].options.length;k++) idxs.push(k);
+        shuffles.push(fy(idxs));
+      }
+      state.mode = 'retry';
+      state.retry = { questions: rq, shuffles: shuffles, answers: {}, cur: 0, showResults: false };
+      saveState();
+      render();
+    };
+
+    document.getElementById('freshBtn').onclick = function(){
+      document.getElementById('modalBg').style.display = 'flex';
+    };
+    document.getElementById('modalCancel').onclick = function(){
+      document.getElementById('modalBg').style.display = 'none';
+    };
+    document.getElementById('modalConfirm').onclick = function(){
+      document.getElementById('modalBg').style.display = 'none';
+      try { localStorage.removeItem(STATE_KEY); localStorage.removeItem(ATTEMPTS_KEY); } catch(e){}
+      state = freshState();
+      saveState();
+      setAttempts(0);
+      render();
+    };
+
+    if (state.mode === 'retry' && state.retry && state.retry.showResults){
+      // stay on retry results
+    }
+
+    render();
+  } catch(err){
+    document.body.innerHTML = '<div style="padding:40px;text-align:center;color:#501313;font-family:sans-serif;">This quiz could not be loaded. Please reload the page.</div>';
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>한글 문장 퀴즈 11</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; background: #f0f4f8; min-height: 100vh; padding: 16px; }
+  .date-display { font-size: 2rem; font-weight: 800; text-align: center; color: #185FA5; margin-bottom: 8px; }
+  .quiz-title { text-align: center; font-size: 1.4rem; font-weight: 700; color: #1a1a2e; margin-bottom: 18px; }
+  .dot-nav { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .dot { width: 34px; height: 34px; border-radius: 50%; background: #ccc; color: #fff; font-weight: 700; font-size: 0.85rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+  .dot.correct { background: #1D9E75; }
+  .dot.wrong   { background: #E24B4A; }
+  .dot.active  { outline: 3px solid #185FA5; outline-offset: 2px; }
+  .quiz-card { background: #fff; border-radius: 16px; padding: 24px 20px; max-width: 680px; margin: 0 auto 16px auto; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+  .type-tag { display: inline-block; background: #185FA5; color: #fff; font-size: 0.75rem; font-weight: 700; border-radius: 999px; padding: 3px 12px; margin-bottom: 12px; letter-spacing: 0.03em; }
+  .question-num { color: #185FA5; font-weight: 800; font-size: 0.9rem; margin-bottom: 6px; }
+  .question-text { font-size: 1.25rem; font-weight: 700; color: #1a1a2e; margin-bottom: 20px; line-height: 1.4; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option-row { display: flex; align-items: center; gap: 8px; }
+  .option-btn { flex: 1; background-color: #e8edf4; color: #111111; border: 2px solid transparent; border-radius: 10px; padding: 14px 16px; font-size: 1.05rem; font-weight: 600; text-align: left; cursor: pointer; transition: border-color 0.15s, background-color 0.15s; font-family: inherit; line-height: 1.3; }
+  .option-btn:active { opacity: 0.85; }
+  .option-btn.correct  { background-color: #E1F5EE !important; border-color: #1D9E75 !important; color: #085041 !important; }
+  .option-btn.wrong    { background-color: #FCEBEB !important; border-color: #E24B4A !important; color: #501313 !important; }
+  .option-btn.revealed { background-color: #E1F5EE !important; border-color: #1D9E75 !important; color: #085041 !important; }
+  .speaker-btn { background: none; border: none; cursor: pointer; font-size: 1.3rem; padding: 6px; border-radius: 8px; flex-shrink: 0; transition: background 0.15s; }
+  .speaker-btn:active { background: #e0e7ef; }
+  .explanation { display: none; background: #fff3f3; border-left: 4px solid #E24B4A; border-radius: 6px; padding: 10px 14px; margin-top: 12px; font-size: 0.92rem; color: #501313; line-height: 1.5; }
+  .explanation.show { display: block; }
+  .nav-row { display: flex; justify-content: space-between; max-width: 680px; margin: 0 auto 24px auto; gap: 12px; }
+  .nav-btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; background: #185FA5; color: #fff; transition: opacity 0.15s; font-family: inherit; }
+  .nav-btn:disabled { opacity: 0.35; cursor: default; }
+  .nav-btn:active:not(:disabled) { opacity: 0.8; }
+  .results-pill { display: inline-block; background: #185FA5; color: #fff; font-size: 0.78rem; font-weight: 700; border-radius: 999px; padding: 3px 12px; margin-bottom: 12px; text-align: center; }
+  .results-header { background: #185FA5; color: #fff; border-radius: 16px 16px 0 0; padding: 20px; text-align: center; }
+  .results-header h2 { font-size: 1.5rem; font-weight: 800; }
+  .score-big { font-size: 2.5rem; font-weight: 800; margin: 8px 0; }
+  .results-body { background: #fff; border-radius: 0 0 16px 16px; padding: 20px; }
+  .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .result-card { border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; font-weight: 700; font-size: 0.9rem; border: 2px solid transparent; }
+  .result-card.correct { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .result-card.wrong   { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+  .result-card.skipped { background: #f5f5f5; border-color: #ccc; color: #555; }
+  .results-actions { display: flex; gap: 10px; }
+  .results-btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .copy-btn  { background: #e8edf4; color: #111; }
+  .fresh-btn { background: #E24B4A; color: #fff; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay.show { display: flex; }
+  .modal-box { background: #fff; border-radius: 16px; padding: 28px 24px; max-width: 320px; width: 90%; text-align: center; }
+  .modal-box h3 { font-size: 1.15rem; font-weight: 800; margin-bottom: 10px; color: #1a1a2e; }
+  .modal-box p  { font-size: 0.95rem; color: #444; margin-bottom: 20px; }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-cancel  { flex: 1; padding: 12px; border: 2px solid #ccc; border-radius: 10px; background: #fff; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .modal-confirm { flex: 1; padding: 12px; border: none; border-radius: 10px; background: #E24B4A; color: #fff; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+  #quiz-area      { display: none; }
+  #results-screen { display: none; }
+</style>
+</head>
+<body>
+
+<div class="date-display" id="date-display"></div>
+<div class="quiz-title">🇰🇷 한글 문장 퀴즈 11</div>
+<div class="dot-nav" id="dot-nav"></div>
+
+<div id="quiz-area">
+  <div class="quiz-card">
+    <span class="type-tag">English → 한글</span>
+    <div class="question-num" id="question-num"></div>
+    <div class="question-text" id="question-text"></div>
+    <div class="options" id="options"></div>
+    <div class="explanation" id="explanation"></div>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn" id="prev-btn" onclick="goTo(state.current - 1)">← 이전</button>
+    <button class="nav-btn" id="next-btn" onclick="handleNext()">다음 →</button>
+  </div>
+</div>
+
+<div id="results-screen">
+  <div class="results-pill">Results</div>
+  <div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+    <div class="results-header">
+      <h2>퀴즈 완료! 🎉</h2>
+      <div class="score-big" id="score-big"></div>
+      <div id="score-label"></div>
+    </div>
+    <div class="results-body">
+      <div class="results-grid" id="results-grid"></div>
+      <div class="results-actions">
+        <button class="results-btn copy-btn"  onclick="copyResults()">📋 결과 복사</button>
+        <button class="results-btn fresh-btn" onclick="askFresh()">🔄 다시 시작</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box">
+    <h3>다시 시작할까요?</h3>
+    <p>모든 답변이 초기화됩니다.</p>
+    <div class="modal-btns">
+      <button class="modal-cancel"  onclick="closeModal()">취소</button>
+      <button class="modal-confirm" onclick="confirmFresh()">다시 시작</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Image 2 — reuse set 11. Semantic conflict rules:
+// 나 기분 좋아 ↔ 행복해       — never together
+// 사랑해 ↔ 나도 사랑해        — never together
+// 그만해 ↔ 그만 할래 ↔ 됐어  — never together
+// 잘못했어요 ↔ 미안해         — never together
+// 잘 먹겠습니다 ↔ 잘 먹었습니다 — never together
+// 무거워 ↔ 하나도 안 무거워   — never together
+const ALL_QUESTIONS = [
+  {
+    english: "I'm in a good mood.",
+    correct: "나 기분 좋아.",
+    // avoid 행복해
+    distractors: ["나 기분 나빠.", "그냥 그래.", "나 지루해."]
+  },
+  {
+    english: "It's so fun!",
+    correct: "너무 재밌어!",
+    distractors: ["귀엽다!", "진짜 멋있다!", "이거 마음에 들어."]
+  },
+  {
+    english: "I won!",
+    correct: "나 이겼어!",
+    distractors: ["졌어...", "다음에 이길 거야.", "됐어."]
+  },
+  {
+    english: "Cheer up!",
+    correct: "힘내!",
+    distractors: ["조심해.", "잘했어!", "빨리 와!"]
+  },
+  {
+    english: "Come quickly!",
+    correct: "빨리 와!",
+    distractors: ["기다려.", "지금 가자.", "힘내!"]
+  },
+  {
+    english: "Are you ready?",
+    correct: "준비됐어?",
+    distractors: ["아직.", "지금 가자.", "가방 챙겼어?"]
+  },
+  {
+    english: "It's done. / Enough.",
+    correct: "됐어.",
+    // avoid 그만해, 그만 할래
+    distractors: ["아직.", "나 이겼어!", "준비됐어?"]
+  },
+  {
+    english: "That's really cool!",
+    correct: "진짜 멋있다!",
+    distractors: ["귀엽다!", "너무 재밌어!", "이거 마음에 들어."]
+  },
+  {
+    english: "So cute!",
+    correct: "귀엽다!",
+    distractors: ["진짜 멋있다!", "너무 재밌어!", "나 이거 좋아해."]
+  },
+  {
+    english: "How do you feel today?",
+    correct: "오늘 기분 어때?",
+    distractors: ["준비됐어?", "가방 챙겼어?", "배불러?"]
+  },
+  {
+    english: "I'm happy.",
+    correct: "행복해.",
+    // avoid 나 기분 좋아
+    distractors: ["슬퍼.", "그냥 그래.", "나 지루해."]
+  },
+  {
+    english: "I love you.",
+    correct: "사랑해.",
+    // avoid 나도 사랑해
+    distractors: ["보고싶어.", "응, 좋아해.", "나 좋아해?"]
+  },
+  {
+    english: "Thank you for the meal.",
+    correct: "잘 먹겠습니다.",
+    // avoid 잘 먹었습니다
+    distractors: ["다녀오겠습니다.", "다녀왔습니다.", "밥 먹자."]
+  },
+  {
+    english: "I am sorry.",
+    correct: "잘못했어요.",
+    // avoid 미안해
+    distractors: ["다신 안 그럴게요.", "고마워.", "괜찮아."]
+  },
+  {
+    english: "I won't do that again.",
+    correct: "다신 안 그럴게요.",
+    distractors: ["잘못했어요.", "그만해.", "하지마."]
+  },
+  {
+    english: "Don't touch it.",
+    correct: "그거 만지지 마.",
+    distractors: ["가져와.", "그거 더러운거야.", "갖다 놔."]
+  },
+  {
+    english: "Stop it.",
+    correct: "그만해.",
+    // avoid 그만 할래, 됐어
+    distractors: ["하지마.", "진정해.", "안 돼."]
+  },
+  {
+    english: "Don't do that.",
+    correct: "하지마.",
+    distractors: ["조심해.", "그거 만지지 마.", "갖다 놔."]
+  },
+  {
+    english: "Bring it here.",
+    correct: "가져와.",
+    distractors: ["갖다 놔.", "청소해.", "얼른 가서 씻어."]
+  },
+  {
+    english: "Is it heavy?",
+    correct: "무거워?",
+    // avoid 하나도 안 무거워
+    distractors: ["배불러?", "가방 챙겼어?", "엄청 배불러."]
+  }
+];
+
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ko-KR';
+  u.rate = 0.85;
+  window.speechSynthesis.speak(u);
+}
+
+const STORAGE_KEY = 'korean_quiz_v11';
+let questions = [];
+let state = {};
+
+function defaultState() { return { current: 0, answers: {}, showResults: false }; }
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildQuestions() {
+  return ALL_QUESTIONS.map(q => {
+    const opts = shuffle([q.correct, ...q.distractors]);
+    return { ...q, options: opts };
+  });
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ state, questions })); } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const saved = JSON.parse(raw);
+    if (saved.questions && saved.state && saved.questions.length === ALL_QUESTIONS.length) {
+      questions = saved.questions;
+      state = saved.state;
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
+function render() {
+  const now = new Date();
+  const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('date-display').textContent =
+    `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+
+  const dotNav = document.getElementById('dot-nav');
+  dotNav.innerHTML = '';
+  questions.forEach((_, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'dot';
+    btn.textContent = i + 1;
+    if (state.answers[i] !== undefined)
+      btn.classList.add(state.answers[i] === questions[i].correct ? 'correct' : 'wrong');
+    if (!state.showResults && i === state.current) btn.classList.add('active');
+    btn.onclick = () => {
+      if (state.showResults) { state.showResults = false; state.current = i; saveState(); render(); }
+      else goTo(i);
+    };
+    dotNav.appendChild(btn);
+  });
+
+  const quizArea      = document.getElementById('quiz-area');
+  const resultsScreen = document.getElementById('results-screen');
+
+  if (state.showResults) {
+    quizArea.style.display      = 'none';
+    resultsScreen.style.display = 'block';
+    showResults();
+    return;
+  }
+
+  quizArea.style.display      = 'block';
+  resultsScreen.style.display = 'none';
+
+  const q = questions[state.current];
+  document.getElementById('question-num').textContent  = `문제 ${state.current + 1} / ${questions.length}`;
+  document.getElementById('question-text').textContent = q.english;
+
+  const optionsEl = document.getElementById('options');
+  optionsEl.innerHTML = '';
+  const answered = state.answers[state.current];
+
+  q.options.forEach(opt => {
+    const row = document.createElement('div');
+    row.className = 'option-row';
+    const btn = document.createElement('button');
+    btn.className   = 'option-btn';
+    btn.textContent = opt;
+    if (answered !== undefined) {
+      if (opt === q.correct) btn.classList.add(answered === q.correct ? 'correct' : 'revealed');
+      else if (opt === answered) btn.classList.add('wrong');
+      btn.disabled = true;
+    } else {
+      btn.onclick = () => selectAnswer(opt);
+    }
+    const spk = document.createElement('button');
+    spk.className = 'speaker-btn';
+    spk.title     = '발음 듣기';
+    spk.innerHTML = '🔊';
+    spk.onclick   = () => speak(opt);
+    row.appendChild(btn);
+    row.appendChild(spk);
+    optionsEl.appendChild(row);
+  });
+
+  const expEl = document.getElementById('explanation');
+  if (answered !== undefined && answered !== q.correct) {
+    expEl.textContent = `정답: ${q.correct}`;
+    expEl.classList.add('show');
+  } else {
+    expEl.classList.remove('show');
+    expEl.textContent = '';
+  }
+
+  document.getElementById('prev-btn').disabled = state.current === 0;
+  document.getElementById('next-btn').textContent =
+    state.current === questions.length - 1 ? '결과 보기 →' : '다음 →';
+}
+
+function selectAnswer(opt) { state.answers[state.current] = opt; saveState(); render(); }
+function goTo(i) { if (i < 0 || i >= questions.length) return; state.current = i; saveState(); render(); }
+function handleNext() {
+  if (state.current === questions.length - 1) { state.showResults = true; saveState(); render(); }
+  else goTo(state.current + 1);
+}
+
+function showResults() {
+  let correct = 0;
+  questions.forEach((q, i) => { if (state.answers[i] === q.correct) correct++; });
+  document.getElementById('score-big').textContent   = `${correct} / ${questions.length}`;
+  document.getElementById('score-label').textContent =
+    correct === questions.length ? '완벽해요! 🌟' :
+    correct >= questions.length * 0.7 ? '잘했어요! 👍' : '더 연습해봐요! 💪';
+  const grid = document.getElementById('results-grid');
+  grid.innerHTML = '';
+  questions.forEach((q, i) => {
+    const a = state.answers[i];
+    const card = document.createElement('div');
+    card.className = 'result-card ' + (a === undefined ? 'skipped' : a === q.correct ? 'correct' : 'wrong');
+    card.innerHTML = `<div>문제 ${i+1}</div><div>${a === undefined ? '건너뜀' : a === q.correct ? '✓ 정답' : '✗ 오답'}</div>`;
+    card.onclick = () => { state.showResults = false; state.current = i; saveState(); render(); };
+    grid.appendChild(card);
+  });
+}
+
+function copyResults() {
+  let text = `한글 퀴즈 11 결과\n`, correct = 0;
+  questions.forEach((q, i) => {
+    const a = state.answers[i];
+    if (a === q.correct) correct++;
+    text += `문제${i+1}: ${a === undefined ? '건너뜀' : a === q.correct ? '✓' : '✗'}\n`;
+  });
+  text += `총점: ${correct}/${questions.length}`;
+  try { navigator.clipboard.writeText(text); } catch(e) {}
+}
+
+function askFresh() { document.getElementById('modal-overlay').classList.add('show'); }
+function closeModal() { document.getElementById('modal-overlay').classList.remove('show'); }
+function confirmFresh() {
+  closeModal();
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+  questions = buildQuestions(); state = defaultState(); saveState(); render();
+}
+
+try {
+  if (!loadState()) { questions = buildQuestions(); state = defaultState(); saveState(); }
+  render();
+} catch(e) {
+  document.body.innerHTML = '<p style="padding:20px;color:red;">오류가 발생했습니다. 새로고침 해주세요.<br>' + e + '</p>';
+}
+</script>
+</body>
+</html>

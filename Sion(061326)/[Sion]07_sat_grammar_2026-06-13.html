@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT Grammar</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;margin:0 auto;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px 0;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.context-box{background:#f5f7fa;border-left:4px solid #185FA5;border-radius:8px;padding:12px 16px;margin-bottom:12px;font-size:0.92rem;line-height:1.75;color:#222;}
+.tag-badge{display:inline-block;background:#185FA5;color:#fff;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:8px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.q-text{font-size:0.97rem;font-weight:600;color:#111;margin-bottom:12px;line-height:1.6;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.9rem;text-align:left;cursor:pointer;line-height:1.45;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-13</div>
+<div class="title-hd">[Sion] SAT Grammar</div>
+<div class="instruction">Choose the best option to complete or improve each sentence in context.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 10</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump ▾</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="tag-badge" id="q-tag"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="context-box" id="context-box"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_satgrammar_10_20260613_v2';
+var ATT_KEY='quiz_satgrammar_att_20260613_v2';
+var qs=[
+ {tag:'Transitions',
+  context:'Early studies suggested that video games impaired academic performance. _______, more recent longitudinal research has found that moderate gaming correlates with improved spatial reasoning and problem-solving skills.',
+  q:'Which choice most logically completes the text?',
+  opts:['Consequently,','However,','Similarly,','Therefore,'],
+  ci:1,exp:'The first sentence states a negative finding; the second presents an opposing positive finding. "However" signals this contrast. "Consequently" and "Therefore" signal cause-and-effect; "Similarly" signals agreement or continuation.'},
+ {tag:'Subject-Verb Agreement',
+  context:'The committee, along with its three independent advisors, _______ scheduled to present findings to the board next Tuesday.',
+  q:'Which choice correctly completes the sentence?',
+  opts:['are','were','is','have been'],
+  ci:2,exp:'The grammatical subject is "committee" (singular). "Along with its three independent advisors" is a parenthetical phrase and does not change the subject. A singular verb ("is") is required.'},
+ {tag:'Punctuation',
+  context:'',
+  q:'Which version of the sentence is correctly punctuated?',
+  opts:['The Amazon rainforest which covers approximately 5.5 million square kilometers, produces about twenty percent of the world\'s oxygen.','The Amazon rainforest, which covers approximately 5.5 million square kilometers, produces about twenty percent of the world\'s oxygen.','The Amazon rainforest which covers approximately 5.5 million square kilometers produces about twenty percent of the world\'s oxygen.','The Amazon rainforest, which covers approximately 5.5 million square kilometers produces about twenty percent of the world\'s oxygen.'],
+  ci:1,exp:'"Which covers approximately 5.5 million square kilometers" is a nonrestrictive relative clause — it adds information but is not essential to identifying the subject. Nonrestrictive clauses must be enclosed by commas on both sides.'},
+ {tag:'Parallel Structure',
+  context:'The new city policy requires businesses to reduce waste, to increase recycling, and _______ detailed sustainability reports annually.',
+  q:'Which choice correctly completes the parallel series?',
+  opts:['submitting','the submission of','to submit','that they submit'],
+  ci:2,exp:'The series uses parallel infinitives: "to reduce," "to increase," and the blank must match with "to submit." "Submitting" is a gerund; "the submission of" is a noun phrase; "that they submit" is a clause — none are parallel to the established infinitive pattern.'},
+ {tag:'Pronoun Reference',
+  context:'When the researchers shared the data with the journalists, they were surprised by the conclusions.',
+  q:'To clarify who was surprised, the sentence should be revised to:',
+  opts:['When the researchers shared the data with the journalists, the journalists were surprised by the conclusions.','When sharing the data with the journalists, the researchers were surprised by the conclusions.','The journalists shared data with the researchers, who were surprised by the conclusions.','The researchers, when sharing data, surprised the journalists with their unexpected conclusions.'],
+  ci:0,exp:'"They" in the original could refer to either researchers or journalists, creating ambiguity. Option A replaces the ambiguous pronoun with "the journalists," making the intended meaning clear. Options B, C, and D alter the meaning or restructure the sentence in ways that change who was surprised.'},
+ {tag:'Modifier Placement',
+  context:'Running through the park, a deer was spotted by the children.',
+  q:'Which revision most effectively corrects the dangling modifier?',
+  opts:['Running through the park, the deer spotted the children.','The children, running through the park, spotted a deer.','A deer was running through the park when it was spotted by the children.','Running through the park and spotting a deer, the children were surprised.'],
+  ci:1,exp:'The participial phrase "Running through the park" must logically modify the subject of the main clause. The children are doing the running. Option B correctly places "the children" as the subject immediately after the modifier.'},
+ {tag:'Apostrophes',
+  context:'The _______ latest research on memory consolidation has overturned decades of accepted theory.',
+  q:'Which choice correctly fills in the blank?',
+  opts:['scientists','scientist\'s','scientists\'','scientists\'s'],
+  ci:2,exp:'The blank needs the possessive of "scientists" (plural noun ending in -s). For plural nouns ending in -s, form the possessive by adding only an apostrophe after the s: "scientists\'." "Scientist\'s" is singular possessive; "scientists" has no apostrophe; "scientists\'s" is not standard.'},
+ {tag:'Concision',
+  context:'The report concluded that the policy had been both effective and _______ in achieving its stated objectives.',
+  q:'Which choice most concisely and effectively completes the sentence?',
+  opts:['successful in accomplishing its goals as well','successful','a success that achieved what it was meant to accomplish','achieving success in the way that was intended'],
+  ci:1,exp:'"Effective and successful" concisely states two parallel adjectives. The other options restate information already conveyed by "in achieving its stated objectives" — adding words without adding meaning.'},
+ {tag:'Transitions',
+  context:'Bioluminescence — the production of light by living organisms — serves a variety of functions in the natural world. _______, deep-sea fish use it to attract prey, while fireflies use it to signal potential mates.',
+  q:'Which choice most logically connects the two sentences?',
+  opts:['In contrast,','Nevertheless,','For instance,','As a result,'],
+  ci:2,exp:'The second sentence provides specific examples of the "variety of functions" mentioned in the first. "For instance" correctly signals that examples follow. "In contrast" and "Nevertheless" signal opposition; "As a result" signals consequence.'},
+ {tag:'Verb Tense',
+  context:'By the time the expedition reached the summit, the weather had shifted dramatically and the lead climber _______ a difficult decision about whether to continue.',
+  q:'Which choice correctly completes the sentence?',
+  opts:['faces','had faced','faced','will face'],
+  ci:2,exp:'"Reached" is simple past (the expedition arrived). "Had shifted" is past perfect (the weather changed before arrival). "Faced" (simple past) correctly places the decision at the same moment as reaching the summit. "Had faced" would imply the decision came before reaching the summit.'}
+];
+
+var state={};
+function loadState(){try{var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');if(s&&typeof s.cur==='number'&&s.answers&&s.shuffles){state=s;}else{resetState();}}catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){if(!state.shuffles[i]){var a=[0,1,2,3];for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}state.shuffles[i]=a;}return state.shuffles[i];}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAttempts(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function updateNav(){var ans=Object.keys(state.answers).length;document.getElementById('nav-count').textContent=ans+' / '+qs.length;document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';renderDots();}
+function toggleJump(){var p=document.getElementById('dot-panel');var b=document.getElementById('jump-btn');if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}else{p.style.display='none';b.textContent='Jump ▾';}}
+function renderDots(){var p=document.getElementById('dot-panel');if(p.style.display==='none')return;var h='';for(var i=0;i<qs.length;i++){var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===getCSI(i)?'#185FA5':'#E24B4A');h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';}if(Object.keys(state.answers).length===qs.length){h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';}p.innerHTML=h;}
+function goToQ(i){state.cur=i;state.showResults=false;saveState();render();document.getElementById('dot-panel').style.display='none';document.getElementById('jump-btn').textContent='Jump ▾';}
+function showResults(){state.showResults=true;localStorage.setItem(ATT_KEY,loadAttempts()+1);saveState();render();}
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAttempts();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';document.getElementById('resultsArea').style.display='none';updateNav();
+  var i=state.cur;var q=qs[i];
+  document.getElementById('q-tag').textContent=q.tag;
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  var cb=document.getElementById('context-box');
+  if(q.context){cb.style.display='block';cb.textContent=q.context;}else{cb.style.display='none';}
+  document.getElementById('q-text').textContent=q.q;
+  var sh=getShuffle(i);var ans=state.answers[i];var csi=getCSI(i);
+  var html='';for(var s=0;s<4;s++){var oi=sh[s];var cls='opt-btn';var dis='';if(ans!==undefined){dis='disabled';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}html+='<button class="'+cls+'" '+dis+' onclick="pick('+i+','+s+')">'+(escHtml(q.opts[oi]))+'</button>';}
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');if(ans!==undefined&&ans!==csi){eb.style.display='block';eb.textContent=q.exp;}else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';document.getElementById('resultsArea').style.display='block';updateNav();
+  var c=0,w=0,sk=0;for(var i=0;i<qs.length;i++){if(state.answers[i]===undefined)sk++;else if(state.answers[i]===getCSI(i))c++;else w++;}
+  document.getElementById('results-summary').innerHTML='<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';for(var i=0;i<qs.length;i++){var a=state.answers[i];var label,bg,tc;if(a===undefined){label='Skipped';bg='#d7dde6';tc='#555';}else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}else{label='Wrong';bg='#FCEBEB';tc='#501313';}html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.88rem;font-weight:600;color:#333;">Q'+(i+1)+' — '+escHtml(qs[i].tag)+'</span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';}
+  document.getElementById('results-cards').innerHTML=html;
+}
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){if(dir===1&&state.cur===qs.length-1){showResults();return;}state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));saveState();render();}
+function retryWrong(){var first=-1;for(var i=0;i<qs.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){if(first===-1)first=i;delete state.answers[i];}}if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}}
+function copyRes(){var lines=['[Sion] SAT Grammar 2026-06-13 - Results'];for(var i=0;i<qs.length;i++){var a=state.answers[i];lines.push('Q'+(i+1)+' ('+qs[i].tag+'): '+(a===undefined?'Skipped':a===getCSI(i)?'Correct':'Wrong'));}var txt=lines.join('\n');if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fb(txt);});}else{fb(txt);}}
+function fb(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;window.openFreshModal=openFreshModal;window.confirmFresh=confirmFresh;window.showResults=showResults;
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

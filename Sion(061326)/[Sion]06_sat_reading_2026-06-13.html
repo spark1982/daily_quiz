@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT Reading</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;margin:0 auto;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px 0;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.passage-box{background:#f5f7fa;border-left:4px solid #185FA5;border-radius:8px;padding:14px 16px;margin-bottom:14px;font-size:0.9rem;line-height:1.8;color:#222;}
+.passage-label{font-weight:700;color:#185FA5;font-size:0.82rem;letter-spacing:0.05em;margin-bottom:6px;}
+.tag-badge{display:inline-block;background:#185FA5;color:#fff;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:8px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.q-text{font-size:0.97rem;font-weight:600;color:#111;margin-bottom:12px;line-height:1.6;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.9rem;text-align:left;cursor:pointer;line-height:1.45;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-13</div>
+<div class="title-hd">[Sion] SAT Reading</div>
+<div class="instruction">Read each passage and answer the question that follows.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 10</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump ▾</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="tag-badge" id="q-tag"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="passage-box" id="passage-box"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_satreading_10_20260613_v1';
+var ATT_KEY='quiz_satreading_att_20260613_v1';
+var qs=[
+ // Passage 1 — Natural Science (Antibiotic Resistance) — Q1-2
+ {tag:'Natural Science',
+  passage:'The emergence of antibiotic-resistant bacteria represents one of medicine\'s most pressing challenges. When patients fail to complete prescribed antibiotic courses, surviving bacteria — those with natural resistance mutations — reproduce freely, gradually creating populations that medications can no longer kill. Hospitals have become particular hotbeds for resistant strains, since pathogens there are repeatedly exposed to antibiotics, accelerating the selection pressure that drives resistance. Researchers have responded by developing combination therapies that attack bacteria through multiple mechanisms simultaneously, making it harder for any single resistance mutation to confer protection. Still, the pace of new antibiotic development has slowed considerably: pharmaceutical companies find the economics challenging, since antibiotics are typically taken for short courses rather than indefinitely like medications for chronic conditions.',
+  q:'What is the main purpose of this passage?',
+  opts:['To argue that pharmaceutical companies should be required to fund antibiotic research','To explain how antibiotic resistance develops and describe efforts to address it','To warn readers that hospital infections are becoming untreatable','To trace the historical origins of the first antibiotic medications'],
+  ci:1,exp:'The passage covers how resistance develops (incomplete courses, selection pressure), where it concentrates (hospitals), how researchers respond (combination therapies), and the economic barrier to new drugs — making B the best overall summary. A and C only address one element; D is not discussed.'},
+ {tag:'Natural Science',
+  passage:'The emergence of antibiotic-resistant bacteria represents one of medicine\'s most pressing challenges. When patients fail to complete prescribed antibiotic courses, surviving bacteria — those with natural resistance mutations — reproduce freely, gradually creating populations that medications can no longer kill. Hospitals have become particular hotbeds for resistant strains, since pathogens there are repeatedly exposed to antibiotics, accelerating the selection pressure that drives resistance. Researchers have responded by developing combination therapies that attack bacteria through multiple mechanisms simultaneously, making it harder for any single resistance mutation to confer protection. Still, the pace of new antibiotic development has slowed considerably: pharmaceutical companies find the economics challenging, since antibiotics are typically taken for short courses rather than indefinitely like medications for chronic conditions.',
+  q:'As used in the passage, "confer" most nearly means:',
+  opts:['transfer to another organism','discuss between parties','provide or grant','officially confirm'],
+  ci:2,exp:'"Confer protection" means to provide or grant protection to the bacterium. The sentence describes a mutation giving a bacterium the quality of being resistant. "Transfer" and "discuss" do not fit; "confirm" implies something already known, not something granted.'},
+ // Passage 2 — Social Science (Remote Work) — Q3-4
+ {tag:'Social Science',
+  passage:'When remote work arrangements expanded dramatically in the early 2020s, economists and managers alike scrambled to assess their effects on productivity. Early surveys suggested employees working from home felt more productive, yet objectively measured output data presented a more nuanced picture. Some studies found that software engineers produced roughly equivalent code volume regardless of location; others noted that certain collaborative tasks — brainstorming, mentoring junior colleagues, building team cohesion — suffered measurably in virtual settings. The evidence reveals a productivity gap that depends heavily on job type, with routine individual tasks traveling well to remote settings while relational or creative work often does not. These findings have pushed many companies toward hybrid models that attempt to balance the benefits of both arrangements.',
+  q:'The passage suggests that hybrid work models became popular primarily because:',
+  opts:['Employees strongly preferred full-time remote work over returning to the office','Research showed productivity improved for all job types in remote settings','Different types of work benefit from different working environments','Companies wanted to reduce expenditures on office real estate'],
+  ci:2,exp:'The final sentence states hybrid models "attempt to balance the benefits of both arrangements," and the preceding sentences explain that individual tasks work well remotely while collaborative tasks suffer. The passage directly supports C. A, B, and D are not stated or are contradicted.'},
+ {tag:'Social Science',
+  passage:'When remote work arrangements expanded dramatically in the early 2020s, economists and managers alike scrambled to assess their effects on productivity. Early surveys suggested employees working from home felt more productive, yet objectively measured output data presented a more nuanced picture. Some studies found that software engineers produced roughly equivalent code volume regardless of location; others noted that certain collaborative tasks — brainstorming, mentoring junior colleagues, building team cohesion — suffered measurably in virtual settings. The evidence reveals a productivity gap that depends heavily on job type, with routine individual tasks traveling well to remote settings while relational or creative work often does not. These findings have pushed many companies toward hybrid models that attempt to balance the benefits of both arrangements.',
+  q:'Which claim is most directly supported by evidence in the passage?',
+  opts:['Remote work universally decreases productivity across all industries','The productivity effects of remote work depend significantly on job type','Software engineers are the most productive employees in any work setting','Self-reported productivity is always a reliable measure of actual output'],
+  ci:1,exp:'The passage explicitly states the productivity gap "depends heavily on job type." The software engineer example and the collaborative tasks example together illustrate this point. A is contradicted. C is not claimed. D is implicitly refuted when the author notes that self-reported and measured data diverged.'},
+ // Passage 3 — Literature (Fiction) — Q5-6
+ {tag:'Literature',
+  passage:'Miriam had spent three weeks rehearsing the conversation in her mind — the careful phrasing, the gentle segue, the reassuring finale — yet standing in the kitchen doorway she found the script had deserted her entirely. Her father sat at the table, hands folded around a coffee mug, looking smaller than she remembered. She recognized, with a pang, that she had been measuring his decline in small increments and each visit reset her internal baseline, so that she never quite noticed how far he had traveled from the man who had once carried her on his shoulders through crowds. The words she had prepared were not wrong, exactly, but they seemed to belong to a version of this moment she no longer inhabited.',
+  q:'The detail about Miriam\'s father "looking smaller than she remembered" most likely serves to:',
+  opts:['Indicate that Miriam has grown considerably since her last visit','Suggest that her father has been seriously ill for many years','Convey Miriam\'s perception of her father\'s physical and personal decline','Explain why Miriam forgot the words she had carefully rehearsed'],
+  ci:2,exp:'The observation is immediately followed by Miriam reflecting on measuring her father\'s "decline in small increments" — confirming the detail signals his overall deterioration. D is tempting, but the passage says the script "deserted her" before she fully registers the visual detail.'},
+ {tag:'Literature',
+  passage:'Miriam had spent three weeks rehearsing the conversation in her mind — the careful phrasing, the gentle segue, the reassuring finale — yet standing in the kitchen doorway she found the script had deserted her entirely. Her father sat at the table, hands folded around a coffee mug, looking smaller than she remembered. She recognized, with a pang, that she had been measuring his decline in small increments and each visit reset her internal baseline, so that she never quite noticed how far he had traveled from the man who had once carried her on his shoulders through crowds. The words she had prepared were not wrong, exactly, but they seemed to belong to a version of this moment she no longer inhabited.',
+  q:'The final sentence of the passage primarily serves to:',
+  opts:['Reveal that Miriam ultimately decided not to speak to her father at all','Suggest that the real situation had diverged from the version Miriam had imagined','Show that Miriam regrets having visited her father on this occasion','Imply that Miriam\'s father already suspected the purpose of her visit'],
+  ci:1,exp:'"They seemed to belong to a version of this moment she no longer inhabited" conveys that the real encounter has become something different from what Miriam anticipated, making her prepared script feel mismatched. B captures this precisely. A, C, and D go beyond what the passage states.'},
+ // Passage 4 — History (Primary Source) — Q7-8
+ {tag:'History',
+  passage:'I have often been utterly astonished, since I came to the north, to find persons who could speak of the singing, among slaves, as evidence of their contentment and happiness. It is impossible to conceive of a greater mistake. Slaves sing most when they are most unhappy. The songs of the slave represent the sorrows of his heart; he is relieved by them, only as an aching heart is relieved by its tears. I have often sung to drown my sorrow, but seldom to express my happiness. Crying for joy, and singing for joy, were alike uncommon to me while in the jaws of slavery. The singing of a man cast away upon a desolate island might be as appropriately considered as evidence of contentment and happiness, as the singing of a slave. — Frederick Douglass, Narrative of the Life of Frederick Douglass (1845)',
+  q:'Douglass\'s primary purpose in this passage is to:',
+  opts:['Demonstrate that enslaved people developed rich and varied musical traditions','Challenge the common northern misinterpretation of enslaved people\'s singing','Argue that northern abolitionists lacked sufficient knowledge of slavery\'s realities','Explain the psychological mechanisms by which singing provides emotional relief'],
+  ci:1,exp:'Douglass opens by expressing astonishment that northerners interpret slave singing as happiness, and the entire passage argues this interpretation is a "greater mistake." His central aim is to correct this misreading of the evidence — best captured by B. C is implied but too narrow; D is a supporting detail, not the main purpose.'},
+ {tag:'History',
+  passage:'I have often been utterly astonished, since I came to the north, to find persons who could speak of the singing, among slaves, as evidence of their contentment and happiness. It is impossible to conceive of a greater mistake. Slaves sing most when they are most unhappy. The songs of the slave represent the sorrows of his heart; he is relieved by them, only as an aching heart is relieved by its tears. I have often sung to drown my sorrow, but seldom to express my happiness. Crying for joy, and singing for joy, were alike uncommon to me while in the jaws of slavery. The singing of a man cast away upon a desolate island might be as appropriately considered as evidence of contentment and happiness, as the singing of a slave. — Frederick Douglass, Narrative of the Life of Frederick Douglass (1845)',
+  q:'Which statement from the passage most directly supports the claim that singing did not indicate happiness for enslaved people?',
+  opts:['I have often been utterly astonished, since I came to the north...','Slaves sing most when they are most unhappy.','The songs of the slave represent the sorrows of his heart.','Crying for joy, and singing for joy, were alike uncommon to me.'],
+  ci:1,exp:'B directly states the core claim: singing is highest at moments of greatest unhappiness. While C and D also support the argument with personal testimony, B is the clearest, most direct statement of the relationship between singing and unhappiness that the passage builds its argument around.'},
+ // Passage 5 — Natural Science (Ocean Acidification) — Q9-10
+ {tag:'Natural Science',
+  passage:'The ocean has absorbed approximately thirty percent of the carbon dioxide humans have released since the Industrial Revolution — a service that has significantly dampened atmospheric warming. This benefit, however, carries a steep cost: as CO₂ dissolves in seawater it forms carbonic acid, lowering the ocean\'s pH in a process known as ocean acidification. Marine organisms that build shells or skeletons from calcium carbonate — including corals, oysters, and certain plankton species — find this increasingly acidic environment hostile, as the chemistry makes it harder to extract the minerals they need and can dissolve existing structures outright. The disruption cascades through ecosystems: plankton that form the base of marine food webs weaken, threatening the fish populations that billions of humans depend on for protein.',
+  q:'Which of the following best states the central idea of the passage?',
+  opts:['Human carbon emissions have caused irreversible damage to every ocean species on Earth','The ocean\'s absorption of CO₂ has entirely prevented global atmospheric warming','Ocean acidification, resulting from CO₂ absorption, threatens marine ecosystems and human food security','Reducing carbon emissions is the only viable solution to the ocean acidification crisis'],
+  ci:2,exp:'The passage describes the cause (CO₂ absorption → acidification) and the consequences (harm to shell-building organisms, disruption of food webs, threat to human protein sources). C captures all of this without overstating (A claims "irreversible" and "every species"; B says warming was "entirely" prevented; D prescribes a solution not mentioned).'},
+ {tag:'Natural Science',
+  passage:'The ocean has absorbed approximately thirty percent of the carbon dioxide humans have released since the Industrial Revolution — a service that has significantly dampened atmospheric warming. This benefit, however, carries a steep cost: as CO₂ dissolves in seawater it forms carbonic acid, lowering the ocean\'s pH in a process known as ocean acidification. Marine organisms that build shells or skeletons from calcium carbonate — including corals, oysters, and certain plankton species — find this increasingly acidic environment hostile, as the chemistry makes it harder to extract the minerals they need and can dissolve existing structures outright. The disruption cascades through ecosystems: plankton that form the base of marine food webs weaken, threatening the fish populations that billions of humans depend on for protein.',
+  q:'As used in the passage, "dampened" most nearly means:',
+  opts:['moistened','reduced','delayed','eliminated'],
+  ci:1,exp:'"Dampened atmospheric warming" means the ocean\'s CO₂ absorption has reduced (lessened) the warming effect — not stopped it entirely. "Moistened" is a literal meaning that does not fit the context; "eliminated" is too strong since warming still occurred; "delayed" implies only a timing change rather than a magnitude reduction.'}
+];
+
+var state={};
+function loadState(){try{var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');if(s&&typeof s.cur==='number'&&s.answers&&s.shuffles){state=s;}else{resetState();}}catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){if(!state.shuffles[i]){var a=[0,1,2,3];for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}state.shuffles[i]=a;}return state.shuffles[i];}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAttempts(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function updateNav(){var ans=Object.keys(state.answers).length;document.getElementById('nav-count').textContent=ans+' / '+qs.length;document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';renderDots();}
+function toggleJump(){var p=document.getElementById('dot-panel');var b=document.getElementById('jump-btn');if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}else{p.style.display='none';b.textContent='Jump ▾';}}
+function renderDots(){var p=document.getElementById('dot-panel');if(p.style.display==='none')return;var h='';for(var i=0;i<qs.length;i++){var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===getCSI(i)?'#185FA5':'#E24B4A');h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';}if(Object.keys(state.answers).length===qs.length){h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';}p.innerHTML=h;}
+function goToQ(i){state.cur=i;state.showResults=false;saveState();render();document.getElementById('dot-panel').style.display='none';document.getElementById('jump-btn').textContent='Jump ▾';}
+function showResults(){state.showResults=true;localStorage.setItem(ATT_KEY,loadAttempts()+1);saveState();render();}
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAttempts();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';document.getElementById('resultsArea').style.display='none';updateNav();
+  var i=state.cur;var q=qs[i];
+  document.getElementById('q-tag').textContent=q.tag;
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('passage-box').innerHTML='<div class="passage-label">Passage</div>'+escHtml(q.passage);
+  document.getElementById('q-text').textContent=q.q;
+  var sh=getShuffle(i);var ans=state.answers[i];var csi=getCSI(i);
+  var html='';for(var s=0;s<4;s++){var oi=sh[s];var cls='opt-btn';var dis='';if(ans!==undefined){dis='disabled';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}html+='<button class="'+cls+'" '+dis+' onclick="pick('+i+','+s+')">'+(escHtml(q.opts[oi]))+'</button>';}
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');if(ans!==undefined&&ans!==csi){eb.style.display='block';eb.textContent=q.exp;}else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';document.getElementById('resultsArea').style.display='block';updateNav();
+  var c=0,w=0,sk=0;for(var i=0;i<qs.length;i++){if(state.answers[i]===undefined)sk++;else if(state.answers[i]===getCSI(i))c++;else w++;}
+  document.getElementById('results-summary').innerHTML='<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';for(var i=0;i<qs.length;i++){var a=state.answers[i];var label,bg,tc;if(a===undefined){label='Skipped';bg='#d7dde6';tc='#555';}else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}else{label='Wrong';bg='#FCEBEB';tc='#501313';}html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.88rem;font-weight:600;color:#333;">Q'+(i+1)+' — '+escHtml(qs[i].tag)+'</span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';}
+  document.getElementById('results-cards').innerHTML=html;
+}
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){if(dir===1&&state.cur===qs.length-1){showResults();return;}state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));saveState();render();}
+function retryWrong(){var first=-1;for(var i=0;i<qs.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){if(first===-1)first=i;delete state.answers[i];}}if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}}
+function copyRes(){var lines=['[Sion] SAT Reading 2026-06-13 - Results'];for(var i=0;i<qs.length;i++){var a=state.answers[i];lines.push('Q'+(i+1)+' ('+qs[i].tag+'): '+(a===undefined?'Skipped':a===getCSI(i)?'Correct':'Wrong'));}var txt=lines.join('\n');if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fb(txt);});}else{fb(txt);}}
+function fb(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;window.openFreshModal=openFreshModal;window.confirmFresh=confirmFresh;window.showResults=showResults;
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

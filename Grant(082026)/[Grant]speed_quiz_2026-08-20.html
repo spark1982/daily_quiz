@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Speed Quiz</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+html{margin:0 auto;}
+.title-hd{text-align:center;font-size:1.5rem;font-weight:800;color:#1D9E75;padding:10px 0 2px;}
+#attbar{text-align:center;font-size:0.8rem;color:#888;margin-bottom:6px;}
+
+#nav-bar{display:flex;align-items:center;gap:8px;margin:10px 0;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#1D9E75;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+
+.q-tag{display:inline-block;color:#fff;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:8px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:6px;}
+
+.qtimer-row{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0 12px;padding:8px 12px;background:#f5f7fa;border-radius:10px;}
+.qtimer-label{font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.02em;}
+.qtimer-display{font-size:1.15rem;font-weight:900;color:#185FA5;font-family:'Courier New',monospace;}
+.qtimer-display.warn{color:#f5a623;}
+.qtimer-display.danger{color:#E24B4A;}
+.pause-btn{background:#185FA5;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;}
+.pause-btn:disabled{background:#c7d2de;cursor:default;}
+
+.q-stem{font-size:1.05rem;font-weight:700;color:#111;margin-bottom:14px;line-height:1.5;}
+svg.qsvg{display:block;margin:8px auto;max-width:100%;}
+
+.opt-btn{display:block;width:100%;padding:12px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.4;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.timeup-msg{background:#FCEBEB;border-left:4px solid #E24B4A;border-radius:8px;padding:10px 14px;margin-top:8px;font-size:0.88rem;color:#501313;display:none;}
+
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#1D9E75;}
+.next-btn{background:#1D9E75;color:#fff;}
+.prev-btn:disabled{opacity:0.4;cursor:default;}
+
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:10px;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:340px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+
+<div class="title-hd">[Grant] Speed Quiz</div>
+<div id="attbar"></div>
+
+<div id="nav-bar">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / N</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #1D9E75;border-radius:14px;background:#fff;color:#1D9E75;cursor:pointer;white-space:nowrap;">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div id="tagWrap"><span class="q-tag" id="q-tag-label"></span></div>
+  <div class="q-num" id="q-num"></div>
+
+  <div class="qtimer-row">
+    <span class="qtimer-label">Time Left</span>
+    <span class="qtimer-display" id="qtimerDisplay">40</span>
+    <button class="pause-btn" id="pauseBtn" onclick="togglePause()">Pause</button>
+  </div>
+
+  <div class="q-stem" id="q-stem"></div>
+  <div id="opts-area"></div>
+  <div class="timeup-msg" id="timeup-msg">Time is up! The correct answer is highlighted above.</div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" id="prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#1D9E75;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.05rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong &amp; Timed Out</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#7b61ff;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModalOriginal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:12px;">Start Fresh (Original Order)</button>
+  <button onclick="openFreshModalRandom()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh (Random Order)</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <h3 id="freshModalTitle" style="margin:0 0 10px;color:#185FA5;font-size:1.05rem;">Start Fresh?</h3>
+    <p id="freshModalText" style="font-size:0.95rem;color:#444;margin:0 0 16px;">All progress will be cleared.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="closeFreshModal()" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+
+var QUIZ_KEY = "quiz_grantspeedquiz_30_20260820_v2";
+var ATT_KEY  = "quiz_grantspeedquiz_att_20260820_v2";
+var ORDER_KEY = "quiz_grantspeedquiz_30_20260820_v2_order_v1";
+var QUIZ_LABEL = "[Grant] Speed Quiz - Results";
+var TAG_COLORS = {"Gauss": "#185FA5", "Intervals": "#7b61ff", "Add & Sub": "#1D9E75", "Multiply": "#f5a623", "Geometry": "#E24B4A"};
+var TIMER_SECS = 40;
+
+var RAW_QUESTIONS = [{"tag": "Gauss", "stem": "Compute the following series.<br>2 + 3 + 4 + 5 + 6 + 7 + 8", "opts": ["28", "40", "42", "35"], "ci": 3}, {"tag": "Gauss", "stem": "Compute the following series.<br>6 + 7 + 8 + 9 + 10 + 11", "opts": ["48", "54", "45", "51"], "ci": 3}, {"tag": "Gauss", "stem": "John saves 5 fifty-cent coins in the first week. He saves 6 fifty-cent coins in the second week. In the third week, he saves 7 fifty-cent coins and so on. How many fifty-cent coins can John save altogether by the end of 10 weeks?", "opts": ["90", "105", "95", "100"], "ci": 2}, {"tag": "Gauss", "stem": "There are 10 rows of seats in an auditorium. The first row has 30 seats. The second row has 34 seats. The third row has 38 seats and so on. How many seats are there in the auditorium?", "opts": ["480", "460", "450", "500"], "ci": 0}, {"tag": "Gauss", "stem": "Compute the following series.<br>17 + 18 + 19 + 20 + 21 + 22 + 23", "opts": ["126", "147", "133", "140"], "ci": 3}, {"tag": "Gauss", "stem": "Compute the following series.<br>100 + 102 + 104 + 106 + 108 + 110", "opts": ["618", "624", "630", "636"], "ci": 2}, {"tag": "Intervals", "stem": "Joe puts 5 matchsticks on a table. Each matchstick is 10 cm away from another. How far is the fifth matchstick away from the first one?", "opts": ["45 cm", "50 cm", "40 cm", "35 cm"], "ci": 2}, {"tag": "Intervals", "stem": "A sailor tied 7 knots on a rope at regular intervals. The distance from the first knot to the seventh one was 18 m long. What is the distance between every two knots?", "opts": ["2.25 m", "2.57 m", "3 m", "3.6 m"], "ci": 2}, {"tag": "Intervals", "stem": "A road, 500 m long, is to be planted with trees at an interval of 5 m. How many trees can be planted if trees are planted at both ends of the road as well?", "opts": ["105", "100", "99", "101"], "ci": 3}, {"tag": "Intervals", "stem": "It takes John 8 minutes to saw a log into 3 equal lengths. How long does it take for him to saw the same log into 9 equal lengths?", "opts": ["28 minutes", "24 minutes", "32 minutes", "36 minutes"], "ci": 2}, {"tag": "Intervals", "stem": "25 trees are planted at regular intervals from the beginning of a road to the end of it. The distance between every two trees is 5 m. How long is the road?", "opts": ["130 m", "125 m", "115 m", "120 m"], "ci": 3}, {"tag": "Intervals", "stem": "My grandfather clock takes 6 seconds to chime 3 times at 3 o'clock. How long does it take to chime 6 times at 6 o'clock?", "opts": ["9 seconds", "18 seconds", "15 seconds", "12 seconds"], "ci": 2}, {"tag": "Add & Sub", "stem": "Compute the following.<br>22 + 78 =", "opts": ["110", "90", "100", "98"], "ci": 2}, {"tag": "Add & Sub", "stem": "Compute the following.<br>24 + 37 + 23 + 16 =", "opts": ["100", "110", "96", "90"], "ci": 0}, {"tag": "Add & Sub", "stem": "Compute the following.<br>24 + 47 + 39 =", "opts": ["106", "120", "110", "100"], "ci": 2}, {"tag": "Add & Sub", "stem": "Compute the following.<br>28 + 57 + 23 + 22 =", "opts": ["140", "126", "130", "120"], "ci": 2}, {"tag": "Add & Sub", "stem": "Compute the following.<br>175 + 246 + 225 + 254 =", "opts": ["910", "880", "900", "890"], "ci": 2}, {"tag": "Add & Sub", "stem": "Compute the following.<br>567 &minus; 134 &minus; 133 =", "opts": ["320", "310", "290", "300"], "ci": 3}, {"tag": "Multiply", "stem": "Compute the following.<br>4 &times; 5 &times; 25 =", "opts": ["550", "500", "450", "400"], "ci": 1}, {"tag": "Multiply", "stem": "Compute the following.<br>24 &times; 25 =", "opts": ["580", "620", "560", "600"], "ci": 3}, {"tag": "Multiply", "stem": "Compute the following.<br>48 &times; 125 =", "opts": ["5,600", "5,800", "6,000", "6,200"], "ci": 2}, {"tag": "Multiply", "stem": "Compute the following.<br>44 &times; 25 =", "opts": ["1,050", "1,100", "1,200", "1,000"], "ci": 1}, {"tag": "Multiply", "stem": "Compute the following.<br>40 &times; 99 =", "opts": ["3,600", "3,960", "4,000", "3,900"], "ci": 1}, {"tag": "Multiply", "stem": "Compute the following.<br>33 &times; 101 =", "opts": ["3,030", "3,333", "3,363", "3,300"], "ci": 1}, {"tag": "Geometry", "stem": "The 5 points below are placed at unequal intervals along a line, so that no two of the segments between them are the same length. How many segments of different lengths can be formed using these 5 points?<br><svg class=\"qsvg\" width=\"220\" height=\"100\" viewBox=\"0 0 220 100\"><line x1=\"20\" y1=\"60\" x2=\"220\" y2=\"60\" stroke=\"#333\" stroke-width=\"2\"/><circle cx=\"20\" cy=\"60\" r=\"4\" fill=\"#185FA5\"/><text x=\"20\" y=\"48\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">A</text><circle cx=\"55\" cy=\"60\" r=\"4\" fill=\"#185FA5\"/><text x=\"55\" y=\"48\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">B</text><circle cx=\"140\" cy=\"60\" r=\"4\" fill=\"#185FA5\"/><text x=\"140\" y=\"48\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">C</text><circle cx=\"175\" cy=\"60\" r=\"4\" fill=\"#185FA5\"/><text x=\"175\" y=\"48\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">D</text><circle cx=\"220\" cy=\"60\" r=\"4\" fill=\"#185FA5\"/><text x=\"220\" y=\"48\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">E</text></svg>", "opts": ["10", "9", "20", "8"], "ci": 0}, {"tag": "Geometry", "stem": "The 6 points below are placed at unequal intervals along a line, so that no two of the segments between them are the same length. How many segments of different lengths can be formed using these 6 points?<br><svg class=\"qsvg\" width=\"250\" height=\"100\" viewBox=\"0 0 250 100\"><line x1=\"15\" y1=\"60\" x2=\"235\" y2=\"60\" stroke=\"#333\" stroke-width=\"2\"/><circle cx=\"15\" cy=\"60\" r=\"4\" fill=\"#185FA5\"/><text x=\"15\" y=\"48\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">A</text><circle cx=\"45\" cy=\"60\" r=\"4\" fill=\"#185FA5\"/><text x=\"45\" y=\"48\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">B</text><circle cx=\"95\" cy=\"60\" r=\"4\" fill=\"#185FA5\"/><text x=\"95\" y=\"48\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">C</text><circle cx=\"140\" cy=\"60\" r=\"4\" fill=\"#185FA5\"/><text x=\"140\" y=\"48\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">D</text><circle cx=\"190\" cy=\"60\" r=\"4\" fill=\"#185FA5\"/><text x=\"190\" y=\"48\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">E</text><circle cx=\"235\" cy=\"60\" r=\"4\" fill=\"#185FA5\"/><text x=\"235\" y=\"48\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">F</text></svg>", "opts": ["15", "18", "12", "21"], "ci": 0}, {"tag": "Geometry", "stem": "The 7 points below are placed at unequal intervals along a line, so that no two of the segments between them are the same length. How many segments of different lengths can be formed using these 7 points?<br><svg class=\"qsvg\" width=\"280\" height=\"100\" viewBox=\"0 0 280 100\"><line x1=\"10\" y1=\"60\" x2=\"260\" y2=\"60\" stroke=\"#333\" stroke-width=\"2\"/><circle cx=\"10\" cy=\"60\" r=\"4\" fill=\"#185FA5\"/><text x=\"10\" y=\"48\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">A</text><circle cx=\"35\" cy=\"60\" r=\"4\" fill=\"#185FA5\"/><text x=\"35\" y=\"48\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">B</text><circle cx=\"70\" cy=\"60\" r=\"4\" fill=\"#185FA5\"/><text x=\"70\" y=\"48\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">C</text><circle cx=\"110\" cy=\"60\" r=\"4\" fill=\"#185FA5\"/><text x=\"110\" y=\"48\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">D</text><circle cx=\"155\" cy=\"60\" r=\"4\" fill=\"#185FA5\"/><text x=\"155\" y=\"48\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">E</text><circle cx=\"205\" cy=\"60\" r=\"4\" fill=\"#185FA5\"/><text x=\"205\" y=\"48\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">F</text><circle cx=\"260\" cy=\"60\" r=\"4\" fill=\"#185FA5\"/><text x=\"260\" y=\"48\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">G</text></svg>", "opts": ["21", "15", "28", "20"], "ci": 0}, {"tag": "Geometry", "stem": "How many rectangles (including squares) are there altogether in the 3-by-3 grid below?<br><svg class=\"qsvg\" width=\"110\" height=\"110\" viewBox=\"0 0 110 110\"><line x1=\"10\" y1=\"10\" x2=\"10\" y2=\"100\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"40\" y1=\"10\" x2=\"40\" y2=\"100\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"70\" y1=\"10\" x2=\"70\" y2=\"100\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"100\" y1=\"10\" x2=\"100\" y2=\"100\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"10\" x2=\"100\" y2=\"10\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"40\" x2=\"100\" y2=\"40\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"70\" x2=\"100\" y2=\"70\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"100\" x2=\"100\" y2=\"100\" stroke=\"#333\" stroke-width=\"1.5\"/></svg>", "opts": ["9", "36", "27", "30"], "ci": 1}, {"tag": "Geometry", "stem": "How many rectangles are there altogether in the 1-row-by-7-column strip below?<br><svg class=\"qsvg\" width=\"202\" height=\"46\" viewBox=\"0 0 202 46\"><line x1=\"10\" y1=\"10\" x2=\"10\" y2=\"36\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"36\" y1=\"10\" x2=\"36\" y2=\"36\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"62\" y1=\"10\" x2=\"62\" y2=\"36\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"88\" y1=\"10\" x2=\"88\" y2=\"36\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"114\" y1=\"10\" x2=\"114\" y2=\"36\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"140\" y1=\"10\" x2=\"140\" y2=\"36\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"166\" y1=\"10\" x2=\"166\" y2=\"36\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"192\" y1=\"10\" x2=\"192\" y2=\"36\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"10\" x2=\"192\" y2=\"10\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"36\" x2=\"192\" y2=\"36\" stroke=\"#333\" stroke-width=\"1.5\"/></svg>", "opts": ["28", "21", "7", "14"], "ci": 0}, {"tag": "Geometry", "stem": "The triangle below has 3 line segments drawn from its top vertex to its base, dividing the base into 4 parts. How many triangles are there altogether in the figure?<br><svg class=\"qsvg\" width=\"240\" height=\"160\" viewBox=\"0 0 240 160\"><line x1=\"120\" y1=\"15\" x2=\"20\" y2=\"145\" stroke=\"#333\" stroke-width=\"2\"/><line x1=\"120\" y1=\"15\" x2=\"220\" y2=\"145\" stroke=\"#333\" stroke-width=\"2\"/><line x1=\"20\" y1=\"145\" x2=\"220\" y2=\"145\" stroke=\"#333\" stroke-width=\"2\"/><line x1=\"120\" y1=\"15\" x2=\"70.0\" y2=\"145\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"120\" y1=\"15\" x2=\"120.0\" y2=\"145\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"120\" y1=\"15\" x2=\"170.0\" y2=\"145\" stroke=\"#333\" stroke-width=\"1.5\"/></svg>", "opts": ["12", "9", "15", "10"], "ci": 3}];
+
+function shuffle(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var tmp=a[i]; a[i]=a[j]; a[j]=tmp;
+  }
+  return a;
+}
+function identityOrder(){ var o=[]; for(var i=0;i<RAW_QUESTIONS.length;i++) o.push(i); return o; }
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length!==RAW_QUESTIONS.length) return false;
+  var sorted = arr.slice().sort(function(a,b){return a-b;});
+  for(var i=0;i<sorted.length;i++) if(sorted[i]!==i) return false;
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad order');
+    return arr;
+  }catch(e){ try{localStorage.removeItem(ORDER_KEY);}catch(e2){} return null; }
+}
+function saveOrder(order){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(order)); }catch(e){} }
+function buildQuestions(raw, order){
+  var out=[]; for(var i=0;i<order.length;i++) out.push(raw[order[i]]); return out;
+}
+var currentOrder = loadOrder() || identityOrder();
+var qs = buildQuestions(RAW_QUESTIONS, currentOrder);
+var pendingFreshMode = 'original';
+
+var state = {};
+function defaultState(){
+  var qtimers = {}, qstatus = {}, qpaused = {};
+  for (var i=0;i<qs.length;i++){ qtimers[i]=TIMER_SECS; qstatus[i]='pending'; qpaused[i]=false; }
+  return { cur:0, answers:{}, qtimers:qtimers, qstatus:qstatus, qpaused:qpaused, showResults:false };
+}
+function loadState(){
+  try{
+    var s = JSON.parse(localStorage.getItem(QUIZ_KEY) || 'null');
+    if (s && typeof s.cur==='number' && s.answers && s.qtimers && s.qstatus){ state = s; }
+    else { state = defaultState(); }
+  }catch(e){ try{localStorage.removeItem(QUIZ_KEY);}catch(e2){} state = defaultState(); }
+}
+function saveState(){ try{ localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); }catch(e){} }
+function loadAttempts(){ try{ return parseInt(localStorage.getItem(ATT_KEY)||'0',10) || 0; }catch(e){ return 0; } }
+
+var tickInterval = null;
+function stopTick(){ if(tickInterval){ clearInterval(tickInterval); tickInterval=null; } }
+function startTick(){
+  stopTick();
+  tickInterval = setInterval(function(){
+    var i = state.cur;
+    if (state.qstatus[i] !== 'pending' || state.qpaused[i]) { return; }
+    state.qtimers[i] = Math.max(0, state.qtimers[i]-1);
+    if (state.qtimers[i] <= 0){
+      state.qstatus[i] = 'timedout';
+      saveState();
+      stopTick();
+      renderQuestion();
+      return;
+    }
+    saveState();
+    renderTimerDisplay();
+  }, 1000);
+}
+function renderTimerDisplay(){
+  var i = state.cur;
+  var el = document.getElementById('qtimerDisplay');
+  var rem = state.qtimers[i];
+  el.textContent = rem;
+  el.classList.remove('warn','danger');
+  if (rem <= TIMER_SECS*(4/15)) el.classList.add('danger');
+  else if (rem <= TIMER_SECS*(8/15)) el.classList.add('warn');
+  var pauseBtn = document.getElementById('pauseBtn');
+  if (state.qstatus[i] !== 'pending'){
+    pauseBtn.disabled = true; pauseBtn.textContent = 'Pause';
+  } else {
+    pauseBtn.disabled = false;
+    pauseBtn.textContent = state.qpaused[i] ? 'Resume' : 'Pause';
+  }
+}
+function togglePause(){
+  var i = state.cur;
+  if (state.qstatus[i] !== 'pending') return;
+  state.qpaused[i] = !state.qpaused[i];
+  saveState();
+  renderTimerDisplay();
+}
+window.togglePause = togglePause;
+
+function updateNav(){
+  var done = 0;
+  for (var i=0;i<qs.length;i++){ if (state.qstatus[i] !== 'pending') done++; }
+  document.getElementById('nav-count').textContent = done + ' / ' + qs.length;
+  document.getElementById('prog-fill').style.width = (done/qs.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function toggleJump(){
+  var p=document.getElementById('dot-panel'); var b=document.getElementById('jump-btn');
+  if (p.style.display==='none' || !p.style.display){ p.style.display='block'; b.textContent='Hide ▴'; renderDots(); }
+  else { p.style.display='none'; b.textContent='Jump ▾'; }
+}
+function renderDots(){
+  var p=document.getElementById('dot-panel');
+  if (p.style.display!=='block') return;
+  var h='';
+  for (var i=0;i<qs.length;i++){
+    var bg;
+    if (state.qstatus[i]==='pending') bg='#d7dde6';
+    else if (state.qstatus[i]==='timedout') bg='#f5a623';
+    else { bg = (state.answers[i]===qs[i].ci) ? '#1D9E75' : '#E24B4A'; }
+    h += '<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';
+  }
+  var allDone = true;
+  for (var i=0;i<qs.length;i++){ if (state.qstatus[i]==='pending') { allDone=false; break; } }
+  if (allDone){
+    h += '<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';
+  }
+  p.innerHTML = h;
+}
+function goToQ(i){
+  stopTick();
+  state.cur=i; state.showResults=false; saveState(); render();
+  document.getElementById('dot-panel').style.display='none';
+  document.getElementById('jump-btn').textContent='Jump ▾';
+}
+
+function showResults(){
+  stopTick();
+  state.showResults = true;
+  try{ localStorage.setItem(ATT_KEY, loadAttempts()+1); }catch(e){}
+  saveState(); render();
+}
+
+function render(){
+  document.getElementById('attbar').textContent = 'Total Attempts: ' + loadAttempts();
+  if (state.showResults){ renderResults(); return; }
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('resultsArea').style.display='none';
+  updateNav();
+  renderQuestion();
+}
+
+function renderQuestion(){
+  var i = state.cur;
+  var q = qs[i];
+  document.getElementById('q-num').textContent = 'Question ' + (i+1) + ' of ' + qs.length;
+
+  var tagWrap = document.getElementById('tagWrap');
+  var tagEl = document.getElementById('q-tag-label');
+  if (q.tag){
+    tagWrap.style.display='block';
+    tagEl.textContent = q.tag;
+    tagEl.style.background = TAG_COLORS[q.tag] || '#1D9E75';
+  } else { tagWrap.style.display='none'; }
+
+  document.getElementById('q-stem').innerHTML = q.stem;
+
+  var status = state.qstatus[i];
+  var ans = state.answers[i];
+  var html='';
+  for (var s=0;s<4;s++){
+    var cls='opt-btn'; var dis='';
+    if (status !== 'pending'){
+      dis='disabled';
+      if (s===q.ci) cls+=' correct';
+      else if (s===ans) cls+=' wrong';
+    }
+    html += '<button class="'+cls+'" '+dis+' onclick="pick('+i+','+s+')">'+q.opts[s]+'</button>';
+  }
+  document.getElementById('opts-area').innerHTML = html;
+
+  document.getElementById('timeup-msg').style.display = (status==='timedout') ? 'block' : 'none';
+
+  renderTimerDisplay();
+  updateNav();
+
+  document.getElementById('next-btn').textContent = (i===qs.length-1) ? 'See Results →' : 'Next';
+  document.getElementById('prev-btn').disabled = (i===0);
+
+  stopTick();
+  if (status === 'pending' && !state.qpaused[i]) startTick();
+}
+
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  updateNav();
+  var c=0,w=0,t=0,sk=0;
+  for (var i=0;i<qs.length;i++){
+    if (state.qstatus[i]==='pending') sk++;
+    else if (state.qstatus[i]==='timedout') t++;
+    else if (state.answers[i]===qs[i].ci) c++;
+    else w++;
+  }
+  document.getElementById('results-summary').innerHTML =
+    '<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;'+
+    '<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;'+
+    '<span style="color:#f5a623;font-weight:700;">'+t+'</span> timed out &nbsp;'+
+    '<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';
+  for (var i=0;i<qs.length;i++){
+    var label,bg,tc;
+    if (state.qstatus[i]==='pending'){ label='Skipped'; bg='#d7dde6'; tc='#555'; }
+    else if (state.qstatus[i]==='timedout'){ label='Timed Out'; bg='#fff3e0'; tc='#8a5a00'; }
+    else if (state.answers[i]===qs[i].ci){ label='Correct'; bg='#E1F5EE'; tc='#085041'; }
+    else { label='Wrong'; bg='#FCEBEB'; tc='#501313'; }
+    html += '<div class="results-card" onclick="goToQ('+i+')">'+
+            '<span style="font-size:0.92rem;font-weight:600;color:#333;">Question '+(i+1)+'</span>'+
+            '<span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span>'+
+            '</div>';
+  }
+  document.getElementById('results-cards').innerHTML = html;
+}
+
+function pick(qi, si){
+  if (state.qstatus[qi] !== 'pending') return;
+  state.answers[qi] = si;
+  state.qstatus[qi] = 'answered';
+  stopTick();
+  saveState(); render();
+}
+function go(dir){
+  if (dir===1 && state.cur===qs.length-1){ showResults(); return; }
+  stopTick();
+  state.cur = Math.max(0, Math.min(qs.length-1, state.cur+dir));
+  saveState(); render();
+}
+
+function retryWrong(){
+  var first=-1;
+  for (var i=0;i<qs.length;i++){
+    var isWrong = state.qstatus[i]==='answered' && state.answers[i]!==qs[i].ci;
+    var isTimedOut = state.qstatus[i]==='timedout';
+    if (isWrong || isTimedOut){
+      if (first===-1) first=i;
+      state.qstatus[i]='pending'; state.qtimers[i]=TIMER_SECS; state.qpaused[i]=false;
+      delete state.answers[i];
+    }
+  }
+  if (first !== -1){ state.cur=first; state.showResults=false; saveState(); render(); }
+}
+function copyRes(){
+  var lines=[QUIZ_LABEL];
+  for (var i=0;i<qs.length;i++){
+    var label = state.qstatus[i]==='pending' ? 'Skipped' :
+      state.qstatus[i]==='timedout' ? 'Timed Out' :
+      (state.answers[i]===qs[i].ci ? 'Correct' : 'Wrong');
+    lines.push('Q'+(i+1)+': '+label);
+  }
+  var txt = lines.join('\n');
+  if (navigator.clipboard){ navigator.clipboard.writeText(txt).catch(function(){ fallbackCopy(txt); }); }
+  else { fallbackCopy(txt); }
+}
+function fallbackCopy(txt){
+  var ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta);
+  ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+}
+
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var titleEl = document.getElementById('freshModalTitle');
+  var textEl = document.getElementById('freshModalText');
+  if (mode==='random'){
+    titleEl.textContent = 'Start Fresh (Random Order)?';
+    textEl.textContent = 'Questions will be reshuffled into a new random order, and all answers and timers will be cleared. This cannot be undone.';
+  } else {
+    titleEl.textContent = 'Start Fresh (Original Order)?';
+    textEl.textContent = 'Questions will return to their original order, and all answers and timers will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  currentOrder = (pendingFreshMode==='random') ? shuffle(identityOrder()) : identityOrder();
+  saveOrder(currentOrder);
+  qs = buildQuestions(RAW_QUESTIONS, currentOrder);
+  state = defaultState();
+  saveState();
+  stopTick();
+  closeFreshModal();
+  render();
+}
+
+window.pick=pick; window.go=go; window.goToQ=goToQ; window.toggleJump=toggleJump;
+window.retryWrong=retryWrong; window.copyRes=copyRes; window.showResults=showResults;
+window.openFreshModalOriginal=openFreshModalOriginal; window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal; window.confirmFresh=confirmFresh;
+
+loadState(); saveState();
+render();
+
+})();
+</script>
+</body>
+</html>

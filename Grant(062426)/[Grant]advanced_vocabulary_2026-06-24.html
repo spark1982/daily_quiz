@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Advanced Vocabulary</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;margin:0 auto;}
+.title-hd{text-align:center;font-size:1.5rem;font-weight:800;color:#1D9E75;padding:10px 0 2px;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:6px 12px 10px;background:#fff;}
+.q-tag{display:inline-block;background:#1D9E75;color:#fff;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:8px;}
+.word-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.word-text{font-size:2rem;font-weight:800;color:#111;}
+.speak-btn{background:#e8edf4;border:none;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.opt-btn{display:block;width:100%;padding:12px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.95rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#1D9E75;}
+.next-btn{background:#1D9E75;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#1D9E75;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+.timer-bar{background:#fff;border-bottom:1px solid #d0dce8;padding:8px 12px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+.timer-setup{display:flex;align-items:center;gap:8px;font-size:0.85rem;color:#444;}
+.timer-setup label{font-weight:700;}
+.timer-setup input[type="number"]{width:56px;padding:5px 6px;border:1.5px solid #d0dce8;border-radius:6px;font-size:0.9rem;text-align:center;}
+.timer-start-btn{background:#185FA5;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;}
+.timer-running{display:flex;align-items:center;gap:8px;}
+.timer-label{font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.02em;}
+.timer-display{font-size:1.1rem;font-weight:900;color:#185FA5;font-family:'Courier New',monospace;letter-spacing:0.02em;}
+.timer-display.warn{color:#f5a623;}
+.timer-display.danger{color:#E24B4A;}
+</style>
+</head>
+<body>
+
+<div class="title-hd">[Grant] Advanced Vocabulary</div>
+<div class="instruction">Choose the best definition for each word.</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 20</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #1D9E75;border-radius:14px;background:#fff;color:#1D9E75;cursor:pointer;white-space:nowrap;">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="20"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">20:00</span>
+  </div>
+</div>
+
+<div id="quizArea" style="display:none;">
+  <div><span class="q-tag" id="q-tag-label">New</span></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="word-row">
+    <span class="word-text" id="q-word"></span>
+    <button class="speak-btn" onclick="speakWord()" title="Listen">&#128264;</button>
+  </div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#1D9E75;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+
+var QUIZ_KEY   = 'quiz_grantadvvocab_20_20260623_v1';
+var ATT_KEY    = 'quiz_grantadvvocab_att_20260623_v1';
+var TTS_LANG   = 'en-US';
+var QUIZ_LABEL = '[Grant] Advanced Vocabulary - Results';
+
+var qs = [
+  { stem:'governance', tag:'New', opts:['the action or manner of governing an organization or state','a formal document outlining legal rights','a sudden change in leadership during a crisis','the process of repairing damaged property'], ci:0,
+    exp:'"Governance" refers to the action or manner of governing a state, company, or organization, not a document, a leadership change, or property repair.' },
+  { stem:'demonstrate', tag:'New', opts:['to clearly show or prove something through evidence or action','to quietly observe a situation without acting','to argue strongly against an idea','to memorize a long passage of text'], ci:0,
+    exp:'"Demonstrate" means to clearly show or prove something, often through evidence or example, not to observe silently, argue against, or memorize.' },
+  { stem:'adapt', tag:'New', opts:['to change or adjust in order to suit new conditions','to refuse to change despite new information','to translate a text into another language exactly','to combine two separate ideas into one'], ci:0,
+    exp:'"Adapt" means to change or adjust to suit new conditions, the opposite of refusing to change.' },
+  { stem:'potential', tag:'New', opts:['having the capacity to develop or happen in the future','already fully developed and complete','impossible to achieve under any circumstance','limited to a single specific use'], ci:0,
+    exp:'"Potential" describes the capacity to develop or happen in the future, not something already complete or impossible.' },
+  { stem:'innovation', tag:'New', opts:['a new idea, method, or invention','an old tradition passed down for generations','a strict rule that must never be broken','a temporary solution to a minor problem'], ci:0,
+    exp:'"Innovation" refers to a new idea, method, or invention, the opposite of an old tradition.' },
+  { stem:'escalate', tag:'Review', opts:['to increase rapidly in extent, intensity, or seriousness','to decrease gradually over a long period','to remain exactly the same without change','to end suddenly and completely'], ci:0,
+    exp:'"Escalate" means to increase rapidly in extent or intensity, such as a conflict escalating, the opposite of decreasing or staying the same.' },
+  { stem:'alternate', tag:'New', opts:['to occur or do in turns, one after the other','to happen only once and never again','to combine two things into a single object','to remain fixed in one position permanently'], ci:0,
+    exp:'"Alternate" means to occur in turns, one after another, such as alternating between two tasks.' },
+  { stem:'autonomy', tag:'New', opts:['the ability to act independently and make one\'s own decisions','the requirement to follow another person\'s orders','a feeling of fear about an uncertain future','a formal title given to a respected leader'], ci:0,
+    exp:'"Autonomy" means the ability to act independently and govern oneself, the opposite of having to follow someone else\'s orders.' },
+  { stem:'ecological', tag:'Review', opts:['relating to the relationship between living things and their environment','relating to the history of ancient civilizations','relating to the structure of a business organization','relating to the rules of a formal sport'], ci:0,
+    exp:'"Ecological" relates to the relationships between living organisms and their environment, not history, business, or sports.' },
+  { stem:'acknowledge', tag:'New', opts:['to accept or admit that something is true or exists','to deny that something ever happened','to forget about an important detail','to keep a secret from everyone else'], ci:0,
+    exp:'"Acknowledge" means to accept or admit that something is true, the opposite of denying it.' },
+  { stem:'atmosphere', tag:'Review', opts:['the overall mood of a place, or the layer of gases surrounding a planet','a written record of a meeting\'s events','a tool used to measure temperature precisely','a formal agreement between two countries'], ci:0,
+    exp:'"Atmosphere" can mean the overall mood or feeling of a place, or the layer of gases surrounding a planet like Earth.' },
+  { stem:'aggregate', tag:'New', opts:['a whole amount formed by combining several separate parts','a single isolated piece with no connection to others','a process of removing unwanted material','a fixed limit that cannot be exceeded'], ci:0,
+    exp:'"Aggregate" refers to a total or whole formed by combining many separate parts, not a single isolated piece.' },
+  { stem:'authorization', tag:'Review', opts:['official permission or approval to do something','a formal complaint filed against a person','a detailed plan for completing a project','a financial penalty for breaking a rule'], ci:0,
+    exp:'"Authorization" means official permission or approval, not a complaint, a plan, or a penalty.' },
+  { stem:'archaeologist', tag:'New', opts:['a scientist who studies human history through excavated sites and artifacts','a scientist who studies the behavior of living animals','a scientist who designs new types of buildings','a scientist who predicts future weather patterns'], ci:0,
+    exp:'An "archaeologist" studies human history and prehistory through excavation of sites and analysis of artifacts, distinct from a zoologist, architect, or meteorologist.' },
+  { stem:'accumulation', tag:'New', opts:['the gradual gathering or build-up of something over time','the sudden disappearance of something valuable','the official announcement of a new policy','the careful division of something into equal parts'], ci:0,
+    exp:'"Accumulation" refers to the gradual gathering or build-up of something over time, the opposite of a sudden disappearance.' },
+  { stem:'elaborate', tag:'New', opts:['detailed and complex, or to explain something in greater detail','simple and lacking any detail','completed in an extremely short amount of time','kept secret from most people'], ci:0,
+    exp:'"Elaborate" describes something detailed and complex, or means to explain something in more detail, the opposite of simple.' },
+  { stem:'acquisition', tag:'New', opts:['the act of gaining or coming into possession of something','the act of giving away one\'s possessions to others','the act of repairing something that is broken','the act of measuring the size of an object'], ci:0,
+    exp:'"Acquisition" means the act of gaining or acquiring possession of something, the opposite of giving it away.' },
+  { stem:'hierarchy', tag:'New', opts:['a system in which people or things are ranked according to status or authority','a system in which all members have completely equal status','a collection of unrelated facts with no organization','a temporary committee formed to solve one problem'], ci:0,
+    exp:'"Hierarchy" is a system of ranking people or things by status or authority, the opposite of a system where everyone is equal.' },
+  { stem:'phenomenon', tag:'New', opts:['a fact or event that is observed, especially one that is unusual or notable','a common object found in nearly every household','a rule that has been written into law','a type of formal written agreement'], ci:0,
+    exp:'"Phenomenon" refers to an observed fact or event, especially one that is unusual or remarkable.' },
+  { stem:'accumulate', tag:'Review', opts:['to gather or acquire an increasing amount of something over time','to give away one\'s belongings all at once','to destroy something completely and permanently','to repeat the same action without any change'], ci:0,
+    exp:'"Accumulate" means to gather or acquire an increasing amount of something over time, such as accumulating savings, the opposite of giving it all away.' }
+];
+
+var state = {};
+
+function loadState() {
+  try {
+    var s = JSON.parse(localStorage.getItem(QUIZ_KEY) || 'null');
+    if (s && typeof s.cur === 'number' && s.answers && s.shuffles) { state = s; }
+    else { resetState(); }
+  } catch(e) { localStorage.removeItem(QUIZ_KEY); resetState(); }
+}
+
+function resetState() {
+  state = { cur:0, answers:{}, shuffles:{}, showResults:false, timerTotalSec:null, timerStartedAt:null };
+}
+
+function saveState() { localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); }
+
+function getShuffle(i) {
+  if (!state.shuffles[i]) {
+    var a=[0,1,2,3];
+    for (var k=3;k>0;k--){ var j=Math.floor(Math.random()*(k+1)); var t=a[k]; a[k]=a[j]; a[j]=t; }
+    state.shuffles[i]=a;
+  }
+  return state.shuffles[i];
+}
+function getCSI(i) { return getShuffle(i).indexOf(qs[i].ci); }
+
+function loadAttempts() { return parseInt(localStorage.getItem(ATT_KEY) || '0', 10); }
+
+function updateNav() {
+  var ans = Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent = ans + ' / ' + qs.length;
+  document.getElementById('prog-fill').style.width = (ans/qs.length*100).toFixed(1)+'%';
+  renderDots();
+}
+
+function toggleJump() {
+  var p=document.getElementById('dot-panel'); var b=document.getElementById('jump-btn');
+  if (p.style.display==='none'||!p.style.display) { p.style.display='block'; b.textContent='Hide ▴'; renderDots(); }
+  else { p.style.display='none'; b.textContent='Jump ▾'; }
+}
+
+function renderDots() {
+  var p=document.getElementById('dot-panel');
+  if (p.style.display!=='block') return;
+  var h='';
+  for (var i=0;i<qs.length;i++){
+    var bg = state.answers[i]===undefined ? '#d7dde6' : (state.answers[i]===getCSI(i) ? '#1D9E75' : '#E24B4A');
+    h += '<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';
+  }
+  if (Object.keys(state.answers).length===qs.length) {
+    h += '<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';
+  }
+  p.innerHTML = h;
+}
+
+function goToQ(i) {
+  state.cur=i; state.showResults=false; saveState(); render();
+  document.getElementById('dot-panel').style.display='none';
+  document.getElementById('jump-btn').textContent='Jump ▾';
+}
+
+function speakWord() {
+  var w = qs[state.cur].stem;
+  var u = new SpeechSynthesisUtterance(w);
+  u.lang = TTS_LANG;
+  window.speechSynthesis.speak(u);
+}
+
+function showResults() {
+  state.showResults = true;
+  localStorage.setItem(ATT_KEY, loadAttempts()+1);
+  saveState(); render();
+}
+
+function render() {
+  if (state.showResults) { renderResults(); return; }
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('resultsArea').style.display='none';
+  updateNav();
+
+  var i=state.cur; var q=qs[i];
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-word').textContent=q.stem;
+
+  var tagEl=document.getElementById('q-tag-label');
+  tagEl.textContent=q.tag;
+  tagEl.style.background = (q.tag==='Review') ? '#f5a623' : '#1D9E75';
+
+  var sh=getShuffle(i); var ans=state.answers[i]; var csi=getCSI(i); var html='';
+  for (var s=0;s<4;s++){
+    var oi=sh[s]; var cls='opt-btn'; var dis='';
+    if (ans!==undefined) {
+      dis='disabled';
+      if (s===csi) cls+=' correct';
+      else if (s===ans) cls+=' wrong';
+    }
+    html += '<button class="'+cls+'" '+dis+' onclick="pick('+i+','+s+')">'+escHtml(q.opts[oi])+'</button>';
+  }
+  document.getElementById('opts-area').innerHTML=html;
+
+  var eb=document.getElementById('exp-box');
+  if (ans!==undefined && ans!==csi) { eb.style.display='block'; eb.textContent=q.exp; }
+  else { eb.style.display='none'; }
+
+  document.getElementById('next-btn').textContent = (i===qs.length-1) ? 'See Results →' : 'Next';
+  document.querySelector('.prev-btn').disabled = (i===0);
+}
+
+function renderResults() {
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  updateNav();
+
+  var c=0,w=0,sk=0;
+  for (var i=0;i<qs.length;i++){
+    if (state.answers[i]===undefined) sk++;
+    else if (state.answers[i]===getCSI(i)) c++;
+    else w++;
+  }
+  document.getElementById('results-summary').innerHTML =
+    '<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;'+
+    '<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;'+
+    '<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+
+  var html='';
+  for (var i=0;i<qs.length;i++){
+    var a=state.answers[i]; var label,bg,tc;
+    if (a===undefined) { label='Skipped'; bg='#d7dde6'; tc='#555'; }
+    else if (a===getCSI(i)) { label='Correct'; bg='#E1F5EE'; tc='#085041'; }
+    else { label='Wrong'; bg='#FCEBEB'; tc='#501313'; }
+    html += '<div class="results-card" onclick="goToQ('+i+')">'+
+      '<span style="font-size:1rem;font-weight:600;color:#333;">'+escHtml(qs[i].stem)+'</span>'+
+      '<span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span>'+
+      '</div>';
+  }
+  document.getElementById('results-cards').innerHTML=html;
+}
+
+function pick(qi,si) {
+  if (state.answers[qi]!==undefined) return;
+  state.answers[qi]=si; saveState(); render();
+}
+
+function go(dir) {
+  if (dir===1 && state.cur===qs.length-1) { showResults(); return; }
+  state.cur = Math.max(0, Math.min(qs.length-1, state.cur+dir));
+  saveState(); render();
+}
+
+function retryWrong() {
+  var first=-1;
+  for (var i=0;i<qs.length;i++){
+    if (state.answers[i]!==undefined && state.answers[i]!==getCSI(i)) {
+      if (first===-1) first=i;
+      delete state.answers[i];
+    }
+  }
+  if (first!==-1) { state.cur=first; state.showResults=false; saveState(); render(); }
+}
+
+function copyRes() {
+  var lines=[QUIZ_LABEL];
+  for (var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    lines.push('Q'+(i+1)+' '+qs[i].stem+': '+(a===undefined?'Skipped':a===getCSI(i)?'Correct':'Wrong'));
+  }
+  var txt=lines.join('\n');
+  if (navigator.clipboard) { navigator.clipboard.writeText(txt).catch(function(){fallbackCopy(txt);}); }
+  else { fallbackCopy(txt); }
+}
+
+function fallbackCopy(txt) {
+  var ta=document.createElement('textarea'); ta.value=txt;
+  document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+}
+
+function openFreshModal() { document.getElementById('freshModal').style.display='flex'; }
+function confirmFresh() {
+  document.getElementById('freshModal').style.display='none';
+  localStorage.removeItem(QUIZ_KEY);
+  resetState(); saveState(); render(); renderTimer();
+}
+
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function formatTime(sec) {
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec/60); var s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function renderTimer() {
+  var setupEl=document.getElementById('timerSetup'); var runningEl=document.getElementById('timerRunning'); var displayEl=document.getElementById('timerDisplay');
+  if (!state.timerStartedAt) { setupEl.style.display='flex'; runningEl.style.display='none'; return; }
+  setupEl.style.display='none'; runningEl.style.display='flex';
+  var elapsed=(Date.now()-state.timerStartedAt)/1000;
+  var remaining=state.timerTotalSec-elapsed;
+  displayEl.classList.remove('warn','danger');
+  if (remaining<=0) { displayEl.textContent="Time's Up"; displayEl.classList.add('danger'); stopTimerInterval(); return; }
+  displayEl.textContent=formatTime(remaining);
+  if (remaining<=state.timerTotalSec*0.1) displayEl.classList.add('danger');
+  else if (remaining<=state.timerTotalSec*0.25) displayEl.classList.add('warn');
+}
+function startTimer() {
+  var input=document.getElementById('timerMinutesInput');
+  var minutes=parseFloat(input.value);
+  if (!minutes||minutes<=0) minutes=20;
+  state.timerTotalSec=Math.round(minutes*60);
+  state.timerStartedAt=Date.now();
+  saveState(); renderTimer(); startTimerInterval();
+}
+function startTimerInterval() { stopTimerInterval(); timerInterval=setInterval(renderTimer,1000); }
+function stopTimerInterval() { if (timerInterval) { clearInterval(timerInterval); timerInterval=null; } }
+
+window.pick=pick; window.go=go; window.goToQ=goToQ; window.toggleJump=toggleJump;
+window.speakWord=speakWord; window.retryWrong=retryWrong; window.copyRes=copyRes;
+window.openFreshModal=openFreshModal; window.confirmFresh=confirmFresh; window.showResults=showResults;
+window.startTimer=startTimer;
+
+var timerInterval=null;
+loadState(); saveState(); render();
+renderTimer(); if (state.timerStartedAt) startTimerInterval();
+
+})();
+</script>
+</body>
+</html>

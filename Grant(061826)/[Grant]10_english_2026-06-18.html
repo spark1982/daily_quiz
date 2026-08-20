@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] English</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0 auto;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.tag-badge{display:inline-block;background:#185FA5;color:#fff;font-size:0.74rem;font-weight:700;padding:3px 10px;border-radius:12px;margin-bottom:10px;}
+.passage-box{background:#f5f7fa;border-left:4px solid #185FA5;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:0.86rem;color:#333;line-height:1.65;max-height:260px;overflow-y:auto;}
+.passage-box p{margin:0 0 10px;}
+.passage-box p:last-child{margin-bottom:0;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.q-text{font-size:0.97rem;font-weight:600;color:#111;margin-bottom:10px;line-height:1.6;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.93rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:200px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-size:10px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-18</div>
+<div class="title-hd">[Grant] English</div>
+<div class="instruction">Read the passage and choose the best answer for each question.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 25</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="passage-box" id="passage-main"></div>
+  <div class="tag-badge" id="tag-badge"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_grantenglish_25_20260617_v1';
+var ATT_KEY='quiz_grantenglish_att_20260617_v1';
+
+var P1="Inside a single beehive, thousands of worker bees cooperate with remarkable precision, despite none of them having a brain larger than a grain of rice. A honeybee colony typically consists of one queen, who lays nearly all the eggs, several hundred drones, and tens of thousands of female workers that forage, build honeycomb, and care for developing larvae. For decades, scientists wondered how foragers could reliably guide their hivemates to flowers that might be located more than a mile away.";
+var P2="The answer, discovered by Austrian zoologist Karl von Frisch in the early twentieth century, turned out to be a coded dance. When a forager returns from a productive flower patch, she performs a figure-eight movement called the waggle dance on the vertical surface of the honeycomb. The angle of the dance relative to straight up indicates the direction of the food source compared to the sun's position, while the duration of the waggling portion conveys distance: longer waggles signal farther destinations. Other bees press close, sensing the vibrations to decode the message.";
+var P3="Dancing is not the only way bees communicate. Colonies also rely heavily on pheromones, chemical signals that can announce a new queen, mark a hive under threat, or guide swarming bees toward a new nesting site. Von Frisch's careful experiments, which involved marking individual bees and tracking their movements, eventually earned him the Nobel Prize in 1973, shared with two other pioneering researchers in animal behavior.";
+var P4="Understanding bee communication has taken on new urgency in recent years. Honeybees pollinate roughly a third of the food crops humans consume, yet many colonies have suffered from colony collapse disorder, a phenomenon in which worker bees vanish, leaving the queen and brood unattended. Some researchers suspect that pesticides, habitat loss, and parasites disrupt the very signals that keep a colony functioning. Protecting these tiny dancers, scientists argue, may matter just as much for agriculture as it does for the bees themselves.";
+
+var PASSAGE='<p>'+P1+'</p><p>'+P2+'</p><p>'+P3+'</p><p>'+P4+'</p>';
+
+var qs=[
+ {tag:'Main Idea',q:'What is the main idea of the passage?',
+  opts:['Honeybees communicate the location of food through a coded dance and other signals, which matters for both bees and agriculture','Queen bees are the only members of a colony capable of communication','Karl von Frisch invented the waggle dance for bees to use','Pesticides are the only threat facing honeybee colonies today'],
+  ci:0,exp:'The passage explains how bees communicate (the waggle dance and pheromones) and connects this to broader importance for agriculture and bee survival — this is the central idea.'},
+ {tag:'Key Detail',q:'According to the passage, what does the duration of the waggling portion of the dance indicate?',
+  opts:['The temperature inside the hive','The distance to the food source','The age of the forager bee','The number of flowers in the patch'],
+  ci:1,exp:'The passage states "the duration of the waggling portion conveys distance: longer waggles signal farther destinations."'},
+ {tag:'Vocabulary',q:'As used in the passage, the word "forage" most nearly means',
+  opts:['To search for and collect food','To build honeycomb cells','To guard the hive entrance','To lay eggs in the colony'],
+  ci:0,exp:'In context, forager bees travel out to find flowers and bring back food, so "forage" means to search for and collect food.'},
+ {tag:'Cause & Effect',q:'According to the passage, what is one suspected cause of colony collapse disorder?',
+  opts:['Too much pollen production','Overcrowding inside the hive','Pesticides, habitat loss, and parasites','Excessive dancing by forager bees'],
+  ci:2,exp:'The passage states "researchers suspect that pesticides, habitat loss, and parasites disrupt the very signals that keep a colony functioning."'},
+ {tag:"Inference",q:"Based on the passage, what can be inferred about why von Frisch's discovery was difficult to make?",
+  opts:['Bees do not actually communicate with each other','The dance\'s meaning is encoded subtly in angle and timing, requiring careful observation','Bees only dance at night, making them hard to study','Forager bees refuse to return to the hive'],
+  ci:1,exp:"Since the dance encodes direction through angle relative to the sun and distance through duration, decoding it would require careful, patient observation — exactly what von Frisch's experiments involved."},
+ {tag:"Author's Purpose",q:"What is the author's main purpose in writing this passage?",
+  opts:['To entertain readers with a fictional story about bees','To inform readers about how bees communicate and why it matters','To persuade readers to start beekeeping as a hobby','To criticize scientists who study animal behavior'],
+  ci:1,exp:'The passage presents factual information about bee communication and its real-world significance, which is informative rather than persuasive, entertaining, or critical.'},
+ {tag:'Compare & Contrast',q:'How does the waggle dance differ from pheromone communication, according to the passage?',
+  opts:['The waggle dance conveys directional and distance information, while pheromones often signal threats or guide swarms','Pheromones are used only by the queen, while the dance is used only by drones','The waggle dance is silent, while pheromones produce sound','Pheromones are visual signals, while the dance relies on smell'],
+  ci:0,exp:'The passage describes the dance as encoding direction and distance, while pheromones "announce a new queen, mark a hive under threat, or guide swarming bees" — different kinds of information.'},
+ {tag:'Sequence',q:'According to the passage, what did von Frisch do before earning the Nobel Prize?',
+  opts:['He marked individual bees and tracked their movements in careful experiments','He developed pesticides to protect hives','He discovered colony collapse disorder','He bred a new species of honeybee'],
+  ci:0,exp:'The passage states his "careful experiments, which involved marking individual bees and tracking their movements, eventually earned him the Nobel Prize in 1973."'},
+ {tag:'Summarize',q:'Which choice best summarizes the third paragraph?',
+  opts:['Bees only communicate through dancing, never through chemicals','Bees also use pheromones for communication, and von Frisch\'s research on bee behavior earned him a Nobel Prize','Pheromones are more important than the waggle dance','Von Frisch discovered pheromones before he discovered the waggle dance'],
+  ci:1,exp:"The third paragraph introduces pheromone communication and notes that von Frisch's research earned him a Nobel Prize — both ideas captured in this summary."},
+ {tag:'Draw Conclusions',q:'What conclusion can be drawn from the passage about the relationship between bees and agriculture?',
+  opts:['Agriculture has little connection to bee health','Healthy bee communication and colonies support pollination that much of human food production depends on','Bees harm more crops than they help','Agriculture would improve if bee colonies disappeared'],
+  ci:1,exp:'The passage notes bees "pollinate roughly a third of the food crops humans consume," so healthy colonies directly support agricultural production.'},
+ {tag:'Text Evidence',q:'Which detail from the passage best supports the idea that bee colonies are highly organized?',
+  opts:['"none of them having a brain larger than a grain of rice"','"a queen, who lays nearly all the eggs, several hundred drones, and tens of thousands of female workers that forage, build honeycomb, and care for developing larvae"','"shared with two other pioneering researchers"','"pesticides, habitat loss, and parasites"'],
+  ci:1,exp:"This description of distinct roles (queen, drones, workers with specific tasks) directly shows the colony's organized structure."},
+ {tag:"Author's Tone",q:"Which word best describes the author's tone in the passage?",
+  opts:['Informative and respectful of the subject','Mocking and dismissive','Angry and accusatory','Indifferent and detached'],
+  ci:0,exp:'The passage presents facts about bee behavior and its significance in a straightforward, respectful manner, without mockery, anger, or indifference.'},
+ {tag:'Fact vs. Opinion',q:'Which statement from the passage is a fact rather than an opinion?',
+  opts:['"Protecting these tiny dancers...may matter just as much for agriculture as it does for the bees themselves"','"Honeybees pollinate roughly a third of the food crops humans consume"','Bees are the most impressive insects in the world','Beekeeping is the most rewarding hobby available'],
+  ci:1,exp:'The pollination statistic is a verifiable, factual claim, while the other options express subjective judgments or opinions.'},
+ {tag:'Point of View',q:'From what point of view is the passage written?',
+  opts:['First-person, from the perspective of a beekeeper','Third-person, objective and informational','Second-person, giving direct instructions to the reader','First-person, from the perspective of a worker bee'],
+  ci:1,exp:'The passage describes bees and research about them without using "I," "you," or a bee\'s own perspective, indicating an objective third-person point of view.'},
+ {tag:'Theme',q:'Which theme is most strongly suggested by the passage?',
+  opts:['Small creatures can have sophisticated systems of communication that matter to the wider world','Insects are simple creatures with no real impact on humans','Scientific discoveries are usually made by accident','Communication is only useful for finding food'],
+  ci:0,exp:'The passage shows that despite their tiny brains, bees use a sophisticated communication system that connects to broader agricultural importance — supporting this theme.'},
+ {tag:'Text Structure',q:'How is the passage primarily structured?',
+  opts:['As a chronological narrative of a single bee\'s life','As a problem followed immediately by a solution','As an explanation of a phenomenon, followed by its broader significance','As a comparison between two unrelated insects'],
+  ci:2,exp:'The passage first explains colony structure and the dance, then pheromones and discovery, before ending with the broader significance for agriculture — an explanatory structure leading to significance.'},
+ {tag:'Context Clues',q:'Based on context, what does "pheromones" most likely mean as used in the passage?',
+  opts:['Chemical signals used to communicate within a colony','A type of flower bees prefer to pollinate','The scientific name for the waggle dance','A disease that affects bee colonies'],
+  ci:0,exp:'The passage describes pheromones as signals that "announce a new queen, mark a hive under threat, or guide swarming bees," indicating they are chemical communication signals.'},
+ {tag:'Connections',q:'Which situation outside the passage is most similar to the waggle dance described?',
+  opts:['A person using a written map with no symbols','A driver using a GPS app that gives spoken turn-by-turn directions','A chef following a recipe exactly','A musician playing an instrument alone'],
+  ci:1,exp:'Like a GPS giving directional and distance information, the waggle dance encodes both direction and distance to guide other bees — a similar real-world communication function.'},
+ {tag:'Critical Thinking',q:'Why might understanding bee communication help researchers address colony collapse disorder?',
+  opts:['It would have no practical use for solving the problem','If disrupted signals contribute to the disorder, understanding those signals could help identify causes and solutions','Colony collapse disorder is unrelated to communication','Bee communication research is only useful for agriculture, not bee health'],
+  ci:1,exp:'Since researchers suspect disrupted signals play a role in colony collapse, understanding the communication system could help pinpoint causes and potential interventions.'},
+ {tag:'Figurative Language',q:'What effect does describing the waggle dance as a "coded dance" create?',
+  opts:['It suggests the dance is meaningless and random','It emphasizes that the dance carries hidden, decipherable information, much like a code','It implies the dance is purely for entertainment','It suggests bees dance only when threatened'],
+  ci:1,exp:'Calling it a "coded dance" frames the movement as carrying specific, decipherable information, similar to a code that must be interpreted — emphasizing its communicative purpose.'},
+ {tag:'Prediction',q:'Based on the passage, what might happen if pesticide use near bee colonies continues to increase unchecked?',
+  opts:['Bee communication and colony health could decline further, threatening pollination of crops','Bees would develop louder dances to compensate','Colony collapse disorder would disappear entirely','Pesticides would have no effect on bee behavior'],
+  ci:0,exp:'Since pesticides are already suspected of disrupting bee signals and contributing to colony collapse, continued unchecked use would likely worsen these effects, threatening pollination.'},
+ {tag:'Setting',q:'Where does most of the bee activity described in the passage take place?',
+  opts:['Inside the hive and on the surrounding flowers the bees visit','Inside a science laboratory only','On a farm with no flowers','Inside the queen\'s private chamber only'],
+  ci:0,exp:'The passage describes activity inside the hive (the dance, pheromones) and out among flowers that foragers visit, making this the setting.'},
+ {tag:'Specific Detail',q:'According to the passage, in what year did von Frisch receive the Nobel Prize?',
+  opts:['1903','1953','1973','1993'],
+  ci:2,exp:'The passage states his experiments "eventually earned him the Nobel Prize in 1973."'},
+ {tag:'Word Meaning',q:'In the passage, what does "disrupt" most nearly mean?',
+  opts:['To strengthen or reinforce','To interfere with or interrupt','To celebrate or honor','To duplicate or copy'],
+  ci:1,exp:'The passage suggests pesticides and other factors "disrupt the very signals" bees rely on, meaning they interfere with or interrupt those signals.'},
+ {tag:'Evaluate Sources',q:'Why might the passage be considered a reliable source of information about bee communication?',
+  opts:['It is based on documented scientific research, including a Nobel Prize-winning discovery','It only contains the author\'s personal opinions about bees','It was written without any reference to scientific study','It focuses solely on entertaining stories about bees'],
+  ci:0,exp:'The passage references a specific, documented scientific discovery (von Frisch\'s Nobel Prize-winning research), which supports its reliability as an informational source.'}
+];
+
+var state={};
+function loadState(){
+  try{
+    var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');
+    if(s&&typeof s.cur==='number'&&s.cur>=0&&s.cur<qs.length&&s.answers&&s.shuffles){state=s;}
+    else resetState();
+  }catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}
+}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){
+  if(!state.shuffles[i]){
+    var a=[0,1,2,3];
+    for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}
+    state.shuffles[i]=a; saveState();
+  }
+  return state.shuffles[i];
+}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAtt(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function updateNav(){
+  var ans=Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent=ans+' / '+qs.length;
+  document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';
+  var p=document.getElementById('dot-panel');
+  if(p.style.display!=='none')renderDots();
+}
+
+function toggleJump(){
+  var p=document.getElementById('dot-panel');
+  var b=document.getElementById('jump-btn');
+  if(p.style.display==='none'){p.style.display='block';b.innerHTML='Hide &#9652;';renderDots();}
+  else{p.style.display='none';b.innerHTML='Jump &#9662;';}
+}
+
+function renderDots(){
+  var p=document.getElementById('dot-panel');
+  var h='';
+  for(var i=0;i<qs.length;i++){
+    var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===getCSI(i)?'#185FA5':'#E24B4A');
+    h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';
+  }
+  if(Object.keys(state.answers).length===qs.length){
+    h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';
+  }
+  p.innerHTML=h;
+}
+
+function goToQ(i){
+  state.cur=i; state.showResults=false; saveState(); render();
+  document.getElementById('dot-panel').style.display='none';
+  document.getElementById('jump-btn').innerHTML='Jump &#9662;';
+}
+
+function showResults(){
+  state.showResults=true;
+  localStorage.setItem(ATT_KEY,loadAtt()+1);
+  saveState(); render();
+}
+
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAtt();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('resultsArea').style.display='none';
+  updateNav();
+  var i=state.cur; var q=qs[i];
+  document.getElementById('passage-main').innerHTML=PASSAGE;
+  document.getElementById('tag-badge').textContent=q.tag;
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-text').textContent=q.q;
+  var sh=getShuffle(i); var ans=state.answers[i]; var csi=getCSI(i);
+  var html='';
+  for(var s=0;s<4;s++){
+    var oi=sh[s]; var cls='opt-btn'; var dis='';
+    if(ans!==undefined){dis='disabled ';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}
+    html+='<button class="'+cls+'" '+dis+'onclick="pick('+i+','+s+')">'+esc(q.opts[oi])+'</button>';
+  }
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');
+  if(ans!==undefined){eb.style.display='block';eb.textContent=q.exp;}
+  else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  updateNav();
+  var c=0,w=0,sk=0;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]===undefined)sk++;
+    else if(state.answers[i]===getCSI(i))c++;
+    else w++;
+  }
+  document.getElementById('results-summary').innerHTML=
+    '<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;'+
+    '<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;'+
+    '<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i]; var label,bg,tc;
+    if(a===undefined){label='Skipped';bg='#d7dde6';tc='#555';}
+    else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}
+    else{label='Wrong';bg='#FCEBEB';tc='#501313';}
+    html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.85rem;color:#333;">Q'+(i+1)+': '+esc(qs[i].tag)+'</span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';
+  }
+  document.getElementById('results-cards').innerHTML=html;
+}
+
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){
+  if(dir===1&&state.cur===qs.length-1){showResults();return;}
+  state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));
+  saveState();render();
+}
+function retryWrong(){
+  var first=-1;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){
+      if(first===-1)first=i; delete state.answers[i];
+    }
+  }
+  if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}
+}
+function copyRes(){
+  var lines=['[Grant] English - Results (2026-06-18)'];
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    var label=a===undefined?'Skipped':(a===getCSI(i)?'Correct':'Wrong');
+    lines.push('Q'+(i+1)+' ('+qs[i].tag+'): '+label);
+  }
+  var txt=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fallbackCopy(txt);});}
+  else fallbackCopy(txt);
+}
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;window.openFreshModal=openFreshModal;
+window.confirmFresh=confirmFresh;window.showResults=showResults;
+
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

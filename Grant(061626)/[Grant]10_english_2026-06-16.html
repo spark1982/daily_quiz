@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] English</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0 auto;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.tag-badge{display:inline-block;background:#1D9E75;color:#fff;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:8px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.q-text{font-size:0.97rem;font-weight:600;color:#111;margin-bottom:10px;line-height:1.6;}
+.passage-box{background:#f5f7fa;border-left:4px solid #185FA5;border-radius:8px;padding:12px 14px;margin-bottom:10px;font-size:0.88rem;color:#333;line-height:1.7;}
+.passage-box p{margin:0 0 10px;}
+.passage-box p:last-child{margin:0;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.93rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-16</div>
+<div class="title-hd">[Grant] English</div>
+<div class="instruction">Read the passage and choose the best answer for each question.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 25</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump ▾</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="tag-badge" id="q-tag"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="passage-box" id="passage-main"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_english_25_20260615_v1';
+var ATT_KEY='quiz_english_att_20260615_v1';
+
+var P1="Coral reefs are among the most diverse ecosystems on Earth. Often called \"the rainforests of the sea,\" they cover less than one percent of the ocean floor yet provide habitat for more than a quarter of all marine species. Built from colonies of tiny animals called polyps, reefs grow slowly—only about one centimeter per year in ideal conditions. Despite their fragile nature, they have existed for hundreds of millions of years, quietly shaping the ecology of the world's oceans.";
+var P2="At the heart of every coral reef is a partnership between corals and microscopic algae called zooxanthellae. These algae live inside coral tissue and provide up to ninety percent of the coral's energy through photosynthesis. In return, the coral offers the algae shelter and nutrients from the surrounding water. This mutualistic relationship gives healthy coral its vivid color and supports the reef's growth. However, when ocean temperatures rise even slightly above normal, corals expel the algae in a stress response called bleaching.";
+var P3="Bleaching does not kill corals immediately, but it leaves them weak and vulnerable to disease. If temperatures remain high for several weeks, bleached corals begin to die. Large-scale bleaching events, now driven largely by climate change, have devastated reefs worldwide. The Great Barrier Reef in Australia has experienced mass bleaching multiple times since 1998, losing roughly half of its coral cover in recent decades. Scientists warn that without significant reductions in global carbon emissions, most coral reefs could be severely degraded by 2050.";
+var P4="Despite this grim outlook, conservation efforts are providing some hope. Marine biologists are cultivating heat-resistant coral strains in underwater nurseries and transplanting them onto damaged reefs. Some research teams are experimenting with assisted evolution, selectively breeding corals that can tolerate warmer waters. Local communities worldwide have established marine protected areas to reduce additional stressors such as overfishing and pollution. While no single solution can save every reef, a combination of global and local action may preserve these ecosystems long enough for recovery.";
+var PASSAGE='<p>'+P1+'</p><p>'+P2+'</p><p>'+P3+'</p><p>'+P4+'</p>';
+
+var qs=[
+ {tag:'Main Idea',q:'What is the main topic of this passage?',
+  opts:['The chemistry of ocean water and its effect on marine life',
+        'The life cycle and behavior of coral polyps',
+        'Coral reefs: what they are, the threats they face, and efforts to save them',
+        'The role of global climate change in reshaping ocean ecosystems'],
+  ci:2,exp:'The passage covers what coral reefs are (P1), their key biology (P2), threats from bleaching (P3), and conservation efforts (P4). The option that captures all four paragraphs is the best main topic statement.'},
+ {tag:'Key Detail',q:'According to the passage, how fast do coral reefs typically grow?',
+  opts:['About one meter per year',
+        'About one centimeter per year',
+        'About ten centimeters per year',
+        'Less than one millimeter per year'],
+  ci:1,exp:'Paragraph 1 states reefs "grow slowly—only about one centimeter per year in ideal conditions."'},
+ {tag:'Vocabulary',q:'In paragraph 2, the word "mutualistic" most nearly means',
+  opts:['Harmful to both organisms involved',
+        'Beneficial to only one of the two organisms',
+        'Competitive and aggressive between species',
+        'Mutually beneficial to both parties in a relationship'],
+  ci:3,exp:'The passage describes both coral and algae gaining from their relationship—coral gets energy while algae gets shelter and nutrients. "Mutualistic" means the benefit flows both ways.'},
+ {tag:'Cause & Effect',q:'According to paragraph 2, what directly triggers coral bleaching?',
+  opts:['Increased pollution from nearby human settlements',
+        'A rise in ocean temperatures even slightly above normal',
+        'Overfishing that disrupts the reef ecosystem',
+        'Zooxanthellae reproducing too quickly inside coral tissue'],
+  ci:1,exp:'Paragraph 2 states: "when ocean temperatures rise even slightly above normal, corals expel the algae in a stress response called bleaching."'},
+ {tag:'Inference',q:'Based on the passage, what can you infer about the role of zooxanthellae in coral survival?',
+  opts:['They occasionally harm coral by consuming too many nutrients',
+        'Coral reefs would struggle to survive without them',
+        'They can thrive independently in open ocean water without a host',
+        'Their loss strengthens coral by forcing it to find alternative energy sources'],
+  ci:1,exp:'Zooxanthellae provide up to 90% of coral\'s energy. When expelled during bleaching, corals become weak and may die—indicating zooxanthellae are essential to reef survival.'},
+ {tag:"Author's Purpose",q:"Why did the author most likely write this passage?",
+  opts:['To persuade readers to stop visiting coral reefs as tourists',
+        'To inform readers about coral reef biology and the conservation challenges reefs face',
+        'To entertain readers with fascinating stories about underwater ecosystems',
+        'To argue that climate change is the greatest threat to all marine life'],
+  ci:1,exp:'The passage explains coral reef biology, describes threats from bleaching, and presents conservation efforts. This informative structure—educating readers about a topic—is the primary purpose.'},
+ {tag:'Compare & Contrast',q:'Why are coral reefs described as "the rainforests of the sea"?',
+  opts:['Both are found only in tropical regions near the equator',
+        'Both are being destroyed at the same rate by human activity',
+        'Both are ecosystems of exceptional biodiversity packed with many species',
+        'Both depend on large amounts of rainfall to sustain their organisms'],
+  ci:2,exp:'Tropical rainforests are famous for extraordinary biodiversity. The passage notes reefs support over 25% of marine species while covering less than 1% of the ocean floor—the same kind of disproportionate richness connects the two ecosystems.'},
+ {tag:'Sequence',q:'According to the passage, what happens FIRST when ocean temperatures rise near a coral reef?',
+  opts:['Scientists begin transplanting heat-resistant corals to the site',
+        'Coral reefs begin to die within days',
+        'Corals expel their zooxanthellae algae',
+        'Bleached corals become infected with disease'],
+  ci:2,exp:'Paragraph 2 explains the first step: rising temperature causes corals to expel their algae (bleaching). Paragraph 3 then notes bleaching leaves them "vulnerable to disease"—disease follows bleaching.'},
+ {tag:'Summarize',q:'Which sentence best summarizes paragraph 3?',
+  opts:['Coral reefs recover naturally from bleaching if given enough time',
+        'Bleaching weakens corals and, combined with climate-driven warming, poses a severe worldwide threat to reef survival',
+        'The Great Barrier Reef has successfully recovered from bleaching events since 1998',
+        'Scientists believe all reefs will be destroyed by 2050 regardless of action taken'],
+  ci:1,exp:'Paragraph 3 explains bleaching weakens corals, notes climate-driven bleaching has devastated reefs worldwide, and warns of severe degradation by 2050. Option B captures the full scope without distorting the message.'},
+ {tag:'Draw Conclusions',q:'What conclusion can you draw from the fact that reefs cover less than 1% of the ocean floor yet support over 25% of marine species?',
+  opts:['Most marine species prefer shallow coastal waters to deep ocean habitats',
+        'The ocean floor is mostly empty, which explains why few species live there',
+        'Coral reefs should not be considered a priority compared to other ecosystems',
+        'Coral reefs are disproportionately important to marine biodiversity relative to their size'],
+  ci:3,exp:'If just 1% of the ocean floor hosts 25% of all marine species, the reef\'s biodiversity far exceeds what its small size alone would suggest—making it critically important well beyond its physical extent.'},
+ {tag:'Text Evidence',q:'Which sentence from the passage best supports the claim that coral reefs are ancient?',
+  opts:['"The Great Barrier Reef has experienced mass bleaching multiple times since 1998."',
+        '"Built from colonies of tiny animals called polyps, reefs grow slowly."',
+        '"They cover less than one percent of the ocean floor."',
+        '"They have existed for hundreds of millions of years, quietly shaping the ecology of the world\'s oceans."'],
+  ci:3,exp:'The statement "they have existed for hundreds of millions of years" directly provides evidence of coral reefs\' ancient origin and long presence on Earth.'},
+ {tag:"Author's Tone",q:"What best describes the author's tone in the final paragraph?",
+  opts:['Pessimistic and hopeless about the future of coral reefs',
+        'Cautiously hopeful, acknowledging problems while highlighting ongoing efforts',
+        'Angry and accusatory toward governments and industries',
+        'Completely neutral and detached with no perspective expressed'],
+  ci:1,exp:'The final paragraph opens with "a grim outlook" but shifts to conservation progress, concluding that "a combination of global and local action may preserve" reefs. This balance of concern and measured optimism is cautiously hopeful.'},
+ {tag:'Fact vs. Opinion',q:'Which of the following is a FACT stated in the passage?',
+  opts:['Coral reefs are the most beautiful ecosystems in the natural world',
+        'Zooxanthellae provide up to ninety percent of the coral\'s energy through photosynthesis',
+        'Every person has a responsibility to help save coral reefs',
+        'Coral reefs are more important to the ocean than any other ecosystem'],
+  ci:1,exp:'Paragraph 2 states that zooxanthellae "provide up to ninety percent of the coral\'s energy through photosynthesis"—a measurable, verifiable fact. The other options express opinions or value judgments that cannot be objectively proven.'},
+ {tag:'Point of View',q:"What is the author's perspective on coral reef conservation?",
+  opts:['Conservation efforts have not yet proven effective at any scale',
+        'A combination of global and local approaches offers the best chance of preserving reefs',
+        'Only reducing global carbon emissions can realistically save coral reefs',
+        'Individual communities cannot meaningfully protect reefs without government action'],
+  ci:1,exp:'The final paragraph presents multiple approaches—heat-resistant corals, assisted evolution, marine protected areas—and concludes that "a combination of global and local action may preserve" reefs, endorsing a multi-pronged strategy.'},
+ {tag:'Theme',q:'What is the central message of this passage?',
+  opts:['Coral reefs have always recovered from natural threats and will continue to do so',
+        'Technology alone is sufficient to solve the coral reef crisis caused by climate change',
+        'Scientists already understand coral reefs so well that recovery is guaranteed',
+        'Human activity threatens coral reefs, but dedicated action at multiple levels can help protect what remains'],
+  ci:3,exp:'The passage traces a cycle of threat and response, concluding that concerted effort—both global (emissions reduction) and local (marine protected areas)—can make a meaningful difference. Action is the key theme.'},
+ {tag:'Text Structure',q:'How is this passage primarily organized?',
+  opts:['Chronological order, from ancient reefs to modern reef decline',
+        'From a general introduction to specific biology, then to threats, then to conservation solutions',
+        'As a problem-and-solution essay focusing only on conservation methods',
+        'As a comparison between coral reefs and other marine ecosystems'],
+  ci:1,exp:'Paragraph 1 introduces reefs broadly; paragraph 2 details the coral-algae relationship; paragraph 3 describes the threat of bleaching; paragraph 4 presents solutions. The structure moves from general to specific to problem to solution.'},
+ {tag:'Context Clues',q:'Based on the context of paragraph 3, the word "degraded" most likely means',
+  opts:['Completely relocated to a protected reserve',
+        'Severely damaged, weakened, or worsened in quality',
+        'Improved through active conservation and restoration',
+        'Studied more carefully by marine scientists'],
+  ci:1,exp:'Paragraph 3 uses "degraded" alongside bleaching and coral death, warning reefs could be "severely degraded by 2050." The surrounding context makes clear the word means damaged or diminished in quality.'},
+ {tag:'Connections',q:'How does the information in paragraph 2 directly connect to the warning in paragraph 3?',
+  opts:['Paragraph 2 explains coral growth rates; paragraph 3 warns that growth will slow even further',
+        'Paragraph 2 explains that algae give coral its color; paragraph 3 warns colorful coral is hardest to bleach',
+        'Paragraph 2 explains the coral-algae partnership; paragraph 3 explains what happens when that essential partnership breaks down',
+        'Paragraph 2 describes coral reproduction; paragraph 3 warns reproduction will be disrupted by warming'],
+  ci:2,exp:'Paragraph 2 establishes that zooxanthellae supply up to 90% of coral\'s energy. Paragraph 3 then shows the consequences when that partnership fails through bleaching—directly linking the biology to the crisis.'},
+ {tag:'Critical Thinking',q:'If ocean temperatures continue to rise, which outcome would MOST LIKELY occur based on this passage?',
+  opts:['Bleaching events would become more frequent and coral reef decline would continue',
+        'Corals would grow faster to compensate for the loss of zooxanthellae',
+        'Marine protected areas would automatically prevent all further bleaching',
+        'Zooxanthellae would rapidly evolve to tolerate high temperatures on their own'],
+  ci:0,exp:'The passage directly states that climate-driven bleaching has already devastated reefs worldwide. Continued rising temperatures would logically intensify and increase the frequency of these destructive bleaching events.'},
+ {tag:'Figurative Language',q:'What does the comparison "the rainforests of the sea" suggest about coral reefs?',
+  opts:['Coral reefs receive frequent rainfall directly onto their surface',
+        'Coral reefs are as extraordinarily rich in biodiversity as tropical rainforests on land',
+        'Coral reefs are geographically located near coastal tropical rainforests',
+        'Coral reefs can grow as tall and dense as the trees in a rainforest'],
+  ci:1,exp:'This metaphor compares reefs to rainforests. Rainforests are famous for harboring enormous biodiversity, so the metaphor emphasizes that reefs—like rainforests—host a remarkable concentration of species relative to their size.'},
+ {tag:'Prediction',q:'Based on the passage, what would most likely happen if global carbon emissions were significantly reduced?',
+  opts:['Ocean temperatures would drop so fast that corals would face a new cold-related threat',
+        'Conservation efforts such as marine protected areas would become unnecessary',
+        'Coral reefs would immediately and fully return to their original condition',
+        'Coral reefs would have a better chance of surviving and recovering over time'],
+  ci:3,exp:'Paragraph 3 warns that without significant emissions reductions, reefs could be severely degraded. This implies that with such reductions, the main driver of bleaching would weaken and reefs would have improved prospects for recovery.'},
+ {tag:'Setting',q:'What type of environment do coral reefs require in order to grow and survive?',
+  opts:['Cold, deep ocean water with high pressure and complete darkness',
+        'Warm, shallow, sunlit ocean water with relatively stable temperatures',
+        'Freshwater rivers and lakes in tropical regions near the equator',
+        'Arctic coastal zones where ice melt keeps water fresh and cold'],
+  ci:1,exp:'The passage notes zooxanthellae perform photosynthesis (requiring light), so reefs need sunlit water. Bleaching is triggered by temperature increases, implying corals need stable warm but not overheated conditions in shallow, accessible water.'},
+ {tag:'Specific Detail',q:'What is the name of the stress response in which corals expel their algae when temperatures rise?',
+  opts:['Dysbiosis','Degradation','Bleaching','Photosynthesis'],
+  ci:2,exp:'Paragraph 2 directly states: "corals expel the algae in a stress response called bleaching."'},
+ {tag:'Word Meaning',q:'In paragraph 4, what does "cultivating" most likely mean?',
+  opts:['Transporting existing corals to a new laboratory for study',
+        'Growing and nurturing organisms carefully over time',
+        'Destroying diseased coral to prevent the spread of infection',
+        'Observing organisms without any interference or intervention'],
+  ci:1,exp:'Paragraph 4 states marine biologists are "cultivating heat-resistant coral strains in underwater nurseries." The word nurseries suggests careful growing and tending of young organisms—so "cultivating" means growing and nurturing carefully.'},
+ {tag:'Evaluate Sources',q:'What type of additional source would BEST provide scientific data on the frequency of coral bleaching events?',
+  opts:['A travel brochure promoting scuba diving tours at coral reefs',
+        'A children\'s illustrated book about ocean animals',
+        'A peer-reviewed marine biology journal article on reef health',
+        'A social media post by a tourist who recently visited the Great Barrier Reef'],
+  ci:2,exp:'Scientific data on bleaching frequency would be most reliably found in peer-reviewed marine biology journals, which undergo expert review for accuracy. Travel brochures, illustrated books, and social media posts are not scientific sources.'}
+];
+
+var state={};
+function loadState(){
+  try{
+    var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');
+    if(s&&typeof s.cur==='number'&&s.cur>=0&&s.cur<qs.length&&s.answers&&s.shuffles){state=s;}
+    else resetState();
+  }catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}
+}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){
+  if(!state.shuffles[i]){
+    var a=[0,1,2,3];
+    for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}
+    state.shuffles[i]=a; saveState();
+  }
+  return state.shuffles[i];
+}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAtt(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function updateNav(){
+  var ans=Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent=ans+' / '+qs.length;
+  document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';
+  var p=document.getElementById('dot-panel');
+  if(p.style.display!=='none')renderDots();
+}
+
+function toggleJump(){
+  var p=document.getElementById('dot-panel');
+  var b=document.getElementById('jump-btn');
+  if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}
+  else{p.style.display='none';b.textContent='Jump ▾';}
+}
+
+function renderDots(){
+  var p=document.getElementById('dot-panel');
+  var h='';
+  for(var i=0;i<qs.length;i++){
+    var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===getCSI(i)?'#185FA5':'#E24B4A');
+    h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';
+  }
+  if(Object.keys(state.answers).length===qs.length){
+    h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';
+  }
+  p.innerHTML=h;
+}
+
+function goToQ(i){
+  state.cur=i; state.showResults=false; saveState(); render();
+  document.getElementById('dot-panel').style.display='none';
+  document.getElementById('jump-btn').textContent='Jump ▾';
+}
+
+function showResults(){
+  state.showResults=true;
+  localStorage.setItem(ATT_KEY,loadAtt()+1);
+  saveState(); render();
+}
+
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAtt();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('resultsArea').style.display='none';
+  updateNav();
+  var i=state.cur; var q=qs[i];
+  document.getElementById('q-tag').textContent=q.tag;
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('passage-main').innerHTML=PASSAGE;
+  document.getElementById('q-text').textContent=q.q;
+  var sh=getShuffle(i); var ans=state.answers[i]; var csi=getCSI(i);
+  var html='';
+  for(var s=0;s<4;s++){
+    var oi=sh[s]; var cls='opt-btn'; var dis='';
+    if(ans!==undefined){dis='disabled ';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}
+    html+='<button class="'+cls+'" '+dis+'onclick="pick('+i+','+s+')">'+esc(q.opts[oi])+'</button>';
+  }
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');
+  if(ans!==undefined&&ans!==csi){eb.style.display='block';eb.textContent=q.exp;}
+  else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  updateNav();
+  var c=0,w=0,sk=0;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]===undefined)sk++;
+    else if(state.answers[i]===getCSI(i))c++;
+    else w++;
+  }
+  document.getElementById('results-summary').innerHTML=
+    '<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;'+
+    '<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;'+
+    '<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i]; var label,bg,tc;
+    if(a===undefined){label='Skipped';bg='#d7dde6';tc='#555';}
+    else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}
+    else{label='Wrong';bg='#FCEBEB';tc='#501313';}
+    html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.9rem;color:#333;">Q'+(i+1)+': '+esc(qs[i].tag)+'</span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';
+  }
+  document.getElementById('results-cards').innerHTML=html;
+}
+
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){
+  if(dir===1&&state.cur===qs.length-1){showResults();return;}
+  state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));
+  saveState();render();
+}
+function retryWrong(){
+  var first=-1;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){
+      if(first===-1)first=i; delete state.answers[i];
+    }
+  }
+  if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}
+}
+function copyRes(){
+  var lines=['[Grant] English - Results (2026-06-16)'];
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    var label=a===undefined?'Skipped':(a===getCSI(i)?'Correct':'Wrong');
+    lines.push('Q'+(i+1)+' ('+qs[i].tag+'): '+label);
+  }
+  var txt=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fallbackCopy(txt);});}
+  else fallbackCopy(txt);
+}
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;window.openFreshModal=openFreshModal;
+window.confirmFresh=confirmFresh;window.showResults=showResults;
+
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

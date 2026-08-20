@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Speed Quiz</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;font-family:-apple-system,'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#222;}
+.wrap{max-width:640px;margin:0 auto;background:#fff;min-height:100vh;box-shadow:0 0 18px rgba(0,0,0,0.08);}
+.title{text-align:center;font-size:1.25rem;font-weight:900;color:#185FA5;padding:16px 12px 10px;}
+#qzAttemptsBar{text-align:center;font-size:0.78rem;font-weight:700;color:#888;padding:2px 12px 8px;background:#fff;letter-spacing:0.02em;}
+#qzAttemptsBar span{color:#185FA5;margin-left:4px;}
+#nav-bar{display:flex;align-items:center;gap:8px;margin:0;padding:10px 14px;background:#fff;border-top:1px solid #e6ebf1;border-bottom:1px solid #e6ebf1;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;font-weight:700;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;margin:0 14px 8px;border-radius:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;color:#fff;font-size:11px;cursor:pointer;margin:2px;}
+.card{padding:18px 16px 20px;}
+.tagline{display:inline-block;background:#185FA5;color:#fff;font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:10px;margin-bottom:10px;}
+.qtimer-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f5f7fa;border-radius:8px;padding:8px 12px;margin-bottom:14px;}
+.qtimer-label{font-size:0.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.02em;}
+.qtimer-display{font-size:1.15rem;font-weight:900;color:#185FA5;font-family:'Courier New',monospace;}
+.qtimer-display.warn{color:#f5a623;}
+.qtimer-display.danger{color:#E24B4A;}
+.qtimer-btn{border:1px solid #185FA5;background:#fff;color:#185FA5;border-radius:14px;padding:5px 14px;font-size:0.8rem;font-weight:700;cursor:pointer;}
+.qtimer-btn:disabled{border-color:#c7d2de;color:#c7d2de;cursor:not-allowed;}
+.qtext{font-size:1.04rem;font-weight:700;line-height:1.5;margin-bottom:16px;color:#1a1a1a;}
+.opt{display:block;width:100%;text-align:left;padding:13px 14px;margin-bottom:10px;border:1.5px solid #d7dde6;border-radius:10px;background:#fff;font-size:0.96rem;cursor:pointer;color:#222;line-height:1.4;}
+.opt:active{opacity:0.85;}
+.opt.correct{border-color:#1D9E75;background:#e9faf3;color:#0c6b4d;font-weight:700;}
+.opt.wrong{border-color:#E24B4A;background:#fdeceb;color:#9c2b22;font-weight:700;}
+.opt.disabled{cursor:default;}
+.timeout-note{font-size:0.85rem;font-weight:700;color:#E24B4A;margin-bottom:10px;}
+.navrow{display:flex;gap:10px;margin-top:18px;}
+.navbtn{flex:1;padding:13px;border:none;border-radius:10px;font-size:0.96rem;font-weight:700;cursor:pointer;background:#185FA5;color:#fff;}
+.navbtn:disabled{background:#c7d2de;cursor:not-allowed;}
+.navbtn.secondary{background:#eef2f7;color:#185FA5;}
+.result{padding:24px 18px;text-align:center;}
+.result h2{color:#185FA5;font-size:1.3rem;margin-bottom:4px;}
+.scoreline{font-size:2rem;font-weight:900;color:#1D9E75;margin:12px 0;}
+.resultbtn{display:block;width:100%;padding:13px;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;color:#fff;}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:50;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:14px;padding:22px;max-width:300px;text-align:center;}
+.modal-box h3{margin:0 0 10px;color:#185FA5;font-size:1.05rem;}
+.modal-box p{font-size:0.96rem;color:#333;margin-bottom:18px;line-height:1.5;}
+.modal-row{display:flex;gap:10px;}
+.modal-row button{flex:1;padding:11px;border:none;border-radius:8px;font-size:0.92rem;font-weight:700;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="title">[Grant] Speed Quiz</div>
+  <div id="qzAttemptsBar">Total Attempts:<span id="qzAttemptsCount">0</span></div>
+  <div id="nav-bar">
+    <span id="nav-count">0 / 30</span>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+    <button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button>
+  </div>
+  <div id="dot-panel"></div>
+
+  <div class="card" id="quizArea"></div>
+  <div class="result" id="resultArea" style="display:none;"></div>
+
+  <div class="modal-overlay" id="freshModal">
+    <div class="modal-box">
+      <h3 id="freshModalTitle">Start Fresh?</h3>
+      <p id="freshModalText">Progress will be cleared. This cannot be undone.</p>
+      <div class="modal-row">
+        <button style="background:#eef2f7;color:#185FA5;" onclick="closeFreshModal()">Cancel</button>
+        <button style="background:#E24B4A;color:#fff;" onclick="confirmFresh()">Start Fresh</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var RAW_QUESTIONS = [{"tag": "Gauss", "q": "Compute the following series.<br>(a) 2 + 3 + 4 + 5 + 6 + 7 + 8", "opts": ["30", "35", "32", "42"], "ci": 1}, {"tag": "Gauss", "q": "Compute the following series.<br>(c) 4 + 6 + 8 + 10 + 12 + 14", "opts": ["52", "60", "54", "48"], "ci": 2}, {"tag": "Gauss", "q": "John saves 5 fifty-cent coins in the first week. He saves 6 fifty-cent coins in the second week. In the third week, he saves 7 fifty-cent coins and so on. How many fifty-cent coins can John save altogether by the end of 10 weeks?", "opts": ["85", "90", "100", "95"], "ci": 3}, {"tag": "Gauss", "q": "Compute the following series.<br>1 + 2 + 3 + 4 + … + 48 + 49 + 50", "opts": ["1250", "1300", "1225", "1275"], "ci": 3}, {"tag": "Gauss", "q": "There are 20 teams in the North Volleyball League. Each team must play exactly one match with every other team. How many matches are to be played altogether in the league?", "opts": ["190", "380", "200", "180"], "ci": 0}, {"tag": "Gauss", "q": "Find the sum of all multiples of 4 that are smaller than or equal to 40.", "opts": ["220", "200", "210", "240"], "ci": 0}, {"tag": "Intervals", "q": "Joe puts 5 matchsticks on a table. Each matchstick is 10 cm away from another. How far is the fifth matchstick away from the first one?", "opts": ["36 cm", "45 cm", "40 cm", "50 cm"], "ci": 2}, {"tag": "Intervals", "q": "A road, 500 m long, is to be planted with trees at an interval of 5 m. How many trees can be planted if trees are planted at both ends of the road as well?", "opts": ["100 trees", "102 trees", "101 trees", "99 trees"], "ci": 2}, {"tag": "Intervals", "q": "25 trees are planted at regular intervals from the beginning of a road to the end of it. The distance between every two trees is 5 m. How long is the road?", "opts": ["100 m", "115 m", "125 m", "120 m"], "ci": 3}, {"tag": "Intervals", "q": "Melvin lives on the 5th floor of an apartment building. Nick lives on the next floor. The staircases leading to Melvin's apartment have 80 steps. How many steps have the staircases leading to Nick's apartment?", "opts": ["96 steps", "120 steps", "80 steps", "100 steps"], "ci": 3}, {"tag": "Intervals", "q": "My grandfather clock takes 6 seconds to chime 3 times at 3 o'clock. How long does it take to chime 6 times at 6 o'clock?", "opts": ["15 seconds", "18 seconds", "12 seconds", "10 seconds"], "ci": 0}, {"tag": "Intervals", "q": "Each side of a football field is planted with 16 flags. There is one flag at each corner. How many flags are planted altogether in the football field?", "opts": ["60 flags", "56 flags", "64 flags", "48 flags"], "ci": 0}, {"tag": "Addition &amp; Subtraction Tricks", "q": "Compute the following.<br>(a) 22 + 78 =", "opts": ["90", "98", "110", "100"], "ci": 3}, {"tag": "Addition &amp; Subtraction Tricks", "q": "Compute the following.<br>(d) 54 + 46 =", "opts": ["90", "102", "110", "100"], "ci": 3}, {"tag": "Addition &amp; Subtraction Tricks", "q": "Compute the following.<br>(a) 284 + 118 =", "opts": ["400", "412", "402", "392"], "ci": 2}, {"tag": "Addition &amp; Subtraction Tricks", "q": "Compute the following.<br>(a) 383 + 1,005 =", "opts": ["1,388", "1,288", "1,398", "1,378"], "ci": 0}, {"tag": "Addition &amp; Subtraction Tricks", "q": "Compute the following.<br>(a) 438 - 132 - 206 =", "opts": ["104", "100", "110", "90"], "ci": 1}, {"tag": "Addition &amp; Subtraction Tricks", "q": "Compute the following.<br>(c) 738 - (238 + 162) =", "opts": ["400", "348", "328", "338"], "ci": 3}, {"tag": "Multiplication Tricks", "q": "Compute the following.<br>a) 4 x 5 x 25", "opts": ["450", "500", "525", "400"], "ci": 1}, {"tag": "Multiplication Tricks", "q": "Compute the following.<br>a) 24 x 25", "opts": ["600", "580", "620", "625"], "ci": 0}, {"tag": "Multiplication Tricks", "q": "Compute the following.<br>c) 64 x 125", "opts": ["8,125", "7,800", "7,500", "8,000"], "ci": 3}, {"tag": "Multiplication Tricks", "q": "Compute the following.<br>b) 88 x 125", "opts": ["10,000", "10,800", "11,200", "11,000"], "ci": 3}, {"tag": "Multiplication Tricks", "q": "Compute the following.<br>a) 40 x 99", "opts": ["4,000", "3,960", "3,900", "3,860"], "ci": 1}, {"tag": "Multiplication Tricks", "q": "Compute the following.<br>b) 46 x 101", "opts": ["4,506", "4,606", "4,646", "4,664"], "ci": 2}, {"tag": "Geometry - Lines", "q": "There are 5 points, A, B, C, D, and E, on a straight line as shown below. All the distances between every two points are different. How many different lengths of line segments can be formed altogether?<br><svg width=\"280\" height=\"80\" viewBox=\"0 0 280 80\" style=\"display:block;margin:10px auto;\"><line x1=\"20\" y1=\"40\" x2=\"260\" y2=\"40\" stroke=\"#333\" stroke-width=\"2\"/><circle cx=\"20\" cy=\"40\" r=\"4\" fill=\"#185FA5\"/><text x=\"20\" y=\"22\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">A</text><circle cx=\"70\" cy=\"40\" r=\"4\" fill=\"#185FA5\"/><text x=\"70\" y=\"22\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">B</text><circle cx=\"140\" cy=\"40\" r=\"4\" fill=\"#185FA5\"/><text x=\"140\" y=\"22\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">C</text><circle cx=\"180\" cy=\"40\" r=\"4\" fill=\"#185FA5\"/><text x=\"180\" y=\"22\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">D</text><circle cx=\"260\" cy=\"40\" r=\"4\" fill=\"#185FA5\"/><text x=\"260\" y=\"22\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">E</text></svg>", "opts": ["8", "10", "12", "9"], "ci": 1}, {"tag": "Geometry - Lines", "q": "There are 7 points, A, B, C, D, E, F, and G, on a straight line as shown below. All the distances between every two points are different. How many different lengths of line segments can be formed altogether?<br><svg width=\"340\" height=\"80\" viewBox=\"0 0 340 80\" style=\"display:block;margin:10px auto;\"><line x1=\"20\" y1=\"40\" x2=\"320\" y2=\"40\" stroke=\"#333\" stroke-width=\"2\"/><circle cx=\"20\" cy=\"40\" r=\"4\" fill=\"#185FA5\"/><text x=\"20\" y=\"22\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">A</text><circle cx=\"60\" cy=\"40\" r=\"4\" fill=\"#185FA5\"/><text x=\"60\" y=\"22\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">B</text><circle cx=\"110\" cy=\"40\" r=\"4\" fill=\"#185FA5\"/><text x=\"110\" y=\"22\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">C</text><circle cx=\"150\" cy=\"40\" r=\"4\" fill=\"#185FA5\"/><text x=\"150\" y=\"22\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">D</text><circle cx=\"220\" cy=\"40\" r=\"4\" fill=\"#185FA5\"/><text x=\"220\" y=\"22\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">E</text><circle cx=\"260\" cy=\"40\" r=\"4\" fill=\"#185FA5\"/><text x=\"260\" y=\"22\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">F</text><circle cx=\"320\" cy=\"40\" r=\"4\" fill=\"#185FA5\"/><text x=\"320\" y=\"22\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">G</text></svg>", "opts": ["24", "20", "18", "21"], "ci": 3}, {"tag": "Geometry - Squares", "q": "How many squares are there altogether in the figure below?<br><svg width=\"140\" height=\"140\" viewBox=\"0 0 140 140\" style=\"display:block;margin:10px auto;\"><rect x=\"10\" y=\"10\" width=\"120\" height=\"120\" fill=\"none\" stroke=\"#333\" stroke-width=\"2\"/><line x1=\"70\" y1=\"10\" x2=\"70\" y2=\"130\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"70\" x2=\"130\" y2=\"70\" stroke=\"#333\" stroke-width=\"1.5\"/></svg>", "opts": ["8", "4", "5", "6"], "ci": 2}, {"tag": "Geometry - Squares", "q": "How many squares are there altogether in the figure below (3 columns by 2 rows of equal-sized unit squares)?<br><svg width=\"140\" height=\"100\" viewBox=\"0 0 140 100\" style=\"display:block;margin:10px auto;\"><rect x=\"10\" y=\"10\" width=\"120\" height=\"80\" fill=\"none\" stroke=\"#333\" stroke-width=\"2\"/><line x1=\"50\" y1=\"10\" x2=\"50\" y2=\"90\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"90\" y1=\"10\" x2=\"90\" y2=\"90\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"50\" x2=\"130\" y2=\"50\" stroke=\"#333\" stroke-width=\"1.5\"/></svg>", "opts": ["8", "7", "6", "9"], "ci": 0}, {"tag": "Geometry - Rectangles", "q": "How many rectangles (including squares) are there altogether in the 3-by-3 grid below?<br><svg width=\"128\" height=\"128\" viewBox=\"0 0 128 128\" style=\"display:block;margin:10px auto;\"><rect x=\"10\" y=\"10\" width=\"108\" height=\"108\" fill=\"none\" stroke=\"#333\" stroke-width=\"2\"/><line x1=\"46\" y1=\"10\" x2=\"46\" y2=\"118\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"82\" y1=\"10\" x2=\"82\" y2=\"118\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"46\" x2=\"118\" y2=\"46\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"82\" x2=\"118\" y2=\"82\" stroke=\"#333\" stroke-width=\"1.5\"/></svg>", "opts": ["36", "42", "30", "24"], "ci": 0}, {"tag": "Geometry - Triangles", "q": "The triangle below has 3 line segments drawn from the top vertex to the base, dividing the base into 4 parts. How many triangles of any size are there altogether in the figure?<br><svg width=\"200\" height=\"160\" viewBox=\"0 0 200 160\" style=\"display:block;margin:10px auto;\"><polygon points=\"100,10 10,150 190,150\" fill=\"none\" stroke=\"#333\" stroke-width=\"2\"/><line x1=\"100\" y1=\"10\" x2=\"55\" y2=\"150\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"100\" y1=\"10\" x2=\"100\" y2=\"150\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"100\" y1=\"10\" x2=\"145\" y2=\"150\" stroke=\"#333\" stroke-width=\"1.5\"/></svg>", "opts": ["9", "8", "12", "10"], "ci": 3}];
+var QUIZ_KEY = 'quiz_grantspeedquiz_30_20260627_v1';
+var ATT_KEY = 'quiz_grantspeedquiz_att_20260627_v1';
+var ORDER_KEY = 'quiz_grantspeedquiz_30_20260627_v1_order_v1';
+var QUIZ_TITLE = '[Grant] Speed Quiz';
+var Q_TIME_MS = 40000;
+
+function shuffle(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var tmp=a[i]; a[i]=a[j]; a[j]=tmp;
+  }
+  return a;
+}
+function identityOrder(){ var o=[]; for(var i=0;i<RAW_QUESTIONS.length;i++) o.push(i); return o; }
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length!==RAW_QUESTIONS.length) return false;
+  var sorted = arr.slice().sort(function(a,b){return a-b;});
+  for(var i=0;i<sorted.length;i++) if(sorted[i]!==i) return false;
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad order');
+    return arr;
+  }catch(e){ localStorage.removeItem(ORDER_KEY); return null; }
+}
+function saveOrder(order){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(order)); }catch(e){} }
+function buildQuestions(raw, order){
+  var out=[];
+  for(var i=0;i<order.length;i++) out.push(raw[order[i]]);
+  return out;
+}
+var currentOrder = loadOrder() || identityOrder();
+var QUESTIONS = buildQuestions(RAW_QUESTIONS, currentOrder);
+var pendingFreshMode = 'original';
+
+function defaultQState(){
+  return { answered:false, selected:null, timedOut:false, remainingMs:Q_TIME_MS, manuallyPaused:false, activeStartTs:null };
+}
+function defaultState(){
+  var qs = [];
+  for(var i=0;i<QUESTIONS.length;i++) qs.push(defaultQState());
+  return { cur:0, qs:qs, showResults:false };
+}
+function loadState(){
+  try{
+    var raw = localStorage.getItem(QUIZ_KEY);
+    if(!raw) return null;
+    var s = JSON.parse(raw);
+    if(!s.qs || s.qs.length !== QUESTIONS.length) return null;
+    return s;
+  }catch(e){ return null; }
+}
+function saveState(s){ try{ localStorage.setItem(QUIZ_KEY, JSON.stringify(s)); }catch(e){} }
+
+var state = loadState() || defaultState();
+var tickInterval = null;
+
+function settleActive(){
+  var i = state.cur;
+  var qs = state.qs[i];
+  if(qs && qs.activeStartTs && !qs.answered && !qs.timedOut && !qs.manuallyPaused){
+    var elapsed = Date.now() - qs.activeStartTs;
+    qs.remainingMs = Math.max(0, qs.remainingMs - elapsed);
+    if(qs.remainingMs <= 0){ qs.timedOut = true; }
+  }
+  if(qs){ qs.activeStartTs = null; }
+  if(tickInterval){ clearInterval(tickInterval); tickInterval = null; }
+}
+
+function activate(i){
+  var qs = state.qs[i];
+  if(!qs.answered && !qs.timedOut && !qs.manuallyPaused){
+    qs.activeStartTs = Date.now();
+    tickInterval = setInterval(function(){ tick(); }, 200);
+  }
+}
+
+function tick(){
+  var i = state.cur;
+  var qs = state.qs[i];
+  if(!qs || !qs.activeStartTs){ return; }
+  var elapsed = Date.now() - qs.activeStartTs;
+  var remaining = qs.remainingMs - elapsed;
+  if(remaining <= 0){
+    qs.remainingMs = 0;
+    qs.timedOut = true;
+    qs.activeStartTs = null;
+    if(tickInterval){ clearInterval(tickInterval); tickInterval = null; }
+    saveState(state);
+    render();
+    return;
+  }
+  renderTimerDisplay(remaining);
+}
+
+function renderTimerDisplay(ms){
+  var el = document.getElementById('qtimerDisplay');
+  if(!el) return;
+  var sec = Math.ceil(ms/1000);
+  el.textContent = sec + 's';
+  el.classList.remove('warn','danger');
+  if(sec <= 10) el.classList.add('danger');
+  else if(sec <= 20) el.classList.add('warn');
+}
+
+function currentRemainingMs(i){
+  var qs = state.qs[i];
+  if(qs.activeStartTs && !qs.manuallyPaused && !qs.answered && !qs.timedOut){
+    return Math.max(0, qs.remainingMs - (Date.now()-qs.activeStartTs));
+  }
+  return qs.remainingMs;
+}
+
+function render(){
+  if(state.showResults){
+    settleActive();
+    renderResult();
+    document.getElementById('quizArea').style.display='none';
+    document.getElementById('resultArea').style.display='block';
+    updateNav();
+    return;
+  }
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('resultArea').style.display='none';
+
+  var i = state.cur;
+  var q = QUESTIONS[i];
+  var qs = state.qs[i];
+  var locked = qs.answered || qs.timedOut;
+
+  var html = '';
+  if(q.tag){ html += '<span class="tagline">'+q.tag+'</span><br>'; }
+
+  var remaining = currentRemainingMs(i);
+  var sec = Math.ceil(remaining/1000);
+  var dispClass = sec<=10 ? ' danger' : (sec<=20 ? ' warn' : '');
+  var pauseBtnLabel = qs.manuallyPaused ? 'Resume' : 'Pause';
+  var pauseDisabled = locked ? 'disabled' : '';
+  html += '<div class="qtimer-row">';
+  html += '<span class="qtimer-label">Time Left</span>';
+  html += '<span class="qtimer-display'+dispClass+'" id="qtimerDisplay">'+(locked?(qs.timedOut?"0s":sec+'s'):sec+'s')+'</span>';
+  html += '<button class="qtimer-btn" id="qtimerPauseBtn" '+pauseDisabled+' onclick="togglePause()">'+pauseBtnLabel+'</button>';
+  html += '</div>';
+
+  html += '<div class="qtext">Q'+(i+1)+'. '+q.q+'</div>';
+
+  if(qs.timedOut){
+    html += '<div class="timeout-note">Time\'s up for this question.</div>';
+  }
+
+  for(var k=0;k<q.opts.length;k++){
+    var cls='opt';
+    if(locked){
+      cls += ' disabled';
+      if(k===q.ci) cls += ' correct';
+      else if(qs.answered && k===qs.selected) cls += ' wrong';
+    }
+    html += '<button class="'+cls+'" '+(locked?'disabled':'onclick="pick('+k+')"')+'>'+q.opts[k]+'</button>';
+  }
+
+  html += '<div class="navrow">';
+  html += '<button class="navbtn secondary" onclick="go(-1)" '+(i===0?'disabled':'')+'>&larr; Prev</button>';
+  if(i>=QUESTIONS.length-1){
+    html += '<button class="navbtn" onclick="finishQuiz()">Show Results &rarr;</button>';
+  } else {
+    html += '<button class="navbtn" onclick="go(1)">Next &rarr;</button>';
+  }
+  html += '</div>';
+
+  document.getElementById('quizArea').innerHTML = html;
+  updateNav();
+
+  if(!locked && !qs.manuallyPaused){
+    activate(i);
+  }
+}
+
+function pick(k){
+  var i = state.cur;
+  var qs = state.qs[i];
+  if(qs.answered || qs.timedOut) return;
+  settleActive();
+  qs.answered = true;
+  qs.selected = k;
+  saveState(state);
+  render();
+}
+
+function togglePause(){
+  var i = state.cur;
+  var qs = state.qs[i];
+  if(qs.answered || qs.timedOut) return;
+  if(qs.manuallyPaused){
+    qs.manuallyPaused = false;
+    qs.activeStartTs = Date.now();
+    saveState(state);
+    activate(i);
+  } else {
+    settleActive();
+    qs.manuallyPaused = true;
+    saveState(state);
+  }
+  render();
+}
+
+function go(d){
+  settleActive();
+  var ni = state.cur + d;
+  if(ni<0 || ni>QUESTIONS.length-1) return;
+  state.cur = ni;
+  saveState(state);
+  render();
+}
+
+function goToQ(i){
+  settleActive();
+  state.cur = i;
+  state.showResults = false;
+  saveState(state);
+  render();
+}
+
+function finishQuiz(){
+  settleActive();
+  state.showResults = true;
+  saveState(state);
+  bumpAttempts();
+  render();
+}
+
+function renderResult(){
+  var correct=0;
+  for(var i=0;i<QUESTIONS.length;i++){
+    if(state.qs[i].answered && state.qs[i].selected===QUESTIONS[i].ci) correct++;
+  }
+  var wrong = QUESTIONS.length - correct;
+  var pct = Math.round(correct/QUESTIONS.length*100);
+  var html = '<h2>Results</h2>';
+  html += '<div class="scoreline">'+correct+' / '+QUESTIONS.length+'</div>';
+  html += '<div style="color:#555;margin-bottom:18px;">'+pct+'% correct &middot; '+wrong+' incorrect</div>';
+  html += '<button class="resultbtn" style="background:#7b61ff;" onclick="copyRes()">Copy All Results</button>';
+  html += '<button class="resultbtn" style="background:#1D9E75;" onclick="retryWrong()">Retry Wrong &amp; Timed Out</button>';
+  html += '<button class="resultbtn" style="background:#185FA5;" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button>';
+  html += '<button class="resultbtn" style="background:#888;" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button>';
+  document.getElementById('resultArea').innerHTML = html;
+}
+
+function retryWrong(){
+  var retryList = [];
+  for(var i=0;i<QUESTIONS.length;i++){
+    var qs = state.qs[i];
+    var isCorrect = qs.answered && qs.selected===QUESTIONS[i].ci;
+    if(!isCorrect){
+      retryList.push(i);
+      state.qs[i] = defaultQState();
+    }
+  }
+  if(retryList.length>0){
+    state.cur = retryList[0];
+    state.showResults = false;
+    saveState(state);
+    render();
+  }
+}
+
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var titleEl = document.getElementById('freshModalTitle');
+  var textEl = document.getElementById('freshModalText');
+  if(mode==='random'){
+    titleEl.textContent = 'Start Fresh (Random Order)?';
+    textEl.textContent = 'Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    titleEl.textContent = 'Start Fresh (Original Order)?';
+    textEl.textContent = 'Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  currentOrder = (pendingFreshMode==='random') ? shuffle(identityOrder()) : identityOrder();
+  saveOrder(currentOrder);
+  QUESTIONS = buildQuestions(RAW_QUESTIONS, currentOrder);
+  state = defaultState();
+  saveState(state);
+  if(tickInterval){ clearInterval(tickInterval); tickInterval=null; }
+  closeFreshModal();
+  render();
+}
+
+function copyRes(){
+  var correct=0;
+  for(var i=0;i<QUESTIONS.length;i++){ if(state.qs[i].answered && state.qs[i].selected===QUESTIONS[i].ci) correct++; }
+  var txt = QUIZ_TITLE + ' - Score: ' + correct + '/' + QUESTIONS.length;
+  try{ navigator.clipboard.writeText(txt); }catch(e){}
+}
+
+function updateNav(){
+  var answered = 0;
+  for(var i=0;i<QUESTIONS.length;i++){ if(state.qs[i].answered || state.qs[i].timedOut) answered++; }
+  document.getElementById('nav-count').textContent = answered + ' / ' + QUESTIONS.length;
+  document.getElementById('prog-fill').style.width = (answered/QUESTIONS.length*100).toFixed(1)+'%';
+  renderDots();
+}
+
+function toggleJump(){
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display==='none' || !panel.style.display){
+    panel.style.display='block'; btn.innerHTML='Hide &#9652;'; renderDots();
+  } else {
+    panel.style.display='none'; btn.innerHTML='Jump &#9662;';
+  }
+}
+
+function renderDots(){
+  var panel = document.getElementById('dot-panel');
+  if(panel.style.display==='none' || !panel.style.display) return;
+  var html='';
+  for(var i=0;i<QUESTIONS.length;i++){
+    var qs = state.qs[i];
+    var bg;
+    if(!qs.answered && !qs.timedOut) bg = '#d7dde6';
+    else if(qs.timedOut) bg = '#f5a623';
+    else bg = (qs.selected===QUESTIONS[i].ci) ? '#185FA5' : '#E24B4A';
+    html += '<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';
+  }
+  panel.innerHTML = html;
+}
+
+function qaGet(){ try{ return parseInt(localStorage.getItem(ATT_KEY)||'0',10)||0; }catch(e){ return 0; } }
+function qaSet(n){ try{ localStorage.setItem(ATT_KEY, String(n)); }catch(e){} }
+function bumpAttempts(){ qaSet(qaGet()+1); renderAttempts(); }
+function renderAttempts(){ var el=document.getElementById('qzAttemptsCount'); if(el) el.textContent = qaGet(); }
+
+window.pick = pick;
+window.go = go;
+window.goToQ = goToQ;
+window.finishQuiz = finishQuiz;
+window.retryWrong = retryWrong;
+window.openFreshModalOriginal = openFreshModalOriginal;
+window.openFreshModalRandom = openFreshModalRandom;
+window.closeFreshModal = closeFreshModal;
+window.confirmFresh = confirmFresh;
+window.copyRes = copyRes;
+window.toggleJump = toggleJump;
+window.togglePause = togglePause;
+
+render();
+renderAttempts();
+</script>
+</body>
+</html>

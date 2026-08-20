@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>English Comprehension Quiz — Set 3</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #1a1a2e; min-height: 100vh; }
+  .due-date { text-align: center; font-size: 2rem; font-weight: 800; color: #185FA5; background: #fff; padding: 18px 10px 10px; }
+  .quiz-title { text-align: center; font-size: 1.35rem; font-weight: 700; color: #185FA5; background: #fff; padding: 0 10px 14px; border-bottom: 2px solid #d0dce8; }
+  #quiz-screen, #results-screen, #wrong-review-screen { display: none; }
+  .dot-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 14px 10px 10px; background: #fff; border-bottom: 1px solid #e0e8f0; }
+  .dot { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #b0bec5; background: #e8edf4; color: #444; font-size: 0.72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; flex-shrink: 0; }
+  .dot.current { border-color: #185FA5; background: #185FA5; color: #fff; }
+  .dot.correct { background: #1D9E75; border-color: #1D9E75; color: #fff; }
+  .dot.wrong { background: #E24B4A; border-color: #E24B4A; color: #fff; }
+  .dot.results-pill { border-radius: 16px; width: auto; padding: 0 12px; font-size: 0.72rem; background: #e8edf4; border-color: #b0bec5; color: #444; }
+  .dot.results-pill.active { background: #185FA5; border-color: #185FA5; color: #fff; }
+  .passage-box { background: #fff; margin: 14px 12px 0; border-radius: 12px; padding: 18px; border: 1px solid #d0dce8; font-size: 0.97rem; line-height: 1.75; color: #222; max-width: 780px; margin-left: auto; margin-right: auto; }
+  .passage-box h3 { font-size: 1.05rem; color: #185FA5; margin-bottom: 10px; font-weight: 700; }
+  .question-card { background: #fff; margin: 14px 12px 20px; border-radius: 12px; padding: 20px; border: 1px solid #d0dce8; max-width: 780px; margin-left: auto; margin-right: auto; }
+  .type-badge { display: inline-block; background: #185FA5; color: #fff; font-size: 0.72rem; font-weight: 700; border-radius: 20px; padding: 3px 12px; margin-bottom: 10px; letter-spacing: 0.03em; }
+  .q-num { font-size: 0.82rem; color: #888; font-weight: 600; margin-bottom: 4px; }
+  .q-text { font-size: 1.02rem; font-weight: 600; color: #1a1a2e; line-height: 1.55; margin-bottom: 16px; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .opt-btn { background: #e8edf4; color: #111111; border: 2px solid transparent; border-radius: 10px; padding: 12px 16px; font-size: 0.97rem; text-align: left; cursor: pointer; transition: all 0.15s; line-height: 1.45; }
+  .opt-btn:disabled { cursor: default; }
+  .opt-btn.correct-ans { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .opt-btn.wrong-ans { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+  .opt-btn.reveal-correct { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .explanation { margin-top: 14px; background: #f7f9fc; border-left: 4px solid #185FA5; border-radius: 0 8px 8px 0; padding: 12px 14px; font-size: 0.92rem; color: #2a2a4a; line-height: 1.6; display: none; }
+  .explanation.show { display: block; }
+  .nav-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px 20px; max-width: 780px; margin: 0 auto; }
+  .nav-btn { background: #185FA5; color: #fff; border: none; border-radius: 10px; padding: 12px 28px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+  .nav-btn:disabled { background: #b0bec5; cursor: default; }
+  .nav-btn.next-results { background: #1D9E75; }
+  .q-counter { font-size: 0.92rem; color: #666; font-weight: 600; }
+  .results-wrap { padding: 20px 12px; max-width: 780px; margin: 0 auto; }
+  .results-header { text-align: center; margin-bottom: 20px; }
+  .results-score { font-size: 2.5rem; font-weight: 800; color: #185FA5; }
+  .results-label { font-size: 1rem; color: #666; margin-top: 4px; }
+  .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 24px; }
+  .result-card { border-radius: 10px; padding: 10px 12px; cursor: pointer; border: 2px solid transparent; }
+  .result-card.correct { background: #E1F5EE; border-color: #1D9E75; }
+  .result-card.wrong { background: #FCEBEB; border-color: #E24B4A; }
+  .result-card.skipped { background: #f5f5f5; border-color: #bbb; }
+  .rc-qnum { font-size: 0.75rem; font-weight: 700; color: #555; }
+  .rc-status { font-size: 0.82rem; font-weight: 700; margin-top: 2px; }
+  .result-card.correct .rc-status { color: #085041; }
+  .result-card.wrong .rc-status { color: #501313; }
+  .result-card.skipped .rc-status { color: #666; }
+  .rc-correct-ans { font-size: 0.72rem; color: #555; margin-top: 4px; line-height: 1.4; }
+  .results-btns { display: flex; flex-direction: column; gap: 10px; }
+  .btn-copy { background: #185FA5; color: #fff; border: none; border-radius: 10px; padding: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+  .btn-retry-wrong { background: #E24B4A; color: #fff; border: none; border-radius: 10px; padding: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+  .btn-fresh { background: #fff; color: #E24B4A; border: 2px solid #E24B4A; border-radius: 10px; padding: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+  .wrong-review-header { background: #fff; padding: 14px 16px; border-bottom: 2px solid #E24B4A; display: flex; align-items: center; gap: 12px; }
+  .wrong-review-header h2 { font-size: 1.1rem; color: #E24B4A; font-weight: 800; }
+  .btn-back-results { background: #185FA5; color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 0.88rem; font-weight: 700; cursor: pointer; margin-left: auto; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; justify-content: center; align-items: center; }
+  .modal-overlay.show { display: flex; }
+  .modal-box { background: #fff; border-radius: 16px; padding: 28px 24px; max-width: 340px; width: 90%; text-align: center; }
+  .modal-box h3 { font-size: 1.15rem; font-weight: 800; color: #1a1a2e; margin-bottom: 10px; }
+  .modal-box p { font-size: 0.95rem; color: #555; margin-bottom: 22px; line-height: 1.5; }
+  .modal-btns { display: flex; gap: 12px; }
+  .modal-cancel { flex: 1; background: #e8edf4; color: #333; border: none; border-radius: 10px; padding: 13px; font-size: 0.97rem; font-weight: 700; cursor: pointer; }
+  .modal-confirm { flex: 1; background: #E24B4A; color: #fff; border: none; border-radius: 10px; padding: 13px; font-size: 0.97rem; font-weight: 700; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="due-date">📅 Due: June 5, 2026</div>
+<div class="quiz-title">English Comprehension Quiz — Set 3</div>
+
+<div class="dot-nav" id="dotNav"></div>
+
+<div id="quiz-screen">
+  <div class="passage-box" id="passageBox">
+    <h3>📖 Read the passage carefully.</h3>
+    <div id="passageText"></div>
+  </div>
+  <div class="question-card">
+    <div class="type-badge" id="typeBadge"></div>
+    <div class="q-num" id="qNum"></div>
+    <div class="q-text" id="qText"></div>
+    <div class="options" id="optionsDiv"></div>
+    <div class="explanation" id="explanation"></div>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn" id="prevBtn" onclick="goTo(state.cur-1)">← Prev</button>
+    <span class="q-counter" id="qCounter"></span>
+    <button class="nav-btn" id="nextBtn" onclick="handleNext()">Next →</button>
+  </div>
+</div>
+
+<div id="results-screen">
+  <div class="results-wrap">
+    <div class="results-header">
+      <div class="results-score" id="resultsScore"></div>
+      <div class="results-label">Quiz Complete!</div>
+    </div>
+    <div class="results-grid" id="resultsGrid"></div>
+    <div class="results-btns">
+      <button class="btn-retry-wrong" id="retryWrongBtn" onclick="startRetry()">🔁 Retry Wrong Answers</button>
+      <button class="btn-copy" onclick="copyResults()">📋 Copy All Results</button>
+      <button class="btn-fresh" onclick="showFreshModal()">🔄 Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<div id="wrong-review-screen">
+  <div class="wrong-review-header">
+    <h2>🔁 Wrong Answer Retry</h2>
+    <button class="btn-back-results" onclick="backToResults()">Back to Results</button>
+  </div>
+  <div class="dot-nav" id="retryDotNav"></div>
+  <div class="passage-box" id="retryPassageBox" style="display:none">
+    <h3>📖 Read the passage carefully.</h3>
+    <div id="retryPassageText"></div>
+  </div>
+  <div class="question-card">
+    <div class="type-badge" id="retryBadge"></div>
+    <div class="q-num" id="retryQNum"></div>
+    <div class="q-text" id="retryQText"></div>
+    <div class="options" id="retryOptions"></div>
+    <div class="explanation" id="retryExplanation"></div>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn" id="retryPrev" onclick="retryNav(-1)">← Prev</button>
+    <span class="q-counter" id="retryCtr"></span>
+    <button class="nav-btn" id="retryNext" onclick="retryNav(1)">Next →</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <h3>Start Fresh?</h3>
+    <p>All your progress will be cleared. This cannot be undone.</p>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="hideFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'quiz_comprehension_25_set3_v1';
+
+const PASSAGE = `When thirteen-year-old Diego arrived at Pinecrest Middle School in October, the hallways felt like a maze and every face was a stranger's. His family had moved from San Antonio, Texas, to a small town in Oregon, and nothing felt right. The rain was relentless, the food was different, and worst of all, Diego had left behind his best friend, Marco, and their beloved Saturday soccer games.
+
+For the first two weeks, Diego ate lunch alone, pretending to read so no one would notice. He told himself he didn't need anyone new. Back in San Antonio, friendships had been easy — they had just happened. Here, every conversation felt like a test he hadn't studied for.
+
+Then, one afternoon in gym class, Coach Rivera divided the students into soccer teams. Diego hesitated at first, hanging back near the goal. But when a loose ball rolled toward him, instinct took over. He trapped it cleanly, twisted past two defenders, and sent a perfect low shot into the corner of the net.
+
+The gym went quiet for a moment. Then a boy named Jordan ran over, eyes wide. "Where did you learn to do that?"
+
+Diego shrugged, but he couldn't hide the smile pulling at his mouth. "My friend Marco. We used to play every Saturday back in San Antonio."
+
+"We have a team that practices on Saturdays," Jordan said. "We could really use someone like you."
+
+Diego looked at the muddy field through the gymnasium window. It wasn't San Antonio. The sky was gray and the grass was wet. But a soccer ball was a soccer ball, and a Saturday was a Saturday.
+
+"Okay," he said quietly. "I'll come."
+
+That weekend, standing in the drizzle with new teammates, Diego realized that some things — the language of a perfectly placed pass, the trust between players — are the same everywhere.`;
+
+const QUESTIONS = [
+  {
+    type: "Inference",
+    q: "What can we infer about Diego during his first two weeks at the new school?",
+    options: [
+      "He was confident but chose to keep to himself on purpose.",
+      "He felt lonely and was hiding his discomfort behind a book.",
+      "He disliked soccer and avoided all physical activity.",
+      "He had already made a few friends but preferred eating alone."
+    ],
+    ci: 1,
+    exp: "Diego 'ate lunch alone, pretending to read so no one would notice' and described every conversation as 'a test he hadn't studied for.' These details reveal loneliness hidden behind a defensive habit."
+  },
+  {
+    type: "Main Idea",
+    q: "Which sentence best states the main idea of this passage?",
+    options: [
+      "Moving to a new school is always a painful experience that takes years to recover from.",
+      "A boy who struggles to fit in at a new school finds connection through his love of soccer.",
+      "Soccer is the world's most popular sport because it brings people together.",
+      "Diego misses his friend Marco and spends the whole story trying to go back to San Antonio."
+    ],
+    ci: 1,
+    exp: "The story follows Diego's journey from isolation to connection, with soccer as the bridge. This is the central narrative arc of the passage."
+  },
+  {
+    type: "Theme",
+    q: "What is the central theme of this passage?",
+    options: [
+      "Moving to a new place is too difficult for most young people to handle.",
+      "Being good at sports is the only way to make friends.",
+      "Shared passions can bridge the gap between strangers and create belonging.",
+      "It is better to stay in one place your whole life than to move around."
+    ],
+    ci: 2,
+    exp: "The passage ends with Diego realizing that 'the language of a perfectly placed pass, the trust between players — are the same everywhere.' The theme is that shared passion transcends difference and creates connection."
+  },
+  {
+    type: "Predict",
+    q: "At the end of the passage, Diego agrees to join the Saturday soccer team. What will most likely happen next?",
+    options: [
+      "Diego will quit the team after the first practice because he misses Marco too much.",
+      "Diego will gradually build friendships through soccer and feel more at home in Oregon.",
+      "Coach Rivera will tell Diego he is not skilled enough to join the team.",
+      "Diego will contact Marco and convince him to move to Oregon."
+    ],
+    ci: 1,
+    exp: "The passage ends on a hopeful note — Diego steps onto the field and recognizes something universal in the sport. The logical next step is that he builds new friendships and begins to feel at home."
+  },
+  {
+    type: "Summary",
+    q: "Which option best summarizes the entire passage?",
+    options: [
+      "Diego moves from Texas to Oregon and immediately makes friends by showing off his soccer skills in gym class.",
+      "A boy named Jordan convinces Diego to join a soccer team, and Diego becomes the star player.",
+      "After struggling with loneliness at a new school, Diego reveals his soccer talent in gym class and is invited to join a team, taking a hopeful step toward belonging.",
+      "Diego misses his best friend Marco and refuses to make new friends until his parents force him to play soccer."
+    ],
+    ci: 2,
+    exp: "The best summary captures Diego's initial loneliness, the turning point in gym class, Jordan's invitation, and Diego's hopeful decision — without overstating or distorting any part of the story."
+  },
+  {
+    type: "Tone",
+    q: "How does the tone of the passage shift from the beginning to the end?",
+    options: [
+      "From angry and resentful to calm and accepting",
+      "From lonely and uncertain to quietly hopeful",
+      "From excited and energetic to tired and sad",
+      "From humorous and playful to serious and tense"
+    ],
+    ci: 1,
+    exp: "The passage opens with Diego feeling isolated and describing conversations as tests he hadn't studied for. By the end, he is standing with new teammates in the drizzle, recognizing something universal. The tone shifts from lonely and uncertain to quietly hopeful."
+  },
+  {
+    type: "Point of View",
+    q: "From which point of view is this passage written?",
+    options: [
+      "First person — Diego narrates the story himself",
+      "Second person — the reader is addressed as 'you'",
+      "Third person limited — an outside narrator focuses on Diego's thoughts and experiences",
+      "Third person omniscient — the narrator knows the thoughts of all characters equally"
+    ],
+    ci: 2,
+    exp: "The narrator uses 'he' and 'his' and has access to Diego's inner thoughts ('He told himself he didn't need anyone new'), but we only see inside Diego's perspective — not Jordan's or Coach Rivera's. This is third person limited."
+  },
+  {
+    type: "Author's Purpose",
+    q: "Why did the author most likely write this passage?",
+    options: [
+      "To inform readers about the rules of soccer",
+      "To warn readers about the dangers of moving to a new city",
+      "To entertain readers and inspire those who feel like outsiders",
+      "To persuade readers that team sports should be required in all schools"
+    ],
+    ci: 2,
+    exp: "The passage tells a fictional story with a relatable emotional journey. Its purpose is to entertain while also inspiring readers — especially those who have felt like outsiders — with a message about connection and belonging."
+  },
+  {
+    type: "Cause & Effect",
+    q: "What caused Diego to finally reveal his soccer talent in gym class?",
+    options: [
+      "Coach Rivera asked Diego to demonstrate his skills for the class.",
+      "Jordan challenged Diego to a one-on-one competition.",
+      "A loose ball rolled toward Diego and instinct took over.",
+      "Diego decided he was tired of being ignored and wanted to show off."
+    ],
+    ci: 2,
+    exp: "The passage states clearly: 'when a loose ball rolled toward him, instinct took over.' Diego did not plan to show his skill — it happened naturally in response to the ball."
+  },
+  {
+    type: "Compare & Contrast",
+    q: "How does Diego's experience making friends in San Antonio differ from his experience in Oregon?",
+    options: [
+      "In San Antonio, friendships required hard work; in Oregon, they come easily through soccer.",
+      "In San Antonio, friendships happened naturally and easily; in Oregon, every conversation feels like a test.",
+      "In San Antonio, Diego had no close friends; in Oregon, he quickly becomes popular.",
+      "In San Antonio, Diego relied on soccer to make friends; in Oregon, he avoids the sport at first."
+    ],
+    ci: 1,
+    exp: "The passage says: 'In San Antonio, friendships had been easy — they had just happened. Here, every conversation felt like a test he hadn't studied for.' This is the direct contrast the passage draws."
+  },
+  {
+    type: "Text Structure",
+    q: "What is the main text structure of this passage?",
+    options: [
+      "Cause-effect: explaining why students struggle when they move to new schools",
+      "Compare-contrast: comparing life in San Antonio with life in Oregon",
+      "Chronological: events unfold in the order they happen, building toward a turning point",
+      "Problem-solution: Diego's loneliness is solved when he joins the soccer team"
+    ],
+    ci: 2,
+    exp: "The passage moves forward in time — Diego arrives, spends two lonely weeks, then has a turning point in gym class, then agrees to join the team. While there is also a problem-solution element, the dominant structure is chronological narrative."
+  },
+  {
+    type: "Character Traits / Motivation",
+    q: "Which words best describe Diego at the beginning of the story?",
+    options: [
+      "Arrogant and unfriendly",
+      "Guarded and homesick",
+      "Cheerful and adventurous",
+      "Lazy and uninterested in school"
+    ],
+    ci: 1,
+    exp: "Diego eats alone, pretends to read to avoid attention, and tells himself he doesn't need new friends. These actions show he is emotionally guarded. His memories of Marco and San Antonio reveal deep homesickness."
+  },
+  {
+    type: "Supporting Details",
+    q: "Which detail best supports the idea that Diego felt out of place in Oregon?",
+    options: [
+      "He trapped the ball cleanly and sent a perfect shot into the net.",
+      "He told himself he didn't need anyone new, and every conversation felt like a test he hadn't studied for.",
+      "Jordan asked him where he learned to play soccer.",
+      "He agreed to come to Saturday practice."
+    ],
+    ci: 1,
+    exp: "The detail about conversations feeling like 'a test he hadn't studied for' directly illustrates Diego's sense of not belonging. It captures both his anxiety and his feeling of being unprepared for this new social environment."
+  },
+  {
+    type: "Situation",
+    q: "Where does the turning point of the story take place?",
+    options: [
+      "On the muddy Saturday soccer field in Oregon",
+      "In the school cafeteria during lunch",
+      "In gym class during a soccer game",
+      "In San Antonio during a Saturday game with Marco"
+    ],
+    ci: 2,
+    exp: "The turning point — when Diego reveals his talent and meets Jordan — happens in gym class during a soccer game. This is where the story shifts from isolation toward connection."
+  },
+  {
+    type: "Setting",
+    q: "How does the Oregon setting affect Diego's feelings at the start of the story?",
+    options: [
+      "The warm, sunny weather makes Diego feel cheerful despite missing home.",
+      "The unfamiliar environment, relentless rain, and different food all deepen Diego's sense of not belonging.",
+      "The small town makes it easy for Diego to meet people quickly.",
+      "The school's large size makes Diego feel anonymous, which he enjoys."
+    ],
+    ci: 1,
+    exp: "The passage lists specific details — 'the rain was relentless, the food was different' — to show how the unfamiliar Oregon environment reinforces Diego's feeling of displacement and longing for home."
+  },
+  {
+    type: "Figurative Language",
+    q: "What type of figurative language is used in: 'the hallways felt like a maze and every face was a stranger's'?",
+    options: [
+      "Personification",
+      "Hyperbole",
+      "Simile",
+      "Metaphor"
+    ],
+    ci: 2,
+    exp: "'The hallways felt like a maze' uses 'like' to compare the hallways to a maze — this is a simile. It expresses how confusing and overwhelming the new school felt to Diego."
+  },
+  {
+    type: "Analogy",
+    q: "Complete the analogy: Loneliness : Isolation :: Courage : ________",
+    options: [
+      "Fear",
+      "Bravery",
+      "Sadness",
+      "Running"
+    ],
+    ci: 1,
+    exp: "Loneliness and isolation are near-synonyms — both describe being alone or cut off. Courage and bravery are near-synonyms — both describe facing difficulty without giving in to fear."
+  },
+  {
+    type: "Synonym & Antonym",
+    q: "The passage says Diego's family's move made 'nothing feel right' and describes his early weeks as difficult. The word 'relentless' is used to describe the rain. Which word is the best ANTONYM of 'relentless'?",
+    options: [
+      "Constant",
+      "Harsh",
+      "Occasional",
+      "Heavy"
+    ],
+    ci: 2,
+    exp: "'Relentless' means nonstop or never letting up. Its antonym is 'occasional,' meaning happening only sometimes. 'Constant' and 'heavy' are close to synonyms, not antonyms."
+  },
+  {
+    type: "Guess the Meaning",
+    q: "Read this sentence: 'He trapped it cleanly, twisted past two defenders, and sent a perfect low shot into the corner of the net.' What does 'trapped' most likely mean in this context?",
+    options: [
+      "Caught and controlled the ball with his foot",
+      "Kicked the ball as hard as possible",
+      "Blocked another player from moving",
+      "Threw the ball to a teammate"
+    ],
+    ci: 0,
+    exp: "In soccer, 'trapping' a ball means stopping and controlling it with your foot or body. The context — Diego receives a loose ball and then moves past defenders — supports this meaning."
+  },
+  {
+    type: "Preposition",
+    q: "Choose the correct preposition: 'Diego had left behind his best friend Marco and their beloved Saturday soccer games ________ San Antonio.'",
+    options: [
+      "on",
+      "in",
+      "at",
+      "for"
+    ],
+    ci: 1,
+    exp: "'In San Antonio' is correct — 'in' is used with cities and towns to indicate location. 'At' is used for specific places or addresses, not city names."
+  },
+  {
+    type: "Genre",
+    q: "What is the genre of this passage?",
+    options: [
+      "Nonfiction biography",
+      "Poetry",
+      "Realistic fiction",
+      "Fantasy"
+    ],
+    ci: 2,
+    exp: "The passage features invented characters in believable, everyday situations — a new student adjusting to a school move. There is no magic, no real historical figure, and no verse. It is realistic fiction."
+  },
+  {
+    type: "Kind of Fiction",
+    q: "Which type of fiction best describes this passage?",
+    options: [
+      "Historical fiction",
+      "Science fiction",
+      "Realistic fiction",
+      "Fantasy"
+    ],
+    ci: 2,
+    exp: "The story takes place in a recognizable modern setting with everyday events (moving schools, gym class, Saturday soccer). There is no past historical era, futuristic technology, or magical element — it is realistic fiction."
+  },
+  {
+    type: "Fact vs. Opinion",
+    q: "Which of the following statements is a FACT based on the passage?",
+    options: [
+      "Diego is the most talented soccer player anyone at Pinecrest has ever seen.",
+      "Oregon is a worse place to grow up than San Antonio.",
+      "Diego arrived at Pinecrest Middle School in October.",
+      "Jordan was the friendliest student in the entire school."
+    ],
+    ci: 2,
+    exp: "'Diego arrived at Pinecrest Middle School in October' is stated directly in the passage as a specific detail — it is a fact. The other options are opinions or exaggerations not supported by the text."
+  },
+  {
+    type: "Fact vs. Opinion",
+    q: "Which of the following statements is an OPINION?",
+    options: [
+      "Diego's family moved from San Antonio, Texas, to a small town in Oregon.",
+      "Diego ate lunch alone during his first two weeks.",
+      "Moving to a new school in middle school is the hardest thing a young person can face.",
+      "Jordan invited Diego to join the Saturday soccer team."
+    ],
+    ci: 2,
+    exp: "'The hardest thing a young person can face' is a personal judgment that cannot be measured or proven. The other three statements are specific events described in the passage and can be verified."
+  },
+  {
+    type: "Title",
+    q: "Which title best fits this passage?",
+    options: [
+      "Jordan's Soccer Team: A Championship Story",
+      "The Long Rain: Life in Oregon",
+      "A Ball, a Field, and a New Beginning",
+      "How to Move to a New School Without Losing Friends"
+    ],
+    ci: 2,
+    exp: "'A Ball, a Field, and a New Beginning' captures the three key elements of the story: soccer (the ball and field), and Diego's emotional journey toward belonging (a new beginning). It reflects both the literal and emotional arc of the passage."
+  }
+];
+
+let state = { cur: 0, answers: {}, shuffles: {}, showResults: false };
+let retryIndices = [], retryCur = 0, retryAnswers = {}, retryShuffles = {};
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (
+        parsed &&
+        typeof parsed.cur === 'number' &&
+        parsed.cur >= 0 &&
+        parsed.cur < QUESTIONS.length &&
+        typeof parsed.answers === 'object' &&
+        typeof parsed.shuffles === 'object'
+      ) {
+        state = parsed;
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    }
+  } catch(e) {
+    try { localStorage.removeItem(STORAGE_KEY); } catch(e2) {}
+  }
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getShuffled(qi) {
+  if (state.shuffles[qi]) return state.shuffles[qi];
+  const arr = shuffle(QUESTIONS[qi].options.map((_, i) => i));
+  state.shuffles[qi] = arr;
+  saveState();
+  return arr;
+}
+
+function getRetryShuffled(ri) {
+  if (retryShuffles[ri]) return retryShuffles[ri];
+  const arr = shuffle(QUESTIONS[retryIndices[ri]].options.map((_, i) => i));
+  retryShuffles[ri] = arr;
+  return arr;
+}
+
+function buildDotNav() {
+  const nav = document.getElementById('dotNav');
+  nav.innerHTML = '';
+  QUESTIONS.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    d.textContent = i + 1;
+    if (state.answers[i] !== undefined)
+      d.classList.add(state.answers[i] === QUESTIONS[i].ci ? 'correct' : 'wrong');
+    if (i === state.cur && !state.showResults) d.classList.add('current');
+    d.onclick = () => goTo(i);
+    nav.appendChild(d);
+  });
+  const pill = document.createElement('div');
+  pill.className = 'dot results-pill' + (state.showResults ? ' active' : '');
+  pill.textContent = 'Results';
+  pill.onclick = () => { state.showResults = true; saveState(); render(); };
+  nav.appendChild(pill);
+}
+
+function buildRetryDotNav() {
+  const nav = document.getElementById('retryDotNav');
+  nav.innerHTML = '';
+  retryIndices.forEach((qi, ri) => {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    d.textContent = qi + 1;
+    if (retryAnswers[ri] !== undefined)
+      d.classList.add(retryAnswers[ri] === QUESTIONS[qi].ci ? 'correct' : 'wrong');
+    if (ri === retryCur) d.classList.add('current');
+    d.onclick = () => { retryCur = ri; renderRetry(); };
+    nav.appendChild(d);
+  });
+}
+
+function render() {
+  try {
+    document.getElementById('quiz-screen').style.display = 'none';
+    document.getElementById('results-screen').style.display = 'none';
+    document.getElementById('wrong-review-screen').style.display = 'none';
+    buildDotNav();
+    if (state.showResults) {
+      document.getElementById('results-screen').style.display = 'block';
+      showResultsScreen();
+    } else {
+      document.getElementById('quiz-screen').style.display = 'block';
+      renderQuestion();
+    }
+  } catch(e) {
+    document.body.innerHTML += '<div style="padding:20px;color:red;font-weight:bold;">Error: ' + e.message + '</div>';
+  }
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[state.cur];
+  const sh = getShuffled(state.cur);
+  document.getElementById('typeBadge').textContent = q.type;
+  document.getElementById('qNum').textContent = 'Question ' + (state.cur + 1) + ' of ' + QUESTIONS.length;
+  document.getElementById('qText').textContent = q.q;
+  document.getElementById('passageText').textContent = PASSAGE;
+  document.getElementById('passageBox').style.display = 'block';
+
+  const optDiv = document.getElementById('optionsDiv');
+  optDiv.innerHTML = '';
+  const answered = state.answers[state.cur];
+  sh.forEach((origIdx, pos) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = String.fromCharCode(65 + pos) + '. ' + q.options[origIdx];
+    if (answered !== undefined) {
+      btn.disabled = true;
+      if (origIdx === q.ci) btn.classList.add(answered === q.ci ? 'correct-ans' : 'reveal-correct');
+      else if (origIdx === answered) btn.classList.add('wrong-ans');
+    } else {
+      btn.onclick = () => selectAnswer(origIdx);
+    }
+    optDiv.appendChild(btn);
+  });
+
+  const expDiv = document.getElementById('explanation');
+  if (answered !== undefined && answered !== q.ci) {
+    expDiv.textContent = '📝 ' + q.exp;
+    expDiv.classList.add('show');
+  } else {
+    expDiv.classList.remove('show');
+    expDiv.textContent = '';
+  }
+
+  document.getElementById('qCounter').textContent = (state.cur + 1) + ' / ' + QUESTIONS.length;
+  document.getElementById('prevBtn').disabled = state.cur === 0;
+  const nextBtn = document.getElementById('nextBtn');
+  if (state.cur === QUESTIONS.length - 1) {
+    nextBtn.textContent = 'See Results →';
+    nextBtn.className = 'nav-btn next-results';
+  } else {
+    nextBtn.textContent = 'Next →';
+    nextBtn.className = 'nav-btn';
+  }
+}
+
+function selectAnswer(origIdx) {
+  state.answers[state.cur] = origIdx;
+  saveState();
+  renderQuestion();
+}
+
+function handleNext() {
+  if (state.cur === QUESTIONS.length - 1) {
+    state.showResults = true;
+    saveState();
+    render();
+  } else {
+    goTo(state.cur + 1);
+  }
+}
+
+function goTo(i) {
+  if (i < 0 || i >= QUESTIONS.length) return;
+  state.cur = i;
+  state.showResults = false;
+  saveState();
+  render();
+}
+
+function showResultsScreen() {
+  try {
+    let correct = 0;
+    QUESTIONS.forEach((q, i) => { if (state.answers[i] === q.ci) correct++; });
+    document.getElementById('resultsScore').textContent = correct + ' / ' + QUESTIONS.length;
+
+    const grid = document.getElementById('resultsGrid');
+    grid.innerHTML = '';
+    QUESTIONS.forEach((q, i) => {
+      const a = state.answers[i];
+      let cls, status;
+      if (a === undefined) { cls = 'skipped'; status = 'Skipped'; }
+      else if (a === q.ci) { cls = 'correct'; status = '✓ Correct'; }
+      else { cls = 'wrong'; status = '✗ Wrong'; }
+      const card = document.createElement('div');
+      card.className = 'result-card ' + cls;
+      let inner = '<div class="rc-qnum">Q' + (i+1) + ' — ' + q.type + '</div><div class="rc-status">' + status + '</div>';
+      if (cls !== 'correct') inner += '<div class="rc-correct-ans">✓ ' + q.options[q.ci] + '</div>';
+      card.innerHTML = inner;
+      card.onclick = () => goTo(i);
+      grid.appendChild(card);
+    });
+
+    const wrongCount = QUESTIONS.filter((q, i) => state.answers[i] !== undefined && state.answers[i] !== q.ci).length;
+    document.getElementById('retryWrongBtn').style.display = wrongCount > 0 ? 'block' : 'none';
+  } catch(e) {
+    document.getElementById('results-screen').innerHTML += '<div style="padding:20px;color:red;">Results error: ' + e.message + '</div>';
+  }
+}
+
+function startRetry() {
+  retryIndices = QUESTIONS.map((q, i) => ({ i, q }))
+    .filter(({ i, q }) => state.answers[i] !== undefined && state.answers[i] !== q.ci)
+    .map(({ i }) => i);
+  if (retryIndices.length === 0) return;
+  retryCur = 0;
+  retryAnswers = {};
+  retryShuffles = {};
+  document.getElementById('quiz-screen').style.display = 'none';
+  document.getElementById('results-screen').style.display = 'none';
+  document.getElementById('wrong-review-screen').style.display = 'block';
+  buildRetryDotNav();
+  renderRetry();
+}
+
+function renderRetry() {
+  const ri = retryCur;
+  const qi = retryIndices[ri];
+  const q = QUESTIONS[qi];
+  const sh = getRetryShuffled(ri);
+
+  document.getElementById('retryBadge').textContent = q.type;
+  document.getElementById('retryQNum').textContent = 'Q' + (qi+1) + ' (Wrong Answer Retry — ' + (ri+1) + ' of ' + retryIndices.length + ')';
+  document.getElementById('retryQText').textContent = q.q;
+  document.getElementById('retryPassageText').textContent = PASSAGE;
+  document.getElementById('retryPassageBox').style.display = 'block';
+
+  const optDiv = document.getElementById('retryOptions');
+  optDiv.innerHTML = '';
+  const answered = retryAnswers[ri];
+  sh.forEach((origIdx, pos) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = String.fromCharCode(65 + pos) + '. ' + q.options[origIdx];
+    if (answered !== undefined) {
+      btn.disabled = true;
+      if (origIdx === q.ci) btn.classList.add(answered === q.ci ? 'correct-ans' : 'reveal-correct');
+      else if (origIdx === answered) btn.classList.add('wrong-ans');
+    } else {
+      btn.onclick = () => { retryAnswers[ri] = origIdx; renderRetry(); };
+    }
+    optDiv.appendChild(btn);
+  });
+
+  const expDiv = document.getElementById('retryExplanation');
+  if (answered !== undefined && answered !== q.ci) {
+    expDiv.textContent = '📝 ' + q.exp;
+    expDiv.classList.add('show');
+  } else if (answered === q.ci) {
+    expDiv.textContent = '✅ Correct!';
+    expDiv.classList.add('show');
+  } else {
+    expDiv.classList.remove('show');
+    expDiv.textContent = '';
+  }
+
+  document.getElementById('retryCtr').textContent = (ri+1) + ' / ' + retryIndices.length;
+  document.getElementById('retryPrev').disabled = ri === 0;
+  const nextBtn = document.getElementById('retryNext');
+  if (ri === retryIndices.length - 1) {
+    nextBtn.textContent = 'Done ✓';
+    nextBtn.onclick = backToResults;
+  } else {
+    nextBtn.textContent = 'Next →';
+    nextBtn.onclick = () => retryNav(1);
+  }
+  buildRetryDotNav();
+}
+
+function retryNav(dir) {
+  retryCur = Math.max(0, Math.min(retryIndices.length - 1, retryCur + dir));
+  renderRetry();
+}
+
+function backToResults() {
+  document.getElementById('wrong-review-screen').style.display = 'none';
+  document.getElementById('results-screen').style.display = 'block';
+  state.showResults = true;
+  buildDotNav();
+  showResultsScreen();
+}
+
+function copyResults() {
+  let text = 'English Comprehension Quiz — Set 3\n===================================\n';
+  let correct = 0;
+  QUESTIONS.forEach((q, i) => {
+    const a = state.answers[i];
+    let status;
+    if (a === undefined) status = 'Skipped';
+    else if (a === q.ci) { status = 'Correct'; correct++; }
+    else status = 'Wrong (Correct: ' + q.options[q.ci] + ')';
+    text += 'Q' + (i+1) + ' [' + q.type + ']: ' + status + '\n';
+  });
+  text += '\nScore: ' + correct + ' / ' + QUESTIONS.length;
+  try { navigator.clipboard.writeText(text).catch(() => fallbackCopy(text)); }
+  catch(e) { fallbackCopy(text); }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  document.execCommand('copy'); document.body.removeChild(ta);
+}
+
+function showFreshModal() { document.getElementById('freshModal').classList.add('show'); }
+function hideFreshModal() { document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh() {
+  hideFreshModal();
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+  state = { cur: 0, answers: {}, shuffles: {}, showResults: false };
+  render();
+}
+
+loadState();
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>[Grant] English</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background:#ffffff; color:#111111; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 16px 16px 60px; }
+  .datebar { font-size: 1rem; text-align:center; color:#555555; margin-top: 6px; }
+  .titlebar { font-size: 2rem; font-weight: 800; text-align:center; color:#185FA5; background:#ffffff; margin: 6px 0 2px; line-height:1.25; }
+  .attempts { text-align:center; color:#185FA5; font-size: 0.95rem; margin-bottom: 14px; }
+  .dotnav { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin: 10px 0 16px; }
+  .dot { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:700; cursor:pointer; border:2px solid #cccccc; background:#e8edf4; color:#333333; }
+  .dot.correct { background:#185FA5; border-color:#185FA5; color:#ffffff; }
+  .dot.wrong { background:#E24B4A; border-color:#E24B4A; color:#ffffff; }
+  .dot.current { box-shadow: 0 0 0 3px rgba(24,95,165,0.35); }
+  .tag { display:inline-block; background:#185FA5; color:#ffffff; border-radius:999px; padding:5px 14px; font-size:0.8rem; font-weight:700; margin-bottom:12px; }
+  .qcard { background:#f7f9fc; border-radius:14px; padding:18px; margin-bottom:16px; }
+  .qtext { font-size:1.15rem; line-height:1.55; margin-bottom: 14px; }
+  .speakbtn { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:#185FA5; color:#ffffff; border:none; font-size:1rem; cursor:pointer; vertical-align:middle; margin-left:8px; }
+  .passage { background:#eef3f9; border-left:4px solid #185FA5; border-radius:8px; padding:14px; margin-bottom:16px; font-size:0.98rem; line-height:1.6; }
+  .passage h4 { margin:0 0 6px; color:#185FA5; font-size:1rem; }
+  .lineno { color:#888888; font-size:0.78rem; margin-right:6px; }
+  .opt { display:block; width:100%; text-align:left; padding:13px 16px; margin:8px 0; border-radius:10px; font-size:1rem; cursor:pointer; background:#e8edf4; color:#111111; border:2px solid transparent; line-height:1.45; }
+  .opt.correct { background:#E1F5EE; border-color:#1D9E75; color:#085041; }
+  .opt.wrong { background:#FCEBEB; border-color:#E24B4A; color:#501313; }
+  .explain { margin-top:12px; padding:14px; border-radius:10px; background:#fff7e6; border:1px solid #f0d9a8; font-size:0.95rem; line-height:1.55; color:#5a4400; display:none; }
+  .navrow { display:flex; justify-content:space-between; gap:12px; margin-top:6px; }
+  .navbtn { flex:1; padding:14px; border-radius:10px; border:none; font-size:1rem; font-weight:700; cursor:pointer; background:#185FA5; color:#ffffff; }
+  .navbtn:disabled { background:#b9c8da; cursor:default; }
+  .navbtn.secondary { background:#e8edf4; color:#185FA5; }
+  .frac { display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; margin:0 3px; line-height:1; font-size:0.95em; }
+  .frac .num, .frac .den { padding:0 4px; }
+  .frac .num { border-bottom: 2px solid currentColor; }
+  .rad { display:inline-flex; align-items:center; vertical-align:middle; line-height:1; }
+  .rad-idx { font-size:0.6em; line-height:1; align-self:flex-start; margin-top:0.1em; margin-right:1px; }
+  .rad-sign { display:inline-flex; align-items:center; line-height:1; }
+  .rad-tick { font-size:1.35em; line-height:1; position:relative; top:0.06em; }
+  .rad-body { border-top:2px solid currentColor; padding:1px 5px 1px 1px; display:inline-flex; align-items:center; line-height:1.25; flex-wrap:nowrap; gap:2px; }
+  #resultsArea { display:none; }
+  .resgrid { display:grid; grid-template-columns: repeat(auto-fill, minmax(64px,1fr)); gap:8px; margin: 16px 0; }
+  .rescell { border-radius:10px; padding:10px 4px; text-align:center; font-size:0.85rem; font-weight:700; cursor:pointer; border:2px solid transparent; }
+  .rescell.correct { background:#E1F5EE; border-color:#1D9E75; color:#085041; }
+  .rescell.wrong { background:#FCEBEB; border-color:#E24B4A; color:#501313; }
+  .rescell.skipped { background:#eeeeee; border-color:#bbbbbb; color:#555555; }
+  .scoreline { text-align:center; font-size:1.3rem; font-weight:800; color:#185FA5; margin: 10px 0; }
+  .resbtnrow { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:14px; }
+  .resbtn { padding:13px 18px; border-radius:10px; border:none; font-size:0.95rem; font-weight:700; cursor:pointer; background:#185FA5; color:#ffffff; }
+  .resbtn.secondary { background:#e8edf4; color:#185FA5; }
+  .resbtn.danger { background:#FCEBEB; color:#501313; }
+  .modalbg { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); align-items:center; justify-content:center; z-index:50; }
+  .modalbox { background:#ffffff; border-radius:14px; padding:22px; max-width:340px; width:88%; text-align:center; }
+  .modalbox p { font-size:1.02rem; line-height:1.5; margin: 6px 0 18px; color:#111111; }
+  .modalbtnrow { display:flex; gap:10px; }
+  .modalbtnrow button { flex:1; padding:12px; border-radius:10px; border:none; font-size:0.95rem; font-weight:700; cursor:pointer; }
+  .mbcancel { background:#e8edf4; color:#185FA5; }
+  .mbconfirm { background:#E24B4A; color:#ffffff; }
+  .pillbadge { display:inline-block; background:#185FA5; color:#ffffff; border-radius:999px; padding:6px 16px; font-size:0.85rem; font-weight:700; margin-bottom:10px; }
+  .counter { text-align:center; color:#555555; font-size:0.9rem; margin-bottom: 8px; }
+  .fallback { text-align:center; padding:40px 16px; color:#501313; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="datebar">Monday, June 8, 2026</div>
+  <div class="titlebar">[Grant] English</div>
+  <div class="attempts" id="attemptsLine">Total Attempts: 0</div>
+  <div class="dotnav" id="dotNav"></div>
+  <div class="counter" id="counterLine"></div>
+
+  <div id="quizArea" style="display:none;">
+    <div class="tag" id="tagBadge"></div>
+    <div class="passage" id="passageBox" style="display:none;"></div>
+    <div class="qcard">
+      <div class="qtext" id="qText"></div>
+      <div id="optsBox"></div>
+      <div class="explain" id="explainBox"></div>
+    </div>
+    <div class="navrow">
+      <button class="navbtn secondary" id="prevBtn">Prev</button>
+      <button class="navbtn" id="nextBtn">Next</button>
+    </div>
+  </div>
+
+  <div id="resultsArea">
+    <div class="pillbadge">Results</div>
+    <div class="scoreline" id="scoreLine"></div>
+    <div class="resgrid" id="resGrid"></div>
+    <div class="resbtnrow">
+      <button class="resbtn secondary" id="copyBtn">Copy All Results</button>
+      <button class="resbtn" id="retryBtn">Retry Wrong Questions</button>
+      <button class="resbtn danger" id="freshBtn">Start Fresh</button>
+    </div>
+    <div id="miniResult"></div>
+  </div>
+
+  <div class="fallback" id="fallbackArea" style="display:none;"></div>
+</div>
+
+<div class="modalbg" id="modalBg">
+  <div class="modalbox">
+    <p>This will erase all saved progress and attempts for this quiz. Are you sure you want to start fresh?</p>
+    <div class="modalbtnrow">
+      <button class="mbcancel" id="modalCancel">Cancel</button>
+      <button class="mbconfirm" id="modalConfirm">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  try {
+    var QUESTIONS = [{"tag": "Inference", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "Based on the passage, what can be most reasonably inferred about why Maya's grandmother \"rarely spoke of\" her interest in astronomy?", "options": ["She may have set the hobby aside long ago and not thought of it as something others would care about.", "She was embarrassed that she had once owned a telescope.", "She had forgotten that she ever owned a telescope at all.", "She did not want Maya to find the telescope in the attic."], "correct": 0, "explain": "The passage says she \"had been an amateur astronomer decades ago,\" suggesting it was part of her past. Her softened eyes when she sees the telescope again suggest the interest quietly faded rather than something she hid out of embarrassment or secrecy."}, {"tag": "Main Idea", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "Which sentence best states the main idea of the passage?", "options": ["A single chance discovery in an attic sparks a passion that gradually changes how a whole family spends its evenings.", "A girl argues with her brother about whether sports or astronomy is more entertaining.", "A family decides to build a platform in their backyard so they can relax outdoors.", "A grandmother teaches her granddaughter how to use an old telescope properly."], "correct": 0, "explain": "The passage traces how Maya's discovery of the telescope leads not only to her own growing fascination but eventually draws in her brother and grandmother too — reshaping the family's nightly routine, as stated in the final lines."}, {"tag": "Theme", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "Which statement best expresses a theme found in this passage?", "options": ["An unexpected discovery can awaken curiosity that brings people closer together.", "People should always finish the task they originally set out to do.", "Hobbies that involve technology are more valuable than outdoor activities.", "Older siblings rarely change their opinions once they have been formed."], "correct": 0, "explain": "Maya's discovery of the telescope (an unexpected event) sparks her curiosity, which in turn draws in her grandmother and, eventually, Caleb — illustrating how a single moment of wonder can connect a family."}, {"tag": "Predict", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "Based on the details at the end of the passage, what will Caleb most likely do as the story continues?", "options": ["Continue to spend more evenings outside looking at the sky with Maya.", "Hide the telescope so that Maya cannot use it anymore.", "Convince Maya to give up astronomy and join his stadium activities instead.", "Move away to live with his grandmother permanently."], "correct": 0, "explain": "The passage shows Caleb gradually shifting from teasing Maya to \"wandering outside after dinner, squinting upward, asking\" about the sky — a clear sign that his curiosity is growing, making it likely he will keep joining her."}, {"tag": "Summary", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "Which choice best summarizes what happens in the passage?", "options": ["Maya finds an old telescope, becomes captivated by astronomy, and slowly draws her grandmother and brother into sharing the hobby with her.", "Maya and Caleb spend the summer arguing about which hobby is better until their parents intervene.", "Maya's grandmother buys her a brand-new telescope so that she can study the planets for school.", "Maya loses interest in astronomy after her brother makes fun of her for watching the night sky."], "correct": 0, "explain": "The passage follows Maya from the moment she finds the telescope through her growing fascination with astronomy and the way that interest eventually brings her grandmother and brother into the experience as well."}, {"tag": "Tone", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "Which word best describes the overall tone of the passage?", "options": ["warm and reflective", "harsh and critical", "tense and fearful", "sarcastic and mocking"], "correct": 0, "explain": "The passage describes Maya's wonder, her grandmother's softening response, and the family slowly bonding over the night sky — all conveyed in a gentle, appreciative way that creates a warm, reflective tone."}, {"tag": "Point of View", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "From which point of view is this passage told?", "options": ["third-person, focused mainly on Maya's experiences and feelings", "first-person, narrated by Maya herself", "first-person, narrated by Caleb", "third-person, focused mainly on the grandmother's memories"], "correct": 0, "explain": "The narrator refers to \"Maya,\" \"her,\" and \"she\" rather than \"I,\" which signals third-person narration, and the passage consistently follows Maya's thoughts and discoveries rather than Caleb's or the grandmother's."}, {"tag": "Author's Purpose", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "What is the author's main purpose in writing this passage?", "options": ["to entertain readers with a story about how a small discovery changes a family's habits", "to persuade readers to purchase a telescope for their own homes", "to inform readers about the scientific names of the planets", "to explain step-by-step instructions for using a telescope"], "correct": 0, "explain": "The passage is a narrative that follows characters and events rather than presenting an argument, instructions, or factual information about astronomy — its purpose is to tell an engaging story."}, {"tag": "Cause & Effect", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "What caused Maya to become fascinated with astronomy?", "options": ["She looked through the telescope and saw Saturn's rings come into focus for the first time.", "Her brother challenged her to learn more about the night sky than he knew.", "Her parents enrolled her in an astronomy class at school.", "She read a book about planets that her grandmother had given her."], "correct": 0, "explain": "The passage states that when \"Saturn's rings slid into focus, she gasped... From that moment on, Maya spent every clear night outside,\" directly linking that experience to the start of her fascination."}, {"tag": "Compare & Contrast", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "How are Maya's and Caleb's early attitudes toward the night sky different?", "options": ["Maya is immediately drawn to it with wonder, while Caleb at first dismisses it as boring.", "Maya finds it frightening, while Caleb finds it relaxing and calm.", "Maya only pretends to enjoy it to please her grandmother, while Caleb genuinely loves it.", "Maya is indifferent toward it, while Caleb is instantly fascinated by it."], "correct": 0, "explain": "Maya gasps in wonder and spends \"every clear night outside,\" while Caleb initially \"could not understand the sudden fascination\" and teases her for staring at \"specks of light\" — showing two very different first reactions."}, {"tag": "Text Structure", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "How is this passage mainly organized?", "options": ["as a sequence of events that unfold over time, from one rainy afternoon through an entire summer", "as a comparison between two different cities and their views of the night sky", "as a list of reasons why telescopes are useful tools for scientists", "as a problem followed immediately by its solution in the very next sentence"], "correct": 0, "explain": "The passage moves chronologically — beginning with \"a rainy Saturday afternoon,\" continuing through \"that night\" and \"weeks,\" and ending \"by the end of the summer\" — which is a sequential, time-ordered structure."}, {"tag": "Character Traits/Motivation", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "Which trait does Maya display most clearly throughout the passage?", "options": ["curiosity that drives her to explore and learn more about the world around her", "shyness that keeps her from sharing her interests with her family", "impatience that causes her to give up on activities quickly", "carelessness that leads her to misplace her belongings often"], "correct": 0, "explain": "Maya searches the attic, examines the telescope, studies the sky every clear night, fills a notebook with questions, and asks to visit a planetarium — all actions that reveal a strong, driving curiosity."}, {"tag": "Supporting Details", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "Which detail from the passage best supports the idea that Maya's grandmother once shared Maya's new interest?", "options": ["The passage states that the grandmother \"had been an amateur astronomer decades ago.\"", "The passage states that the grandmother kept a photo album in the attic.", "The passage states that the grandmother built a platform in the backyard.", "The passage states that the grandmother often complained about the noise from the stadium."], "correct": 0, "explain": "The detail that the grandmother \"had been an amateur astronomer decades ago\" directly shows that she once pursued the same kind of interest that Maya is now discovering."}, {"tag": "Situation", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "What is happening at the very beginning of the passage?", "options": ["Maya is searching through her grandmother's attic for a photo album when she finds something unexpected.", "Maya is helping her grandmother clean out an old storage unit for a yard sale.", "Maya is looking for her brother, who has hidden somewhere in the house.", "Maya is putting away a telescope that she recently bought from a store."], "correct": 0, "explain": "The opening lines describe Maya climbing into the attic \"searching for an old photo album\" and instead finding the wooden case containing the telescope — an unplanned discovery, not a search for the telescope itself."}, {"tag": "Setting", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "Where does most of the action in this passage take place?", "options": ["in and around Maya's home, including the attic and the backyard, over the course of a summer", "in a school classroom during the fall semester", "at a stadium where Caleb regularly attends games", "inside a science museum's planetarium each weekend"], "correct": 0, "explain": "The events move from the attic to the backyard, and the passage notes that the family builds a platform in the backyard \"by the end of the summer,\" placing nearly all of the action at home over several months."}, {"tag": "Figurative Language", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "In the sentence \"Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure,\" the author uses which type of figurative language?", "options": ["a simile that compares the telescope to a treasure using the word \"like\"", "an example of personification that gives the telescope human feelings", "hyperbole that exaggerates the telescope's size beyond belief", "an idiom that has a meaning different from its literal words"], "correct": 0, "explain": "The phrase \"gleamed like a forgotten treasure\" directly compares the telescope to a treasure using the word \"like,\" which is the defining feature of a simile."}, {"tag": "Analogy", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "The passage describes Maya's reaction to seeing Saturn's rings as feeling \"as if she had discovered a secret that the universe had been hiding just for her.\" This comparison suggests that Maya's experience was most like —", "options": ["the feeling of uncovering something rare and meant only for the person who finds it", "the feeling of being scolded for something she did not do", "the feeling of losing an item that she had searched for all day", "the feeling of waiting in a long line for an amusement park ride"], "correct": 0, "explain": "Comparing the moment to discovering a hidden secret \"just for her\" suggests a feeling of uncovering something rare and personally meaningful — much like finding a hidden treasure meant only for the finder."}, {"tag": "Synonym & Antonym", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "In the sentence \"Her older brother, Caleb, could not understand the sudden fascination,\" the word that is CLOSEST in meaning to \"fascination\" is \"strong interest,\" while the word that is most nearly its OPPOSITE is —", "options": ["boredom", "wonder", "curiosity", "excitement"], "correct": 0, "explain": "\"Fascination\" means a powerful, captivated interest — its synonym is \"strong interest,\" and its opposite (antonym) is \"boredom,\" since boredom describes a complete lack of interest."}, {"tag": "Guess the Meaning", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "Based on the context of the passage, what does the word \"amateur\" most likely mean in the sentence describing the grandmother?", "options": ["someone who does an activity for enjoyment rather than as a paid profession", "someone who is a recognized expert paid to perform a task", "someone who refuses to try new activities or hobbies", "someone who teaches a subject at a university level"], "correct": 0, "explain": "The passage describes the grandmother as having pursued astronomy on her own, long ago, simply out of personal interest — which fits the meaning of \"amateur\" as someone who engages in an activity for enjoyment rather than as a profession."}, {"tag": "Preposition", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "In the sentence \"That night, Maya carried the telescope to the backyard and pointed it toward the sky,\" which word is a preposition that shows direction?", "options": ["toward", "carried", "Maya", "night"], "correct": 0, "explain": "\"Toward\" is a preposition that shows the direction in which Maya pointed the telescope. \"Carried\" is a verb, and \"Maya\" and \"night\" are nouns."}, {"tag": "Genre", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "What genre does this passage best represent?", "options": ["realistic fiction", "persuasive essay", "historical biography", "scientific report"], "correct": 0, "explain": "The passage tells an invented story about believable characters experiencing everyday events, which is the defining quality of realistic fiction — it does not argue a position, recount real historical figures, or report scientific data."}, {"tag": "Kind of Fiction", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "Which of the following best explains why this passage is considered realistic fiction rather than fantasy?", "options": ["The characters and events could plausibly happen in everyday life, without any magical or impossible elements.", "The story takes place in a kingdom ruled by dragons and wizards.", "The main character can speak with animals and travel through time.", "The plot depends on a magical object that grants the characters wishes."], "correct": 0, "explain": "Nothing in the passage involves magic, fantastical creatures, or impossible events — a girl finding an old telescope and becoming interested in astronomy is something that could realistically happen, which places the story in the realistic fiction category."}, {"tag": "Fact vs Opinion", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "Which of the following from the passage is a fact rather than an opinion?", "options": ["Maya's grandmother had been an amateur astronomer decades ago.", "The universe holds more wonders than any stadium ever could.", "Astronomy is a more rewarding hobby than playing sports.", "Watching the night sky is more peaceful than watching a game."], "correct": 0, "explain": "That the grandmother \"had been an amateur astronomer decades ago\" is presented as a verifiable detail about her past, while the other choices express personal judgments or comparisons of value that cannot be proven true for everyone."}, {"tag": "Title", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div>", "q": "Which title would best fit this passage?", "options": ["\"The Telescope in the Attic\"", "\"How to Build a Backyard Observatory\"", "\"Caleb's Favorite Stadium Games\"", "\"A History of Modern Astronomy\""], "correct": 0, "explain": "The story centers on Maya's discovery of a telescope in the attic and how that discovery changes her family — \"The Telescope in the Attic\" captures both the central object and the setting where the story begins."}, {"tag": "Text-to-Text Connection", "passage": "<h4>Passage 1</h4><div class=\"passage\">On a rainy Saturday afternoon, Maya climbed into her grandmother's dusty attic, searching for an old photo album. Instead, her fingers brushed against a long wooden case tucked behind a stack of boxes. Inside, wrapped in faded velvet, lay a brass telescope that gleamed like a forgotten treasure. Maya's grandmother had been an amateur astronomer decades ago, though she rarely spoke of it anymore.</div><div class=\"passage\">That night, Maya carried the telescope to the backyard and pointed it toward the sky. When Saturn's rings slid into focus, she gasped as if she had discovered a secret that the universe had been hiding just for her. From that moment on, Maya spent every clear night outside, sketching constellations in a notebook and memorizing the names of distant moons.</div><div class=\"passage\">Her older brother, Caleb, could not understand the sudden fascination. He preferred the roar of a stadium to the silence of the night sky, and he teased Maya for staring at \"specks of light.\" Yet when their grandmother saw the telescope propped against Maya's window, her eyes softened, and she offered to teach Maya how to track the planets across the seasons.</div><div class=\"passage\">Weeks passed, and Maya's notebook filled with drawings and questions. She begged her parents to take her to the science museum's planetarium, convinced that the universe held more wonders than any stadium ever could. Slowly, even Caleb began to wander outside after dinner, squinting upward, asking what that bright dot near the moon might be.</div><div class=\"passage\">By the end of the summer, the siblings had built a small platform in the backyard, complete with two folding chairs and a star chart taped to the fence. What had begun as a single rainy afternoon in a forgotten attic had quietly reshaped the way an entire family looked at the night sky.</div><h4 style=\"margin-top:14px;\">Passage 2</h4><div class=\"passage\">Psychologists have long studied what sparks a lasting passion in young people. Often, it is not a structured lesson or a class assignment that ignites curiosity — it is a small, unplanned moment: a found object, an overheard conversation, or an unexpected glimpse of something unfamiliar. Such chance encounters can open a door that a person did not know existed, leading them toward interests that shape their future choices. Researchers note that these discoveries are especially powerful when they are shared with another person, since curiosity often grows stronger when it passes from one generation to the next.</div>", "q": "Which idea from Passage 2 connects most directly to what happens to Maya in Passage 1?", "options": ["A small, unplanned moment — like finding an old object — can open the door to a lasting interest, especially when it is later shared with someone else.", "Young people develop lasting passions only when they are enrolled in formal classes designed to teach a specific skill.", "Curiosity about the world tends to fade quickly unless it is rewarded with a prize or recognition.", "Hobbies that involve technology, such as telescopes, are more likely to be shared across generations than other hobbies."], "correct": 0, "explain": "Passage 2 explains that lasting passions often begin with \"a small, unplanned moment\" like \"a found object\" and grow stronger when \"shared with another person.\" This mirrors Maya's experience: she stumbles upon an old telescope by chance, and her interest later grows as she shares it with her grandmother and brother."}];
+    var TOPIC = "english_comprehension";
+    var STATE_KEY = "quiz_" + TOPIC + "_" + QUESTIONS.length + "_v1";
+    var ATTEMPTS_KEY = "quiz_" + TOPIC + "_attempts_v1";
+    var SPEAK_LANG = ""; // '' if none
+
+    function fy(arr){
+      var a = arr.slice();
+      for (var i=a.length-1;i>0;i--){
+        var j = Math.floor(Math.random()*(i+1));
+        var t=a[i]; a[i]=a[j]; a[j]=t;
+      }
+      return a;
+    }
+
+    function freshState(){
+      var shuffles = [];
+      for (var i=0;i<QUESTIONS.length;i++){
+        var idxs = [];
+        for (var k=0;k<QUESTIONS[i].options.length;k++) idxs.push(k);
+        shuffles.push(fy(idxs));
+      }
+      return { cur:0, answers:{}, shuffles:shuffles, showResults:false, mode:'main', wrongList:[], retry:null };
+    }
+
+    function loadState(){
+      try {
+        var raw = localStorage.getItem(STATE_KEY);
+        if (!raw) return freshState();
+        var st = JSON.parse(raw);
+        if (typeof st !== 'object' || st===null) throw new Error('bad');
+        if (typeof st.cur !== 'number' || st.cur < 0 || st.cur >= QUESTIONS.length) throw new Error('bad cur');
+        if (typeof st.answers !== 'object' || st.answers === null) throw new Error('bad answers');
+        if (!Array.isArray(st.shuffles) || st.shuffles.length !== QUESTIONS.length) throw new Error('bad shuffles');
+        for (var i=0;i<st.shuffles.length;i++){
+          if (!Array.isArray(st.shuffles[i]) || st.shuffles[i].length !== QUESTIONS[i].options.length) throw new Error('bad shuffle entry');
+        }
+        if (typeof st.showResults !== 'boolean') st.showResults = false;
+        if (typeof st.mode !== 'string') st.mode = 'main';
+        if (!Array.isArray(st.wrongList)) st.wrongList = [];
+        return st;
+      } catch(e){
+        try { localStorage.removeItem(STATE_KEY); } catch(e2){}
+        return freshState();
+      }
+    }
+
+    function saveState(){ try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch(e){} }
+
+    function getAttempts(){
+      try { var v = parseInt(localStorage.getItem(ATTEMPTS_KEY) || '0', 10); return isNaN(v)?0:v; } catch(e){ return 0; }
+    }
+    function setAttempts(v){ try { localStorage.setItem(ATTEMPTS_KEY, String(v)); } catch(e){} }
+    function bumpAttempts(){ var v = getAttempts()+1; setAttempts(v); return v; }
+
+    var state = loadState();
+
+    var quizArea = document.getElementById('quizArea');
+    var passageBox = document.getElementById('passageBox');
+    var resultsArea = document.getElementById('resultsArea');
+    var fallbackArea = document.getElementById('fallbackArea');
+
+    function activeList(){
+      if (state.mode === 'retry' && state.retry) return state.retry.questions;
+      return QUESTIONS;
+    }
+    function activeShuffles(){
+      if (state.mode === 'retry' && state.retry) return state.retry.shuffles;
+      return state.shuffles;
+    }
+    function activeAnswers(){
+      if (state.mode === 'retry' && state.retry) return state.retry.answers;
+      return state.answers;
+    }
+
+    function speakerHtml(text, lang){
+      if (!lang) return '';
+      var safe = text.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+      return '<button class="speakbtn" onclick="window.__speak(\''+safe+'\',\''+lang+'\')" aria-label="Play audio" type="button">&#128266;</button>';
+    }
+    window.__speak = function(text, lang){
+      try {
+        if (!('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
+        var u = new SpeechSynthesisUtterance(text);
+        u.lang = lang;
+        u.rate = 0.85;
+        window.speechSynthesis.speak(u);
+      } catch(e){}
+    };
+
+    function renderDots(){
+      var nav = document.getElementById('dotNav');
+      nav.innerHTML = '';
+      var list = activeList();
+      var answers = activeAnswers();
+      for (var i=0;i<list.length;i++){
+        var d = document.createElement('div');
+        d.className = 'dot';
+        var rec = answers[i];
+        if (rec){ d.className += rec.correct ? ' correct' : ' wrong'; }
+        if (!state.showResults && i === state.cur && state.mode !== 'resultsView') d.className += ' current';
+        d.textContent = (i+1);
+        (function(idx){ d.onclick = function(){ goTo(idx); }; })(i);
+        nav.appendChild(d);
+      }
+    }
+
+    function goTo(i){
+      if (state.mode==='retry' && state.retry){ state.retry.cur = i; }
+      else { state.cur = i; }
+      state.showResults = false;
+      saveState();
+      render();
+    }
+
+    function renderQuestion(){
+      var list = activeList();
+      var shuffles = activeShuffles();
+      var answers = activeAnswers();
+      var cur = (state.mode==='retry' && state.retry) ? state.retry.cur : state.cur;
+      if (cur < 0) cur = 0;
+      if (cur >= list.length) cur = list.length - 1;
+      if (state.mode==='retry' && state.retry) state.retry.cur = cur; else state.cur = cur;
+
+      var q = list[cur];
+      document.getElementById('tagBadge').textContent = q.tag || '';
+      document.getElementById('counterLine').textContent = (cur+1) + ' / ' + list.length;
+
+      if (q.passage){
+        passageBox.style.display = 'block';
+        passageBox.innerHTML = q.passage;
+      } else {
+        passageBox.style.display = 'none';
+        passageBox.innerHTML = '';
+      }
+
+      var qHtml = q.q;
+      if (q.speak){ qHtml += speakerHtml(q.speak.text, q.speak.lang); }
+      document.getElementById('qText').innerHTML = qHtml;
+
+      var order = shuffles[cur];
+      var optsBox = document.getElementById('optsBox');
+      optsBox.innerHTML = '';
+      var rec = answers[cur];
+      var explainBox = document.getElementById('explainBox');
+      explainBox.style.display = 'none';
+      explainBox.innerHTML = '';
+
+      for (var k=0;k<order.length;k++){
+        var origIdx = order[k];
+        var btn = document.createElement('button');
+        btn.className = 'opt';
+        btn.innerHTML = q.options[origIdx];
+        btn.type = 'button';
+        if (rec){
+          if (origIdx === q.correct) btn.className += ' correct';
+          else if (origIdx === rec.picked) btn.className += ' wrong';
+          btn.disabled = true;
+        }
+        (function(oi){
+          btn.onclick = function(){ selectOption(cur, oi); };
+        })(origIdx);
+        optsBox.appendChild(btn);
+      }
+
+      if (rec){
+        if (!rec.correct){
+          explainBox.style.display = 'block';
+          explainBox.innerHTML = '<strong>Explanation:</strong> ' + q.explain;
+        } else {
+          explainBox.style.display = 'none';
+        }
+      }
+
+      var prevBtn = document.getElementById('prevBtn');
+      var nextBtn = document.getElementById('nextBtn');
+      prevBtn.disabled = (cur === 0);
+      nextBtn.textContent = (cur === list.length - 1) ? 'See Results →' : 'Next';
+    }
+
+    function selectOption(qIdx, optIdx){
+      var list = activeList();
+      var answers = activeAnswers();
+      if (answers[qIdx]) return;
+      var q = list[qIdx];
+      var correct = (optIdx === q.correct);
+      answers[qIdx] = { picked: optIdx, correct: correct };
+      saveState();
+      renderQuestion();
+      renderDots();
+    }
+
+    function goNext(){
+      var list = activeList();
+      var cur = (state.mode==='retry' && state.retry) ? state.retry.cur : state.cur;
+      if (cur === list.length - 1){
+        showResults();
+      } else {
+        cur += 1;
+        if (state.mode==='retry' && state.retry) state.retry.cur = cur; else state.cur = cur;
+        state.showResults = false;
+        saveState();
+        render();
+      }
+    }
+    function goPrev(){
+      var cur = (state.mode==='retry' && state.retry) ? state.retry.cur : state.cur;
+      if (cur > 0){
+        cur -= 1;
+        if (state.mode==='retry' && state.retry) state.retry.cur = cur; else state.cur = cur;
+        saveState();
+        render();
+      }
+    }
+
+    function showResults(){
+      if (state.mode === 'retry' && state.retry){
+        state.retry.showResults = true;
+      } else {
+        state.showResults = true;
+        bumpAttempts();
+        document.getElementById('attemptsLine').textContent = 'Total Attempts: ' + getAttempts();
+      }
+      saveState();
+      render();
+    }
+
+    function buildSummaryText(){
+      var list = activeList();
+      var answers = activeAnswers();
+      var c=0,w=0,s=0;
+      for (var i=0;i<list.length;i++){
+        var rec = answers[i];
+        if (!rec) s++;
+        else if (rec.correct) c++;
+        else w++;
+      }
+      var lines = [];
+      lines.push('[Grant] English - Monday, June 8, 2026');
+      lines.push('Score: ' + c + ' / ' + list.length + ' correct (Wrong: ' + w + ', Skipped: ' + s + ')');
+      for (var j=0;j<list.length;j++){
+        var rec2 = answers[j];
+        var status = !rec2 ? 'Skipped' : (rec2.correct ? 'Correct' : 'Wrong');
+        lines.push('Q' + (j+1) + ': ' + status);
+      }
+      return lines.join('\n');
+    }
+
+    function renderResults(){
+      var list = activeList();
+      var answers = activeAnswers();
+      var c=0,w=0,s=0;
+      var grid = document.getElementById('resGrid');
+      grid.innerHTML = '';
+      for (var i=0;i<list.length;i++){
+        var rec = answers[i];
+        var cell = document.createElement('div');
+        var status;
+        if (!rec){ status='skipped'; s++; }
+        else if (rec.correct){ status='correct'; c++; }
+        else { status='wrong'; w++; }
+        cell.className = 'rescell ' + status;
+        cell.textContent = 'Q' + (i+1);
+        (function(idx){ cell.onclick = function(){
+          state.showResults = false;
+          if (state.mode==='retry' && state.retry){ state.retry.showResults = false; state.retry.cur = idx; }
+          else { state.cur = idx; }
+          saveState();
+          render();
+        }; })(i);
+        grid.appendChild(cell);
+      }
+      document.getElementById('scoreLine').textContent = 'Score: ' + c + ' / ' + list.length + '   (Correct ' + c + ' - Wrong ' + w + ' - Skipped ' + s + ')';
+      document.getElementById('miniResult').innerHTML = '';
+
+      var retryBtn = document.getElementById('retryBtn');
+      if (state.mode === 'retry'){
+        retryBtn.style.display = 'none';
+      } else {
+        retryBtn.style.display = '';
+        retryBtn.disabled = (w === 0);
+      }
+    }
+
+    function render(){
+      try {
+        document.getElementById('attemptsLine').textContent = 'Total Attempts: ' + getAttempts();
+
+        var showingResults = (state.mode === 'retry' && state.retry) ? !!state.retry.showResults : !!state.showResults;
+
+        if (showingResults){
+          quizArea.style.display = 'none';
+          passageBox.style.display = 'none';
+          resultsArea.style.display = 'block';
+          fallbackArea.style.display = 'none';
+          document.getElementById('counterLine').textContent = '';
+          renderDots();
+          renderResults();
+        } else {
+          resultsArea.style.display = 'none';
+          fallbackArea.style.display = 'none';
+          quizArea.style.display = 'block';
+          renderDots();
+          renderQuestion();
+        }
+      } catch(e){
+        quizArea.style.display = 'none';
+        resultsArea.style.display = 'none';
+        fallbackArea.style.display = 'block';
+        fallbackArea.innerHTML = '<p>Something went wrong while displaying this quiz. Please try the Start Fresh button below.</p><button class="resbtn danger" onclick="window.__hardReset()">Start Fresh</button>';
+      }
+    }
+
+    window.__hardReset = function(){
+      try { localStorage.removeItem(STATE_KEY); localStorage.removeItem(ATTEMPTS_KEY); } catch(e){}
+      location.reload();
+    };
+
+    document.getElementById('prevBtn').onclick = goPrev;
+    document.getElementById('nextBtn').onclick = goNext;
+
+    document.getElementById('copyBtn').onclick = function(){
+      var text = buildSummaryText();
+      function fallbackCopy(){
+        try {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.focus(); ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          notifyCopied();
+        } catch(e){}
+      }
+      function notifyCopied(){
+        var btn = document.getElementById('copyBtn');
+        var orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function(){ btn.textContent = orig; }, 1500);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(notifyCopied, fallbackCopy);
+      } else {
+        fallbackCopy();
+      }
+    };
+
+    document.getElementById('retryBtn').onclick = function(){
+      var wrongIdx = [];
+      for (var i=0;i<QUESTIONS.length;i++){
+        var rec = state.answers[i];
+        if (rec && !rec.correct) wrongIdx.push(i);
+      }
+      if (wrongIdx.length === 0) return;
+      var rq = wrongIdx.map(function(i){ return QUESTIONS[i]; });
+      var shuffles = [];
+      for (var j=0;j<rq.length;j++){
+        var idxs = [];
+        for (var k=0;k<rq[j].options.length;k++) idxs.push(k);
+        shuffles.push(fy(idxs));
+      }
+      state.mode = 'retry';
+      state.retry = { questions: rq, shuffles: shuffles, answers: {}, cur: 0, showResults: false };
+      saveState();
+      render();
+    };
+
+    document.getElementById('freshBtn').onclick = function(){
+      document.getElementById('modalBg').style.display = 'flex';
+    };
+    document.getElementById('modalCancel').onclick = function(){
+      document.getElementById('modalBg').style.display = 'none';
+    };
+    document.getElementById('modalConfirm').onclick = function(){
+      document.getElementById('modalBg').style.display = 'none';
+      try { localStorage.removeItem(STATE_KEY); localStorage.removeItem(ATTEMPTS_KEY); } catch(e){}
+      state = freshState();
+      saveState();
+      setAttempts(0);
+      render();
+    };
+
+    if (state.mode === 'retry' && state.retry && state.retry.showResults){
+      // stay on retry results
+    }
+
+    render();
+  } catch(err){
+    document.body.innerHTML = '<div style="padding:40px;text-align:center;color:#501313;font-family:sans-serif;">This quiz could not be loaded. Please reload the page.</div>';
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Math</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0 auto;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#1D9E75;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.tag-badge{display:inline-block;color:#fff;font-size:0.74rem;font-weight:700;padding:3px 10px;border-radius:12px;margin-bottom:10px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.q-text{font-size:1.05rem;font-weight:600;color:#111;margin-bottom:14px;line-height:1.6;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#eef6f1;color:#111;font-size:0.95rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#eef6f1;color:#1D9E75;}
+.next-btn{background:#1D9E75;color:#fff;}
+.prog-track{background:#d7e9e1;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#1D9E75;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#eef6f1;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#eef6f1;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+.fr{display:inline-block;vertical-align:middle;text-align:center;font-style:italic;}
+.fr .fn,.fr .fd{display:block;font-size:0.78em;line-height:1.25;padding:0 3px;}
+.fr .fb{display:block;border-top:1.5px solid currentColor;min-width:14px;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-20</div>
+<div class="title-hd">[Grant] Math</div>
+<div class="instruction">Solve each problem and choose the correct answer.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 24</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #1D9E75;border-radius:14px;background:#fff;color:#1D9E75;cursor:pointer;white-space:nowrap;">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="tag-badge" id="tag-badge"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#1D9E75;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#eef6f1;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#eef6f1;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_grantmath_20_20260619_v1';
+var ATT_KEY='quiz_grantmath_att_20260619_v1';
+var CAT_COLORS={'Fractions':'#6B3FA0','Decimals':'#185FA5','Integers':'#1D7A4A','Unit Conversion':'#C05600','Exponent Rules':'#8B1A1A','Linear Equations':'#0E7490'};
+
+function fr(n,d){return '<span class="fr"><span class="fn">'+n+'</span><span class="fb"></span><span class="fd">'+d+'</span></span>';}
+function mx(w,n,d){return w+'&thinsp;'+fr(n,d);}
+
+var qs=[
+ {cat:'Fractions',q:'What is '+fr(3,4)+' &minus; '+fr(1,3)+' + '+fr(1,6)+' ?',
+  opts:[fr(7,12),fr(5,12),fr(11,12),fr(1,3)],ci:0,
+  exp:'Using twelfths: '+fr(9,12)+' &minus; '+fr(4,12)+' + '+fr(2,12)+' = '+fr(7,12)+'.'},
+ {cat:'Fractions',q:'What is '+fr(1,2)+' &times; '+mx(2,2,3)+' &minus; '+fr(1,4)+' ?',
+  opts:[mx(1,1,12),fr(11,12),mx(1,1,6),fr(7,6)],ci:0,
+  exp:'Convert '+mx(2,2,3)+' to '+fr(8,3)+'. Then '+fr(1,2)+' &times; '+fr(8,3)+' = '+fr(4,3)+', and '+fr(4,3)+' &minus; '+fr(1,4)+' = '+fr(16,12)+' &minus; '+fr(3,12)+' = '+fr(13,12)+' = '+mx(1,1,12)+'.'},
+ {cat:'Fractions',q:'What is ('+fr(5,8)+' &minus; '+fr(1,4)+') &divide; '+fr(3,4)+' ?',
+  opts:[fr(1,2),fr(2,3),fr(1,4),fr(3,8)],ci:0,
+  exp:fr(5,8)+' &minus; '+fr(1,4)+' = '+fr(5,8)+' &minus; '+fr(2,8)+' = '+fr(3,8)+'. Dividing by '+fr(3,4)+' means multiplying by '+fr(4,3)+': '+fr(3,8)+' &times; '+fr(4,3)+' = '+fr(1,2)+'.'},
+ {cat:'Fractions',q:'What is '+mx(1,3,5)+' &divide; '+fr(2,5)+' + '+fr(1,4)+' ? (Express as a mixed number.)',
+  opts:[mx(4,1,4),'3','8',mx(3,1,4)],ci:0,
+  exp:'Convert '+mx(1,3,5)+' to '+fr(8,5)+'. Dividing by '+fr(2,5)+' means multiplying by '+fr(5,2)+': '+fr(8,5)+' &times; '+fr(5,2)+' = 4. Then 4 + '+fr(1,4)+' = '+mx(4,1,4)+'.'},
+
+ {cat:'Decimals',q:'What is 4.6 &times; 1.5 &minus; 0.8 ?',
+  opts:['6.1','5.3','6.9','5.8'],ci:0,
+  exp:'4.6 &times; 1.5 = 6.9, and 6.9 &minus; 0.8 = 6.1.'},
+ {cat:'Decimals',q:'What is (3.6 + 2.4) &divide; 0.6 ?',
+  opts:['10','12','6','5'],ci:0,
+  exp:'3.6 + 2.4 = 6, and 6 &divide; 0.6 = 10.'},
+ {cat:'Decimals',q:'What is 8.25 &minus; 3.5 &times; 1.4 ?',
+  opts:['3.35','4.55','3.05','5.95'],ci:0,
+  exp:'3.5 &times; 1.4 = 4.9, and 8.25 &minus; 4.9 = 3.35.'},
+ {cat:'Decimals',q:'What is (12.6 &divide; 1.4) + 0.85 &times; 2 ?',
+  opts:['10.7','11','9.7','12.6'],ci:0,
+  exp:'12.6 &divide; 1.4 = 9, and 0.85 &times; 2 = 1.7. So 9 + 1.7 = 10.7.'},
+
+ {cat:'Integers',q:'What is (&minus;4)&#x00B2; &minus; 5 &times; (&minus;2) ?',
+  opts:['26','6','&minus;6','46'],ci:0,
+  exp:'(&minus;4)&#x00B2; = 16, and 5 &times; (&minus;2) = &minus;10. So 16 &minus; (&minus;10) = 16 + 10 = 26.'},
+ {cat:'Integers',q:'What is &minus;2&#x00B3; + 3 &times; (&minus;4) &minus; (&minus;5) ?',
+  opts:['&minus;15','1','&minus;25','9'],ci:0,
+  exp:'&minus;2&#x00B3; = &minus;8, and 3 &times; (&minus;4) = &minus;12. So &minus;8 + (&minus;12) &minus; (&minus;5) = &minus;8 &minus; 12 + 5 = &minus;15.'},
+ {cat:'Integers',q:'What is (&minus;18 + 4) &divide; (&minus;2) + 3 &times; (&minus;5) ?',
+  opts:['&minus;8','&minus;22','22','&minus;26'],ci:0,
+  exp:'(&minus;18 + 4) = &minus;14, and &minus;14 &divide; (&minus;2) = 7. Also 3 &times; (&minus;5) = &minus;15. So 7 + (&minus;15) = &minus;8.'},
+ {cat:'Integers',q:'What is 30 &divide; (&minus;5) &minus; (&minus;2)&#x00B2; + 6 ?',
+  opts:['&minus;4','8','4','&minus;16'],ci:0,
+  exp:'30 &divide; (&minus;5) = &minus;6, and (&minus;2)&#x00B2; = 4. So &minus;6 &minus; 4 + 6 = &minus;4.'},
+
+ {cat:'Unit Conversion',q:'How many meters are in '+mx(2,3,4)+' kilometers? (1 km = 1,000 m)',
+  opts:['2,750 m','275 m','27,500 m','2,570 m'],ci:0,
+  exp:mx(2,3,4)+' km = 2.75 km. 2.75 &times; 1,000 = 2,750 m.'},
+ {cat:'Unit Conversion',q:'How many minutes are in '+mx(3,1,2)+' hours? (1 hour = 60 minutes)',
+  opts:['210 min','180 min','230 min','195 min'],ci:0,
+  exp:mx(3,1,2)+' hours = 3.5 hours. 3.5 &times; 60 = 210 minutes.'},
+ {cat:'Unit Conversion',q:'How many grams are in '+mx(2,2,5)+' kilograms? (1 kg = 1,000 g)',
+  opts:['2,400 g','2,000 g','2,040 g','24,000 g'],ci:0,
+  exp:mx(2,2,5)+' kg = 2.4 kg. 2.4 &times; 1,000 = 2,400 g.'},
+ {cat:'Unit Conversion',q:'A bottle holds '+mx(1,3,4)+' liters plus an extra 500 mL. What is the total in milliliters? (1 L = 1,000 mL)',
+  opts:['2,250 mL','1,750 mL','2,000 mL','2,500 mL'],ci:0,
+  exp:mx(1,3,4)+' L = 1.75 L = 1,750 mL. 1,750 + 500 = 2,250 mL.'},
+
+ {cat:'Exponent Rules',q:'Simplify: a<sup>6</sup> &middot; a<sup>3</sup> &divide; a<sup>5</sup>',
+  opts:['a<sup>4</sup>','a<sup>14</sup>','a<sup>8</sup>','a<sup>3</sup>'],ci:0,
+  exp:'a&#x2076; &middot; a&#x00B3; = a&#x2079; (add exponents). Then a&#x2079; &divide; a&#x2075; = a&#x2074; (subtract exponents).'},
+ {cat:'Exponent Rules',q:'Simplify: (b<sup>2</sup>)<sup>4</sup> &middot; b &divide; b<sup>3</sup>',
+  opts:['b<sup>6</sup>','b<sup>14</sup>','b<sup>9</sup>','b<sup>2</sup>'],ci:0,
+  exp:'(b&#x00B2;)&#x2074; = b&#x2078; (multiply exponents). Then b&#x2078; &middot; b = b&#x2079;. Finally b&#x2079; &divide; b&#x00B3; = b&#x2076;.'},
+ {cat:'Exponent Rules',q:'Evaluate: 4<sup>2</sup> + 3<sup>3</sup> &minus; 10',
+  opts:['33','23','43','21'],ci:0,
+  exp:'4&#x00B2; = 16, and 3&#x00B3; = 27. So 16 + 27 &minus; 10 = 33.'},
+ {cat:'Exponent Rules',q:'Simplify: (c<sup>4</sup>)<sup>2</sup> &divide; (c<sup>3</sup> &middot; c<sup>2</sup>)',
+  opts:['c<sup>3</sup>','c','c<sup>6</sup>','c<sup>11</sup>'],ci:0,
+  exp:'(c&#x2074;)&#x00B2; = c&#x2078;. The denominator c&#x00B3; &middot; c&#x00B2; = c&#x2075;. Finally c&#x2078; &divide; c&#x2075; = c&#x00B3;.'},
+
+ {cat:'Linear Equations',q:'Solve for x: 2x + 7 = 19',
+  opts:['6','12','5','26'],ci:0,
+  exp:'Subtract 7 from both sides: 2x = 12. Divide both sides by 2: x = 6.'},
+ {cat:'Linear Equations',q:'Solve for x: 5(x + 2) = 35',
+  opts:['5','7','3','9'],ci:0,
+  exp:'Divide both sides by 5: x + 2 = 7. Subtract 2 from both sides: x = 5.'},
+ {cat:'Linear Equations',q:'Solve for x: 9x &minus; 4 = 4x + 16',
+  opts:['4','2','5','20'],ci:0,
+  exp:'Subtract 4x from both sides: 5x &minus; 4 = 16. Add 4 to both sides: 5x = 20. Divide both sides by 5: x = 4.'},
+ {cat:'Linear Equations',q:'Solve for x: 30 &minus; 2x = 10',
+  opts:['10','&minus;10','20','40'],ci:0,
+  exp:'Subtract 30 from both sides: &minus;2x = &minus;20. Divide both sides by &minus;2: x = 10.'}
+];
+
+var state={};
+function loadState(){
+  try{
+    var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');
+    if(s&&typeof s.cur==='number'&&s.cur>=0&&s.cur<qs.length&&s.answers&&s.shuffles){state=s;}
+    else resetState();
+  }catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}
+}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){
+  if(!state.shuffles[i]){
+    var a=[0,1,2,3];
+    for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}
+    state.shuffles[i]=a; saveState();
+  }
+  return state.shuffles[i];
+}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAtt(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+
+function updateNav(){
+  var ans=Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent=ans+' / '+qs.length;
+  document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';
+  renderDots();
+}
+
+function toggleJump(){
+  var p=document.getElementById('dot-panel');
+  var b=document.getElementById('jump-btn');
+  if(p.style.display==='block'){p.style.display='none';b.innerHTML='Jump &#9662;';}
+  else{p.style.display='block';b.innerHTML='Hide &#9652;';renderDots();}
+}
+
+function renderDots(){
+  var p=document.getElementById('dot-panel');
+  if(p.style.display!=='block')return;
+  var h='';
+  for(var i=0;i<qs.length;i++){
+    var bg=state.answers[i]===undefined?'#d7e9e1':(state.answers[i]===getCSI(i)?'#1D9E75':'#E24B4A');
+    h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';
+  }
+  if(Object.keys(state.answers).length===qs.length){
+    h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';
+  }
+  p.innerHTML=h;
+}
+
+function goToQ(i){
+  state.cur=i; state.showResults=false; saveState(); render();
+  document.getElementById('dot-panel').style.display='none';
+  document.getElementById('jump-btn').innerHTML='Jump &#9662;';
+}
+
+function showResults(){
+  state.showResults=true;
+  localStorage.setItem(ATT_KEY,loadAtt()+1);
+  saveState(); render();
+}
+
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAtt();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('resultsArea').style.display='none';
+  updateNav();
+  var i=state.cur; var q=qs[i];
+  var badge=document.getElementById('tag-badge');
+  badge.textContent=q.cat; badge.style.background=CAT_COLORS[q.cat];
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-text').innerHTML=q.q;
+  var sh=getShuffle(i); var ans=state.answers[i]; var csi=getCSI(i);
+  var html='';
+  for(var s=0;s<4;s++){
+    var oi=sh[s]; var cls='opt-btn'; var dis='';
+    if(ans!==undefined){dis='disabled ';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}
+    html+='<button class="'+cls+'" '+dis+'onclick="pick('+i+','+s+')">'+q.opts[oi]+'</button>';
+  }
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');
+  if(ans!==undefined){eb.style.display='block';eb.innerHTML=q.exp;}
+  else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  updateNav();
+  var c=0,w=0,sk=0;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]===undefined)sk++;
+    else if(state.answers[i]===getCSI(i))c++;
+    else w++;
+  }
+  document.getElementById('results-summary').innerHTML=
+    '<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;'+
+    '<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;'+
+    '<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i]; var label,bg,tc;
+    if(a===undefined){label='Skipped';bg='#d7e9e1';tc='#555';}
+    else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}
+    else{label='Wrong';bg='#FCEBEB';tc='#501313';}
+    html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.9rem;color:#333;">Q'+(i+1)+': '+qs[i].cat+'</span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';
+  }
+  document.getElementById('results-cards').innerHTML=html;
+}
+
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){
+  if(dir===1&&state.cur===qs.length-1){showResults();return;}
+  state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));
+  saveState();render();
+}
+function retryWrong(){
+  var first=-1;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){
+      if(first===-1)first=i; delete state.answers[i];
+    }
+  }
+  if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}
+}
+function copyRes(){
+  var lines=['[Grant] Math - Results (2026-06-20)'];
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    var label=a===undefined?'Skipped':(a===getCSI(i)?'Correct':'Wrong');
+    lines.push('Q'+(i+1)+' ('+qs[i].cat+'): '+label);
+  }
+  var txt=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fallbackCopy(txt);});}
+  else fallbackCopy(txt);
+}
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;window.openFreshModal=openFreshModal;
+window.confirmFresh=confirmFresh;window.showResults=showResults;
+
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

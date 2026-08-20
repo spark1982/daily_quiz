@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Advanced Vocabulary</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh;padding:16px}
+.date-label{font-size:2rem;font-weight:800;text-align:center;color:#185FA5;background:#fff;padding:10px 0 2px}
+.title{text-align:center;font-size:1.4rem;font-weight:700;color:#185FA5;background:#fff;padding:2px 0 4px}
+.attempts{text-align:center;font-size:0.9rem;color:#555;background:#fff;padding:2px 0 10px}
+.container{max-width:680px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.1);overflow:hidden}
+.dot-nav{display:flex;flex-wrap:wrap;gap:6px;padding:14px 16px;background:#f7f9fc;border-bottom:1px solid #e0e6ef;justify-content:center}
+.dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;cursor:pointer;border:2px solid #c5d2e0;background:#e8edf4;color:#333}
+.dot.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.dot.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.dot.active{border-color:#185FA5;background:#d0e4f7;color:#185FA5}
+.results-pill{background:#185FA5;color:#fff;border-radius:20px;padding:4px 14px;font-size:0.8rem;font-weight:600}
+#quizArea{display:none;padding:20px 20px 10px}
+.tag-badge{display:inline-block;background:#185FA5;color:#fff;border-radius:20px;padding:3px 12px;font-size:0.75rem;font-weight:600;margin-bottom:10px}
+.q-counter{font-size:0.85rem;color:#666;margin-bottom:6px}
+.word-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.word-text{font-size:1.8rem;font-weight:800;color:#185FA5;font-style:italic}
+.speak-btn{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:0.9rem;cursor:pointer;flex-shrink:0}
+.options{display:grid;gap:10px}
+.opt-btn{width:100%;text-align:left;padding:12px 16px;border-radius:8px;border:2px solid transparent;background:#e8edf4;color:#111111;font-size:0.97rem;cursor:pointer;transition:.15s}
+.opt-btn:hover{border-color:#185FA5}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.opt-btn.reveal{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.explain{margin-top:14px;padding:12px;background:#f0f5ff;border-left:4px solid #185FA5;border-radius:4px;font-size:0.9rem;color:#222}
+.nav-btns{display:flex;gap:10px;margin-top:18px;padding-bottom:10px}
+.btn{padding:10px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer}
+.btn-blue{background:#185FA5;color:#fff}.btn-gray{background:#e8edf4;color:#333}
+#resultsArea{display:none;padding:20px}
+.res-header{font-size:1.2rem;font-weight:700;color:#185FA5;margin-bottom:14px;text-align:center}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:18px}
+.res-card{padding:10px;border-radius:8px;background:#f0f4f8;cursor:pointer;text-align:center;font-size:0.85rem;font-weight:600;border:2px solid transparent}
+.res-card.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.res-card.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.res-card.skipped{background:#fff3cd;border-color:#e6a817;color:#7a5500}
+.res-actions{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:12px;padding:28px;max-width:340px;width:90%;text-align:center}
+.modal h3{margin-bottom:10px;color:#185FA5}.modal p{margin-bottom:18px;color:#444;font-size:.95rem}
+.modal-btns{display:flex;gap:10px;justify-content:center}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="date-label">2026-06-11</div>
+<div class="title">[Grant] Advanced Vocabulary</div>
+<div class="attempts" id="attemptsLabel">Total Attempts: 0</div>
+<div class="dot-nav" id="dotNav"></div>
+<div id="quizArea"></div>
+<div id="resultsArea"></div>
+</div>
+<div class="modal-overlay" id="freshModal">
+<div class="modal"><h3>Start Fresh</h3><p>This will reset all progress.</p>
+<div class="modal-btns"><button class="btn btn-blue" onclick="doFresh()">Reset</button><button class="btn btn-gray" onclick="closeFreshModal()">Cancel</button></div></div>
+</div>
+<script>
+(function(){
+const KEY='quiz_advvocab_15_v1';
+const ATT_KEY='quiz_advvocab_attempts_v1';
+var qs=[
+{w:'adequate',opts:['satisfactory or sufficient for a purpose','a scientist who studies ancient civilizations','a note added to explain or clarify text','self-governance; the freedom to make decisions'],ci:0,exp:'"Adequate" means satisfactory or acceptable in quality or quantity. Example: The supplies were adequate for the trip.'},
+{w:'allocation',opts:['a desire to accomplish great things','the process of distributing or assigning resources','a comparison made to show similarities','freedom from external control or influence'],ci:1,exp:'"Allocation" refers to the distribution or assignment of something (such as resources, tasks, or money). Example: The allocation of funds was announced.'},
+{w:'alternate',opts:['official permission or approval','a confident statement of fact','to switch back and forth between two things','nearly exact but not perfectly accurate'],ci:2,exp:'"Alternate" (verb) means to occur or do something in turns; (adjective) every other one. Example: They alternate between two roles.'},
+{w:'annotation',opts:['a remarkable or extraordinary event','having a strong desire to succeed','the distribution of something among parties','a note or comment added to a text to explain it'],ci:3,exp:'"Annotation" is a note or comment added to a text, diagram, or other material to explain or clarify it. Example: The textbook had helpful annotations in the margins.'},
+{w:'approximate',opts:['nearly exact; not perfectly accurate','to switch between two choices','a change or addition made to a law','the layer of gases surrounding a planet'],ci:0,exp:'"Approximate" means close to the actual, but not completely accurate. Example: The approximate cost is $50.'},
+{w:'archaeologist',opts:['official permission to do something','a scientist who studies past human life through artifacts','a feeling or general mood of a place','satisfactory for the required purpose'],ci:1,exp:'"Archaeologist" is a scientist who studies human history and prehistory through excavation of artifacts. Example: The archaeologist discovered an ancient tomb.'},
+{w:'assertion',opts:['potential to develop or achieve','the distribution of resources','a confident and forceful statement of fact or belief','the ability to develop into something in the future'],ci:2,exp:'"Assertion" means a confident statement of a fact or belief. Example: Her assertion that prices would rise proved correct.'},
+{w:'atmosphere',opts:['a comparison between two ideas','self-governance; personal freedom','a note or comment added to clarify','the layer of gases surrounding Earth; the mood or tone of a place'],ci:3,exp:'"Atmosphere" refers to the layer of gases around a planet, or figuratively the mood or character of a place. Example: The café had a warm, friendly atmosphere.'},
+{w:'authorization',opts:['self-governance; independence','official permission or approval','a remarkable, extraordinary event','close to exact; not perfectly accurate'],ci:1,exp:'"Authorization" means official permission or approval to do something. Example: You need authorization to access those files.'},
+{w:'autonomy',opts:['a change or amendment to a rule','a confident statement','self-governance; freedom to make one\'s own decisions','a note or annotation in a text'],ci:2,exp:'"Autonomy" means self-governance or the right to make one\'s own choices without external control. Example: The region gained greater autonomy.'},
+{w:'ambitious',opts:['having a strong desire to succeed or achieve greatness','a confident declaration of belief','a comparison drawn to highlight similarities','to alternate between two opposite states'],ci:0,exp:'"Ambitious" describes someone who has a strong desire to succeed or achieve something. Example: She was ambitious and worked hard to reach her goals.'},
+{w:'amendment',opts:['satisfactory for the purpose','official approval or authorization','the ability to develop into something more','a change or addition made to a law or document'],ci:3,exp:'"Amendment" is a formal change or addition to a law, constitution, or document. Example: The First Amendment protects free speech.'},
+{w:'analogy',opts:['self-governance; freedom from control','a comparison between two things to show similarities','close to exact; approximate','the distribution of resources or responsibilities'],ci:1,exp:'"Analogy" is a comparison between two things to show how they are similar, often used for explanation or clarification. Example: He used an analogy to explain the concept.'},
+{w:'phenomenon',opts:['a remarkable, observable fact or extraordinary event','a note added to clarify text','having a strong desire to accomplish goals','freedom from external control or authority'],ci:0,exp:'"Phenomenon" refers to a fact, occurrence, or circumstance observed or observable — especially a remarkable one. Example: The northern lights are a natural phenomenon.'},
+{w:'potential',opts:['the layer of gases around the Earth','a confident statement of belief','the capacity to develop, achieve, or become something in the future','official permission or sanction'],ci:2,exp:'"Potential" refers to latent qualities or abilities that may be developed in the future. Example: She has the potential to become a great leader.'}
+];
+
+var state={cur:0,answers:{},shuffles:{},showResults:false};
+function loadState(){try{var s=localStorage.getItem(KEY);if(!s)return;var p=JSON.parse(s);if(typeof p.cur!=='number'||typeof p.answers!=='object'||typeof p.shuffles!=='object')throw 0;if(p.cur<0||p.cur>=qs.length)p.cur=0;state=p;}catch(e){localStorage.removeItem(KEY);}}
+function saveState(){localStorage.setItem(KEY,JSON.stringify(state));}
+function getAttempts(){return parseInt(localStorage.getItem(ATT_KEY)||'0');}
+function incAttempts(){localStorage.setItem(ATT_KEY,String(getAttempts()+1));}
+function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function getShuffled(qi){if(!state.shuffles[qi]){state.shuffles[qi]=shuffle([0,1,2,3]);saveState();}return state.shuffles[qi];}
+function speak(w){if(!window.speechSynthesis)return;var u=new SpeechSynthesisUtterance(w);u.lang='en-US';speechSynthesis.cancel();speechSynthesis.speak(u);}
+function render(){document.getElementById('attemptsLabel').textContent='Total Attempts: '+getAttempts();buildDots();if(state.showResults){showResults();return;}showQuestion();}
+function buildDots(){var nav=document.getElementById('dotNav');var html='';for(var i=0;i<qs.length;i++){var cls='dot';if(state.answers[i]===undefined){}else if(state.answers[i]===qs[i].ci)cls+=' correct';else cls+=' wrong';if(i===state.cur&&!state.showResults)cls+=' active';html+='<div class="'+cls+'" onclick="goToQ('+i+')">'+(i+1)+'</div>';}if(state.showResults)html+='<span class="results-pill">Results</span>';nav.innerHTML=html;}
+function showQuestion(){var qa=document.getElementById('quizArea');document.getElementById('resultsArea').style.display='none';qa.style.display='block';var i=state.cur,q=qs[i];var order=getShuffled(i);var ans=state.answers[i];var answered=(ans!==undefined);var html='<div class="tag-badge">Advanced Vocabulary</div><div class="q-counter">'+(i+1)+' / '+qs.length+'</div><div class="word-row"><div class="word-text">'+q.w+'</div><button class="speak-btn" onclick="speak(\''+q.w+'\')">Listen</button></div><div class="options">';for(var k=0;k<4;k++){var oi=order[k];var cls='opt-btn';if(answered){if(oi===q.ci)cls+=' reveal';if(oi===ans&&ans!==q.ci)cls+=' wrong';}html+='<button class="'+cls+'" onclick="pick('+oi+')">'+q.opts[oi]+'</button>';}html+='</div>';if(answered&&ans!==q.ci)html+='<div class="explain"><strong>Explanation:</strong> '+q.exp+'</div>';html+='<div class="nav-btns">';if(i>0)html+='<button class="btn btn-gray" onclick="go(-1)">Prev</button>';if(i<qs.length-1)html+='<button class="btn btn-blue" onclick="go(1)">Next</button>';else html+='<button class="btn btn-blue" onclick="finishQuiz()">See Results &#8594;</button>';html+='</div>';qa.innerHTML=html;}
+function pick(oi){var i=state.cur;if(state.answers[i]!==undefined)return;state.answers[i]=oi;saveState();showQuestion();}
+function go(d){state.cur+=d;if(state.cur<0)state.cur=0;if(state.cur>=qs.length)state.cur=qs.length-1;saveState();showQuestion();}
+function goToQ(i){if(state.showResults){state.showResults=false;state.cur=i;saveState();render();return;}state.cur=i;saveState();showQuestion();buildDots();}
+function finishQuiz(){incAttempts();state.showResults=true;saveState();render();}
+function showResults(){var qa=document.getElementById('quizArea');var ra=document.getElementById('resultsArea');qa.style.display='none';ra.style.display='block';var c=0,w=0,s=0;for(var i=0;i<qs.length;i++){var a=state.answers[i];if(a===undefined)s++;else if(a===qs[i].ci)c++;else w++;}var html='<div class="res-header">Results: '+c+' / '+qs.length+'</div><div class="res-grid">';for(var i=0;i<qs.length;i++){var a=state.answers[i];var cls='res-card ',lbl='';if(a===undefined){cls+='skipped';lbl='Skipped';}else if(a===qs[i].ci){cls+='correct';lbl='Correct';}else{cls+='wrong';lbl='Wrong';}html+='<div class="'+cls+'" onclick="goToQ('+i+')">Q'+(i+1)+': '+lbl+'</div>';}html+='</div><div class="res-actions"><button class="btn btn-blue" onclick="startRetry()">Retry Wrong Questions</button><button class="btn btn-gray" onclick="copyRes()">Copy All Results</button><button class="btn btn-gray" onclick="confirmFresh()">Start Fresh</button></div>';ra.innerHTML=html;buildDots();}
+var retryList=[],retryIdx=0,retryAnswers={};
+function startRetry(){retryList=[];for(var i=0;i<qs.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==qs[i].ci)retryList.push(i);}if(!retryList.length){alert('No wrong questions!');return;}retryIdx=0;retryAnswers={};showRetry();}
+function showRetry(){var el=document.getElementById('retryArea');if(!el){el=document.createElement('div');el.id='retryArea';el.style.cssText='padding:20px';document.querySelector('.container').appendChild(el);}document.getElementById('quizArea').style.display='none';document.getElementById('resultsArea').style.display='none';el.style.display='block';if(retryIdx>=retryList.length){var c=0;for(var x=0;x<retryList.length;x++){if(retryAnswers[x]===qs[retryList[x]].ci)c++;}el.innerHTML='<div style="font-weight:700;color:#185FA5;margin-bottom:14px">Retry Complete: '+c+'/'+retryList.length+' correct</div><button class="btn btn-blue" onclick="backToResults()">Back to Results</button>';return;}var qi=retryList[retryIdx],q=qs[qi];var order=getShuffled(qi);var ans=retryAnswers[retryIdx];var answered=(ans!==undefined);var html='<div style="font-weight:700;color:#185FA5;margin-bottom:10px">Retry '+(retryIdx+1)+'/'+retryList.length+'</div><div class="word-row"><div class="word-text">'+q.w+'</div><button class="speak-btn" onclick="speak(\''+q.w+'\')">Listen</button></div><div class="options">';for(var k=0;k<4;k++){var oi=order[k];var cls='opt-btn';if(answered){if(oi===q.ci)cls+=' reveal';if(oi===ans&&ans!==q.ci)cls+=' wrong';}html+='<button class="'+cls+'" onclick="retryPick('+oi+')">'+q.opts[oi]+'</button>';}html+='</div>';if(answered&&ans!==q.ci)html+='<div class="explain">'+q.exp+'</div>';html+='<div class="nav-btns"><button class="btn btn-blue" onclick="retryNext()">'+(retryIdx<retryList.length-1?'Next':'Finish Retry')+'</button></div>';el.innerHTML=html;}
+function retryPick(oi){if(retryAnswers[retryIdx]!==undefined)return;retryAnswers[retryIdx]=oi;showRetry();}
+function retryNext(){retryIdx++;showRetry();}
+function backToResults(){var r=document.getElementById('retryArea');if(r)r.style.display='none';state.showResults=true;saveState();render();}
+function copyRes(){var lines=['[Grant] Advanced Vocabulary 2026-06-11'];var c=0,w=0,s=0;for(var i=0;i<qs.length;i++){var a=state.answers[i];if(a===undefined){s++;lines.push('Q'+(i+1)+': Skipped ('+qs[i].w+')');}else if(a===qs[i].ci){c++;lines.push('Q'+(i+1)+': Correct ('+qs[i].w+')');}else{w++;lines.push('Q'+(i+1)+': Wrong ('+qs[i].w+')');}}lines.splice(1,0,'Score: '+c+'/'+qs.length);var txt=lines.join('\n');if(navigator.clipboard)navigator.clipboard.writeText(txt);else{var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}}
+function confirmFresh(){document.getElementById('freshModal').classList.add('show');}
+function closeFreshModal(){document.getElementById('freshModal').classList.remove('show');}
+function doFresh(){localStorage.removeItem(KEY);state={cur:0,answers:{},shuffles:{},showResults:false};closeFreshModal();render();}
+window.pick=pick;window.go=go;window.finishQuiz=finishQuiz;window.goToQ=goToQ;
+window.startRetry=startRetry;window.copyRes=copyRes;window.confirmFresh=confirmFresh;
+window.closeFreshModal=closeFreshModal;window.doFresh=doFresh;
+window.retryPick=retryPick;window.retryNext=retryNext;window.backToResults=backToResults;window.speak=speak;
+loadState();render();
+})();
+</script>
+</body>
+</html>

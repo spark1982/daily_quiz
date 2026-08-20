@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Competition – Chapter 1</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f9; min-height: 100vh; }
+
+  .due-date {
+    font-size: 2rem; font-weight: 800; text-align: center;
+    color: #185FA5; background: white; padding: 12px 0 8px;
+    letter-spacing: 0.01em;
+  }
+
+  .attempt-banner {
+    text-align: center; background: #185FA5; color: white;
+    padding: 8px 16px; font-size: 1.05rem; font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+  .attempt-banner span { font-size: 1.3rem; font-weight: 900; }
+
+  .quiz-header {
+    background: white; text-align: center; padding: 14px 16px 10px;
+    border-bottom: 2px solid #d0dce8;
+  }
+  .quiz-header h1 { font-size: 1.4rem; color: #185FA5; font-weight: 800; }
+
+  /* Dot Nav */
+  .dot-nav {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    justify-content: center; padding: 10px 12px;
+    background: white; border-bottom: 1px solid #d0dce8;
+  }
+  .dot {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #d0dce8; color: #444; font-size: 0.75rem;
+    font-weight: 700; display: flex; align-items: center;
+    justify-content: center; cursor: pointer; border: none;
+    transition: background 0.15s;
+  }
+  .dot.correct { background: #185FA5; color: white; }
+  .dot.wrong { background: #E24B4A; color: white; }
+  .dot.current { outline: 3px solid #185FA5; outline-offset: 2px; }
+  .results-pill {
+    background: #185FA5; color: white; border-radius: 16px;
+    padding: 6px 14px; font-size: 0.8rem; font-weight: 700;
+    display: none; align-items: center;
+  }
+  .results-pill.show { display: flex; }
+
+  /* Quiz Area */
+  #quizArea { display: none; }
+  #quizArea.show { display: block; }
+
+  .question-card {
+    background: white; border-radius: 12px; margin: 14px 12px;
+    padding: 20px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .type-badge {
+    display: inline-block; background: #185FA5; color: white;
+    border-radius: 20px; padding: 3px 12px; font-size: 0.75rem;
+    font-weight: 700; margin-bottom: 10px;
+  }
+  .q-number { font-size: 0.85rem; color: #888; margin-bottom: 4px; }
+  .q-text {
+    font-size: 1.15rem; font-weight: 700; color: #1a2a3a;
+    margin-bottom: 16px; line-height: 1.5;
+  }
+
+  .option-btn {
+    display: block; width: 100%; text-align: left;
+    padding: 12px 16px; margin-bottom: 10px;
+    border-radius: 8px; font-size: 1rem; font-weight: 600;
+    cursor: pointer; transition: opacity 0.1s;
+    background-color: #e8edf4; color: #111111;
+    border: 2px solid transparent;
+  }
+  .option-btn:active { opacity: 0.8; }
+  .option-btn.correct-ans {
+    background-color: #E1F5EE !important;
+    border-color: #1D9E75 !important;
+    color: #085041 !important;
+  }
+  .option-btn.wrong-ans {
+    background-color: #FCEBEB !important;
+    border-color: #E24B4A !important;
+    color: #501313 !important;
+  }
+  .option-btn.revealed-correct {
+    background-color: #E1F5EE !important;
+    border-color: #1D9E75 !important;
+    color: #085041 !important;
+  }
+  .option-btn:disabled { cursor: default; }
+
+  .explanation {
+    display: none; background: #fff3e0; border-left: 4px solid #ff9800;
+    border-radius: 6px; padding: 10px 14px; margin-top: 8px;
+    font-size: 0.92rem; color: #5a3800; line-height: 1.5;
+  }
+  .explanation.show { display: block; }
+
+  /* Nav Buttons */
+  .nav-row {
+    display: flex; justify-content: space-between;
+    padding: 0 12px 16px; gap: 10px;
+  }
+  .nav-btn {
+    flex: 1; padding: 13px 0; border-radius: 8px;
+    font-size: 1rem; font-weight: 700; cursor: pointer;
+    border: none; background: #185FA5; color: white;
+    transition: opacity 0.15s;
+  }
+  .nav-btn:active { opacity: 0.8; }
+  .nav-btn:disabled { background: #b0c4d8; cursor: default; }
+
+  /* Results */
+  #resultsScreen { display: none; }
+  #resultsScreen.show { display: block; }
+
+  .results-header {
+    background: white; text-align: center;
+    padding: 20px 16px 14px;
+    border-bottom: 2px solid #d0dce8;
+  }
+  .results-header h2 { font-size: 1.4rem; color: #185FA5; font-weight: 800; }
+  .score-display {
+    font-size: 2.4rem; font-weight: 900; color: #185FA5; margin: 8px 0 4px;
+  }
+  .score-sub { font-size: 0.95rem; color: #666; }
+
+  .results-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 8px; padding: 14px 12px;
+  }
+  .result-card {
+    background: white; border-radius: 10px; padding: 10px 6px;
+    text-align: center; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    border: 2px solid transparent;
+  }
+  .result-card.correct { border-color: #1D9E75; }
+  .result-card.wrong { border-color: #E24B4A; }
+  .result-card.skipped { border-color: #aaa; }
+  .result-card .rc-num { font-size: 0.8rem; color: #888; font-weight: 700; }
+  .result-card .rc-label {
+    font-size: 0.72rem; font-weight: 800; margin-top: 3px;
+    text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .result-card.correct .rc-label { color: #1D9E75; }
+  .result-card.wrong .rc-label { color: #E24B4A; }
+  .result-card.skipped .rc-label { color: #888; }
+
+  .wrong-review { padding: 0 12px 10px; }
+  .wrong-item {
+    background: white; border-radius: 10px; margin-bottom: 10px;
+    padding: 14px 16px; border-left: 4px solid #E24B4A;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .wrong-item.skipped { border-left-color: #aaa; }
+  .wrong-item-q { font-size: 0.95rem; font-weight: 700; color: #1a2a3a; margin-bottom: 6px; }
+  .wrong-item-ans { font-size: 0.88rem; color: #555; }
+  .wrong-item-ans .correct-label { color: #1D9E75; font-weight: 700; }
+
+  .results-actions {
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 0 12px 24px;
+  }
+  .action-btn {
+    width: 100%; padding: 13px 0; border-radius: 8px;
+    font-size: 1rem; font-weight: 700; cursor: pointer;
+    border: none; background: #185FA5; color: white;
+  }
+  .action-btn.secondary {
+    background: white; color: #185FA5; border: 2px solid #185FA5;
+  }
+  .action-btn.danger { background: white; color: #E24B4A; border: 2px solid #E24B4A; }
+  .action-btn.retry-btn { background: #e67e22; color: white; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45); z-index: 999;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: white; border-radius: 14px;
+    padding: 26px 22px; max-width: 320px; width: 90%;
+    text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  }
+  .modal-box h3 { font-size: 1.15rem; color: #1a2a3a; margin-bottom: 10px; }
+  .modal-box p { font-size: 0.92rem; color: #555; margin-bottom: 20px; }
+  .modal-actions { display: flex; gap: 10px; }
+  .modal-actions button {
+    flex: 1; padding: 11px 0; border-radius: 8px;
+    font-size: 0.95rem; font-weight: 700; cursor: pointer; border: none;
+  }
+  .modal-cancel { background: #e8edf4; color: #333; }
+  .modal-confirm { background: #E24B4A; color: white; }
+
+  /* Retry mini results */
+  #retryResults { display: none; }
+  #retryResults.show { display: block; }
+  .retry-header {
+    background: #e67e22; color: white; text-align: center;
+    padding: 16px; border-radius: 10px; margin: 14px 12px 10px;
+  }
+  .retry-header h3 { font-size: 1.2rem; font-weight: 800; }
+  .retry-score { font-size: 2rem; font-weight: 900; margin: 6px 0 2px; }
+</style>
+</head>
+<body>
+
+<div class="due-date" id="dueDate">📅 Due: June 6, 2025</div>
+
+<div class="attempt-banner">
+  🔁 Total Attempts: <span id="attemptCount">0</span>
+</div>
+
+<div class="quiz-header">
+  <h1>Math Competition — Chapter 1</h1>
+</div>
+
+<div class="dot-nav" id="dotNav"></div>
+
+<div id="quizArea">
+  <div class="question-card" id="questionCard"></div>
+  <div class="nav-row">
+    <button class="nav-btn" id="prevBtn" onclick="go(-1)">← Prev</button>
+    <button class="nav-btn" id="nextBtn" onclick="goNext()">Next →</button>
+  </div>
+</div>
+
+<div id="resultsScreen">
+  <div class="results-header">
+    <h2>Results</h2>
+    <div class="score-display" id="scoreDisplay"></div>
+    <div class="score-sub" id="scoreSub"></div>
+  </div>
+  <div class="results-grid" id="resultsGrid"></div>
+  <div class="wrong-review" id="wrongReview"></div>
+  <div class="results-actions">
+    <button class="action-btn retry-btn" id="retryWrongBtn" onclick="startRetry()">🔁 Retry Wrong Questions</button>
+    <button class="action-btn secondary" id="copyBtn" onclick="copyResults()">📋 Copy All Results</button>
+    <button class="action-btn danger" onclick="showFreshModal()">🗑 Start Fresh</button>
+  </div>
+</div>
+
+<!-- Retry session -->
+<div id="retryArea" style="display:none;">
+  <div class="question-card" id="retryCard"></div>
+  <div class="nav-row">
+    <button class="nav-btn" id="retryPrevBtn" onclick="retryGo(-1)">← Prev</button>
+    <button class="nav-btn" id="retryNextBtn" onclick="retryGoNext()">Next →</button>
+  </div>
+</div>
+
+<div id="retryResults">
+  <div class="retry-header">
+    <h3>🔁 Retry Results</h3>
+    <div class="retry-score" id="retryScoreDisplay"></div>
+  </div>
+  <div class="wrong-review" id="retryWrongReview"></div>
+  <div class="results-actions">
+    <button class="action-btn" onclick="endRetry()">← Back to Results</button>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <h3>Start Fresh?</h3>
+    <p>All progress will be cleared. This cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="hideFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="doStartFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'quiz_mathcomp_ch1_20q_v1';
+const ATTEMPTS_KEY = 'quiz_mathcomp_ch1_attempts_v1';
+
+const RAW_QUESTIONS = [
+  {
+    text: "Solve: 1 − 2 + 3 − 4 + 5",
+    answer: 3,
+    options: [3, 5, 1, -3],
+    explanation: "Work left to right: 1 − 2 = −1, −1 + 3 = 2, 2 − 4 = −2, −2 + 5 = 3."
+  },
+  {
+    text: "Solve: 1 + 2 × 2",
+    answer: 5,
+    options: [5, 6, 8, 4],
+    explanation: "Multiplication first: 2 × 2 = 4, then 1 + 4 = 5."
+  },
+  {
+    text: "Solve: 1 − (2 + 3) − (4 + 5)",
+    answer: -13,
+    options: [-13, -12, -8, -9],
+    explanation: "Evaluate parentheses first: 1 − 5 − 9 = −13."
+  },
+  {
+    text: "Solve: (1 + 2) × 2",
+    answer: 6,
+    options: [6, 5, 8, 4],
+    explanation: "Parentheses first: 3 × 2 = 6."
+  },
+  {
+    text: "Solve: 12 ÷ 2 × 3",
+    answer: 18,
+    options: [18, 2, 6, 36],
+    explanation: "Left to right (same precedence): 12 ÷ 2 = 6, then 6 × 3 = 18."
+  },
+  {
+    text: "Solve: 0 + 2 − 4 × 6 ÷ 8",
+    answer: -1,
+    options: [-1, 0, -3, 1],
+    explanation: "Multiplication/division first: 4 × 6 ÷ 8 = 24 ÷ 8 = 3. Then 0 + 2 − 3 = −1."
+  },
+  {
+    text: "Solve: 1 × 2 + 3 × 4 + 5 × 6 + 7 × 8",
+    answer: 100,
+    options: [100, 96, 104, 112],
+    explanation: "Multiply first: 2 + 12 + 30 + 56 = 100."
+  },
+  {
+    text: "Solve: 1 × (2 + 3) × 4 + 5 × 6 + 7 × 8",
+    answer: 106,
+    options: [106, 100, 112, 98],
+    explanation: "1 × 5 × 4 = 20, then 20 + 30 + 56 = 106."
+  },
+  {
+    text: "How many integers are between −10 and 10? (not including −10 and 10)",
+    answer: 19,
+    options: [19, 20, 21, 18],
+    explanation: "The integers are −9, −8, …, −1, 0, 1, …, 9. That is 19 integers."
+  },
+  {
+    text: "How many natural numbers are between −12,394 and 932, inclusive?",
+    answer: 932,
+    options: [932, 933, 931, 13326],
+    explanation: "Natural numbers are 1, 2, 3, … Since the range goes up to 932 inclusive, there are 932 natural numbers."
+  },
+  {
+    text: "Solve: 32 − (16 − (8 − (4 − (2 − 1))))",
+    answer: 21,
+    options: [21, 19, 23, 17],
+    explanation: "Start innermost: 2 − 1 = 1. Then 4 − 1 = 3. Then 8 − 3 = 5. Then 16 − 5 = 11. Then 32 − 11 = 21."
+  },
+  {
+    text: "Solve: 2((2 + 3) × 4 − 18)",
+    answer: 4,
+    options: [4, 2, 8, 0],
+    explanation: "Inner: (2+3) = 5, 5 × 4 = 20, 20 − 18 = 2. Then 2 × 2 = 4."
+  },
+  {
+    text: "Solve: 6(2 + 4)",
+    answer: 36,
+    options: [36, 16, 24, 48],
+    explanation: "6(2 + 4) = 6 × 6 = 36."
+  },
+  {
+    text: "Solve: 20(50 + 4) − 1000",
+    answer: 80,
+    options: [80, 100, 1080, 60],
+    explanation: "20 × 54 = 1080. Then 1080 − 1000 = 80."
+  },
+  {
+    text: "Solve: 5(2 + 4 + 6 + 8 + 10)",
+    answer: 150,
+    options: [150, 120, 160, 100],
+    explanation: "2+4+6+8+10 = 30. Then 5 × 30 = 150."
+  },
+  {
+    text: "Solve: 32 ÷ 16 × 6 ÷ 3 × 10 ÷ 5 + 18 ÷ 9 × 12 ÷ 6 × 8 ÷ 4",
+    answer: 16,
+    options: [16, 12, 20, 8],
+    explanation: "First part: 32÷16=2, ×6=12, ÷3=4, ×10=40, ÷5=8. Second part: 18÷9=2, ×12=24, ÷6=4, ×8=32, ÷4=8. Sum: 8+8=16."
+  },
+  {
+    text: "How many integers are between −34 and 89, inclusive?",
+    answer: 124,
+    options: [124, 123, 125, 122],
+    explanation: "Count: 89 − (−34) + 1 = 89 + 34 + 1 = 124."
+  },
+  {
+    text: "Jake has to read from page 186 to page 563, inclusive, in 14 days, reading equal pages each day. How many pages per day?",
+    answer: 27,
+    options: [27, 26, 28, 25],
+    explanation: "Total pages: 563 − 186 + 1 = 378. Then 378 ÷ 14 = 27."
+  },
+  {
+    text: "Solve: 16 ÷ (2 + 2)² + (19 − 2 ÷ 2) ÷ 6",
+    answer: 4,
+    options: [4, 3, 5, 6],
+    explanation: "(2+2)² = 16, so 16÷16 = 1. Then 2÷2 = 1, so 19−1 = 18, 18÷6 = 3. Total: 1+3 = 4."
+  },
+  {
+    text: "Solve: 720 ÷ 6 ÷ 5 ÷ 4 ÷ 3 ÷ 2 ÷ 1",
+    answer: 1,
+    options: [1, 6, 720, 120],
+    explanation: "720÷6=120, ÷5=24, ÷4=6, ÷3=2, ÷2=1, ÷1=1."
+  }
+];
+
+// Shuffle helper
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Build questions with shuffled options
+function buildQuestions(rawList) {
+  return rawList.map((q, idx) => {
+    const shuffled = shuffle(q.options);
+    const ci = shuffled.indexOf(q.answer);
+    return {
+      ...q,
+      shuffled,
+      ci,
+      qIndex: idx
+    };
+  });
+}
+
+const QUESTIONS = buildQuestions(RAW_QUESTIONS);
+
+function defaultState() {
+  return {
+    cur: 0,
+    answers: {},   // qIndex -> chosen option index (in shuffled)
+    showResults: false
+  };
+}
+
+function saveState(st) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(st));
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const st = JSON.parse(raw);
+    if (typeof st.cur !== 'number' || st.cur < 0 || st.cur >= QUESTIONS.length) throw new Error();
+    if (typeof st.answers !== 'object') throw new Error();
+    if (typeof st.showResults !== 'boolean') throw new Error();
+    return st;
+  } catch(e) {
+    localStorage.removeItem(STORAGE_KEY);
+    return null;
+  }
+}
+
+function getAttempts() {
+  return parseInt(localStorage.getItem(ATTEMPTS_KEY) || '0', 10);
+}
+
+function incrementAttempts() {
+  const n = getAttempts() + 1;
+  localStorage.setItem(ATTEMPTS_KEY, String(n));
+  return n;
+}
+
+let state = loadState() || defaultState();
+
+// Retry state
+let retryQuestions = [];
+let retryState = { cur: 0, answers: {} };
+
+function render() {
+  try {
+    document.getElementById('attemptCount').textContent = getAttempts();
+
+    // Build dot nav
+    const dotNav = document.getElementById('dotNav');
+    const rPill = document.querySelector('.results-pill');
+    dotNav.innerHTML = '';
+
+    QUESTIONS.forEach((q, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'dot';
+      btn.textContent = i + 1;
+      if (i === state.cur && !state.showResults) btn.classList.add('current');
+      if (state.answers[i] !== undefined) {
+        btn.classList.add(state.answers[i] === q.ci ? 'correct' : 'wrong');
+      }
+      btn.onclick = () => { state.cur = i; state.showResults = false; saveState(state); render(); };
+      dotNav.appendChild(btn);
+    });
+
+    // Results pill
+    let pill = document.querySelector('.results-pill');
+    if (!pill) {
+      pill = document.createElement('span');
+      pill.className = 'results-pill';
+      pill.textContent = 'Results';
+      pill.onclick = () => { state.showResults = true; saveState(state); render(); };
+      dotNav.appendChild(pill);
+    } else {
+      dotNav.appendChild(pill);
+    }
+    if (state.showResults) pill.classList.add('show'); else pill.classList.remove('show');
+
+    const quizArea = document.getElementById('quizArea');
+    const resultsScreen = document.getElementById('resultsScreen');
+    const retryArea = document.getElementById('retryArea');
+    const retryResultsEl = document.getElementById('retryResults');
+
+    // Hide retry areas in normal mode
+    retryArea.style.display = 'none';
+    retryResultsEl.classList.remove('show');
+
+    if (state.showResults) {
+      quizArea.classList.remove('show');
+      resultsScreen.classList.add('show');
+      renderResults();
+    } else {
+      quizArea.classList.add('show');
+      resultsScreen.classList.remove('show');
+      renderQuestion();
+    }
+  } catch(e) {
+    document.body.innerHTML = '<p style="padding:20px;color:red;">Error rendering quiz. Please refresh.</p>';
+  }
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[state.cur];
+  const card = document.getElementById('questionCard');
+  const answered = state.answers[state.cur] !== undefined;
+  const chosen = state.answers[state.cur];
+
+  let optionsHTML = '';
+  q.shuffled.forEach((opt, i) => {
+    let cls = 'option-btn';
+    if (answered) {
+      if (i === q.ci) cls += ' revealed-correct';
+      else if (i === chosen) cls += ' wrong-ans';
+    }
+    optionsHTML += `<button class="${cls}" ${answered ? 'disabled' : ''} onclick="choose(${i})">${opt}</button>`;
+  });
+
+  const showExp = answered && chosen !== q.ci;
+
+  card.innerHTML = `
+    <div class="type-badge">Order of Operations</div>
+    <div class="q-number">Question ${state.cur + 1} of ${QUESTIONS.length}</div>
+    <div class="q-text">${q.text}</div>
+    ${optionsHTML}
+    <div class="explanation ${showExp ? 'show' : ''}">${q.explanation}</div>
+  `;
+
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  prevBtn.disabled = state.cur === 0;
+  if (state.cur === QUESTIONS.length - 1) {
+    nextBtn.textContent = 'See Results →';
+  } else {
+    nextBtn.textContent = 'Next →';
+  }
+}
+
+function choose(i) {
+  if (state.answers[state.cur] !== undefined) return;
+  state.answers[state.cur] = i;
+  saveState(state);
+  render();
+}
+
+function go(dir) {
+  state.cur = Math.max(0, Math.min(QUESTIONS.length - 1, state.cur + dir));
+  state.showResults = false;
+  saveState(state);
+  render();
+}
+
+function goNext() {
+  if (state.cur === QUESTIONS.length - 1) {
+    state.showResults = true;
+    const n = incrementAttempts();
+    document.getElementById('attemptCount').textContent = n;
+    saveState(state);
+    render();
+  } else {
+    go(1);
+  }
+}
+
+function renderResults() {
+  const total = QUESTIONS.length;
+  let correct = 0, wrong = 0, skipped = 0;
+  QUESTIONS.forEach((q, i) => {
+    const ans = state.answers[i];
+    if (ans === undefined) skipped++;
+    else if (ans === q.ci) correct++;
+    else wrong++;
+  });
+
+  document.getElementById('scoreDisplay').textContent = `${correct} / ${total}`;
+  document.getElementById('scoreSub').textContent = `Correct: ${correct}  •  Wrong: ${wrong}  •  Skipped: ${skipped}`;
+
+  // Grid
+  const grid = document.getElementById('resultsGrid');
+  grid.innerHTML = '';
+  QUESTIONS.forEach((q, i) => {
+    const ans = state.answers[i];
+    let cls = 'result-card skipped', label = 'Skipped';
+    if (ans !== undefined) {
+      if (ans === q.ci) { cls = 'result-card correct'; label = 'Correct'; }
+      else { cls = 'result-card wrong'; label = 'Wrong'; }
+    }
+    grid.innerHTML += `<div class="${cls}" onclick="jumpTo(${i})">
+      <div class="rc-num">Q${i+1}</div>
+      <div class="rc-label">${label}</div>
+    </div>`;
+  });
+
+  // Wrong/skipped review
+  const review = document.getElementById('wrongReview');
+  review.innerHTML = '';
+  const wrongList = QUESTIONS.filter((q, i) => {
+    const ans = state.answers[i];
+    return ans === undefined || ans !== q.ci;
+  });
+  if (wrongList.length > 0) {
+    wrongList.forEach(q => {
+      const userAns = state.answers[q.qIndex];
+      const userLabel = userAns !== undefined ? q.shuffled[userAns] : 'Skipped';
+      const type = userAns === undefined ? 'skipped' : '';
+      review.innerHTML += `<div class="wrong-item ${type}">
+        <div class="wrong-item-q">Q${q.qIndex + 1}: ${q.text}</div>
+        <div class="wrong-item-ans">
+          Your answer: ${userLabel} &nbsp;|&nbsp;
+          <span class="correct-label">Correct: ${q.answer}</span>
+        </div>
+        <div style="font-size:0.85rem;color:#666;margin-top:4px;">${q.explanation}</div>
+      </div>`;
+    });
+  }
+
+  // Show/hide retry button
+  document.getElementById('retryWrongBtn').style.display = wrongList.length > 0 ? 'block' : 'none';
+}
+
+function jumpTo(i) {
+  state.cur = i;
+  state.showResults = false;
+  saveState(state);
+  render();
+}
+
+function copyResults() {
+  let text = `Math Competition Ch.1 Results\n`;
+  text += `Score: ${Object.values(state.answers).filter((a,i) => a === QUESTIONS[i]?.ci).length} / ${QUESTIONS.length}\n\n`;
+  QUESTIONS.forEach((q, i) => {
+    const ans = state.answers[i];
+    const status = ans === undefined ? 'Skipped' : (ans === q.ci ? '✅ Correct' : '❌ Wrong');
+    text += `Q${i+1}: ${status}\n`;
+  });
+  try {
+    navigator.clipboard.writeText(text);
+  } catch(e) {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+  const btn = document.getElementById('copyBtn');
+  btn.textContent = '✅ Copied!';
+  setTimeout(() => btn.textContent = '📋 Copy All Results', 2000);
+}
+
+// Retry logic
+function startRetry() {
+  retryQuestions = QUESTIONS.filter((q, i) => {
+    const ans = state.answers[i];
+    return ans === undefined || ans !== q.ci;
+  });
+  if (retryQuestions.length === 0) return;
+  retryState = { cur: 0, answers: {} };
+
+  document.getElementById('resultsScreen').classList.remove('show');
+  document.getElementById('retryResults').classList.remove('show');
+  document.getElementById('retryArea').style.display = 'block';
+  renderRetryQuestion();
+}
+
+function renderRetryQuestion() {
+  const q = retryQuestions[retryState.cur];
+  const card = document.getElementById('retryCard');
+  const answered = retryState.answers[retryState.cur] !== undefined;
+  const chosen = retryState.answers[retryState.cur];
+
+  let optionsHTML = '';
+  q.shuffled.forEach((opt, i) => {
+    let cls = 'option-btn';
+    if (answered) {
+      if (i === q.ci) cls += ' revealed-correct';
+      else if (i === chosen) cls += ' wrong-ans';
+    }
+    optionsHTML += `<button class="${cls}" ${answered ? 'disabled' : ''} onclick="retryChoose(${i})">${opt}</button>`;
+  });
+
+  const showExp = answered && chosen !== q.ci;
+
+  card.innerHTML = `
+    <div class="type-badge" style="background:#e67e22;">🔁 Retry</div>
+    <div class="q-number">Retry ${retryState.cur + 1} of ${retryQuestions.length} (Original Q${q.qIndex + 1})</div>
+    <div class="q-text">${q.text}</div>
+    ${optionsHTML}
+    <div class="explanation ${showExp ? 'show' : ''}">${q.explanation}</div>
+  `;
+
+  document.getElementById('retryPrevBtn').disabled = retryState.cur === 0;
+  document.getElementById('retryNextBtn').textContent =
+    retryState.cur === retryQuestions.length - 1 ? 'See Retry Results →' : 'Next →';
+}
+
+function retryChoose(i) {
+  if (retryState.answers[retryState.cur] !== undefined) return;
+  retryState.answers[retryState.cur] = i;
+  renderRetryQuestion();
+}
+
+function retryGo(dir) {
+  retryState.cur = Math.max(0, Math.min(retryQuestions.length - 1, retryState.cur + dir));
+  renderRetryQuestion();
+}
+
+function retryGoNext() {
+  if (retryState.cur === retryQuestions.length - 1) {
+    showRetryResults();
+  } else {
+    retryState.cur++;
+    renderRetryQuestion();
+  }
+}
+
+function showRetryResults() {
+  document.getElementById('retryArea').style.display = 'none';
+  const retryResultsEl = document.getElementById('retryResults');
+  retryResultsEl.classList.add('show');
+
+  let correct = 0;
+  retryQuestions.forEach((q, i) => {
+    if (retryState.answers[i] === q.ci) correct++;
+  });
+  document.getElementById('retryScoreDisplay').textContent =
+    `${correct} / ${retryQuestions.length}`;
+
+  const review = document.getElementById('retryWrongReview');
+  review.innerHTML = '';
+  retryQuestions.forEach((q, i) => {
+    const ans = retryState.answers[i];
+    if (ans !== undefined && ans === q.ci) return;
+    const userLabel = ans !== undefined ? q.shuffled[ans] : 'Skipped';
+    const type = ans === undefined ? 'skipped' : '';
+    review.innerHTML += `<div class="wrong-item ${type}">
+      <div class="wrong-item-q">Q${q.qIndex + 1}: ${q.text}</div>
+      <div class="wrong-item-ans">
+        Your answer: ${userLabel} &nbsp;|&nbsp;
+        <span class="correct-label">Correct: ${q.answer}</span>
+      </div>
+    </div>`;
+  });
+}
+
+function endRetry() {
+  document.getElementById('retryResults').classList.remove('show');
+  document.getElementById('resultsScreen').classList.add('show');
+}
+
+// Modal
+function showFreshModal() {
+  document.getElementById('freshModal').classList.add('show');
+}
+function hideFreshModal() {
+  document.getElementById('freshModal').classList.remove('show');
+}
+function doStartFresh() {
+  localStorage.removeItem(STORAGE_KEY);
+  state = defaultState();
+  hideFreshModal();
+  render();
+}
+
+// Init
+render();
+</script>
+</body>
+</html>

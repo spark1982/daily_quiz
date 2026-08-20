@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Math Competition</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;margin:0 auto;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px 0;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.tag-badge{display:inline-block;background:#185FA5;color:#fff;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:8px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.q-text{font-size:1rem;font-weight:600;color:#111;margin-bottom:12px;line-height:1.6;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.93rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+.radical{display:inline-flex;align-items:center;vertical-align:middle;}
+.radical-index{font-size:0.65em;align-self:flex-start;margin-right:1px;line-height:1;}
+.radical-symbol{display:inline-flex;align-items:stretch;}
+.radical-symbol::before{content:"√";font-size:1.15em;line-height:1;position:relative;top:2px;}
+.radical-content{border-top:2.5px solid currentColor;padding:1px 4px 1px 2px;display:inline-block;line-height:1.3;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-13</div>
+<div class="title-hd">[Grant] Math Competition</div>
+<div class="instruction">Choose the correct answer for each problem.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 21</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump ▾</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="tag-badge" id="q-tag"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_mathcomp_21_20260613_v1';
+var ATT_KEY='quiz_mathcomp_att_20260613_v1';
+function R(idx,inner){var i=idx?'<span class="radical-index">'+idx+'</span>':'';return '<span class="radical">'+i+'<span class="radical-symbol"><span class="radical-content">'+inner+'</span></span></span>';}
+var qs=[
+ // Chapter 1 — Order of Operations
+ {tag:'Chapter 1',q:'Solve: 8 ÷ 2 × 5',opts:['10','16','20','24'],ci:2,exp:'Follow order of operations left to right: 8 ÷ 2 = 4, then 4 × 5 = 20.',isHTML:false},
+ {tag:'Chapter 1',q:'How many natural numbers are between −10,000 and 750, inclusive?',opts:['750','10,750','9,250','10,000'],ci:0,exp:'Natural numbers are positive integers (1, 2, 3, ...). From 1 to 750 inclusive there are 750 natural numbers.',isHTML:false},
+ {tag:'Chapter 1',q:'Solve: 7(3 + 5 + 7 + 9 + 11)',opts:['210','245','280','315'],ci:1,exp:'Inner sum: 3+5+7+9+11 = 35. Then 7 × 35 = 245.',isHTML:false},
+ // Chapter 2 — Divisibility & LCM
+ {tag:'Chapter 2',q:'What are the remainders when 234,567 is divided by 4, 5, 8, 9, and 10 (in that order)?',opts:['3, 2, 7, 0, 7','0, 2, 7, 0, 7','3, 1, 7, 0, 7','3, 2, 6, 0, 7'],ci:0,exp:'÷4: 234567=4×58641+3, rem 3. ÷5: last digit 7, rem 2. ÷8: 567=8×70+7, rem 7. ÷9: digit sum=2+3+4+5+6+7=27, 27÷9=3 rem 0. ÷10: last digit 7, rem 7.',isHTML:false},
+ {tag:'Chapter 2',q:'A number between 1 and 100 is a multiple of both 9 and 11. What is it?',opts:['9','33','63','99'],ci:3,exp:'LCM(9, 11) = 99. The only multiple of 99 between 1 and 100 is 99 itself.',isHTML:false},
+ {tag:'Chapter 2',q:'What is the smallest three-digit whole number that is a multiple of 7?',opts:['98','100','105','112'],ci:2,exp:'100 ÷ 7 = 14.28..., so the next whole multiple is 15 × 7 = 105.',isHTML:false},
+ // Chapter 3 — Prime Numbers
+ {tag:'Chapter 3',q:'Is 199 a prime number?',opts:['Yes, it is prime.','No, it is divisible by 7.','No, it is divisible by 11.','No, it is divisible by 13.'],ci:0,exp:'√199 ≈ 14.1. Check primes 2, 3, 5, 7, 11, 13: none divide 199 evenly. So 199 is prime.',isHTML:false},
+ {tag:'Chapter 3',q:'What is the largest two-digit prime number?',opts:['91','93','97','99'],ci:2,exp:'√97 ≈ 9.8. Check primes 2, 3, 5, 7: none divide 97. 91=7×13 and 93=3×31 and 99=9×11 are composite. So 97 is the largest two-digit prime.',isHTML:false},
+ {tag:'Chapter 3',q:'How many prime numbers are between 1 and 50?',opts:['13','14','15','16'],ci:2,exp:'Primes: 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47. Count = 15.',isHTML:false},
+ // Chapter 4 — Factors
+ {tag:'Chapter 4',q:'Find the sum of all the factors of 48.',opts:['96','108','120','124'],ci:3,exp:'48 = 2⁴ × 3. Sum of factors = (1+2+4+8+16)(1+3) = 31 × 4 = 124.',isHTML:false},
+ {tag:'Chapter 4',q:'How many more factors does 120 have than 60?',opts:['2','3','4','6'],ci:2,exp:'120 = 2³×3×5 has (3+1)(1+1)(1+1) = 16 factors. 60 = 2²×3×5 has (2+1)(1+1)(1+1) = 12 factors. Difference = 16 − 12 = 4.',isHTML:false},
+ {tag:'Chapter 4',q:'How many factors do 28 and 196 share?',opts:['4','5','6','8'],ci:2,exp:'28 = 2²×7. 196 = 2²×7². GCD(28, 196) = 28. Number of factors of 28 = (2+1)(1+1) = 6.',isHTML:false},
+ // Chapter 5 — Exponents & Perfect Powers
+ {tag:'Chapter 5',q:'How many factors of 2⁸ × 3⁴ × 5² are divisible by 5?',opts:['45','60','90','108'],ci:2,exp:'Must include 5^a with a ≥ 1 (2 choices: 1 or 2), 2^b with b ∈ {0,...,8} (9 choices), 3^c with c ∈ {0,...,4} (5 choices). Total = 2 × 9 × 5 = 90.',isHTML:false},
+ {tag:'Chapter 5',q:'Is 216 a perfect cube? Is it also a perfect square?',opts:['Both a perfect square and a perfect cube','A perfect square but not a perfect cube','A perfect cube but not a perfect square','Neither a perfect square nor a perfect cube'],ci:2,exp:'216 = 6³ = 2³ × 3³. Since all prime exponents are multiples of 3, it is a perfect cube (∛216 = 6). Since the exponents are not all even, it is NOT a perfect square.',isHTML:false},
+ {tag:'Chapter 5',q:'Find the number of factors of 3³ × 5² × 7² that are perfect squares.',opts:['4','6','8','12'],ci:2,exp:'Perfect square factors need all even exponents. Exponent of 3: {0, 2} (2 choices). Exponent of 5: {0, 2} (2 choices). Exponent of 7: {0, 2} (2 choices). Total = 2 × 2 × 2 = 8.',isHTML:false},
+ // Chapter 6 — Money & Word Problems
+ {tag:'Chapter 6',q:'Sarah bought 4 notebooks at 35 cents each with a $2 bill. How much change did she receive? (in cents)',opts:['50','55','60','65'],ci:2,exp:'4 × 35 = 140 cents. Change = 200 − 140 = 60 cents.',isHTML:false},
+ {tag:'Chapter 6',q:'Alex needs 3 pens (79¢ each), 4 pencils (35¢ each), and 6 erasers (25¢ each). How much does he need? (in dollars)',opts:['$4.87','$5.17','$5.27','$5.47'],ci:2,exp:'3×79 + 4×35 + 6×25 = 237 + 140 + 150 = 527 cents = $5.27.',isHTML:false},
+ {tag:'Chapter 6',q:'How many ways are there to make 23 cents using only pennies and/or nickels?',opts:['3','4','5','6'],ci:2,exp:'0 nickels + 23 pennies; 1 nickel + 18 pennies; 2 nickels + 13 pennies; 3 nickels + 8 pennies; 4 nickels + 3 pennies. Total = 5 ways.',isHTML:false},
+ // Chapter 7 — Radicals & Roots
+ {tag:'Chapter 7',q:'Find the largest perfect square less than 300.',opts:['256','272','289','296'],ci:2,exp:'√300 ≈ 17.32. So 17² = 289 is the largest perfect square less than 300.',isHTML:false},
+ {tag:'Chapter 7',q:'Simplify: '+R('2','5')+' &times; '+R('4','5')+' &times; '+R('4','5'),opts:['5<sup>1/4</sup>','5<sup>1/2</sup>','5','5<sup>2</sup>'],ci:2,exp:'5^(1/2) × 5^(1/4) × 5^(1/4) = 5^(2/4 + 1/4 + 1/4) = 5^(4/4) = 5¹ = 5.',isHTML:true},
+ {tag:'Chapter 7',q:'Simplify: '+R(null,'3<sup>10</sup>')+' &times; '+R('5','3<sup>5</sup>'),opts:['3<sup>4</sup>','3<sup>5</sup>','3<sup>6</sup>','3<sup>7</sup>'],ci:2,exp:'3^(10/2) × 3^(5/5) = 3⁵ × 3¹ = 3⁶ = 729.',isHTML:true}
+];
+
+var state={};
+function loadState(){try{var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');if(s&&typeof s.cur==='number'&&s.answers&&s.shuffles){state=s;}else{resetState();}}catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){if(!state.shuffles[i]){var a=[0,1,2,3];for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}state.shuffles[i]=a;}return state.shuffles[i];}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAttempts(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function updateNav(){var ans=Object.keys(state.answers).length;document.getElementById('nav-count').textContent=ans+' / '+qs.length;document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';renderDots();}
+function toggleJump(){var p=document.getElementById('dot-panel');var b=document.getElementById('jump-btn');if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}else{p.style.display='none';b.textContent='Jump ▾';}}
+function renderDots(){var p=document.getElementById('dot-panel');if(p.style.display==='none')return;var h='';for(var i=0;i<qs.length;i++){var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===getCSI(i)?'#185FA5':'#E24B4A');h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';}if(Object.keys(state.answers).length===qs.length){h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';}p.innerHTML=h;}
+function goToQ(i){state.cur=i;state.showResults=false;saveState();render();document.getElementById('dot-panel').style.display='none';document.getElementById('jump-btn').textContent='Jump ▾';}
+function showResults(){state.showResults=true;localStorage.setItem(ATT_KEY,loadAttempts()+1);saveState();render();}
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAttempts();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';document.getElementById('resultsArea').style.display='none';updateNav();
+  var i=state.cur;var q=qs[i];
+  document.getElementById('q-tag').textContent=q.tag;
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-text')[q.isHTML?'innerHTML':'textContent']=q.q;
+  var sh=getShuffle(i);var ans=state.answers[i];var csi=getCSI(i);
+  var html='';for(var s=0;s<4;s++){var oi=sh[s];var cls='opt-btn';var dis='';if(ans!==undefined){dis='disabled';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}html+='<button class="'+cls+'" '+dis+' onclick="pick('+i+','+s+')">'+(q.isHTML?q.opts[oi]:escHtml(q.opts[oi]))+'</button>';}
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');if(ans!==undefined&&ans!==csi){eb.style.display='block';eb.textContent=q.exp;}else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';document.getElementById('resultsArea').style.display='block';updateNav();
+  var c=0,w=0,sk=0;for(var i=0;i<qs.length;i++){if(state.answers[i]===undefined)sk++;else if(state.answers[i]===getCSI(i))c++;else w++;}
+  document.getElementById('results-summary').innerHTML='<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';for(var i=0;i<qs.length;i++){var a=state.answers[i];var label,bg,tc;if(a===undefined){label='Skipped';bg='#d7dde6';tc='#555';}else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}else{label='Wrong';bg='#FCEBEB';tc='#501313';}html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.9rem;font-weight:600;color:#333;">'+escHtml(qs[i].tag)+' Q'+(i+1)+'</span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';}
+  document.getElementById('results-cards').innerHTML=html;
+}
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){if(dir===1&&state.cur===qs.length-1){showResults();return;}state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));saveState();render();}
+function retryWrong(){var first=-1;for(var i=0;i<qs.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){if(first===-1)first=i;delete state.answers[i];}}if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}}
+function copyRes(){var lines=['[Grant] Math Competition 2026-06-13 - Results'];for(var i=0;i<qs.length;i++){var a=state.answers[i];lines.push('Q'+(i+1)+' ('+qs[i].tag+'): '+(a===undefined?'Skipped':a===getCSI(i)?'Correct':'Wrong'));}var txt=lines.join('\n');if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fb(txt);});}else{fb(txt);}}
+function fb(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;window.openFreshModal=openFreshModal;window.confirmFresh=confirmFresh;window.showResults=showResults;
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

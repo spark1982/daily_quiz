@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Naver Dictionary</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;color:#1a1a2e;min-height:100vh}
+#appWrap{max-width:780px;margin:0 auto;padding:16px}
+h1{text-align:center;font-size:1.45rem;font-weight:700;color:#1D9E75;margin-bottom:4px}
+#subtitle{text-align:center;font-size:0.82rem;color:#666;margin-bottom:14px}
+#topNav{display:flex;align-items:center;gap:10px;background:#fff;border-radius:10px;padding:10px 14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+#qCounter{font-size:0.82rem;color:#555;white-space:nowrap}
+#progressWrap{flex:1;background:#e0e0e0;border-radius:6px;height:8px;overflow:hidden}
+#progressBar{height:8px;background:#1D9E75;border-radius:6px;transition:width 0.3s}
+#jumpToggleBtn{font-size:0.78rem;background:#f0f4f8;border:1px solid #ccc;border-radius:6px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+#jumpToggleBtn:hover{background:#e2e8f0}
+#dotPanel{display:none;background:#fff;border-radius:10px;padding:10px 14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+#dotGrid{display:flex;flex-wrap:wrap;gap:6px}
+.dot{width:28px;height:28px;border-radius:50%;border:none;font-size:0.7rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.dot-unanswered{background:#e0e0e0;color:#555}
+.dot-correct{background:#1D9E75;color:#fff}
+.dot-wrong{background:#e74c3c;color:#fff}
+.dot-current{outline:2px solid #185FA5;outline-offset:2px}
+#instrLine{text-align:center;font-size:0.82rem;color:#777;margin-bottom:10px}
+#quizArea{display:none}
+#qCard{background:#fff;border-radius:12px;padding:20px 22px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:12px}
+#wordRow{display:flex;align-items:center;gap:8px}
+#qWord{font-size:1.6rem;font-weight:700;color:#1a1a2e}
+#speakBtn{background:none;border:none;cursor:pointer;font-size:1.3rem;padding:2px 6px;border-radius:6px;transition:background 0.15s}
+#speakBtn:hover{background:#f0f4f8}
+#optionsGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.optBtn{background:#fff;border:2px solid #d0d8e4;border-radius:10px;padding:13px 14px;font-size:0.9rem;cursor:pointer;text-align:left;transition:border-color 0.15s,background 0.15s;color:#1a1a2e;line-height:1.4}
+.optBtn:hover:not(:disabled){border-color:#1D9E75;background:#f0faf6}
+.optBtn.correct{border-color:#1D9E75;background:#e8f8f2;color:#145c45;font-weight:600}
+.optBtn.wrong{border-color:#e74c3c;background:#fdecea;color:#a00}
+.optBtn:disabled{cursor:default}
+#explanation{display:none;background:#fff8e1;border-left:4px solid #f0a500;border-radius:8px;padding:12px 14px;font-size:0.86rem;color:#5a3e00;margin-bottom:12px;line-height:1.55}
+#bottomNav{display:flex;gap:10px;justify-content:flex-end}
+#prevBtn,#nextBtn{padding:9px 22px;border:none;border-radius:8px;font-size:0.9rem;font-weight:600;cursor:pointer}
+#prevBtn{background:#e2e8f0;color:#444}
+#prevBtn:hover:not(:disabled){background:#cbd5e0}
+#nextBtn{background:#1D9E75;color:#fff}
+#nextBtn:hover:not(:disabled){background:#178a65}
+#nextBtn:disabled{background:#a0c4b8;cursor:default}
+#resultsArea{display:none;background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+#resultsArea h2{text-align:center;font-size:1.3rem;color:#1D9E75;margin-bottom:6px}
+#scoreLine{text-align:center;font-size:2rem;font-weight:700;color:#1a1a2e;margin-bottom:4px}
+#scoreMsg{text-align:center;font-size:0.9rem;color:#666;margin-bottom:18px}
+#wrongList{margin-bottom:18px}
+#wrongList h3{font-size:0.95rem;font-weight:700;color:#e74c3c;margin-bottom:10px}
+.wrongItem{background:#fdecea;border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:0.85rem;line-height:1.5}
+.wrongItem strong{color:#a00}
+#resultBtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+#retryWrongBtn{background:#1D9E75;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer}
+#retryWrongBtn:hover{background:#178a65}
+#copyResultsBtn{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer}
+#copyResultsBtn:hover{background:#144d8a}
+#startFreshBtn{background:#8a9ab0;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer}
+#startFreshBtn:hover{background:#6b7f96}
+#modalOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center}
+#modalOverlay.active{display:flex}
+#modalBox{background:#fff;border-radius:14px;padding:28px 24px;max-width:340px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.18)}
+#modalBox p{font-size:1rem;color:#1a1a2e;margin-bottom:20px;line-height:1.5}
+#modalBtns{display:flex;gap:10px;justify-content:center}
+#modalConfirm{background:#e74c3c;color:#fff;border:none;border-radius:8px;padding:9px 22px;font-size:0.9rem;font-weight:600;cursor:pointer}
+#modalCancel{background:#e2e8f0;color:#444;border:none;border-radius:8px;padding:9px 22px;font-size:0.9rem;font-weight:600;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="appWrap">
+  <h1>[Grant] Naver Dictionary</h1>
+  <div id="subtitle">English Vocabulary Quiz — 50 Questions</div>
+  <div id="topNav">
+    <span id="qCounter">Q 1 / 50</span>
+    <div id="progressWrap"><div id="progressBar" style="width:0%"></div></div>
+    <button id="jumpToggleBtn" onclick="window.toggleDots()">Jump ▾</button>
+  </div>
+  <div id="dotPanel"><div id="dotGrid"></div></div>
+  <div id="instrLine">Choose the correct meaning of the word.</div>
+  <div id="quizArea">
+    <div id="qCard">
+      <div id="wordRow">
+        <span id="qWord"></span>
+        <button id="speakBtn" onclick="window.speakWord()" title="Listen">🔊</button>
+      </div>
+    </div>
+    <div id="optionsGrid"></div>
+    <div id="explanation"></div>
+    <div id="bottomNav">
+      <button id="prevBtn" onclick="window.goPrev()">◀ Prev</button>
+      <button id="nextBtn" onclick="window.goNext()">Next ▶</button>
+    </div>
+  </div>
+  <div id="resultsArea">
+    <h2>Quiz Complete!</h2>
+    <div id="scoreLine"></div>
+    <div id="scoreMsg"></div>
+    <div id="wrongList"></div>
+    <div id="resultBtns">
+      <button id="retryWrongBtn" onclick="window.retryWrong()">Retry Wrong Ones</button>
+      <button id="copyResultsBtn" onclick="window.copyResults()">Copy All Results</button>
+      <button id="startFreshBtn" onclick="window.confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<div id="modalOverlay">
+  <div id="modalBox">
+    <p id="modalMsg"></p>
+    <div id="modalBtns">
+      <button id="modalConfirm" onclick="window.modalConfirmCb()">Yes, Reset</button>
+      <button id="modalCancel" onclick="window.closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+'use strict';
+var STORAGE_KEY='grant_naver_dict_v1';
+var ALL=[
+{word:'astonish',correct:'to surprise or shock someone greatly',options:['to surprise or shock someone greatly','to make someone laugh or smile','to send or communicate something','to refuse or reject firmly']},
+{word:'stern',correct:'serious and strict in manner or attitude',options:['serious and strict in manner or attitude','full of energy and strength','shining with a bright soft light','willing to accept or agree to something']},
+{word:'route',correct:'a path or course taken to get somewhere',options:['a path or course taken to get somewhere','a small portion of food','the act of using up resources','a basic principle used in reasoning']},
+{word:'amuse',correct:'to make someone laugh or smile',options:['to make someone laugh or smile','to eat food greedily and quickly','to express great approval by clapping','to run away from danger quickly']},
+{word:'consumption',correct:'the act of using up resources or goods',options:['the act of using up resources or goods','the state of being held in custody','expressing mockery or scorn toward others','a set of fundamental laws or principles']},
+{word:'morsel',correct:'a small piece or amount of food',options:['a small piece or amount of food','a path or course taken to get somewhere','a person who acts for others officially','a foolish or mentally unstable person']},
+{word:'divine',correct:'relating to or coming from a god',options:['relating to or coming from a god','subject to death; not living forever','having or showing great courage','showing a range of shimmering colors']},
+{word:'mortal',correct:'subject to death; not living forever',options:['subject to death; not living forever','relating to or coming from a god','having strong healthy energy','shining with a bright soft light']},
+{word:'meager',correct:'lacking in quantity or quality; very small',options:['lacking in quantity or quality; very small','full of energy and strength','having strong bright colors','serious and strict in manner or attitude']},
+{word:'vigorous',correct:'having strong healthy energy and force',options:['having strong healthy energy and force','lacking in quantity or quality','moving or responding in a stiff way','shining with a soft bright light']},
+{word:'vivid',correct:'producing clear powerful and detailed images',options:['producing clear powerful and detailed images','lacking in quantity or quality','in an unpleasant or rude manner','full of energy and strength']},
+{word:'rickety',correct:'poorly made and likely to break or fall',options:['poorly made and likely to break or fall','shining with a soft bright light','showing a range of shimmering colors','serious and strict in manner or attitude']},
+{word:'luminous',correct:'shining with a bright soft light',options:['shining with a bright soft light','poorly made and likely to break or fall','lacking in quantity or quality','relating to or coming from a god']},
+{word:'rudely',correct:'in an impolite or disrespectful manner',options:['in an impolite or disrespectful manner','in a stiff and formal way','in a serious and urgent way','in a brief and unfriendly way']},
+{word:'convey',correct:'to communicate or express a message or idea',options:['to communicate or express a message or idea','to eat something greedily and completely','to start or have as an origin','to run away quickly from danger']},
+{word:'sarcastic',correct:'using irony to mock or show contempt',options:['using irony to mock or show contempt','treating others with open disrespect','full of humor and laughter','willing to give permission or agree']},
+{word:'demand',correct:'to ask firmly and forcefully for something',options:['to ask firmly and forcefully for something','to express approval by clapping hands','to refuse or deny something requested','to begin to exist or develop']},
+{word:'originate',correct:'to begin or arise from a particular source',options:['to begin or arise from a particular source','to eat something greedily and completely','to communicate a message or idea','to run away from a dangerous situation']},
+{word:'emanate',correct:'to spread out or come from a source',options:['to spread out or come from a source','to begin or arise from a source','to eat something greedily and completely','to communicate or express a message']},
+{word:'devour',correct:'to eat something greedily and completely',options:['to eat something greedily and completely','to spread out or come from a source','to ask firmly and forcefully for something','to surprise or shock greatly']},
+{word:'lunatic',correct:'a foolish or mentally unstable person',options:['a foolish or mentally unstable person','a person who acts officially for others','a small portion of food','a path or course taken to go somewhere']},
+{word:'stiffly',correct:'in a rigid and not relaxed manner',options:['in a rigid and not relaxed manner','in an impolite or disrespectful way','in a serious and pressing way','in a brief and unfriendly way']},
+{word:'urgently',correct:'in a way requiring immediate action or attention',options:['in a way requiring immediate action or attention','in a rigid and not relaxed manner','in an impolite or disrespectful way','in a rough and unfriendly manner']},
+{word:'gruff',correct:'having a rough and unfriendly manner or voice',options:['having a rough and unfriendly manner or voice','using irony to mock or show contempt','treating others with open disrespect','full of humor and laughter']},
+{word:'mockery',correct:'the act of making fun of someone cruelly',options:['the act of making fun of someone cruelly','a set of fundamental laws governing a nation','open disrespect or scorn toward someone','willingness to accept or agree to something']},
+{word:'scornful',correct:'feeling or showing open disrespect for others',options:['feeling or showing open disrespect for others','using irony to mock or show contempt','treating others in a rude superior way','full of humor and laughter']},
+{word:'mocking',correct:'making fun of someone in a cruel way',options:['making fun of someone in a cruel way','feeling or showing open disrespect','treating others with contempt or disdain','full of humor and laughter']},
+{word:'contemptuous',correct:'showing strong disrespect or disdain toward others',options:['showing strong disrespect or disdain toward others','making fun of someone in a cruel way','feeling or showing open disrespect','having or showing great courage']},
+{word:'contempt',correct:'a feeling that something is worthless or inferior',options:['a feeling that something is worthless or inferior','the act of making fun of someone cruelly','willingness to accept or agree to something','a basic principle used in reasoning']},
+{word:'consent',correct:'to give permission or agree to something',options:['to give permission or agree to something','to ask firmly and forcefully for something','to refuse or reject a request firmly','to spread out from a particular source']},
+{word:'deny',correct:'to refuse to admit or accept something',options:['to refuse to admit or accept something','to give permission or agree to something','to ask firmly and forcefully for something','to express approval by clapping']},
+{word:'logic',correct:'a system of reasoning used to reach conclusions',options:['a system of reasoning used to reach conclusions','a set of fundamental laws governing a nation','the act of using up resources','the state of being held in custody']},
+{word:'applaud',correct:'to express approval by clapping the hands',options:['to express approval by clapping the hands','to refuse to admit or accept something','to give permission or agree to something','to eat something greedily and completely']},
+{word:'representative',correct:'a person who acts officially on behalf of others',options:['a person who acts officially on behalf of others','a foolish or mentally unstable person','a small piece or amount of food','a set of fundamental laws or principles']},
+{word:'serve',correct:'to perform duties or provide a service for others',options:['to perform duties or provide a service for others','to begin or arise from a particular source','to communicate or express a message','to spread out or come from a source']},
+{word:'constitution',correct:'a set of fundamental laws governing a country',options:['a set of fundamental laws governing a country','a system of reasoning used to reach conclusions','the act of using up resources or goods','the state of being held in custody']},
+{word:'developed',correct:'having reached an advanced or mature stage',options:['having reached an advanced or mature stage','poorly made and likely to break or fall','lacking in quantity or quality','relating to or coming from a god']},
+{word:'develop',correct:'to grow or cause to grow more advanced',options:['to grow or cause to grow more advanced','to spread out or come from a source','to begin or arise from a particular source','to communicate or express a message']},
+{word:'feature',correct:'a distinctive quality or characteristic of something',options:['a distinctive quality or characteristic of something','a set of fundamental laws governing a nation','the basic material something is made from','a system of reasoning used to reach conclusions']},
+{word:'substance',correct:'the basic material or matter that something consists of',options:['the basic material or matter that something consists of','a distinctive quality or characteristic','a set of fundamental laws or principles','a system of reasoning used to reach conclusions']},
+{word:'courteous',correct:'polite and considerate in behavior toward others',options:['polite and considerate in behavior toward others','having or showing great courage','having strong healthy energy and force','producing clear powerful and detailed images']},
+{word:'courageous',correct:'having or showing great bravery in difficult situations',options:['having or showing great bravery in difficult situations','polite and considerate in behavior toward others','having strong healthy energy and force','producing clear powerful and detailed images']},
+{word:'detention',correct:'the state of being held in custody or kept back',options:['the state of being held in custody or kept back','the act of using up resources or goods','a set of fundamental laws governing a nation','a system of reasoning used to reach conclusions']},
+{word:'coldly',correct:'in an unfriendly and emotionally distant manner',options:['in an unfriendly and emotionally distant manner','in a rigid and not relaxed manner','in a way requiring immediate action','in a rough and unfriendly manner']},
+{word:'chortle',correct:'to laugh in a joyful and partly suppressed way',options:['to laugh in a joyful and partly suppressed way','to make someone laugh or smile gently','to express approval by clapping hands','to eat something greedily and completely']},
+{word:'divorced',correct:'legally separated from a marriage partner',options:['legally separated from a marriage partner','having reached an advanced or mature stage','poorly made and likely to break or fall','polite and considerate in behavior']},
+{word:'curt',correct:'briefly and rudely abrupt in speech or manner',options:['briefly and rudely abrupt in speech or manner','having a rough and unfriendly manner or voice','using irony to mock or show contempt','in a rigid and not relaxed manner']},
+{word:'iridescent',correct:'showing shifting rainbow-like colors in different lights',options:['showing shifting rainbow-like colors in different lights','shining with a bright soft light','producing clear powerful and detailed images','relating to or coming from a god']},
+{word:'flee',correct:'to run away from danger or a threat quickly',options:['to run away from danger or a threat quickly','to eat something greedily and completely','to spread out or come from a source','to begin or arise from a particular source']},
+{word:'humorous',correct:'causing amusement; having a sense of humor',options:['causing amusement; having a sense of humor','polite and considerate in behavior toward others','having or showing great courage','producing clear powerful and detailed images']}
+];
+
+var state={mode:'all',indices:[],current:0,answers:{},wrongChoice:{},version:STORAGE_KEY};
+
+function loadState(){
+  try{
+    var raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw)return;
+    var s=JSON.parse(raw);
+    if(s.version!==STORAGE_KEY)return;
+    state=s;
+  }catch(e){}
+}
+
+function saveState(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){}
+}
+
+function shuffle(arr){
+  var a=arr.slice();
+  for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}
+  return a;
+}
+
+function init(mode,indices){
+  state={mode:mode||'all',indices:indices||shuffle(ALL.map(function(_,i){return i;})),current:0,answers:{},wrongChoice:{},version:STORAGE_KEY};
+  saveState();
+  render();
+}
+
+function render(){
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('resultsArea').style.display='none';
+  renderNav();
+  renderDots();
+  renderQuestion();
+}
+
+function renderNav(){
+  var total=state.indices.length;
+  document.getElementById('qCounter').textContent='Q '+(state.current+1)+' / '+total;
+  document.getElementById('progressBar').style.width=(((state.current+1)/total)*100).toFixed(1)+'%';
+}
+
+function renderDots(){
+  var grid=document.getElementById('dotGrid');
+  grid.innerHTML='';
+  state.indices.forEach(function(qi,pos){
+    var btn=document.createElement('button');
+    btn.className='dot';
+    btn.textContent=pos+1;
+    var ans=state.answers[pos];
+    if(ans===undefined)btn.classList.add('dot-unanswered');
+    else if(ans===true)btn.classList.add('dot-correct');
+    else btn.classList.add('dot-wrong');
+    if(pos===state.current)btn.classList.add('dot-current');
+    btn.onclick=(function(p){return function(){state.current=p;saveState();render();};})(pos);
+    grid.appendChild(btn);
+  });
+}
+
+function renderQuestion(){
+  var pos=state.current;
+  var qi=state.indices[pos];
+  var q=ALL[qi];
+  var answered=state.answers[pos]!==undefined;
+  document.getElementById('qWord').textContent=q.word;
+  var og=document.getElementById('optionsGrid');
+  og.innerHTML='';
+  var opts=shuffle(q.options);
+  opts.forEach(function(opt){
+    var btn=document.createElement('button');
+    btn.className='optBtn';
+    btn.textContent=opt;
+    if(answered){
+      btn.disabled=true;
+      if(opt===q.correct)btn.classList.add('correct');
+      else if(opt===state.wrongChoice[pos])btn.classList.add('wrong');
+    } else {
+      btn.onclick=(function(o){return function(){answer(o);};})(opt);
+    }
+    og.appendChild(btn);
+  });
+  var expl=document.getElementById('explanation');
+  if(answered&&state.answers[pos]===false){
+    expl.style.display='block';
+    expl.innerHTML='<strong>Explanation:</strong> The correct meaning of <strong>'+q.word+'</strong> is "'+q.correct+'."';
+  } else {
+    expl.style.display='none';
+  }
+  var total=state.indices.length;
+  var nextBtn=document.getElementById('nextBtn');
+  nextBtn.textContent=pos===total-1?'Finish \u2713':'Next \u25b6';
+  nextBtn.disabled=!answered;
+  document.getElementById('prevBtn').disabled=pos===0;
+}
+
+function answer(choice){
+  var pos=state.current;
+  var qi=state.indices[pos];
+  var q=ALL[qi];
+  var correct=choice===q.correct;
+  state.answers[pos]=correct;
+  if(!correct)state.wrongChoice[pos]=choice;
+  saveState();
+  var btns=document.querySelectorAll('.optBtn');
+  btns.forEach(function(btn){
+    btn.disabled=true;
+    if(btn.textContent===q.correct)btn.classList.add('correct');
+    else if(!correct&&btn.textContent===choice)btn.classList.add('wrong');
+  });
+  var expl=document.getElementById('explanation');
+  if(!correct){
+    expl.style.display='block';
+    expl.innerHTML='<strong>Explanation:</strong> The correct meaning of <strong>'+q.word+'</strong> is "'+q.correct+'."';
+  }
+  document.getElementById('nextBtn').disabled=false;
+  if(state.current===state.indices.length-1)document.getElementById('nextBtn').textContent='Finish \u2713';
+  renderDots();
+}
+
+window.goNext=function(){
+  var total=state.indices.length;
+  if(state.current===total-1){goResults();}
+  else{state.current++;saveState();render();}
+};
+window.goPrev=function(){
+  if(state.current>0){state.current--;saveState();render();}
+};
+window.toggleDots=function(){
+  var p=document.getElementById('dotPanel');
+  p.style.display=p.style.display==='block'?'none':'block';
+};
+window.speakWord=function(){
+  var word=document.getElementById('qWord').textContent;
+  if('speechSynthesis' in window){
+    var utt=new SpeechSynthesisUtterance(word);
+    utt.lang='en-US';utt.rate=0.9;
+    speechSynthesis.cancel();speechSynthesis.speak(utt);
+  }
+};
+
+function goResults(){
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  var total=state.indices.length;
+  var correct=0;
+  state.indices.forEach(function(qi,pos){if(state.answers[pos]===true)correct++;});
+  document.getElementById('scoreLine').textContent=correct+' / '+total;
+  var pct=Math.round((correct/total)*100);
+  document.getElementById('scoreMsg').textContent=pct===100?'Perfect score! Amazing work!':pct>=80?'Great job! Keep it up!':pct>=60?'Good effort! Review the wrong ones.':'Keep practicing! You\'ll get better.';
+  var wrongs=[];
+  state.indices.forEach(function(qi,pos){if(state.answers[pos]===false)wrongs.push(qi);});
+  var wl=document.getElementById('wrongList');
+  if(wrongs.length===0){wl.innerHTML='';document.getElementById('retryWrongBtn').style.display='none';}
+  else{
+    document.getElementById('retryWrongBtn').style.display='';
+    wl.innerHTML='<h3>Incorrect Answers ('+wrongs.length+')</h3>';
+    wrongs.forEach(function(qi){
+      var q=ALL[qi];
+      var div=document.createElement('div');
+      div.className='wrongItem';
+      div.innerHTML='<strong>'+q.word+'</strong>: '+q.correct;
+      wl.appendChild(div);
+    });
+  }
+}
+
+window.retryWrong=function(){
+  var wrongs=[];
+  state.indices.forEach(function(qi,pos){if(state.answers[pos]===false)wrongs.push(qi);});
+  if(wrongs.length===0)return;
+  init('retry',shuffle(wrongs));
+};
+window.copyResults=function(){
+  var total=state.indices.length;var correct=0;
+  var lines=['[Grant] Naver Dictionary - Results'];
+  state.indices.forEach(function(qi,pos){
+    var q=ALL[qi];var ok=state.answers[pos]===true;
+    if(ok)correct++;
+    lines.push((ok?'V':'X')+' '+q.word+': '+q.correct);
+  });
+  lines.unshift('Score: '+correct+' / '+total);
+  var txt=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).then(function(){var btn=document.getElementById('copyResultsBtn');btn.textContent='Copied!';setTimeout(function(){btn.textContent='Copy All Results';},1800);});}
+};
+window.confirmFresh=function(){
+  document.getElementById('modalMsg').textContent='Reset all progress and start over?';
+  document.getElementById('modalOverlay').classList.add('active');
+};
+window.modalConfirmCb=function(){
+  closeModal();localStorage.removeItem(STORAGE_KEY);init('all',null);
+};
+window.closeModal=function(){document.getElementById('modalOverlay').classList.remove('active');};
+
+loadState();
+if(!state.indices||state.indices.length===0){init('all',null);}
+else{render();}
+})();
+</script>
+</body>
+</html>

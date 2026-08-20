@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Competition – Chapter 6</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f9; min-height: 100vh; }
+  .due-date { font-size: 2rem; font-weight: 800; text-align: center; color: #185FA5; background: white; padding: 12px 0 8px; }
+  .attempt-banner { text-align: center; background: #185FA5; color: white; padding: 8px 16px; font-size: 1.05rem; font-weight: 700; }
+  .attempt-banner span { font-size: 1.3rem; font-weight: 900; }
+  .quiz-header { background: white; text-align: center; padding: 14px 16px 10px; border-bottom: 2px solid #d0dce8; }
+  .quiz-header h1 { font-size: 1.4rem; color: #185FA5; font-weight: 800; }
+  .nav-bar { background: white; border-bottom: 1px solid #d0dce8; padding: 10px 12px; }
+  .nav-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .nav-count { font-size: 0.82rem; font-weight: 700; color: #185FA5; white-space: nowrap; }
+  .progress-track { flex: 1; height: 8px; background: #d0dce8; border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #185FA5; width: 0%; border-radius: 4px; transition: width 0.3s; }
+  .jump-btn { font-size: 0.8rem; font-weight: 700; color: #185FA5; background: white; border: 1.5px solid #185FA5; border-radius: 6px; padding: 4px 12px; cursor: pointer; white-space: nowrap; }
+  .dot-nav { display: none; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .dot-nav.open { display: flex; }
+  .dot { width: 32px; height: 32px; border-radius: 50%; background: #d0dce8; color: #444; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; }
+  .dot.correct { background: #185FA5; color: white; }
+  .dot.wrong { background: #E24B4A; color: white; }
+  .dot.current { outline: 3px solid #185FA5; outline-offset: 2px; }
+  .results-pill { background: #185FA5; color: white; border-radius: 16px; padding: 6px 14px; font-size: 0.8rem; font-weight: 700; display: none; align-items: center; cursor: pointer; }
+  .results-pill.show { display: flex; }
+
+  /* Timer */
+  .timer-bar {
+    background: white; border-bottom: 1px solid #d0dce8;
+    padding: 8px 12px; display: flex; align-items: center;
+    justify-content: center; gap: 10px; flex-wrap: wrap;
+  }
+  .timer-setup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+  .timer-setup label { font-weight: 700; }
+  .timer-setup input[type="number"] {
+    width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8;
+    border-radius: 6px; font-size: 0.9rem; text-align: center;
+  }
+  .timer-start-btn {
+    background: #185FA5; color: white; border: none; border-radius: 6px;
+    padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer;
+  }
+  .timer-start-btn:active { opacity: 0.8; }
+  .timer-running { display: flex; align-items: center; gap: 8px; }
+  .timer-label {
+    font-size: 0.78rem; font-weight: 700; color: #888;
+    text-transform: uppercase; letter-spacing: 0.02em;
+  }
+  .timer-display {
+    font-size: 1.1rem; font-weight: 900; color: #185FA5;
+    font-family: 'Courier New', monospace; letter-spacing: 0.02em;
+  }
+  .timer-display.warn { color: #f5a623; }
+  .timer-display.danger { color: #E24B4A; }
+  #quizArea { display: none; }
+  #quizArea.show { display: block; }
+  .question-card { background: white; border-radius: 12px; margin: 14px 12px; padding: 20px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .type-badge { display: inline-block; background: #185FA5; color: white; border-radius: 20px; padding: 3px 12px; font-size: 0.75rem; font-weight: 700; margin-bottom: 10px; }
+  .q-number { font-size: 0.85rem; color: #888; margin-bottom: 4px; }
+  .q-text { font-size: 1.05rem; font-weight: 700; color: #1a2a3a; margin-bottom: 16px; line-height: 1.6; }
+  .option-btn { display: block; width: 100%; text-align: left; padding: 12px 16px; margin-bottom: 10px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; background-color: #e8edf4; color: #111111; border: 2px solid transparent; }
+  .option-btn:active { opacity: 0.8; }
+  .option-btn.correct-ans { background-color: #E1F5EE !important; border-color: #1D9E75 !important; color: #085041 !important; }
+  .option-btn.wrong-ans { background-color: #FCEBEB !important; border-color: #E24B4A !important; color: #501313 !important; }
+  .option-btn.revealed-correct { background-color: #E1F5EE !important; border-color: #1D9E75 !important; color: #085041 !important; }
+  .option-btn:disabled { cursor: default; }
+  .explanation { display: none; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 6px; padding: 10px 14px; margin-top: 8px; font-size: 0.92rem; color: #5a3800; line-height: 1.5; }
+  .explanation.show { display: block; }
+  .nav-row { display: flex; justify-content: space-between; padding: 0 12px 16px; gap: 10px; }
+  .nav-btn { flex: 1; padding: 13px 0; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; border: none; background: #185FA5; color: white; }
+  .nav-btn:active { opacity: 0.8; }
+  .nav-btn:disabled { background: #b0c4d8; cursor: default; }
+  #resultsScreen { display: none; }
+  #resultsScreen.show { display: block; }
+  .results-header { background: white; text-align: center; padding: 20px 16px 14px; border-bottom: 2px solid #d0dce8; }
+  .results-header h2 { font-size: 1.4rem; color: #185FA5; font-weight: 800; }
+  .score-display { font-size: 2.4rem; font-weight: 900; color: #185FA5; margin: 8px 0 4px; }
+  .score-sub { font-size: 0.95rem; color: #666; }
+  .results-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 14px 12px; }
+  .result-card { background: white; border-radius: 10px; padding: 10px 6px; text-align: center; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 2px solid transparent; }
+  .result-card.correct { border-color: #1D9E75; }
+  .result-card.wrong { border-color: #E24B4A; }
+  .result-card.skipped { border-color: #aaa; }
+  .result-card .rc-num { font-size: 0.8rem; color: #888; font-weight: 700; }
+  .result-card .rc-label { font-size: 0.72rem; font-weight: 800; margin-top: 3px; text-transform: uppercase; }
+  .result-card.correct .rc-label { color: #1D9E75; }
+  .result-card.wrong .rc-label { color: #E24B4A; }
+  .result-card.skipped .rc-label { color: #888; }
+  .wrong-review { padding: 0 12px 10px; }
+  .wrong-item { background: white; border-radius: 10px; margin-bottom: 10px; padding: 14px 16px; border-left: 4px solid #E24B4A; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .wrong-item.skipped { border-left-color: #aaa; }
+  .wrong-item-q { font-size: 0.95rem; font-weight: 700; color: #1a2a3a; margin-bottom: 6px; }
+  .wrong-item-ans { font-size: 0.88rem; color: #555; }
+  .wrong-item-ans .correct-label { color: #1D9E75; font-weight: 700; }
+  .results-actions { display: flex; flex-direction: column; gap: 10px; padding: 0 12px 24px; }
+  .action-btn { width: 100%; padding: 13px 0; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; border: none; background: #185FA5; color: white; }
+  .action-btn.secondary { background: white; color: #185FA5; border: 2px solid #185FA5; }
+  .action-btn.danger { background: white; color: #E24B4A; border: 2px solid #E24B4A; }
+  .action-btn.retry-btn { background: #e67e22; color: white; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 999; align-items: center; justify-content: center; }
+  .modal-overlay.show { display: flex; }
+  .modal-box { background: white; border-radius: 14px; padding: 26px 22px; max-width: 320px; width: 90%; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+  .modal-box h3 { font-size: 1.15rem; color: #1a2a3a; margin-bottom: 10px; }
+  .modal-box p { font-size: 0.92rem; color: #555; margin-bottom: 20px; }
+  .modal-actions { display: flex; gap: 10px; }
+  .modal-actions button { flex: 1; padding: 11px 0; border-radius: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; border: none; }
+  .modal-cancel { background: #e8edf4; color: #333; }
+  .modal-confirm { background: #E24B4A; color: white; }
+  #retryArea { display: none; }
+  #retryResults { display: none; }
+  #retryResults.show { display: block; }
+  .retry-header { background: #e67e22; color: white; text-align: center; padding: 16px; border-radius: 10px; margin: 14px 12px 10px; }
+  .retry-header h3 { font-size: 1.2rem; font-weight: 800; }
+  .retry-score { font-size: 2rem; font-weight: 900; margin: 6px 0 2px; }
+</style>
+</head>
+<body>
+
+<div class="attempt-banner">🔁 Total Attempts: <span id="attemptCount">0</span></div>
+<div class="quiz-header"><h1>Math Competition — Chapter 6</h1></div>
+<div class="nav-bar">
+  <div class="nav-bar-row">
+    <span class="nav-count" id="navCount">0 / 19</span>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <button class="jump-btn" id="jumpBtn" onclick="toggleDots()">Jump</button>
+  </div>
+  <div class="dot-nav" id="dotNav"></div>
+</div>
+
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="20"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">20:00</span>
+  </div>
+</div>
+
+<div id="quizArea">
+  <div class="question-card" id="questionCard"></div>
+  <div class="nav-row">
+    <button class="nav-btn" id="prevBtn" onclick="go(-1)">← Prev</button>
+    <button class="nav-btn" id="nextBtn" onclick="goNext()">Next →</button>
+  </div>
+</div>
+
+<div id="resultsScreen">
+  <div class="results-header">
+    <h2>Results</h2>
+    <div class="score-display" id="scoreDisplay"></div>
+    <div class="score-sub" id="scoreSub"></div>
+  </div>
+  <div class="results-grid" id="resultsGrid"></div>
+  <div class="wrong-review" id="wrongReview"></div>
+  <div class="results-actions">
+    <button class="action-btn retry-btn" id="retryWrongBtn" onclick="startRetry()">🔁 Retry Wrong Questions</button>
+    <button class="action-btn secondary" id="copyBtn" onclick="copyResults()">📋 Copy All Results</button>
+    <button class="action-btn danger" onclick="showFreshModal('original')">🗑 Start Fresh (Original Order)</button>
+    <button class="action-btn danger" onclick="showFreshModal('random')">🔀 Start Fresh (Random Order)</button>
+  </div>
+</div>
+
+<div id="retryArea">
+  <div class="question-card" id="retryCard"></div>
+  <div class="nav-row">
+    <button class="nav-btn" id="retryPrevBtn" onclick="retryGo(-1)">← Prev</button>
+    <button class="nav-btn" id="retryNextBtn" onclick="retryGoNext()">Next →</button>
+  </div>
+</div>
+
+<div id="retryResults">
+  <div class="retry-header">
+    <h3>🔁 Retry Results</h3>
+    <div class="retry-score" id="retryScoreDisplay"></div>
+  </div>
+  <div class="wrong-review" id="retryWrongReview"></div>
+  <div class="results-actions">
+    <button class="action-btn" onclick="endRetry()">← Back to Results</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <h3 id="freshModalTitle">Start Fresh?</h3>
+    <p id="freshModalText">All progress will be cleared. This cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="hideFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="doStartFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'quiz_mathcomp_ch6_20q_v1';
+const ATTEMPTS_KEY = 'quiz_mathcomp_ch6_attempts_v1';
+
+const RAW_QUESTIONS = [
+  {
+    text: "Amy bought a vanilla ice cream cone for $6.87 and received $2.56 in change. How much did she give the cashier?",
+    answer: "$9.43",
+    options: ["$9.43", "$4.31", "$8.43", "$10.43"],
+    explanation: "She gave: $6.87 + $2.56 = $9.43.",
+    badge: "Money"
+  },
+  {
+    text: "Josh paid $1,124.89 for a laptop costing $1,089.39. How much change should he receive?",
+    answer: "$35.50",
+    options: ["$35.50", "$25.50", "$45.50", "$35.00"],
+    explanation: "$1,124.89 − $1,089.39 = $35.50.",
+    badge: "Money"
+  },
+  {
+    text: "Hannah bought 3 pencils at 28 cents each with a one-dollar bill. How much change did she receive? (in cents)",
+    answer: "16 cents",
+    options: ["16 cents", "18 cents", "14 cents", "22 cents"],
+    explanation: "3 × 28 = 84 cents. Change = 100 − 84 = 16 cents.",
+    badge: "Money"
+  },
+  {
+    text: "Sasha has 3 half-dollars, 8 quarters, 11 dimes, 7 nickels and 13 pennies. How much money does she have in total?",
+    answer: "$5.08",
+    options: ["$5.08", "$4.98", "$5.18", "$5.03"],
+    explanation: "3×50 + 8×25 + 11×10 + 7×5 + 13×1 = 150 + 200 + 110 + 35 + 13 = 508 cents = $5.08.",
+    badge: "Money"
+  },
+  {
+    text: "Ross has quarters in 4 stacks of 8 and dimes in 5 stacks of 7. How much money does he have in total?",
+    answer: "$11.50",
+    options: ["$11.50", "$10.50", "$12.50", "$9.50"],
+    explanation: "Quarters: 4×8×25 = 800 cents. Dimes: 5×7×10 = 350 cents. Total = 1150 cents = $11.50.",
+    badge: "Money"
+  },
+  {
+    text: "How many ways are there to make 15 cents using pennies and/or nickels?",
+    answer: "4",
+    options: ["4", "3", "5", "6"],
+    explanation: "0 nickels+15 pennies, 1 nickel+10 pennies, 2 nickels+5 pennies, 3 nickels+0 pennies. That is 4 ways.",
+    badge: "Counting Money"
+  },
+  {
+    text: "Concert tickets cost $154 for two or $83 for one. How much do Cassie and Jacob save by buying the two-ticket deal?",
+    answer: "$12",
+    options: ["$12", "$8", "$15", "$10"],
+    explanation: "Buying individually: 2 × $83 = $166. Two-ticket deal: $154. Savings = $166 − $154 = $12.",
+    badge: "Money"
+  },
+  {
+    text: "Pens cost 99¢, pencils 49¢, erasers 39¢. Riley needs 2 pens, 3 pencils, and 5 erasers. How much does he need?",
+    answer: "$5.40",
+    options: ["$5.40", "$5.80", "$4.90", "$6.00"],
+    explanation: "2×99 + 3×49 + 5×39 = 198 + 147 + 195 = 540 cents = $5.40.",
+    badge: "Money"
+  },
+  {
+    text: "Alex bought 4 chocolate bars at $2 each and 5 lollipops at 50¢ each, paying with a $20 bill. How much did he have left?",
+    answer: "$9.50",
+    options: ["$9.50", "$10.50", "$8.50", "$7.50"],
+    explanation: "4×$2 + 5×$0.50 = $8 + $2.50 = $10.50. Change = $20 − $10.50 = $9.50.",
+    badge: "Money"
+  },
+  {
+    text: "3 adults ($12), 2 seniors ($10), and 4 children ($7.50) go to a movie. What is the total ticket cost?",
+    answer: "$86.00",
+    options: ["$86.00", "$80.00", "$92.00", "$78.00"],
+    explanation: "3×12 + 2×10 + 4×7.50 = 36 + 20 + 30 = $86.00.",
+    badge: "Money"
+  },
+  {
+    text: "Rank these sunglasses deals from LEAST to MOST expensive per pair: 1 for $14, 3 for $40, 9 for $124.",
+    answer: "3 for $40, 9 for $124, 1 for $14",
+    options: ["3 for $40, 9 for $124, 1 for $14", "1 for $14, 9 for $124, 3 for $40", "9 for $124, 3 for $40, 1 for $14", "3 for $40, 1 for $14, 9 for $124"],
+    explanation: "Per unit: 1 for $14 = $14.00, 3 for $40 \u2248 $13.33, 9 for $124 \u2248 $13.78. Least to most: 3 for $40, 9 for $124, 1 for $14.",
+    badge: "Money"
+  },
+  {
+    text: "A store sells boxes: 1 for $3.00 or 11 for $30.00. What is the least John can spend to get exactly 100 boxes?",
+    answer: "$273",
+    options: ["$273", "$276", "$300", "$270"],
+    explanation: "9 eleven-packs = 99 boxes + 1 single = 100 boxes. Cost = 9×$30 + 1×$3 = $270 + $3 = $273.",
+    badge: "Money"
+  },
+  {
+    text: "How many ways are there to make 17 cents using pennies and/or nickels?",
+    answer: "4",
+    options: ["4", "3", "5", "2"],
+    explanation: "0 nickels+17 pennies, 1 nickel+12 pennies, 2 nickels+7 pennies, 3 nickels+2 pennies. That is 4 ways.",
+    badge: "Counting Money"
+  },
+  {
+    text: "A taxi charges $4.50 to start and $1.10 per mile. Julie's trip is 15 miles. How much does she pay?",
+    answer: "$21.00",
+    options: ["$21.00", "$20.00", "$22.00", "$19.50"],
+    explanation: "$4.50 + $1.10 × 15 = $4.50 + $16.50 = $21.00.",
+    badge: "Money"
+  },
+  {
+    text: "Shirts: 2 for $19, 5 for $45, 20 for $170. Logan needs exactly 132 shirts. What is the least he can pay?",
+    answer: "$1,129",
+    options: ["$1,129", "$1,134", "$1,140", "$1,119"],
+    explanation: "Best combo: 6×20 (=120) + 2×5 (=10) + 1×2 (=2) = 132 shirts. Cost = 6×$170 + 2×$45 + 1×$19 = $1,020 + $90 + $19 = $1,129.",
+    badge: "Money"
+  },
+  {
+    text: "How many ways are there to make 25 cents using quarters, dimes, and/or nickels?",
+    answer: "4",
+    options: ["4", "3", "5", "6"],
+    explanation: "1 quarter; 2 dimes+1 nickel; 1 dime+3 nickels; 5 nickels. That is 4 ways.",
+    badge: "Counting Money"
+  },
+  {
+    text: "A phone company charges $15/month plus 50¢/minute for long distance. Josie's July bill was $99. How many long-distance minutes did she use?",
+    answer: "168 minutes",
+    options: ["168 minutes", "160 minutes", "180 minutes", "148 minutes"],
+    explanation: "Long distance charges = $99 − $15 = $84. Minutes = $84 ÷ $0.50 = 168 minutes.",
+    badge: "Money"
+  },
+  {
+    text: "4 adults ($14 each) and 2 children ($5 each) visit an aquarium. What is the total ticket cost?",
+    answer: "$66",
+    options: ["$66", "$60", "$72", "$58"],
+    explanation: "4×$14 + 2×$5 = $56 + $10 = $66.",
+    badge: "Money"
+  },
+  {
+    text: "10 adults and 10 children go to a movie. Total cost is $210 and each adult ticket costs $14. How much does one child ticket cost?",
+    answer: "$7",
+    options: ["$7", "$6", "$8", "$5"],
+    explanation: "Adult total: 10×$14 = $140. Children total: $210 − $140 = $70. Per child = $70 ÷ 10 = $7.",
+    badge: "Money"
+  },
+  {
+    text: "How many ways are there to make $20 using $10-bills, $5-bills, and/or $1-bills?",
+    answer: "9",
+    options: ["9", "8", "10", "11"],
+    explanation: "0 tens: 5-bills can be 0\u20134 (5 ways). 1 ten: 5-bills can be 0\u20132 (3 ways). 2 tens: 5-bills = 0 (1 way). Total = 5+3+1 = 9 ways.",
+    badge: "Counting Money"
+  }
+];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// --- Question order (original vs random), persisted independently of quiz progress ---
+const ORDER_KEY = 'quiz_mathcomp_ch6_order_v1';
+
+function identityOrder() {
+  return RAW_QUESTIONS.map((_, i) => i);
+}
+
+function isValidOrder(arr) {
+  if (!Array.isArray(arr) || arr.length !== RAW_QUESTIONS.length) return false;
+  const sorted = [...arr].sort((a, b) => a - b);
+  for (let i = 0; i < sorted.length; i++) if (sorted[i] !== i) return false;
+  return true;
+}
+
+function loadOrder() {
+  try {
+    const raw = localStorage.getItem(ORDER_KEY);
+    if (!raw) return null;
+    const arr = JSON.parse(raw);
+    if (!isValidOrder(arr)) throw new Error();
+    return arr;
+  } catch (e) {
+    localStorage.removeItem(ORDER_KEY);
+    return null;
+  }
+}
+
+function saveOrder(order) {
+  localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+}
+
+let currentOrder = loadOrder() || identityOrder();
+
+function buildQuestions(rawList, order) {
+  return order.map((origIdx, idx) => {
+    const q = rawList[origIdx];
+    const shuffled = shuffle(q.options);
+    const ci = shuffled.indexOf(q.answer);
+    return { ...q, shuffled, ci, qIndex: idx };
+  });
+}
+
+let QUESTIONS = buildQuestions(RAW_QUESTIONS, currentOrder);
+
+function defaultState() { return { cur: 0, answers: {}, showResults: false, timerTotalSec: null, timerStartedAt: null }; }
+function saveState(st) { localStorage.setItem(STORAGE_KEY, JSON.stringify(st)); }
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const st = JSON.parse(raw);
+    if (typeof st.cur !== 'number' || st.cur < 0 || st.cur >= QUESTIONS.length) throw new Error();
+    if (typeof st.answers !== 'object' || typeof st.showResults !== 'boolean') throw new Error();
+    return st;
+  } catch(e) { localStorage.removeItem(STORAGE_KEY); return null; }
+}
+function getAttempts() { return parseInt(localStorage.getItem(ATTEMPTS_KEY) || '0', 10); }
+function incrementAttempts() { const n = getAttempts()+1; localStorage.setItem(ATTEMPTS_KEY, String(n)); return n; }
+
+let state = loadState() || defaultState();
+if (typeof state.timerTotalSec === 'undefined') state.timerTotalSec = null;
+if (typeof state.timerStartedAt === 'undefined') state.timerStartedAt = null;
+let timerInterval = null;
+let retryQuestions = [];
+let retryState = { cur: 0, answers: {} };
+
+function toggleDots() {
+  const dotNav = document.getElementById('dotNav');
+  const jumpBtn = document.getElementById('jumpBtn');
+  dotNav.classList.toggle('open');
+  jumpBtn.textContent = dotNav.classList.contains('open') ? 'Close' : 'Jump';
+}
+
+function closeDots() {
+  document.getElementById('dotNav').classList.remove('open');
+  document.getElementById('jumpBtn').textContent = 'Jump';
+}
+
+function formatTime(sec) {
+  sec = Math.max(0, Math.round(sec));
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+function renderTimer() {
+  const setupEl = document.getElementById('timerSetup');
+  const runningEl = document.getElementById('timerRunning');
+  const displayEl = document.getElementById('timerDisplay');
+  if (!setupEl || !runningEl || !displayEl) return;
+
+  if (!state.timerStartedAt) {
+    setupEl.style.display = 'flex';
+    runningEl.style.display = 'none';
+    return;
+  }
+
+  setupEl.style.display = 'none';
+  runningEl.style.display = 'flex';
+
+  const elapsed = (Date.now() - state.timerStartedAt) / 1000;
+  const remaining = state.timerTotalSec - elapsed;
+
+  displayEl.classList.remove('warn', 'danger');
+
+  if (remaining <= 0) {
+    displayEl.textContent = "Time's Up";
+    displayEl.classList.add('danger');
+    stopTimerInterval();
+    return;
+  }
+
+  displayEl.textContent = formatTime(remaining);
+  if (remaining <= state.timerTotalSec * 0.1) displayEl.classList.add('danger');
+  else if (remaining <= state.timerTotalSec * 0.25) displayEl.classList.add('warn');
+}
+
+function startTimer() {
+  const input = document.getElementById('timerMinutesInput');
+  let minutes = parseFloat(input.value);
+  if (!minutes || minutes <= 0) minutes = 20;
+  state.timerTotalSec = Math.round(minutes * 60);
+  state.timerStartedAt = Date.now();
+  saveState(state);
+  renderTimer();
+  startTimerInterval();
+}
+
+function startTimerInterval() {
+  stopTimerInterval();
+  timerInterval = setInterval(renderTimer, 1000);
+}
+
+function stopTimerInterval() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
+
+function render() {
+  try {
+    document.getElementById('attemptCount').textContent = getAttempts();
+    const dotNav = document.getElementById('dotNav');
+    dotNav.innerHTML = '';
+
+    const answeredCount = Object.keys(state.answers).length;
+    document.getElementById('navCount').textContent = `${answeredCount} / ${QUESTIONS.length}`;
+    document.getElementById('progressFill').style.width = `${Math.round(answeredCount / QUESTIONS.length * 100)}%`;
+
+    QUESTIONS.forEach((q, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'dot'; btn.textContent = i + 1;
+      if (i === state.cur && !state.showResults) btn.classList.add('current');
+      if (state.answers[i] !== undefined) btn.classList.add(state.answers[i] === q.ci ? 'correct' : 'wrong');
+      btn.onclick = () => { state.cur = i; state.showResults = false; saveState(state); render(); closeDots(); };
+      dotNav.appendChild(btn);
+    });
+    const pill = document.createElement('span');
+    pill.className = 'results-pill' + (state.showResults ? ' show' : '');
+    pill.textContent = 'Results';
+    pill.onclick = () => { state.showResults = true; saveState(state); render(); closeDots(); };
+    dotNav.appendChild(pill);
+    document.getElementById('retryArea').style.display = 'none';
+    document.getElementById('retryResults').classList.remove('show');
+    if (state.showResults) {
+      document.getElementById('quizArea').classList.remove('show');
+      document.getElementById('resultsScreen').classList.add('show');
+      renderResults();
+    } else {
+      document.getElementById('quizArea').classList.add('show');
+      document.getElementById('resultsScreen').classList.remove('show');
+      renderQuestion();
+    }
+  } catch(e) { document.body.innerHTML = '<p style="padding:20px;color:red;">Error. Please refresh.</p>'; }
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[state.cur];
+  const answered = state.answers[state.cur] !== undefined;
+  const chosen = state.answers[state.cur];
+  let opts = '';
+  q.shuffled.forEach((opt, i) => {
+    let cls = 'option-btn';
+    if (answered) { if (i === q.ci) cls += ' revealed-correct'; else if (i === chosen) cls += ' wrong-ans'; }
+    opts += `<button class="${cls}" ${answered ? 'disabled' : ''} onclick="choose(${i})">${opt}</button>`;
+  });
+  const showExp = answered && chosen !== q.ci;
+  document.getElementById('questionCard').innerHTML = `
+    <div class="type-badge">${q.badge}</div>
+    <div class="q-number">Question ${state.cur + 1} of ${QUESTIONS.length}</div>
+    <div class="q-text">${q.text}</div>
+    ${opts}
+    <div class="explanation ${showExp ? 'show' : ''}">${q.explanation}</div>
+  `;
+  document.getElementById('prevBtn').disabled = state.cur === 0;
+  document.getElementById('nextBtn').textContent = state.cur === QUESTIONS.length - 1 ? 'See Results →' : 'Next →';
+}
+
+function choose(i) {
+  if (state.answers[state.cur] !== undefined) return;
+  state.answers[state.cur] = i; saveState(state); render();
+}
+function go(dir) {
+  state.cur = Math.max(0, Math.min(QUESTIONS.length - 1, state.cur + dir));
+  state.showResults = false; saveState(state); render();
+}
+function goNext() {
+  if (state.cur === QUESTIONS.length - 1) {
+    state.showResults = true;
+    document.getElementById('attemptCount').textContent = incrementAttempts();
+    saveState(state); render();
+  } else { go(1); }
+}
+
+function renderResults() {
+  let correct = 0, wrong = 0, skipped = 0;
+  QUESTIONS.forEach((q, i) => { const a = state.answers[i]; if (a === undefined) skipped++; else if (a === q.ci) correct++; else wrong++; });
+  document.getElementById('scoreDisplay').textContent = `${correct} / ${QUESTIONS.length}`;
+  document.getElementById('scoreSub').textContent = `Correct: ${correct}  •  Wrong: ${wrong}  •  Skipped: ${skipped}`;
+  const grid = document.getElementById('resultsGrid'); grid.innerHTML = '';
+  QUESTIONS.forEach((q, i) => {
+    const a = state.answers[i];
+    let cls = 'result-card skipped', label = 'Skipped';
+    if (a !== undefined) { cls = a === q.ci ? 'result-card correct' : 'result-card wrong'; label = a === q.ci ? 'Correct' : 'Wrong'; }
+    grid.innerHTML += `<div class="${cls}" onclick="jumpTo(${i})"><div class="rc-num">Q${i+1}</div><div class="rc-label">${label}</div></div>`;
+  });
+  const review = document.getElementById('wrongReview'); review.innerHTML = '';
+  const wrongList = QUESTIONS.filter((q, i) => { const a = state.answers[i]; return a === undefined || a !== q.ci; });
+  wrongList.forEach(q => {
+    const a = state.answers[q.qIndex];
+    const ul = a !== undefined ? q.shuffled[a] : 'Skipped';
+    review.innerHTML += `<div class="wrong-item ${a === undefined ? 'skipped' : ''}">
+      <div class="wrong-item-q">Q${q.qIndex + 1}: ${q.text}</div>
+      <div class="wrong-item-ans">Your answer: ${ul} &nbsp;|&nbsp; <span class="correct-label">Correct: ${q.answer}</span></div>
+      <div style="font-size:0.85rem;color:#666;margin-top:4px;">${q.explanation}</div>
+    </div>`;
+  });
+  document.getElementById('retryWrongBtn').style.display = wrongList.length > 0 ? 'block' : 'none';
+}
+
+function jumpTo(i) { state.cur = i; state.showResults = false; saveState(state); render(); closeDots(); }
+
+function copyResults() {
+  let text = 'Math Competition Ch.6 Results\n';
+  text += `Score: ${QUESTIONS.filter((q,i) => state.answers[i] === q.ci).length} / ${QUESTIONS.length}\n\n`;
+  QUESTIONS.forEach((q, i) => { const a = state.answers[i]; text += `Q${i+1}: ${a === undefined ? 'Skipped' : (a === q.ci ? 'Correct' : 'Wrong')}\n`; });
+  try { navigator.clipboard.writeText(text); } catch(e) {
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+  }
+  const btn = document.getElementById('copyBtn'); btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = '📋 Copy All Results', 2000);
+}
+
+function startRetry() {
+  retryQuestions = QUESTIONS.filter((q, i) => { const a = state.answers[i]; return a === undefined || a !== q.ci; });
+  if (!retryQuestions.length) return;
+  retryState = { cur: 0, answers: {} };
+  document.getElementById('resultsScreen').classList.remove('show');
+  document.getElementById('retryResults').classList.remove('show');
+  document.getElementById('retryArea').style.display = 'block';
+  state.timerStartedAt = null;
+  state.timerTotalSec = null;
+  saveState(state);
+  stopTimerInterval();
+  renderTimer();
+  renderRetryQuestion();
+}
+function renderRetryQuestion() {
+  const q = retryQuestions[retryState.cur];
+  const answered = retryState.answers[retryState.cur] !== undefined;
+  const chosen = retryState.answers[retryState.cur];
+  let opts = '';
+  q.shuffled.forEach((opt, i) => {
+    let cls = 'option-btn';
+    if (answered) { if (i === q.ci) cls += ' revealed-correct'; else if (i === chosen) cls += ' wrong-ans'; }
+    opts += `<button class="${cls}" ${answered ? 'disabled' : ''} onclick="retryChoose(${i})">${opt}</button>`;
+  });
+  const showExp = answered && chosen !== q.ci;
+  document.getElementById('retryCard').innerHTML = `
+    <div class="type-badge" style="background:#e67e22;">🔁 Retry</div>
+    <div class="q-number">Retry ${retryState.cur + 1} of ${retryQuestions.length} (Original Q${q.qIndex + 1})</div>
+    <div class="q-text">${q.text}</div>
+    ${opts}
+    <div class="explanation ${showExp ? 'show' : ''}">${q.explanation}</div>
+  `;
+  document.getElementById('retryPrevBtn').disabled = retryState.cur === 0;
+  document.getElementById('retryNextBtn').textContent = retryState.cur === retryQuestions.length - 1 ? 'See Retry Results →' : 'Next →';
+}
+function retryChoose(i) { if (retryState.answers[retryState.cur] !== undefined) return; retryState.answers[retryState.cur] = i; renderRetryQuestion(); }
+function retryGo(dir) { retryState.cur = Math.max(0, Math.min(retryQuestions.length - 1, retryState.cur + dir)); renderRetryQuestion(); }
+function retryGoNext() { if (retryState.cur === retryQuestions.length - 1) { showRetryResults(); } else { retryState.cur++; renderRetryQuestion(); } }
+function showRetryResults() {
+  document.getElementById('retryArea').style.display = 'none';
+  document.getElementById('retryResults').classList.add('show');
+  let correct = 0;
+  retryQuestions.forEach((q, i) => { if (retryState.answers[i] === q.ci) correct++; });
+  document.getElementById('retryScoreDisplay').textContent = `${correct} / ${retryQuestions.length}`;
+  const review = document.getElementById('retryWrongReview'); review.innerHTML = '';
+  retryQuestions.forEach((q, i) => {
+    const a = retryState.answers[i];
+    if (a !== undefined && a === q.ci) return;
+    const ul = a !== undefined ? q.shuffled[a] : 'Skipped';
+    review.innerHTML += `<div class="wrong-item ${a === undefined ? 'skipped' : ''}">
+      <div class="wrong-item-q">Q${q.qIndex + 1}: ${q.text}</div>
+      <div class="wrong-item-ans">Your answer: ${ul} &nbsp;|&nbsp; <span class="correct-label">Correct: ${q.answer}</span></div>
+    </div>`;
+  });
+}
+function endRetry() { document.getElementById('retryResults').classList.remove('show'); document.getElementById('resultsScreen').classList.add('show'); }
+let pendingFreshMode = 'original';
+
+function showFreshModal(mode) {
+  pendingFreshMode = mode;
+  const title = document.getElementById('freshModalTitle');
+  const text = document.getElementById('freshModalText');
+  if (mode === 'random') {
+    title.textContent = 'Start Fresh (Random Order)?';
+    text.textContent = 'Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    title.textContent = 'Start Fresh (Original Order)?';
+    text.textContent = 'Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function hideFreshModal() { document.getElementById('freshModal').classList.remove('show'); }
+function doStartFresh() {
+  currentOrder = pendingFreshMode === 'random' ? shuffle(identityOrder()) : identityOrder();
+  saveOrder(currentOrder);
+  QUESTIONS = buildQuestions(RAW_QUESTIONS, currentOrder);
+  localStorage.removeItem(STORAGE_KEY);
+  state = defaultState();
+  stopTimerInterval();
+  hideFreshModal();
+  render();
+  renderTimer();
+}
+
+render();
+renderTimer();
+if (state.timerStartedAt) startTimerInterval();
+</script>
+</body>
+</html>

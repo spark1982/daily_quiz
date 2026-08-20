@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Geometry Counting — Demo (3Q)</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;margin:0 auto;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;}
+.subtitle{text-align:center;font-size:0.85rem;color:#888;margin-bottom:14px;}
+.tag-badge{display:inline-block;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:6px;color:#fff;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.q-text{font-size:1rem;font-weight:600;color:#111;margin-bottom:12px;line-height:1.7;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.5;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn.reveal{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;line-height:1.7;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:10px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+.results-wrap{text-align:center;padding:20px 0;}
+.score-big{font-size:3rem;font-weight:900;color:#185FA5;margin:10px 0;}
+.score-sub{font-size:1rem;color:#555;margin-bottom:20px;}
+</style>
+</head>
+<body>
+<div class="date-hd">Demo</div>
+<div class="title-hd">[Grant] Geometry Counting</div>
+<div class="subtitle">SVG Figure Test — 3 Questions</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 3</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+</div>
+
+<div id="quizArea">
+  <div class="tag-badge" id="q-tag"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box" style="display:none;"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" id="prev-btn" onclick="go(-1)" disabled>Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <div class="results-wrap">
+    <div class="score-big" id="score-big"></div>
+    <div class="score-sub" id="score-sub"></div>
+    <button onclick="restart()" style="padding:12px 28px;background:#185FA5;color:#fff;border:none;border-radius:20px;font-size:1rem;font-weight:700;cursor:pointer;">Try Again</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var TAG_COLORS={'Squares':'#185FA5','Triangles':'#7b61ff','Rectangles':'#1D9E75'};
+
+var qs=[
+  // ── Q1: 2×2 grid → count squares ──────────────────────────────
+  {
+    tag:'Squares',
+    q:'How many squares are there altogether in the figure below?<br>'+
+      '<svg width="140" height="140" viewBox="0 0 140 140" style="display:block;margin:12px auto;">'+
+        '<rect x="10" y="10" width="120" height="120" fill="none" stroke="#333" stroke-width="2.5"/>'+
+        '<line x1="70" y1="10" x2="70" y2="130" stroke="#333" stroke-width="1.5"/>'+
+        '<line x1="10" y1="70" x2="130" y2="70" stroke="#333" stroke-width="1.5"/>'+
+      '</svg>',
+    opts:['4','5','6','9'],
+    ci:1,
+    exp:'1×1 squares: 4 &nbsp;|&nbsp; 2×2 squares: 1 &nbsp;|&nbsp; Total = <b>5</b>'
+  },
+  // ── Q2: Triangle with 2 cevians from apex → count triangles ───
+  {
+    tag:'Triangles',
+    q:'How many triangles are there altogether in the figure below?<br>'+
+      '<svg width="200" height="155" viewBox="0 0 200 155" style="display:block;margin:12px auto;">'+
+        '<polygon points="100,10 10,145 190,145" fill="none" stroke="#333" stroke-width="2.5"/>'+
+        '<line x1="100" y1="10" x2="70" y2="145" stroke="#333" stroke-width="1.5"/>'+
+        '<line x1="100" y1="10" x2="130" y2="145" stroke="#333" stroke-width="1.5"/>'+
+      '</svg>',
+    opts:['4','5','6','8'],
+    ci:2,
+    exp:'Small (1 section): 3 &nbsp;|&nbsp; Medium (2 sections): 2 &nbsp;|&nbsp; Large (all 3): 1 &nbsp;|&nbsp; Total = <b>6</b>'
+  },
+  // ── Q3: 1×4 rectangle grid → count rectangles ─────────────────
+  {
+    tag:'Rectangles',
+    q:'How many rectangles are there altogether in the figure below?<br>'+
+      '<svg width="260" height="80" viewBox="0 0 260 80" style="display:block;margin:12px auto;">'+
+        '<rect x="10" y="15" width="240" height="50" fill="none" stroke="#333" stroke-width="2.5"/>'+
+        '<line x1="70" y1="15" x2="70" y2="65" stroke="#333" stroke-width="1.5"/>'+
+        '<line x1="130" y1="15" x2="130" y2="65" stroke="#333" stroke-width="1.5"/>'+
+        '<line x1="190" y1="15" x2="190" y2="65" stroke="#333" stroke-width="1.5"/>'+
+      '</svg>',
+    opts:['8','9','10','12'],
+    ci:2,
+    exp:'Choose any 2 of the 5 vertical lines to form a rectangle: C(5,2) = 10 &nbsp;|&nbsp; Total = <b>10</b>'
+  }
+];
+
+var cur=0, answers={};
+
+function getShuffle(i){
+  if(!answers['sh'+i]){
+    var a=[0,1,2,3];
+    for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}
+    answers['sh'+i]=a;
+  }
+  return answers['sh'+i];
+}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+
+function render(){
+  var i=cur; var q=qs[i];
+  var tb=document.getElementById('q-tag'); tb.textContent=q.tag; tb.style.background=TAG_COLORS[q.tag]||'#555';
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-text').innerHTML=q.q;
+
+  var ans=answers[i]; var isAnswered=(ans!==undefined); var csi=getCSI(i);
+  var sh=getShuffle(i);
+  var html='';
+  for(var s=0;s<4;s++){
+    var oi=sh[s]; var cls='opt-btn'; var dis='';
+    if(isAnswered){
+      dis='disabled';
+      if(s===csi) cls+=ans===csi?' correct':' reveal';
+      else if(s===ans) cls+=' wrong';
+    }
+    html+='<button class="'+cls+'" '+dis+' onclick="pick('+i+','+s+')">'+ escHtml(q.opts[oi])+'</button>';
+  }
+  document.getElementById('opts-area').innerHTML=html;
+
+  var eb=document.getElementById('exp-box');
+  if(isAnswered){eb.innerHTML=q.exp; eb.style.display='block';}
+  else{eb.style.display='none';}
+
+  document.getElementById('prev-btn').disabled=(i===0);
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+
+  var done=Object.keys(answers).filter(function(k){return typeof answers[k]==='number';}).length;
+  document.getElementById('nav-count').textContent=done+' / '+qs.length;
+  document.getElementById('prog-fill').style.width=(done/qs.length*100).toFixed(1)+'%';
+}
+
+function pick(qi,si){
+  if(answers[qi]!==undefined)return;
+  answers[qi]=si;
+  render();
+}
+
+function go(dir){
+  if(dir===1&&cur===qs.length-1){showResults();return;}
+  cur=Math.max(0,Math.min(qs.length-1,cur+dir));
+  render();
+}
+
+function showResults(){
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  var c=0;
+  for(var i=0;i<qs.length;i++){if(answers[i]===getCSI(i))c++;}
+  document.getElementById('score-big').textContent=c+' / '+qs.length;
+  document.getElementById('score-sub').textContent=c===qs.length?'Perfect! 🎉':c>0?'Keep going!':'Try again!';
+}
+
+function restart(){
+  answers={};cur=0;
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('resultsArea').style.display='none';
+  render();
+}
+
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+window.pick=pick;window.go=go;window.restart=restart;
+render();
+})();
+</script>
+</body>
+</html>

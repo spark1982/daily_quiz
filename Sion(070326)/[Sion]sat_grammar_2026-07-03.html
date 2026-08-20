@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT Grammar</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;color:#222;min-height:100vh;}
+#app{max-width:700px;margin:0 auto;padding:16px;}
+h1{text-align:center;font-size:1.35rem;font-weight:800;color:#185FA5;padding:14px 0 4px;}
+.instr{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0 4px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;min-width:52px;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:6px;}
+.timer-bar{background:white;border:1px solid #d0dce8;border-radius:8px;padding:8px 12px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.timer-setup{display:flex;align-items:center;gap:8px;font-size:0.85rem;color:#444;}
+.timer-setup label{font-weight:700;}
+.timer-setup input[type="number"]{width:56px;padding:5px 6px;border:1.5px solid #d0dce8;border-radius:6px;font-size:0.9rem;text-align:center;}
+.timer-start-btn{background:#185FA5;color:white;border:none;border-radius:6px;padding:6px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;}
+.timer-running{display:flex;align-items:center;gap:8px;}
+.timer-label{font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;}
+.timer-display{font-size:1.1rem;font-weight:900;color:#185FA5;font-family:'Courier New',monospace;}
+.timer-display.warn{color:#f5a623;}
+.timer-display.danger{color:#E24B4A;}
+#att-bar{text-align:center;font-size:0.8rem;color:#888;margin-bottom:8px;}
+#att-bar span{font-weight:700;color:#185FA5;}
+.card{background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:20px 18px;margin-bottom:12px;}
+.q-num{font-size:0.78rem;color:#888;margin-bottom:8px;}
+.topic-tag{display:inline-block;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:10px;background:#e3f0ff;color:#185FA5;margin-bottom:8px;}
+.context-box{background:#f5f9ff;border-left:3px solid #185FA5;padding:11px 14px;border-radius:4px;font-size:0.95rem;line-height:1.75;color:#222;margin-bottom:12px;}
+.q-text{font-size:0.95rem;line-height:1.5;margin-bottom:14px;color:#333;font-weight:600;}
+.opts{display:grid;gap:8px;}
+.opt{padding:11px 14px;border:2px solid #d7dde6;border-radius:8px;cursor:pointer;font-size:0.92rem;background:white;text-align:left;line-height:1.4;transition:border-color 0.15s,background 0.15s;}
+.opt:hover:not(:disabled){border-color:#185FA5;background:#f0f6ff;}
+.opt.correct{border-color:#1D9E75;background:#e6f7f1;color:#0d6b50;font-weight:700;}
+.opt.wrong{border-color:#E24B4A;background:#fdf0f0;color:#b03030;}
+.opt:disabled{cursor:default;}
+.exp{margin-top:12px;padding:11px;background:#f5f9ff;border-left:3px solid #185FA5;border-radius:4px;font-size:0.86rem;line-height:1.55;color:#333;display:none;}
+.nav-btns{display:flex;gap:8px;margin-top:8px;}
+.nav-btns button{flex:1;padding:10px;border:1.5px solid #d7dde6;border-radius:8px;background:white;cursor:pointer;font-size:0.9rem;color:#444;}
+.nav-btns button:hover:not(:disabled){border-color:#185FA5;color:#185FA5;}
+.nav-btns button:disabled{opacity:0.4;cursor:not-allowed;}
+.results{background:white;border-radius:12px;padding:28px 20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.score-big{font-size:3rem;font-weight:900;color:#185FA5;}
+.score-lbl{color:#888;font-size:0.9rem;margin-bottom:16px;}
+.stats-row{display:flex;justify-content:center;gap:28px;margin-bottom:22px;}
+.stat-n{font-size:1.5rem;font-weight:800;}
+.stat-lbl{font-size:0.75rem;color:#888;}
+.res-btn{display:block;width:100%;padding:13px;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:10px;}
+.btn-copy{background:#7b61ff;color:white;}
+.btn-retry{background:#1D9E75;color:white;}
+.btn-fresh{background:#e8ecf0;color:#444;}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-ov.show{display:flex;}
+.modal-box{background:white;border-radius:14px;padding:24px;max-width:360px;width:90%;text-align:center;}
+.modal-box h3{color:#185FA5;margin-bottom:10px;font-size:1.05rem;}
+.modal-box p{font-size:0.88rem;color:#555;margin-bottom:18px;line-height:1.5;}
+.modal-acts{display:flex;gap:10px;}
+.modal-acts button{flex:1;padding:10px;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;cursor:pointer;}
+.modal-acts .cancel{background:#e8ecf0;color:#444;}
+.modal-acts .confirm{background:#E24B4A;color:white;}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>[Sion] SAT Grammar</h1>
+  <div class="instr">Read each passage excerpt and choose the best answer.</div>
+  <div id="nav-bar">
+    <span id="nav-count">0 / 20</span>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+    <button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button>
+  </div>
+  <div id="dot-panel"></div>
+  <div class="timer-bar" id="timerBar">
+    <div class="timer-setup" id="timerSetup">
+      <label for="timerMin">Set Time Limit:</label>
+      <input type="number" id="timerMin" min="1" max="180" value="25"> min
+      <button class="timer-start-btn" onclick="startTimer()">Start</button>
+    </div>
+    <div class="timer-running" id="timerRunning" style="display:none;">
+      <span class="timer-label">Time Left</span>
+      <span class="timer-display" id="timerDisplay">25:00</span>
+    </div>
+  </div>
+  <div id="att-bar">Total Attempts: <span id="attCount">0</span></div>
+  <div id="qcard"></div>
+  <div id="freshModal" class="modal-ov">
+    <div class="modal-box">
+      <h3 id="freshTitle">Start Fresh?</h3>
+      <p id="freshText">All progress will be cleared. This cannot be undone.</p>
+      <div class="modal-acts">
+        <button class="cancel" onclick="closeFreshModal()">Cancel</button>
+        <button class="confirm" onclick="confirmFresh()">Start Fresh</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+var DATE = '20260702';
+var QUIZ_KEY = 'quiz_siongrammar_20_' + DATE + '_v1';
+var ATT_KEY  = 'quiz_siongrammar_att_' + DATE + '_v1';
+var ORDER_KEY = QUIZ_KEY + '_order_v1';
+
+var RAW_QUESTIONS = [
+  {topic:'Transitions',
+   ctx:'The committee had rejected every previous proposal for renovating the auditorium, citing cost concerns. _____ this latest plan, which relies entirely on private donations rather than public funds, received unanimous approval within a single meeting.',
+   q:'Which choice completes the text with the most logical transition?',
+   opts:['Consequently,','Similarly,','Yet','Specifically,'], ci:2,
+   exp:'"Yet" signals the contrast between the committee\'s history of rejecting proposals and its unanimous approval of this one. "Consequently" would incorrectly suggest the rejection history caused this approval. "Similarly" implies agreement with the earlier pattern, which the sentence contradicts. "Specifically" would introduce a narrower restatement, not a contrast.'},
+  {topic:'Subject-Verb Agreement',
+   ctx:'The jury, along with the two alternate jurors who had sat through every session of testimony, [_____] finally ready to deliver a verdict after eleven hours of deliberation.',
+   q:'Which choice most accurately completes the sentence according to the conventions of Standard English?',
+   opts:['was','were','have been','are'], ci:0,
+   exp:'"Along with the two alternate jurors" is a parenthetical phrase, not a second subject joined by "and," so it does not make the subject plural. The subject remains the singular collective noun "jury," requiring the singular verb "was." "Were," "have been," and "are" all incorrectly treat the subject as plural.'},
+  {topic:'Parallel Structure',
+   ctx:'The new manager\'s leadership style emphasized listening carefully to employee concerns, delegating responsibility to junior staff, and [_____] transparent about the company\'s financial struggles.',
+   q:'Which choice maintains the parallel structure of the sentence?',
+   opts:['to be','she was','the act of being','being'], ci:3,
+   exp:'"Being" matches the -ing form established by "listening" and "delegating," preserving the parallel list. "To be" shifts to an infinitive, "she was" introduces a full clause with a repeated subject, and "the act of being" shifts to a noun phrase, each breaking the pattern.'},
+  {topic:'Punctuation',
+   ctx:'The archaeologists had expected to find pottery shards near the riverbank[_____] instead, they uncovered an intact bronze sword buried nearly a meter below the surface.',
+   q:'Which choice correctly completes the text?',
+   opts:[',',';',' -',' :'], ci:1,
+   exp:'"Instead" here functions as a conjunctive adverb linking two independent clauses, which requires a semicolon before it. A comma alone would create a comma splice. A dash and a colon are not the conventional marks for joining two complete sentences connected by a conjunctive adverb like "instead."'},
+  {topic:'Pronoun Reference',
+   ctx:'After the mentor introduced the new intern to the senior partner, [_____] seemed unusually nervous throughout the rest of the meeting.',
+   q:'Which choice most clearly identifies who felt nervous?',
+   opts:['the intern','they','he','it'], ci:0,
+   exp:'"He" is ambiguous because it could refer to the mentor, the intern, or the senior partner, all of whom could be male. "They" is plural and does not match any single noun in the sentence. "It" cannot refer to a person. Only "the intern" unambiguously identifies who felt nervous.'},
+  {topic:'Modifier Placement',
+   ctx:'Riddled with contradictions and based on testimony that shifted from one interrogation to the next, [_____].',
+   q:'Which choice correctly completes the sentence without creating a dangling modifier?',
+   opts:['the detectives dismissed the confession as unreliable','a decision was made to dismiss the confession as unreliable','the detectives\' report dismissed the confession as unreliable','the confession was ultimately dismissed by the detectives as unreliable'], ci:3,
+   exp:'Only "the confession" can be the subject that the opening phrase describes - it is the confession that is riddled with contradictions and based on shifting testimony. In the other options, the grammatical subject (the detectives, a decision, the detectives\' report) is not the entity described by the modifier, creating a dangling modifier.'},
+  {topic:'Apostrophe Usage',
+   ctx:'The committee could not determine whether the missing funds had been misplaced during the previous [_____] tenure or during the current administration\'s first year.',
+   q:'Which choice correctly completes the sentence?',
+   opts:['treasurers','treasurer\'s','treasurers\'','treasurers\'s'], ci:1,
+   exp:'"Treasurer\'s" is the singular possessive form, correctly showing that the tenure belonged to one specific previous treasurer. "Treasurers" is simply plural with no possession. "Treasurers\'" is plural possessive, appropriate only if multiple treasurers shared one tenure. "Treasurers\'s" is not a standard English form.'},
+  {topic:'Concision',
+   ctx:'In spite of the fact that the company had posted record profits that year, the board of directors nevertheless still decided, after much discussion and deliberation, to postpone all planned employee bonuses.',
+   q:'Which version of the highlighted portion "In spite of the fact that" is most concise without changing the intended meaning?',
+   opts:['Despite the fact that','Regardless of the fact that','Although','In spite of the fact that'], ci:2,
+   exp:'"Although" conveys the same concessive meaning as the original phrase in a single word. "Despite the fact that," "regardless of the fact that," and "in spite of the fact that" are all wordy substitutes for "although" that add no additional meaning.'},
+  {topic:'Verb Tense',
+   ctx:'By the time the investigators finally located the missing shipment, the perishable cargo inside [_____] beyond any possibility of salvage.',
+   q:'Which choice most accurately completes the sentence?',
+   opts:['spoils','has spoiled','was spoiling','had spoiled'], ci:3,
+   exp:'The past perfect "had spoiled" indicates an action completed before another past event: the investigators locating the shipment. "Spoils" is present tense and does not fit the past narrative. "Has spoiled" is present perfect, appropriate for actions connected to the present. "Was spoiling" suggests an ongoing process at that moment rather than a completed state.'},
+  {topic:'Relative Clauses',
+   ctx:'The startup, [_____] business model depended entirely on a single, easily replicated idea, collapsed within months of a larger competitor entering the market.',
+   q:'Which choice correctly completes the sentence?',
+   opts:['whose','that','which','who'], ci:0,
+   exp:'"Whose" shows possession, correctly indicating that the business model belongs to the startup. "That" cannot introduce a non-restrictive clause set off by commas here. "Which" would need to replace the entire noun "startup" rather than show possession of "business model." "Who" is reserved for people, not companies.'},
+  {topic:'Transitions',
+   ctx:'Proponents argued that the new tax would primarily affect luxury imports, sparing ordinary consumers from any real burden. _____ economists later found that nearly sixty percent of the additional cost had been passed on to shoppers purchasing everyday household goods.',
+   q:'Which choice completes the text with the most logical transition?',
+   opts:['Indeed,','In fact,','Similarly,','For instance,'], ci:1,
+   exp:'"In fact" introduces a surprising truth that undercuts the proponents\' claim: ordinary consumers were burdened after all. "Indeed" would signal agreement with the claim rather than a correction. "Similarly" wrongly frames the finding as comparable to the claim, and "for instance" wrongly frames it as one example supporting the claim.'},
+  {topic:'Subject-Verb Agreement',
+   ctx:'The number of applicants who [_____] willing to relocate for the position has dropped sharply since the company ended its relocation stipend.',
+   q:'Which choice most accurately completes the sentence?',
+   opts:['was','have been','are','were'], ci:2,
+   exp:'The relative pronoun "who" refers back to the plural noun "applicants," so the verb inside the relative clause must be plural. Because the sentence describes a present, ongoing attitude tied to the current statistic "has dropped," the present-tense plural "are" is correct. "Was" and "have been" mismatch in number or tense, and "were" wrongly limits the willingness to a completed past period rather than the present.'},
+  {topic:'Parallel Structure',
+   ctx:'The consultant\'s report recommended reducing overhead costs, renegotiating supplier contracts, and [_____] a smaller, more specialized workforce.',
+   q:'Which choice maintains the parallel structure of the list?',
+   opts:['hiring','hire','to hire','the hiring of'], ci:0,
+   exp:'"Hiring" matches the -ing form established by "reducing" and "renegotiating," preserving the parallel list. "Hire" shifts to a base verb, "to hire" shifts to an infinitive, and "the hiring of" shifts to a noun phrase, each breaking the established pattern.'},
+  {topic:'Punctuation',
+   ctx:'The novel\'s protagonist, a former soldier struggling to adjust to civilian life[_____] narrates the story through a series of fragmented, non-chronological flashbacks.',
+   q:'Which choice correctly completes the text?',
+   opts:[' -',';',' :',','], ci:3,
+   exp:'The appositive "a former soldier struggling to adjust to civilian life" is set off by commas on both sides. Since the phrase opens with a comma after "protagonist," it must close with a matching comma before "narrates." A dash, semicolon, or colon would not match the comma already used to open the appositive.'},
+  {topic:'Pronoun Reference',
+   ctx:'Although the professor thanked the graduate assistant for organizing the symposium, [_____] later admitted feeling overwhelmed by how much work the event required.',
+   q:'Which choice most clearly identifies who felt overwhelmed?',
+   opts:['she','the assistant','they','it'], ci:1,
+   exp:'"She" is ambiguous because it could refer to either the professor or the graduate assistant, both of whom could be female. "They" is plural and matches neither singular noun. "It" cannot refer to a person. Only "the assistant" unambiguously identifies who felt overwhelmed.'},
+  {topic:'Modifier Placement',
+   ctx:'Exhausted after running the marathon and barely able to stand, [_____].',
+   q:'Which choice correctly completes the sentence without creating a dangling modifier?',
+   opts:['a warm meal was the only thing on her mind','the finish line was where her family greeted her with a warm meal','her family greeted her at the finish line with a warm meal','a warm meal greeted her at the finish line'], ci:2,
+   exp:'Only "her family greeted her" correctly follows with "her" as the person the opening phrase describes: she is the one exhausted and barely able to stand. In the other options, the grammatical subject (a warm meal, the finish line) is not the entity that was exhausted, creating a dangling modifier.'},
+  {topic:'Apostrophe Usage',
+   ctx:'The museum renovated [_____] east wing before addressing the more urgent structural problems in the basement.',
+   q:'Which choice correctly completes the sentence?',
+   opts:['its','it\'s','their','its\''], ci:0,
+   exp:'"Its" is the possessive form of "it," correctly showing that the east wing belongs to the museum. "It\'s" is a contraction of "it is," which does not fit before "east wing." "Their" is plural and does not match the singular "museum." "Its\'" is not a standard English form.'},
+  {topic:'Concision',
+   ctx:'At this point in time, the researchers have not yet been able to determine the exact cause of the anomaly.',
+   q:'Which version of the highlighted portion "At this point in time" is most concise without changing the intended meaning?',
+   opts:['At the present time','At this particular point in time','At this point in time','Currently'], ci:3,
+   exp:'"Currently" conveys the same meaning as the original phrase in a single word. "At the present time," "at this particular point in time," and "at this point in time" are all wordy substitutes for "currently" that add no additional meaning.'},
+  {topic:'Verb Tense',
+   ctx:'If the museum [_____] additional funding a decade ago, the entire east wing would already have been restored.',
+   q:'Which choice most accurately completes the sentence?',
+   opts:['received','had received','would receive','has received'], ci:1,
+   exp:'This is a hypothetical about the past: the funding was not received, and the wing was not restored. The correct form for the "if" clause is the past perfect, "had received." "Received" is simple past and does not create the needed contrary-to-fact structure. "Would receive" incorrectly places a conditional form in the if-clause itself. "Has received" is present perfect and does not fit the clearly past hypothetical.'},
+  {topic:'Relative Clauses',
+   ctx:'The proposal [_____] the city council rejected last spring has resurfaced with only minor revisions.',
+   q:'Which choice correctly completes the sentence?',
+   opts:['which','whose','that','who'], ci:2,
+   exp:'Because the clause "the city council rejected last spring" is essential to identifying which proposal is meant, and it is not set off by commas, "that" is the correct restrictive relative pronoun. "Which" is conventionally used for supplementary, comma-set-off clauses. "Whose" would show possession, which is not needed here. "Who" is reserved for people.'}
+];
+
+function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function identityOrder(){var o=[];for(var i=0;i<RAW_QUESTIONS.length;i++)o.push(i);return o;}
+function isValidOrder(arr){if(!Array.isArray(arr)||arr.length!==RAW_QUESTIONS.length)return false;var s=arr.slice().sort(function(a,b){return a-b;});for(var i=0;i<s.length;i++)if(s[i]!==i)return false;return true;}
+function loadOrder(){try{var r=localStorage.getItem(ORDER_KEY);if(!r)return null;var a=JSON.parse(r);if(!isValidOrder(a))throw new Error('bad');return a;}catch(e){localStorage.removeItem(ORDER_KEY);return null;}}
+function saveOrder(o){try{localStorage.setItem(ORDER_KEY,JSON.stringify(o));}catch(e){}}
+function buildQuestions(raw,order){var out=[];for(var i=0;i<order.length;i++)out.push(raw[order[i]]);return out;}
+var currentOrder=loadOrder()||identityOrder();
+var QUESTIONS=buildQuestions(RAW_QUESTIONS,currentOrder);
+
+function defaultState(){return{cur:0,answers:{},showResults:false,timerStartedAt:null,timerTotalSec:null};}
+function saveState(s){try{localStorage.setItem(QUIZ_KEY,JSON.stringify(s));}catch(e){}}
+function loadState(){try{var r=localStorage.getItem(QUIZ_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
+var state=loadState()||defaultState();
+
+function loadAtt(){try{return parseInt(localStorage.getItem(ATT_KEY)||'0',10)||0;}catch(e){return 0;}}
+function saveAtt(n){try{localStorage.setItem(ATT_KEY,String(n));}catch(e){}}
+function renderAtt(){var el=document.getElementById('attCount');if(el)el.textContent=loadAtt();}
+
+var timerInterval=null;
+function formatTime(sec){sec=Math.max(0,Math.round(sec));var m=Math.floor(sec/60),s=sec%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+function renderTimer(){
+  var setup=document.getElementById('timerSetup'),run=document.getElementById('timerRunning'),disp=document.getElementById('timerDisplay');
+  if(!setup)return;
+  if(!state.timerStartedAt){setup.style.display='flex';run.style.display='none';return;}
+  setup.style.display='none';run.style.display='flex';
+  var elapsed=(Date.now()-state.timerStartedAt)/1000,rem=state.timerTotalSec-elapsed;
+  disp.classList.remove('warn','danger');
+  if(rem<=0){disp.textContent="Time's Up";disp.classList.add('danger');stopTimerInterval();return;}
+  disp.textContent=formatTime(rem);
+  if(rem<=state.timerTotalSec*0.1)disp.classList.add('danger');
+  else if(rem<=state.timerTotalSec*0.25)disp.classList.add('warn');
+}
+function startTimer(){var inp=document.getElementById('timerMin');var m=parseFloat(inp.value)||25;state.timerTotalSec=Math.round(m*60);state.timerStartedAt=Date.now();saveState(state);renderTimer();startTimerInterval();}
+function startTimerInterval(){stopTimerInterval();timerInterval=setInterval(renderTimer,1000);}
+function stopTimerInterval(){if(timerInterval){clearInterval(timerInterval);timerInterval=null;}}
+
+function updateNav(){
+  var ans=Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent=ans+' / '+QUESTIONS.length;
+  document.getElementById('prog-fill').style.width=(ans/QUESTIONS.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel=document.getElementById('dot-panel');if(panel.style.display==='none')return;
+  var h='';
+  for(var i=0;i<QUESTIONS.length;i++){
+    var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===QUESTIONS[i].ci?'#185FA5':'#E24B4A');
+    h+='<span onclick="goToQ('+i+')" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:'+bg+';color:#fff;font-size:11px;cursor:pointer;margin:2px;">'+(i+1)+'</span>';
+  }
+  panel.innerHTML=h;
+}
+function toggleJump(){
+  var p=document.getElementById('dot-panel'),b=document.getElementById('jump-btn');
+  if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}
+  else{p.style.display='none';b.textContent='Jump ▾';}
+}
+function goToQ(i){state.cur=i;state.showResults=false;saveState(state);document.getElementById('dot-panel').style.display='none';document.getElementById('jump-btn').textContent='Jump ▾';render();}
+function pick(optIdx){if(state.answers[state.cur]!==undefined)return;state.answers[state.cur]=optIdx;saveState(state);render();}
+function goPrev(){if(state.cur>0){state.cur--;saveState(state);render();}}
+function goNext(){
+  if(state.cur<QUESTIONS.length-1){state.cur++;saveState(state);render();}
+  else{if(!state.showResults){var a=loadAtt()+1;saveAtt(a);renderAtt();}state.showResults=true;saveState(state);render();}
+}
+function render(){
+  var c=document.getElementById('qcard');
+  if(state.showResults){renderResults();return;}
+  var q=QUESTIONS[state.cur],ans=state.answers[state.cur],done=ans!==undefined;
+  var isLast=state.cur===QUESTIONS.length-1;
+  var optsH='';
+  for(var i=0;i<q.opts.length;i++){
+    var cls='opt';
+    if(done){if(i===q.ci)cls+=' correct';else if(i===ans)cls+=' wrong';}
+    optsH+='<button class="'+cls+'"'+(done?' disabled':'')+' onclick="pick('+i+')">'+q.opts[i]+'</button>';
+  }
+  var expH=done&&ans!==q.ci?'<div class="exp" style="display:block">'+q.exp+'</div>':'';
+  var nextLbl=isLast?'See Results &#8594;':'Next &#8594;';
+  c.innerHTML='<div class="card"><div class="q-num">Q'+(state.cur+1)+' of '+QUESTIONS.length+'</div><span class="topic-tag">'+q.topic+'</span><div class="context-box">'+q.ctx+'</div><div class="q-text">'+q.q+'</div><div class="opts">'+optsH+'</div>'+expH+'</div><div class="nav-btns"><button '+(state.cur===0?'disabled':'')+' onclick="goPrev()">&#8592; Prev</button><button onclick="goNext()">'+nextLbl+'</button></div>';
+  updateNav();
+}
+function renderResults(){
+  var correct=0,wrong=0,skip=0;
+  for(var i=0;i<QUESTIONS.length;i++){if(state.answers[i]===undefined)skip++;else if(state.answers[i]===QUESTIONS[i].ci)correct++;else wrong++;}
+  var pct=Math.round(correct/QUESTIONS.length*100);
+  document.getElementById('qcard').innerHTML='<div class="results"><div class="score-big">'+correct+'/'+QUESTIONS.length+'</div><div class="score-lbl">'+pct+'% correct</div><div class="stats-row"><div><div class="stat-n" style="color:#1D9E75">'+correct+'</div><div class="stat-lbl">Correct</div></div><div><div class="stat-n" style="color:#E24B4A">'+wrong+'</div><div class="stat-lbl">Wrong</div></div><div><div class="stat-n" style="color:#888">'+skip+'</div><div class="stat-lbl">Skipped</div></div></div><button class="res-btn btn-copy" onclick="copyRes()">Copy All Results</button><button class="res-btn btn-retry" onclick="retryWrong()">Retry Wrong Ones</button><button class="res-btn btn-fresh" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button><button class="res-btn btn-fresh" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button></div>';
+  updateNav();
+}
+function copyRes(){
+  var correct=0,lines=['[Sion] SAT Grammar Results'];
+  for(var i=0;i<QUESTIONS.length;i++){var q=QUESTIONS[i],a=state.answers[i],ok=a===q.ci;if(ok)correct++;lines.push('Q'+(i+1)+' ['+q.topic+'] '+(a===undefined?'SKIP':ok?'OK':'WRONG')+' ('+q.opts[q.ci]+')');}
+  lines.push('Score: '+correct+'/'+QUESTIONS.length);
+  try{navigator.clipboard.writeText(lines.join('\n'));}catch(e){alert(lines.join('\n'));}
+}
+function retryWrong(){
+  var wrong=[];
+  for(var i=0;i<QUESTIONS.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==QUESTIONS[i].ci){wrong.push(i);delete state.answers[i];}}
+  if(wrong.length>0){state.cur=wrong[0];state.showResults=false;saveState(state);render();}
+}
+var pendingFreshMode='original';
+function openFreshModalOriginal(){pendingFreshMode='original';document.getElementById('freshTitle').textContent='Start Fresh (Original Order)?';document.getElementById('freshText').textContent='Questions return to their original order and all progress is cleared.';document.getElementById('freshModal').classList.add('show');}
+function openFreshModalRandom(){pendingFreshMode='random';document.getElementById('freshTitle').textContent='Start Fresh (Random Order)?';document.getElementById('freshText').textContent='Questions will be reshuffled and all progress is cleared.';document.getElementById('freshModal').classList.add('show');}
+function closeFreshModal(){document.getElementById('freshModal').classList.remove('show');}
+function confirmFresh(){currentOrder=(pendingFreshMode==='random')?shuffle(identityOrder()):identityOrder();saveOrder(currentOrder);QUESTIONS=buildQuestions(RAW_QUESTIONS,currentOrder);state=defaultState();saveState(state);stopTimerInterval();closeFreshModal();render();renderTimer();}
+window.toggleJump=toggleJump;window.goToQ=goToQ;window.pick=pick;window.goPrev=goPrev;window.goNext=goNext;
+window.startTimer=startTimer;window.copyRes=copyRes;window.retryWrong=retryWrong;
+window.openFreshModalOriginal=openFreshModalOriginal;window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;window.confirmFresh=confirmFresh;
+render();renderTimer();if(state.timerStartedAt)startTimerInterval();renderAtt();
+</script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>[Both] Korean Sentences</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f7fb;min-height:100vh;padding:16px}
+.date-header{font-size:2rem;font-weight:800;text-align:center;color:#185FA5;background:#fff;padding:12px;border-radius:10px;margin-bottom:6px}
+.quiz-title{font-size:1.4rem;font-weight:700;text-align:center;color:#185FA5;margin-bottom:4px}
+.attempts{text-align:center;font-size:0.95rem;color:#555;margin-bottom:10px}
+.nav-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;margin-bottom:14px;padding:8px}
+.dot{width:30px;height:30px;border-radius:50%;border:2px solid #185FA5;background:#fff;color:#185FA5;font-size:0.7rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.dot.correct{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.dot.wrong{background:#E24B4A;border-color:#E24B4A;color:#fff}
+.dot.current{box-shadow:0 0 0 3px #185FA5}
+.dot.results-pill{width:auto;padding:0 12px;border-radius:15px;font-size:0.8rem}
+.card{background:#fff;border-radius:14px;padding:20px;max-width:680px;margin:0 auto 14px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.q-meta{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.tag{background:#185FA5;color:#fff;border-radius:12px;padding:3px 10px;font-size:0.75rem;font-weight:600}
+.counter{font-size:0.85rem;color:#888}
+.q-text{font-size:1.4rem;color:#111;margin-bottom:16px;line-height:1.6;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.speak-btn{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:0.85rem;flex-shrink:0}
+.speak-btn:hover{background:#1050a0}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{background:#e8edf4;color:#111111;border:2px solid transparent;border-radius:10px;padding:12px 16px;cursor:pointer;font-size:0.98rem;text-align:left;transition:all .15s}
+.opt:hover{border-color:#185FA5}
+.opt.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.opt.reveal{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.explain{margin-top:12px;background:#f0f6ff;border-left:4px solid #185FA5;padding:10px 14px;border-radius:6px;font-size:0.92rem;color:#1a3a6b}
+.nav-btns{display:flex;justify-content:space-between;margin-top:16px}
+.btn{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:0.95rem;cursor:pointer;font-weight:600}
+.btn:hover{background:#1050a0}
+.btn-outline{background:#fff;color:#185FA5;border:2px solid #185FA5}
+.btn-outline:hover{background:#e8edf4}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin:16px 0}
+.res-card{border-radius:10px;padding:10px;cursor:pointer;text-align:center;font-size:0.88rem;font-weight:600}
+.res-card.c{background:#E1F5EE;color:#085041;border:2px solid #1D9E75}
+.res-card.w{background:#FCEBEB;color:#501313;border:2px solid #E24B4A}
+.res-card.s{background:#f0f0f0;color:#555;border:2px solid #999}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:14px;padding:28px;max-width:340px;width:90%;text-align:center}
+.modal h3{color:#185FA5;margin-bottom:12px}
+.modal-btns{display:flex;gap:10px;justify-content:center;margin-top:18px}
+</style>
+</head>
+<body>
+<div class="date-header">2026-06-10</div>
+<div class="quiz-title">[Both] Korean Sentences</div>
+<div class="attempts" id="attDisp">Total Attempts: 0</div>
+<div class="nav-dots" id="navDots"></div>
+<div id="quizArea" style="display:none"></div>
+<div id="resultsArea" style="display:none"></div>
+<div class="modal-overlay" id="freshModal">
+  <div class="modal">
+    <h3>Start Fresh?</h3>
+    <p>All progress will be reset.</p>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeFresh()">Cancel</button>
+      <button class="btn" onclick="doFresh()">Reset</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+const SK='quiz_korsen_20_v1',ATK='quiz_korsen_attempts_v1';
+const QS=[
+{s:'감기 걸렸어.',opts:['I have a cold.','I\'m hungry.','I caught a fever.','I feel sleepy.'],ci:0,ex:'"감기 걸렸어" means "I caught a cold / I have a cold." 감기 = cold (illness), 걸렸어 = caught.'},
+{s:'나 심심해.',opts:['I\'m lonely.','I\'m bored.','I\'m tired.','I\'m nervous.'],ci:1,ex:'"나 심심해" means "I\'m bored." 나 = I, 심심해 = am bored.'},
+{s:'나 화났어.',opts:['I\'m surprised.','I\'m disappointed.','I\'m angry.','I\'m confused.'],ci:2,ex:'"나 화났어" means "I\'m angry." 화 = anger, 났어 = arose/erupted.'},
+{s:'진정해.',opts:['Hurry up.','Be quiet.','Wait a moment.','Calm down.'],ci:3,ex:'"진정해" means "Calm down." 진정 = composure/calm.'},
+{s:'별일 없어?',opts:['Nothing much going on?','Are you busy?','Where are you going?','How are you feeling?'],ci:0,ex:'"별일 없어?" means "Nothing special going on? / What\'s up?" 별일 = special/unusual thing.'},
+{s:'엄마 어디 있어?',opts:['When is Mom coming?','Where is Mom?','Who is that?','What did Mom say?'],ci:1,ex:'"엄마 어디 있어?" means "Where is Mom?" 엄마 = mom, 어디 = where, 있어 = is.'},
+{s:'무서워.',opts:['I\'m dizzy.','It\'s cold.','I\'m scared.','I feel lonely.'],ci:2,ex:'"무서워" means "I\'m scared / It\'s scary." 무섭다 = to be scary/afraid.'},
+{s:'이거 재밌다!',opts:['This is delicious!','This is amazing!','This is strange!','This is fun!'],ci:3,ex:'"이거 재밌다!" means "This is fun!" 이거 = this, 재밌다 = is fun/interesting.'},
+{s:'진짜?',opts:['Really?','No way!','Is that right?','Are you sure?'],ci:0,ex:'"진짜?" means "Really?" 진짜 = real/really, used as a question.'},
+{s:'행복해.',opts:['I\'m excited.','I\'m happy.','I\'m satisfied.','I\'m glad.'],ci:1,ex:'"행복해" means "I\'m happy." 행복 = happiness.'},
+{s:'나 피곤해.',opts:['I\'m sick.','I\'m sleepy.','I\'m tired.','I\'m weak.'],ci:2,ex:'"나 피곤해" means "I\'m tired." 피곤 = fatigue.'},
+{s:'같이 놀자.',opts:['Let\'s go together.','Come play with me later.','Do you want to study together?','Let\'s play together.'],ci:3,ex:'"같이 놀자" means "Let\'s play together." 같이 = together, 놀자 = let\'s play.'},
+{s:'보고싶어.',opts:['I miss you.','I want to see you again.','Can you visit me?','I\'m waiting for you.'],ci:0,ex:'"보고싶어" means "I miss you." 보고 = to see, 싶어 = want to.'},
+{s:'그건 내 거야.',opts:['This belongs to you.','That\'s mine.','Give that back.','Where\'s my stuff?'],ci:1,ex:'"그건 내 거야" means "That\'s mine." 그건 = that, 내 = my, 거야 = thing (it is).'},
+{s:'미안해.',opts:['Please forgive me.','Thank you anyway.','I\'m sorry.','I understand.'],ci:2,ex:'"미안해" means "I\'m sorry." 미안 = sorry/apologetic.'},
+{s:'힘내!',opts:['Be careful!','Good luck!','Don\'t give up!','Cheer up!'],ci:3,ex:'"힘내!" means "Cheer up! / Keep it up!" 힘 = strength, 내 = bring out.'},
+{s:'괜찮아.',opts:['It\'s okay.','Never mind.','Don\'t worry about it.','That\'s fine with me.'],ci:0,ex:'"괜찮아" means "It\'s okay / I\'m fine." 괜찮다 = to be okay/alright.'},
+{s:'짜증나.',opts:['I\'m exhausted.','I\'m annoyed.','I\'m uncomfortable.','This is unfair.'],ci:1,ex:'"짜증나" means "I\'m annoyed / It\'s irritating." 짜증 = irritation/annoyance.'},
+{s:'사랑해.',opts:['I like you.','I care about you.','I love you.','You mean a lot to me.'],ci:2,ex:'"사랑해" means "I love you." 사랑 = love.'},
+{s:'고마워.',opts:['You\'re welcome.','That\'s kind.','No problem.','Thank you.'],ci:3,ex:'"고마워" means "Thank you." 고맙다 = to be grateful/thankful.'}
+];
+let state={cur:0,answers:{},shuffles:{},showResults:false};
+function loadState(){try{const s=localStorage.getItem(SK);if(s){const p=JSON.parse(s);if(typeof p.cur==='number'&&typeof p.answers==='object'&&!Array.isArray(p.answers)&&typeof p.shuffles==='object'&&!Array.isArray(p.shuffles)){state=p;}else{localStorage.removeItem(SK);}}}catch(e){localStorage.removeItem(SK);}}
+function saveState(){localStorage.setItem(SK,JSON.stringify(state));}
+function getAttempts(){return parseInt(localStorage.getItem(ATK)||'0');}
+function incAttempts(){localStorage.setItem(ATK,getAttempts()+1);}
+function updAttDisp(){document.getElementById('attDisp').textContent='Total Attempts: '+getAttempts();}
+function getShuffle(i){if(!state.shuffles[i]){const arr=[0,1,2,3];for(let k=3;k>0;k--){const r=Math.floor(Math.random()*(k+1));[arr[k],arr[r]]=[arr[r],arr[k]];}state.shuffles[i]=arr;saveState();}return state.shuffles[i];}
+function renderDots(forResults){
+  const nd=document.getElementById('navDots');nd.innerHTML='';
+  if(forResults){const pill=document.createElement('button');pill.className='dot results-pill correct';pill.textContent='Results';nd.appendChild(pill);return;}
+  QS.forEach((_,i)=>{
+    const d=document.createElement('button');d.className='dot';d.textContent=i+1;
+    if(state.answers[i]!==undefined){const sh=getShuffle(i);const cs=sh.indexOf(QS[i].ci);if(state.answers[i]===cs)d.classList.add('correct');else d.classList.add('wrong');}
+    if(i===state.cur)d.classList.add('current');
+    d.onclick=()=>{state.cur=i;saveState();render();};
+    nd.appendChild(d);
+  });
+}
+function speak(text){if(!window.speechSynthesis)return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='ko-KR';u.rate=0.9;window.speechSynthesis.speak(u);}
+function render(){
+  try{
+    if(state.showResults){renderResults();return;}
+    document.getElementById('quizArea').style.display='block';
+    document.getElementById('resultsArea').style.display='none';
+    renderDots(false);
+    const i=state.cur,q=QS[i],sh=getShuffle(i);
+    const answered=state.answers[i]!==undefined;
+    const cs=sh.indexOf(q.ci);
+    let html=`<div class="card">
+      <div class="q-meta"><span class="tag">Korean</span><span class="counter">${i+1} / ${QS.length}</span></div>
+      <div class="q-text"><span style="font-size:1.5rem;font-weight:700">${q.s}</span><button class="speak-btn" onclick="speak('${q.s.replace(/'/g,"\\'")}')">Listen</button></div>
+      <div class="opts">`;
+    sh.forEach((origIdx,dispIdx)=>{
+      let cls='opt';
+      if(answered){if(dispIdx===cs)cls+=' correct';else if(dispIdx===state.answers[i])cls+=' wrong';}
+      html+=`<button class="${cls}" onclick="pick(${dispIdx})">${q.opts[origIdx]}</button>`;
+    });
+    html+='</div>';
+    if(answered&&state.answers[i]!==cs){html+=`<div class="explain">${q.ex}</div>`;}
+    html+=`<div class="nav-btns">
+      <button class="btn btn-outline" onclick="go(-1)"${i===0?' disabled':''}>Prev</button>
+      <button class="btn" onclick="${i===QS.length-1?'finishQuiz()':'go(1)'}">${i===QS.length-1?'See Results →':'Next'}</button>
+    </div></div>`;
+    document.getElementById('quizArea').innerHTML=html;
+  }catch(e){document.getElementById('quizArea').innerHTML='<div class="card">Error rendering. Please refresh.</div>';}
+}
+function renderResults(){
+  incAttempts();updAttDisp();
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  renderDots(true);
+  let correct=0,wrong=0,skipped=0,gridHTML='';
+  QS.forEach((q,i)=>{
+    const sh=getShuffle(i);const cs=sh.indexOf(q.ci);
+    if(state.answers[i]===undefined){skipped++;gridHTML+=`<div class="res-card s" onclick="goToQ(${i})">Q${i+1}<br>Skipped</div>`;}
+    else if(state.answers[i]===cs){correct++;gridHTML+=`<div class="res-card c" onclick="goToQ(${i})">Q${i+1}<br>Correct</div>`;}
+    else{wrong++;gridHTML+=`<div class="res-card w" onclick="goToQ(${i})">Q${i+1}<br>Wrong</div>`;}
+  });
+  document.getElementById('resultsArea').innerHTML=`<div class="card">
+    <h2 style="color:#185FA5;text-align:center;margin-bottom:8px">Results</h2>
+    <p style="text-align:center;font-size:1.1rem;margin-bottom:12px">${correct} / ${QS.length} Correct &nbsp;|&nbsp; ${wrong} Wrong &nbsp;|&nbsp; ${skipped} Skipped</p>
+    <div class="results-grid">${gridHTML}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px">
+      <button class="btn" onclick="startRetry()">Retry Wrong Questions</button>
+      <button class="btn btn-outline" onclick="copyRes()">Copy All Results</button>
+      <button class="btn btn-outline" onclick="confirmFresh()">Start Fresh</button>
+    </div></div>`;
+}
+function pick(dispIdx){if(state.answers[state.cur]!==undefined)return;state.answers[state.cur]=dispIdx;saveState();render();}
+function go(dir){state.cur=Math.max(0,Math.min(QS.length-1,state.cur+dir));saveState();render();}
+function finishQuiz(){state.showResults=true;saveState();render();}
+function goToQ(i){state.showResults=false;state.cur=i;saveState();render();}
+function startRetry(){
+  const wrongIdx=[];
+  QS.forEach((q,i)=>{const sh=getShuffle(i);if(state.answers[i]!==undefined&&state.answers[i]!==sh.indexOf(q.ci))wrongIdx.push(i);});
+  if(!wrongIdx.length){alert('No wrong questions!');return;}
+  wrongIdx.forEach(i=>{delete state.answers[i];delete state.shuffles[i];});
+  state.showResults=false;state.cur=wrongIdx[0];saveState();render();
+}
+function copyRes(){
+  let txt='[Both] Korean Sentences — 2026-06-10\n';
+  QS.forEach((q,i)=>{const sh=getShuffle(i);const cs=sh.indexOf(q.ci);const st=state.answers[i]===undefined?'Skipped':state.answers[i]===cs?'Correct':'Wrong';txt+=`Q${i+1} (${q.s}): ${st}\n`;});
+  navigator.clipboard.writeText(txt).catch(()=>{});
+}
+function confirmFresh(){document.getElementById('freshModal').classList.add('show');}
+function closeFresh(){document.getElementById('freshModal').classList.remove('show');}
+function doFresh(){localStorage.removeItem(SK);state={cur:0,answers:{},shuffles:{},showResults:false};closeFresh();render();}
+window.pick=pick;window.go=go;window.finishQuiz=finishQuiz;window.goToQ=goToQ;
+window.startRetry=startRetry;window.copyRes=copyRes;window.confirmFresh=confirmFresh;
+window.closeFresh=closeFresh;window.doFresh=doFresh;window.speak=speak;
+loadState();updAttDisp();render();
+})();
+</script>
+</body>
+</html>

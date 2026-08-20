@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Grammar</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0 auto;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.skill-tag{display:inline-block;background:#2D6A9E;color:#fff;font-size:0.75rem;font-weight:700;padding:2px 10px;border-radius:10px;margin-bottom:8px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:6px;}
+.q-text{font-size:0.97rem;color:#111;font-weight:600;line-height:1.55;margin-bottom:10px;background:#f5f7fa;border-radius:10px;padding:12px 14px;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.93rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-16</div>
+<div class="title-hd">[Grant] Grammar</div>
+<div class="instruction">Choose the best answer for each grammar question.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 20</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump ▾</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="skill-tag" id="skill-tag"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_grammar_20_20260615_v1';
+var ATT_KEY='quiz_grammar_att_20260615_v1';
+
+var qs=[
+ {tag:'Nouns',
+  q:'Which of the following is a proper noun?',
+  opts:['friendship','dog','Amazon River','kindness'],ci:2,
+  exp:'"Amazon River" is a proper noun because it is the name of a specific place. Proper nouns always start with a capital letter. The other choices—friendship, dog, kindness—are common nouns naming general things.'},
+ {tag:'Plural Nouns',
+  q:'What is the correct plural of the word "leaf"?',
+  opts:['leafs','leafes','leaf\'s','leaves'],ci:3,
+  exp:'For nouns ending in -f or -fe, change the ending to -ves: leaf → leaves. Other examples: knife → knives, wolf → wolves. "Leafs" and "leafes" are not real words, and "leaf\'s" is a possessive, not a plural.'},
+ {tag:'Pronouns',
+  q:'Choose the correct pronoun to fill in the blank:\n"The teacher praised ___ for our hard work."',
+  opts:['we','they','them','us'],ci:3,
+  exp:'"Us" is an object pronoun. After a verb like "praised," use an object pronoun (me, you, him, her, us, them). "We" and "they" are subject pronouns used as the subject of a sentence.'},
+ {tag:'Verb Tense',
+  q:'Choose the correct verb form:\n"Yesterday, I ___ my homework early."',
+  opts:['finish','finishing','have finished','finished'],ci:3,
+  exp:'The word "yesterday" signals the simple past tense. "Finished" is the simple past of "finish." "Finish" is present tense, "finishing" is a participle, and "have finished" is present perfect—none fit "yesterday."'},
+ {tag:'Irregular Verbs',
+  q:'What is the correct past tense of the verb "bring"?',
+  opts:['bringed','brung','brang','brought'],ci:3,
+  exp:'"Bring" is an irregular verb. Its past tense is "brought"—not formed by adding -ed. Irregular past tenses must be memorized: bring→brought, think→thought, buy→bought.'},
+ {tag:'Adjectives & Adverbs',
+  q:'Which sentence correctly uses an adverb?',
+  opts:['She runs quick.','She runs more quicker.','She runs quickly.','She runs the quickliest.'],ci:2,
+  exp:'Adverbs modify verbs and often end in -ly. "Quickly" is the adverb form of "quick." "Quick" is an adjective and modifies nouns. "More quicker" and "the quickliest" are double comparatives—never correct in English.'},
+ {tag:'Apostrophes',
+  q:'Which sentence uses an apostrophe correctly?',
+  opts:["Its raining outside.","My two cat's are sleeping.","The dogs' bed are soft.","The bird's nest fell from the tree."],ci:3,
+  exp:'"The bird\'s nest" uses an apostrophe to show possession—the nest belongs to one bird. "Its" (no apostrophe) is possessive; "it\'s" (with apostrophe) = "it is." "Cat\'s" for a plural is wrong; it should be "cats." "Dogs\' bed are" has a subject-verb mismatch.'},
+ {tag:'Capitalization',
+  q:'Which sentence is capitalized correctly?',
+  opts:["We visited the Grand Canyon in arizona.","We visited the grand canyon in Arizona.","we visited the Grand Canyon in Arizona.","We visited the Grand Canyon in Arizona."],ci:3,
+  exp:'"Grand Canyon" is the proper name of a specific landmark and "Arizona" is a proper name of a state—both must be capitalized. The start of a sentence must also be capitalized. Option D is the only one that does all three correctly.'},
+ {tag:'Commas',
+  q:'Which sentence uses commas correctly in a list?',
+  opts:["I bought apples oranges, and bananas.","I bought, apples, oranges, and bananas.","I bought apples, oranges and, bananas.","I bought apples, oranges, and bananas."],ci:3,
+  exp:'When listing three or more items, use commas to separate them: "apples, oranges, and bananas." A comma before the final "and" (Oxford comma) is standard. Do not put a comma right after the verb "bought."'},
+ {tag:'Subject-Verb Agreement',
+  q:'Choose the correct verb:\n"The group of students ___ working quietly."',
+  opts:['are','were','be','is'],ci:3,
+  exp:'"Group" is a collective noun—it refers to a single unit and takes a singular verb. "The group... is working" is correct. The phrase "of students" is a prepositional phrase that does not change the subject.'},
+ {tag:'Parts of Speech',
+  q:'In the sentence "She sings beautifully," what part of speech is the word "beautifully"?',
+  opts:['adjective','noun','verb','adverb'],ci:3,
+  exp:'"Beautifully" is an adverb because it describes how she sings (a verb). Adverbs describe verbs, adjectives, or other adverbs. Most adverbs end in -ly. Adjectives describe nouns, not actions.'},
+ {tag:'Conjunctions',
+  q:'Which conjunction best completes the sentence?\n"I wanted to go outside, ___ it was raining."',
+  opts:['and','so','because','but'],ci:3,
+  exp:'"But" is correct because it shows contrast between two opposing ideas: wanting to go outside vs. the rain. "And" adds similar ideas. "So" shows a result. "Because" introduces a reason (and would need to reorder the sentence).'},
+ {tag:'Pronouns',
+  q:'Choose the correct pronoun:\n"The dog wagged ___ tail happily."',
+  opts:['their','they','it','its'],ci:3,
+  exp:'"Its" is the possessive pronoun for a singular thing or animal (no apostrophe). "It\'s" = "it is." "Their" is plural possessive. "They" is a subject pronoun, not possessive. "It" is not possessive.'},
+ {tag:'Complete Sentences',
+  q:'Which of the following is a complete sentence?',
+  opts:['Running through the park.','Because she was tired.','After the long game ended.','The dog barked loudly at the stranger.'],ci:3,
+  exp:'A complete sentence must have a subject and a verb and express a complete thought. "The dog barked loudly at the stranger" has a subject (the dog), a verb (barked), and expresses a complete thought. The other options are fragments—they leave the reader waiting for more.'},
+ {tag:'Possessive Pronouns',
+  q:'Choose the correct possessive pronoun:\n"That backpack is ___. Please return it."',
+  opts:['her','she','herself','hers'],ci:3,
+  exp:'"Hers" is a stand-alone possessive pronoun (no noun follows it): "the backpack is hers." "Her" is used before a noun: "her backpack." "She" is a subject pronoun. "Herself" is a reflexive pronoun.'},
+ {tag:'Comparative Adjectives',
+  q:'Which sentence uses the correct comparative form of "cold"?',
+  opts:['Today is more cold than yesterday.','Today is most cold than yesterday.','Today is more colder than yesterday.','Today is colder than yesterday.'],ci:3,
+  exp:'Short adjectives (one syllable) form comparatives by adding -er: cold → colder. You never say "more cold" or "more colder" (double comparative). "Most cold" is a superlative, not a comparative—and it\'s not standard.'},
+ {tag:'Future Perfect',
+  q:'Choose the correct verb form:\n"By next week, she ___ finished reading the book."',
+  opts:['has','have','will be','will have'],ci:3,
+  exp:'"Will have finished" is the future perfect tense, used for an action that will be completed before a specific time in the future. "By next week" signals future perfect. "Has/have finished" is present perfect. "Will be finished" suggests she will be in a state, but "will have finished" more precisely shows completion.'},
+ {tag:'Commas: Introductory Phrases',
+  q:'Which sentence uses the comma correctly with an introductory phrase?',
+  opts:['After the long hike we rested by the river.','After the long hike, we rested by the river.','After the long, hike we rested by the river.','After the long hike we, rested by the river.'],ci:1,
+  exp:'When a sentence begins with an introductory phrase ("After the long hike"), place a comma after it before the main clause. Only option B puts the comma in the right place—after "hike" and before "we."'},
+ {tag:'Double Negatives',
+  q:'Which sentence is grammatically correct?',
+  opts:["I don't have no money.","She didn't do nothing wrong.","We haven't never been there.","He can't find any of his books."],ci:3,
+  exp:'In English, using two negatives in one clause is a double negative and is incorrect. "Don\'t...no," "didn\'t...nothing," and "haven\'t...never" are all double negatives. "He can\'t find any" uses one negative ("can\'t") with "any," which is correct.'},
+ {tag:'Prepositions',
+  q:'In the sentence "The cat hid under the bed," the word "under" is a:',
+  opts:['adjective','adverb','conjunction','preposition'],ci:3,
+  exp:'"Under" is a preposition. Prepositions show the relationship between a noun (or pronoun) and another word in the sentence—here, "under" shows where the cat hid relative to the bed. Other common prepositions: in, on, above, beside, through.'}
+];
+
+var state={};
+function loadState(){try{var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');if(s&&typeof s.cur==='number'&&s.cur>=0&&s.cur<qs.length&&s.answers&&s.shuffles)state=s;else resetState();}catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){if(!state.shuffles[i]){var a=[0,1,2,3];for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}state.shuffles[i]=a;saveState();}return state.shuffles[i];}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAtt(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function updateNav(){var ans=Object.keys(state.answers).length;document.getElementById('nav-count').textContent=ans+' / '+qs.length;document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';var p=document.getElementById('dot-panel');if(p.style.display!=='none')renderDots();}
+function toggleJump(){var p=document.getElementById('dot-panel');var b=document.getElementById('jump-btn');if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}else{p.style.display='none';b.textContent='Jump ▾';}}
+function renderDots(){var p=document.getElementById('dot-panel');var h='';for(var i=0;i<qs.length;i++){var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===getCSI(i)?'#185FA5':'#E24B4A');h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';}if(Object.keys(state.answers).length===qs.length){h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';}p.innerHTML=h;}
+function goToQ(i){state.cur=i;state.showResults=false;saveState();render();document.getElementById('dot-panel').style.display='none';document.getElementById('jump-btn').textContent='Jump ▾';}
+function showResults(){state.showResults=true;localStorage.setItem(ATT_KEY,loadAtt()+1);saveState();render();}
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAtt();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';document.getElementById('resultsArea').style.display='none';
+  updateNav();
+  var i=state.cur;var q=qs[i];
+  document.getElementById('skill-tag').textContent=q.tag;
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-text').textContent=q.q;
+  var sh=getShuffle(i);var ans=state.answers[i];var csi=getCSI(i);
+  var html='';
+  for(var s=0;s<4;s++){var oi=sh[s];var cls='opt-btn';var dis='';if(ans!==undefined){dis='disabled ';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}html+='<button class="'+cls+'" '+dis+'onclick="pick('+i+','+s+')">'+esc(q.opts[oi])+'</button>';}
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');
+  if(ans!==undefined&&ans!==csi){eb.style.display='block';eb.textContent=q.exp;}else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';document.getElementById('resultsArea').style.display='block';updateNav();
+  var c=0,w=0,sk=0;for(var i=0;i<qs.length;i++){if(state.answers[i]===undefined)sk++;else if(state.answers[i]===getCSI(i))c++;else w++;}
+  document.getElementById('results-summary').innerHTML='<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';for(var i=0;i<qs.length;i++){var a=state.answers[i];var label,bg,tc;if(a===undefined){label='Skipped';bg='#d7dde6';tc='#555';}else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}else{label='Wrong';bg='#FCEBEB';tc='#501313';}html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.9rem;color:#333;">Q'+(i+1)+': '+esc(qs[i].tag)+'</span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';}
+  document.getElementById('results-cards').innerHTML=html;
+}
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){if(dir===1&&state.cur===qs.length-1){showResults();return;}state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));saveState();render();}
+function retryWrong(){var first=-1;for(var i=0;i<qs.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){if(first===-1)first=i;delete state.answers[i];}}if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}}
+function copyRes(){var lines=['[Grant] Grammar - Results (2026-06-16)'];for(var i=0;i<qs.length;i++){var a=state.answers[i];var label=a===undefined?'Skipped':(a===getCSI(i)?'Correct':'Wrong');lines.push('Q'+(i+1)+' ('+qs[i].tag+'): '+label);}var txt=lines.join('\n');if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fallbackCopy(txt);});}else fallbackCopy(txt);}
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;
+window.openFreshModal=openFreshModal;window.confirmFresh=confirmFresh;window.showResults=showResults;
+
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

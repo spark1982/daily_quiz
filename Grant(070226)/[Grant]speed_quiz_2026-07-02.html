@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Speed Quiz</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;color:#222;min-height:100vh;}
+#app{max-width:700px;margin:0 auto;padding:16px;}
+h1{text-align:center;font-size:1.35rem;font-weight:800;color:#185FA5;padding:14px 0 4px;}
+#att-bar{text-align:center;font-size:0.8rem;color:#888;margin:6px 0 10px;}
+#att-bar span{font-weight:700;color:#185FA5;}
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0 4px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;min-width:52px;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:6px;}
+.timer-section{display:flex;align-items:center;justify-content:center;gap:14px;background:#f5f9ff;border:1px solid #d0dce8;border-radius:8px;padding:10px 14px;margin-bottom:14px;}
+.timer-label{font-size:0.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;}
+.timer-display{font-size:2rem;font-weight:900;font-family:'Courier New',monospace;color:#185FA5;min-width:56px;text-align:center;transition:color 0.3s;}
+.timer-display.warn{color:#f5a623;}
+.timer-display.danger{color:#E24B4A;}
+.timer-display.done{color:#1D9E75;font-size:1.1rem;}
+.pause-btn{padding:7px 16px;border:2px solid #185FA5;border-radius:8px;background:white;color:#185FA5;font-weight:700;cursor:pointer;font-size:0.85rem;white-space:nowrap;}
+.pause-btn.paused{background:#185FA5;color:white;}
+.card{background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:20px 18px;margin-bottom:12px;}
+.q-num{font-size:0.78rem;color:#888;margin-bottom:8px;}
+.chapter-tag{display:inline-block;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:10px;margin-bottom:10px;}
+.ch-Gauss{background:#FEF3C7;color:#B45309;}
+.ch-Intervals{background:#D1FAE5;color:#065F46;}
+.ch-AddSub{background:#DBEAFE;color:#185FA5;}
+.ch-Multiply{background:#EDE9FE;color:#6D28D9;}
+.ch-Geometry{background:#FEE2E2;color:#B91C1C;}
+.q-text{font-size:1.05rem;line-height:1.75;margin-bottom:16px;color:#222;}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.opt{padding:13px 10px;border:2px solid #d7dde6;border-radius:8px;cursor:pointer;font-size:1rem;font-weight:700;background:white;text-align:center;transition:border-color 0.15s,background 0.15s;}
+.opt:hover:not(:disabled){border-color:#185FA5;background:#f0f6ff;}
+.opt.correct{border-color:#1D9E75;background:#e6f7f1;color:#0d6b50;}
+.opt.wrong{border-color:#E24B4A;background:#fdf0f0;color:#b03030;}
+.opt:disabled{cursor:default;}
+.nav-btns{display:flex;gap:8px;margin-top:8px;}
+.nav-btns button{flex:1;padding:10px;border:1.5px solid #d7dde6;border-radius:8px;background:white;cursor:pointer;font-size:0.9rem;color:#444;}
+.nav-btns button:hover:not(:disabled){border-color:#185FA5;color:#185FA5;}
+.nav-btns button:disabled{opacity:0.4;cursor:not-allowed;}
+.results{background:white;border-radius:12px;padding:28px 20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.score-big{font-size:3rem;font-weight:900;color:#185FA5;}
+.score-lbl{color:#888;font-size:0.9rem;margin-bottom:16px;}
+.stats-row{display:flex;justify-content:center;gap:28px;margin-bottom:22px;}
+.stat-n{font-size:1.5rem;font-weight:800;}
+.stat-lbl{font-size:0.75rem;color:#888;}
+.ch-summary{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:18px;text-align:left;}
+.ch-row{padding:8px 12px;background:#f5f7fa;border-radius:8px;font-size:0.85rem;}
+.ch-row strong{display:block;font-size:0.75rem;color:#888;margin-bottom:2px;}
+.res-btn{display:block;width:100%;padding:13px;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:10px;}
+.btn-copy{background:#7b61ff;color:white;}
+.btn-retry{background:#1D9E75;color:white;}
+.btn-fresh{background:#e8ecf0;color:#444;}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-ov.show{display:flex;}
+.modal-box{background:white;border-radius:14px;padding:24px;max-width:360px;width:90%;text-align:center;}
+.modal-box h3{color:#185FA5;margin-bottom:10px;font-size:1.05rem;}
+.modal-box p{font-size:0.88rem;color:#555;margin-bottom:18px;line-height:1.5;}
+.modal-acts{display:flex;gap:10px;}
+.modal-acts button{flex:1;padding:10px;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;cursor:pointer;}
+.modal-acts .cancel{background:#e8ecf0;color:#444;}
+.modal-acts .confirm{background:#E24B4A;color:white;}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>[Grant] Speed Quiz</h1>
+  <div id="att-bar">Total Attempts: <span id="attCount">0</span></div>
+  <div id="nav-bar">
+    <span id="nav-count">0 / 30</span>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+    <button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button>
+  </div>
+  <div id="dot-panel"></div>
+  <div id="qcard"></div>
+  <div id="freshModal" class="modal-ov">
+    <div class="modal-box">
+      <h3 id="freshTitle">Start Fresh?</h3>
+      <p id="freshText">All progress will be cleared. This cannot be undone.</p>
+      <div class="modal-acts">
+        <button class="cancel" onclick="closeFreshModal()">Cancel</button>
+        <button class="confirm" onclick="confirmFresh()">Start Fresh</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+var DATE='20260701';
+var QUIZ_KEY='quiz_grantspeedquiz_30_'+DATE+'_v2';
+var ATT_KEY='quiz_grantspeedquiz_att_'+DATE+'_v2';
+var ORDER_KEY=QUIZ_KEY+'_order_v1';
+var QUESTION_TIME=40;
+
+var SVG7pt='<svg width="320" height="52" viewBox="0 0 320 52" style="display:block;margin:10px auto;"><line x1="15" y1="24" x2="305" y2="24" stroke="#aaa" stroke-width="1.5"/><circle cx="15" cy="24" r="5" fill="#185FA5"/><circle cx="55" cy="24" r="5" fill="#185FA5"/><circle cx="100" cy="24" r="5" fill="#185FA5"/><circle cx="150" cy="24" r="5" fill="#185FA5"/><circle cx="195" cy="24" r="5" fill="#185FA5"/><circle cx="245" cy="24" r="5" fill="#185FA5"/><circle cx="305" cy="24" r="5" fill="#185FA5"/><text x="15" y="46" text-anchor="middle" font-size="13" fill="#333" font-family="sans-serif">A</text><text x="55" y="46" text-anchor="middle" font-size="13" fill="#333" font-family="sans-serif">B</text><text x="100" y="46" text-anchor="middle" font-size="13" fill="#333" font-family="sans-serif">C</text><text x="150" y="46" text-anchor="middle" font-size="13" fill="#333" font-family="sans-serif">D</text><text x="195" y="46" text-anchor="middle" font-size="13" fill="#333" font-family="sans-serif">E</text><text x="245" y="46" text-anchor="middle" font-size="13" fill="#333" font-family="sans-serif">F</text><text x="305" y="46" text-anchor="middle" font-size="13" fill="#333" font-family="sans-serif">G</text></svg>';
+var SVGgrid4x4='<svg width="170" height="170" viewBox="0 0 170 170" style="display:block;margin:10px auto;"><rect x="5" y="5" width="160" height="160" fill="none" stroke="#333" stroke-width="2"/><line x1="45" y1="5" x2="45" y2="165" stroke="#333" stroke-width="1.5"/><line x1="85" y1="5" x2="85" y2="165" stroke="#333" stroke-width="1.5"/><line x1="125" y1="5" x2="125" y2="165" stroke="#333" stroke-width="1.5"/><line x1="5" y1="45" x2="165" y2="45" stroke="#333" stroke-width="1.5"/><line x1="5" y1="85" x2="165" y2="85" stroke="#333" stroke-width="1.5"/><line x1="5" y1="125" x2="165" y2="125" stroke="#333" stroke-width="1.5"/></svg>';
+var SVGgrid4x3='<svg width="170" height="130" viewBox="0 0 170 130" style="display:block;margin:10px auto;"><rect x="5" y="5" width="160" height="120" fill="none" stroke="#333" stroke-width="2"/><line x1="45" y1="5" x2="45" y2="125" stroke="#333" stroke-width="1.5"/><line x1="85" y1="5" x2="85" y2="125" stroke="#333" stroke-width="1.5"/><line x1="125" y1="5" x2="125" y2="125" stroke="#333" stroke-width="1.5"/><line x1="5" y1="45" x2="165" y2="45" stroke="#333" stroke-width="1.5"/><line x1="5" y1="85" x2="165" y2="85" stroke="#333" stroke-width="1.5"/></svg>';
+var SVGtriK2='<svg width="150" height="150" viewBox="0 0 150 150" style="display:block;margin:10px auto;"><polygon points="75,10 10,140 140,140" fill="none" stroke="#333" stroke-width="2"/><line x1="75" y1="10" x2="53" y2="140" stroke="#333" stroke-width="1.5"/><line x1="75" y1="10" x2="97" y2="140" stroke="#333" stroke-width="1.5"/></svg>';
+var SVGtriK4='<svg width="150" height="150" viewBox="0 0 150 150" style="display:block;margin:10px auto;"><polygon points="75,10 10,140 140,140" fill="none" stroke="#333" stroke-width="2"/><line x1="75" y1="10" x2="36" y2="140" stroke="#333" stroke-width="1.5"/><line x1="75" y1="10" x2="62" y2="140" stroke="#333" stroke-width="1.5"/><line x1="75" y1="10" x2="88" y2="140" stroke="#333" stroke-width="1.5"/><line x1="75" y1="10" x2="114" y2="140" stroke="#333" stroke-width="1.5"/></svg>';
+
+var RAW_QUESTIONS=[
+  // GAUSS (6)
+  {ch:'Gauss',q:'Compute the following series.<br><strong>1 + 3 + 5 + 7 + 9 + 11</strong>',opts:['30','33','36','42'],ci:2},
+  {ch:'Gauss',q:'Compute the following series.<br><strong>17 + 18 + 19 + 20 + 21 + 22 + 23</strong>',opts:['140','133','147','150'],ci:0},
+  {ch:'Gauss',q:'Compute the following series.<br><strong>100 + 102 + 104 + 106 + 108 + 110</strong>',opts:['620','640','600','630'],ci:3},
+  {ch:'Gauss',q:'Compute the following series.<br><strong>100 &minus; 99 + 98 &minus; 97 + 96 &minus; 95 + &hellip; + 4 &minus; 3 + 2 &minus; 1</strong>',opts:['49','50','51','100'],ci:1},
+  {ch:'Gauss',q:'In the series below,<br><strong>1, 2, 5, 7, 1, 2, 5, 7, 1, 2, 5, 7, &hellip;</strong><br>what is the 28th number?',opts:['7','5','2','1'],ci:0},
+  {ch:'Gauss',q:'Find the sum of all multiples of 4 that are smaller than or equal to 40.',opts:['200','240','220','210'],ci:2},
+  // INTERVALS (6)
+  {ch:'Intervals',q:'David uses some coins to form a triangle. There is a coin at every corner. How many coins does he use if there are 6 coins on each side of the triangle?',opts:['18','15','12','16'],ci:1},
+  {ch:'Intervals',q:'16 lamp posts are placed at regular intervals along a road that is 300 m long. If lamp posts are placed at both ends of the road as well, how far is one lamp post from another?',opts:['18.75 m','15 m','25 m','20 m'],ci:3},
+  {ch:'Intervals',q:'21 trees are to be planted at regular intervals along a road that is 800 m long. If both ends of the road are planted with trees as well, how far is one tree from another?',opts:['40 m','36 m','44 m','38 m'],ci:0},
+  {ch:'Intervals',q:'Melvin lives on the 5th floor of an apartment building. Nick lives on the next floor. The staircases leading to Melvin\'s apartment have 80 steps. How many steps have the staircases leading to Nick\'s apartment?',opts:['96','80','100','120'],ci:2},
+  {ch:'Intervals',q:'It takes Uncle Sam 50 seconds to bike from the first lamp post to the eleventh lamp post. How many lamp posts would he bike past after 80 seconds?',opts:['16th','17th','15th','18th'],ci:1},
+  {ch:'Intervals',q:'Stella tied 6 knots on a piece of ribbon. The length between the second and fifth knots was 60 cm. What was the length between the first and sixth knots?',opts:['100 cm','80 cm','90 cm','120 cm'],ci:0},
+  // ADD & SUB (6)
+  {ch:'AddSub',q:'Compute the following.<br><strong>15 + 85 =</strong>',opts:['90','110','100','95'],ci:2},
+  {ch:'AddSub',q:'Compute the following.<br><strong>25 + 35 =</strong>',opts:['50','55','65','60'],ci:3},
+  {ch:'AddSub',q:'Compute the following.<br><strong>86 + 34 + 14 =</strong>',opts:['134','124','144','130'],ci:0},
+  {ch:'AddSub',q:'Compute the following.<br><strong>78 + 52 + 22 =</strong>',opts:['142','152','162','150'],ci:1},
+  {ch:'AddSub',q:'Compute the following.<br><strong>514 + 186 =</strong>',opts:['690','710','700','680'],ci:2},
+  {ch:'AddSub',q:'Compute the following.<br><strong>333 + 168 =</strong>',opts:['491','511','500','501'],ci:3},
+  // MULTIPLY (6)
+  {ch:'Multiply',q:'Compute the following.<br><strong>16 &times; 4 &times; 25</strong>',opts:['1600','1500','1700','1400'],ci:0},
+  {ch:'Multiply',q:'Compute the following.<br><strong>25 &times; 12</strong>',opts:['250','300','350','275'],ci:1},
+  {ch:'Multiply',q:'Compute the following.<br><strong>44 &times; 25</strong>',opts:['1000','1200','1100','1050'],ci:2},
+  {ch:'Multiply',q:'Compute the following.<br><strong>32 &times; 11</strong>',opts:['342','362','332','352'],ci:3},
+  {ch:'Multiply',q:'Compute the following.<br><strong>85 &times; 101</strong>',opts:['8585','8500','8600','8485'],ci:0},
+  {ch:'Multiply',q:'Compute the following.<br><strong>24 &times; 11</strong>',opts:['254','264','274','244'],ci:1},
+  // GEOMETRY (6)
+  {ch:'Geometry',q:'Points A, B, C, D, E, F, and G are placed on a line at unequal spacings. How many line segments of different lengths can be formed?'+SVG7pt,opts:['18','20','21','24'],ci:2},
+  {ch:'Geometry',q:'How many squares are there altogether?'+SVGgrid4x4,opts:['30','25','28','16'],ci:0},
+  {ch:'Geometry',q:'How many squares are there altogether?'+SVGgrid4x3,opts:['12','20','18','24'],ci:1},
+  {ch:'Geometry',q:'How many rectangles are there altogether?'+SVGgrid4x4,opts:['90','80','120','100'],ci:3},
+  {ch:'Geometry',q:'How many triangles are there altogether?'+SVGtriK2,opts:['6','4','5','8'],ci:0},
+  {ch:'Geometry',q:'How many triangles are there altogether?'+SVGtriK4,opts:['12','10','15','20'],ci:2}
+];
+
+function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function identityOrder(){var o=[];for(var i=0;i<RAW_QUESTIONS.length;i++)o.push(i);return o;}
+function isValidOrder(arr){if(!Array.isArray(arr)||arr.length!==RAW_QUESTIONS.length)return false;var s=arr.slice().sort(function(a,b){return a-b;});for(var i=0;i<s.length;i++)if(s[i]!==i)return false;return true;}
+function loadOrder(){try{var r=localStorage.getItem(ORDER_KEY);if(!r)return null;var a=JSON.parse(r);if(!isValidOrder(a))throw new Error();return a;}catch(e){localStorage.removeItem(ORDER_KEY);return null;}}
+function saveOrder(o){try{localStorage.setItem(ORDER_KEY,JSON.stringify(o));}catch(e){}}
+function buildQuestions(raw,order){var out=[];for(var i=0;i<order.length;i++)out.push(raw[order[i]]);return out;}
+var currentOrder=loadOrder()||identityOrder();
+var QUESTIONS=buildQuestions(RAW_QUESTIONS,currentOrder);
+
+function defaultState(){return{cur:0,answers:{},showResults:false};}
+function saveState(s){try{localStorage.setItem(QUIZ_KEY,JSON.stringify(s));}catch(e){}}
+function loadState(){try{var r=localStorage.getItem(QUIZ_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
+var state=loadState()||defaultState();
+
+function loadAtt(){try{return parseInt(localStorage.getItem(ATT_KEY)||'0',10)||0;}catch(e){return 0;}}
+function saveAtt(n){try{localStorage.setItem(ATT_KEY,String(n));}catch(e){}}
+function renderAtt(){var el=document.getElementById('attCount');if(el)el.textContent=loadAtt();}
+
+// Per-question timer
+var qTimer={startedAt:null,pausedElapsed:0,paused:false,active:false,questionIdx:-1};
+var timerTick=null;
+
+function startQTimer(idx){
+  qTimer.startedAt=Date.now();
+  qTimer.pausedElapsed=0;
+  qTimer.paused=false;
+  qTimer.active=true;
+  qTimer.questionIdx=idx;
+  startTick();
+}
+function freezeQTimer(){
+  if(qTimer.active){
+    qTimer.pausedElapsed=getQElapsed();
+    qTimer.startedAt=null;
+    qTimer.active=false;
+  }
+  updateTimerDisplay();
+}
+function getQElapsed(){
+  if(!qTimer.active||qTimer.paused)return qTimer.pausedElapsed;
+  return qTimer.pausedElapsed+(Date.now()-qTimer.startedAt)/1000;
+}
+function getQRemaining(){return Math.max(0,QUESTION_TIME-getQElapsed());}
+function togglePause(){
+  if(!qTimer.active)return;
+  var btn=document.getElementById('pause-btn');
+  if(qTimer.paused){
+    qTimer.startedAt=Date.now();
+    qTimer.paused=false;
+    if(btn){btn.textContent='⏸ Pause';btn.classList.remove('paused');}
+    startTick();
+  } else {
+    qTimer.pausedElapsed=getQElapsed();
+    qTimer.paused=true;
+    if(btn){btn.textContent='▶ Resume';btn.classList.add('paused');}
+    stopTick();
+  }
+}
+function startTick(){stopTick();timerTick=setInterval(updateTimerDisplay,100);}
+function stopTick(){if(timerTick){clearInterval(timerTick);timerTick=null;}}
+function updateTimerDisplay(){
+  var disp=document.getElementById('q-timer');
+  if(!disp)return;
+  if(!qTimer.active){
+    disp.textContent='Done';
+    disp.className='timer-display done';
+    stopTick();
+    return;
+  }
+  var rem=getQRemaining();
+  if(rem<=0){
+    disp.textContent='0';
+    disp.className='timer-display danger';
+    freezeQTimer();
+    return;
+  }
+  disp.textContent=Math.ceil(rem);
+  disp.className='timer-display'+(rem<=5?' danger':rem<=10?' warn':'');
+}
+
+function getChClass(ch){
+  if(ch==='Gauss')return 'ch-Gauss';
+  if(ch==='Intervals')return 'ch-Intervals';
+  if(ch==='AddSub')return 'ch-AddSub';
+  if(ch==='Multiply')return 'ch-Multiply';
+  return 'ch-Geometry';
+}
+function getChLabel(ch){
+  if(ch==='AddSub')return 'Add & Subtract';
+  return ch;
+}
+
+function updateNav(){
+  var ans=Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent=ans+' / '+QUESTIONS.length;
+  document.getElementById('prog-fill').style.width=(ans/QUESTIONS.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel=document.getElementById('dot-panel');if(panel.style.display==='none')return;
+  var h='';
+  for(var i=0;i<QUESTIONS.length;i++){
+    var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===QUESTIONS[i].ci?'#185FA5':'#E24B4A');
+    h+='<span onclick="goToQ('+i+')" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:'+bg+';color:#fff;font-size:11px;cursor:pointer;margin:2px;">'+(i+1)+'</span>';
+  }
+  panel.innerHTML=h;
+}
+function toggleJump(){
+  var p=document.getElementById('dot-panel'),b=document.getElementById('jump-btn');
+  if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}
+  else{p.style.display='none';b.textContent='Jump ▾';}
+}
+function goToQ(i){state.cur=i;state.showResults=false;saveState(state);document.getElementById('dot-panel').style.display='none';document.getElementById('jump-btn').textContent='Jump ▾';render();}
+function pick(optIdx){
+  if(state.answers[state.cur]!==undefined)return;
+  state.answers[state.cur]=optIdx;
+  freezeQTimer();
+  saveState(state);
+  render();
+}
+function goPrev(){if(state.cur>0){state.cur--;saveState(state);render();}}
+function goNext(){
+  if(state.cur<QUESTIONS.length-1){state.cur++;saveState(state);render();}
+  else{if(!state.showResults){var a=loadAtt()+1;saveAtt(a);renderAtt();}state.showResults=true;saveState(state);render();}
+}
+function render(){
+  var c=document.getElementById('qcard');
+  if(state.showResults){renderResults();return;}
+  var q=QUESTIONS[state.cur],ans=state.answers[state.cur],done=ans!==undefined;
+  var isLast=state.cur===QUESTIONS.length-1;
+
+  // Timer management
+  if(state.cur!==qTimer.questionIdx){
+    stopTick();
+    if(!done){
+      startQTimer(state.cur);
+    } else {
+      qTimer.active=false;
+      qTimer.questionIdx=state.cur;
+    }
+  }
+
+  var timerH='<div class="timer-section"><div><div class="timer-label">Time Left</div><div class="timer-display" id="q-timer">'+QUESTION_TIME+'</div></div><button class="pause-btn" id="pause-btn" onclick="togglePause()">&#9646;&#9646; Pause</button></div>';
+
+  var optsH='';
+  for(var i=0;i<q.opts.length;i++){
+    var cls='opt';
+    if(done){if(i===q.ci)cls+=' correct';else if(i===ans)cls+=' wrong';}
+    optsH+='<button class="'+cls+'"'+(done?' disabled':'')+' onclick="pick('+i+')">'+q.opts[i]+'</button>';
+  }
+  var nextLbl=isLast?'See Results &#8594;':'Next &#8594;';
+  c.innerHTML='<div class="card"><div class="q-num">Q'+(state.cur+1)+' of '+QUESTIONS.length+'</div><span class="chapter-tag '+getChClass(q.ch)+'">'+getChLabel(q.ch)+'</span>'+timerH+'<div class="q-text">'+q.q+'</div><div class="opts">'+optsH+'</div></div><div class="nav-btns"><button '+(state.cur===0?'disabled':'')+' onclick="goPrev()">&#8592; Prev</button><button onclick="goNext()">'+nextLbl+'</button></div>';
+  updateNav();
+  updateTimerDisplay();
+}
+function renderResults(){
+  stopTick();
+  var chStats={};
+  var chapters=['Gauss','Intervals','AddSub','Multiply','Geometry'];
+  for(var c=0;c<chapters.length;c++)chStats[chapters[c]]={ok:0,tot:0};
+  var correct=0,wrong=0,skip=0;
+  for(var i=0;i<QUESTIONS.length;i++){
+    var q=QUESTIONS[i];
+    chStats[q.ch].tot++;
+    if(state.answers[i]===undefined)skip++;
+    else if(state.answers[i]===q.ci){correct++;chStats[q.ch].ok++;}
+    else wrong++;
+  }
+  var pct=Math.round(correct/QUESTIONS.length*100);
+  var chH='<div class="ch-summary">';
+  var chLabels={Gauss:'Gauss',Intervals:'Intervals',AddSub:'Add & Sub',Multiply:'Multiply',Geometry:'Geometry'};
+  for(var k in chLabels){
+    var s=chStats[k];
+    chH+='<div class="ch-row"><strong>'+chLabels[k]+'</strong>'+s.ok+'/'+s.tot+'</div>';
+  }
+  chH+='</div>';
+  document.getElementById('qcard').innerHTML='<div class="results"><div class="score-big">'+correct+'/'+QUESTIONS.length+'</div><div class="score-lbl">'+pct+'% correct</div><div class="stats-row"><div><div class="stat-n" style="color:#1D9E75">'+correct+'</div><div class="stat-lbl">Correct</div></div><div><div class="stat-n" style="color:#E24B4A">'+wrong+'</div><div class="stat-lbl">Wrong</div></div><div><div class="stat-n" style="color:#888">'+skip+'</div><div class="stat-lbl">Skipped</div></div></div>'+chH+'<button class="res-btn btn-copy" onclick="copyRes()">Copy All Results</button><button class="res-btn btn-retry" onclick="retryWrong()">Retry Wrong &amp; Timed Out</button><button class="res-btn btn-fresh" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button><button class="res-btn btn-fresh" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button></div>';
+  updateNav();
+}
+function copyRes(){
+  var correct=0,lines=['[Grant] Speed Quiz Results'];
+  for(var i=0;i<QUESTIONS.length;i++){var q=QUESTIONS[i],a=state.answers[i],ok=a===q.ci;if(ok)correct++;lines.push('Q'+(i+1)+' ['+q.ch+'] '+(a===undefined?'SKIP':ok?'OK':'WRONG'));}
+  lines.push('Score: '+correct+'/'+QUESTIONS.length);
+  try{navigator.clipboard.writeText(lines.join('\n'));}catch(e){alert(lines.join('\n'));}
+}
+function retryWrong(){
+  var wrong=[];
+  for(var i=0;i<QUESTIONS.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==QUESTIONS[i].ci){wrong.push(i);delete state.answers[i];}}
+  if(wrong.length>0){state.cur=wrong[0];state.showResults=false;saveState(state);render();}
+}
+var pendingFreshMode='original';
+function openFreshModalOriginal(){pendingFreshMode='original';document.getElementById('freshTitle').textContent='Start Fresh (Original Order)?';document.getElementById('freshText').textContent='Questions return to their original order and all answers and timers will be cleared.';document.getElementById('freshModal').classList.add('show');}
+function openFreshModalRandom(){pendingFreshMode='random';document.getElementById('freshTitle').textContent='Start Fresh (Random Order)?';document.getElementById('freshText').textContent='Questions will be reshuffled into a new random order, and all answers and timers will be cleared.';document.getElementById('freshModal').classList.add('show');}
+function closeFreshModal(){document.getElementById('freshModal').classList.remove('show');}
+function confirmFresh(){currentOrder=(pendingFreshMode==='random')?shuffle(identityOrder()):identityOrder();saveOrder(currentOrder);QUESTIONS=buildQuestions(RAW_QUESTIONS,currentOrder);state=defaultState();saveState(state);stopTick();qTimer={startedAt:null,pausedElapsed:0,paused:false,active:false,questionIdx:-1};closeFreshModal();render();}
+window.toggleJump=toggleJump;window.goToQ=goToQ;window.pick=pick;window.goPrev=goPrev;window.goNext=goNext;
+window.togglePause=togglePause;window.copyRes=copyRes;window.retryWrong=retryWrong;
+window.openFreshModalOriginal=openFreshModalOriginal;window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;window.confirmFresh=confirmFresh;
+render();renderAtt();
+</script>
+</body>
+</html>

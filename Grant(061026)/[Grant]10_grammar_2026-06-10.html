@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>[Grant] Grammar</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f7fb;min-height:100vh;padding:16px}
+.date-header{font-size:2rem;font-weight:800;text-align:center;color:#185FA5;background:#fff;padding:12px;border-radius:10px;margin-bottom:6px}
+.quiz-title{font-size:1.4rem;font-weight:700;text-align:center;color:#185FA5;margin-bottom:4px}
+.attempts{text-align:center;font-size:0.95rem;color:#555;margin-bottom:10px}
+.nav-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-bottom:14px;padding:8px}
+.dot{width:28px;height:28px;border-radius:50%;border:2px solid #185FA5;background:#fff;color:#185FA5;font-size:0.65rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.dot.correct{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.dot.wrong{background:#E24B4A;border-color:#E24B4A;color:#fff}
+.dot.current{box-shadow:0 0 0 3px #185FA5}
+.dot.results-pill{width:auto;padding:0 12px;border-radius:15px;font-size:0.8rem}
+.card{background:#fff;border-radius:14px;padding:20px;max-width:680px;margin:0 auto 14px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.q-meta{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.tag{background:#185FA5;color:#fff;border-radius:12px;padding:3px 10px;font-size:0.75rem;font-weight:600}
+.counter{font-size:0.85rem;color:#888}
+.q-text{font-size:1.05rem;color:#111;margin-bottom:16px;line-height:1.7}
+.sentence-box{background:#f0f6ff;border-left:4px solid #185FA5;border-radius:6px;padding:10px 14px;margin-bottom:14px;font-style:italic;color:#1a3a6b;font-size:0.98rem;line-height:1.7}
+.blank{display:inline-block;border-bottom:2px solid #185FA5;min-width:80px;text-align:center;font-style:normal;font-weight:700;color:#185FA5}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{background:#e8edf4;color:#111111;border:2px solid transparent;border-radius:10px;padding:12px 16px;cursor:pointer;font-size:0.98rem;text-align:left;transition:all .15s}
+.opt:hover{border-color:#185FA5}
+.opt.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.explain{margin-top:12px;background:#f0f6ff;border-left:4px solid #185FA5;padding:10px 14px;border-radius:6px;font-size:0.92rem;color:#1a3a6b}
+.nav-btns{display:flex;justify-content:space-between;margin-top:16px}
+.btn{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:0.95rem;cursor:pointer;font-weight:600}
+.btn:hover{background:#1050a0}
+.btn-outline{background:#fff;color:#185FA5;border:2px solid #185FA5}
+.btn-outline:hover{background:#e8edf4}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin:16px 0}
+.res-card{border-radius:10px;padding:8px;cursor:pointer;text-align:center;font-size:0.85rem;font-weight:600}
+.res-card.c{background:#E1F5EE;color:#085041;border:2px solid #1D9E75}
+.res-card.w{background:#FCEBEB;color:#501313;border:2px solid #E24B4A}
+.res-card.s{background:#f0f0f0;color:#555;border:2px solid #999}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:14px;padding:28px;max-width:340px;width:90%;text-align:center}
+.modal h3{color:#185FA5;margin-bottom:12px}
+.modal-btns{display:flex;gap:10px;justify-content:center;margin-top:18px}
+</style>
+</head>
+<body>
+<div class="date-header">2026-06-10</div>
+<div class="quiz-title">[Grant] Grammar</div>
+<div class="attempts" id="attDisp">Total Attempts: 0</div>
+<div class="nav-dots" id="navDots"></div>
+<div id="quizArea" style="display:none"></div>
+<div id="resultsArea" style="display:none"></div>
+<div class="modal-overlay" id="freshModal">
+  <div class="modal">
+    <h3>Start Fresh?</h3>
+    <p>All progress will be reset.</p>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeFresh()">Cancel</button>
+      <button class="btn" onclick="doFresh()">Reset</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+const SK='quiz_grantgrammar_20_v1',ATK='quiz_grantgrammar_attempts_v1';
+const QS=[
+// Subject-Verb Agreement
+{tag:'Subject-Verb Agreement',q:'Choose the correct verb:',sb:'The list of ingredients <span class="blank">___</span> on the counter.',opts:['are','is','were','have been'],ci:1,ex:'"List" is the subject (singular). "Of ingredients" is a prepositional phrase, not the subject. Singular subject → "is."'},
+{tag:'Subject-Verb Agreement',q:'Choose the correct verb:',sb:'Neither the coach nor the players <span class="blank">___</span> ready.',opts:['is','are','was','am'],ci:1,ex:'In "neither...nor," the verb agrees with the noun closest to it. "Players" is plural → "are."'},
+{tag:'Subject-Verb Agreement',q:'Choose the correct verb:',sb:'Each of the students <span class="blank">___</span> required to bring a pencil.',opts:['have','were','is','are'],ci:2,ex:'"Each" is always singular, regardless of the phrase that follows. → "is required."'},
+{tag:'Subject-Verb Agreement',q:'Choose the correct verb:',sb:'The team, along with their coaches, <span class="blank">___</span> celebrating the win.',opts:['is','are','were','have'],ci:0,ex:'The core subject is "team" (singular). Phrases beginning with "along with," "as well as," etc. do not change the subject. → "is celebrating."'},
+// Pronoun Agreement
+{tag:'Pronoun Agreement',q:'Choose the correct pronoun:',sb:'Everyone on the girls\' team did <span class="blank">___</span> best.',opts:['their','her','his','its'],ci:0,ex:'Modern standard usage accepts "their" as a singular gender-neutral pronoun for antecedents like "everyone."'},
+{tag:'Pronoun Agreement',q:'Choose the correct pronoun:',sb:'The company announced <span class="blank">___</span> new policy yesterday.',opts:['their','his','her','its'],ci:3,ex:'"Company" is a singular collective noun. Use the singular neuter pronoun "its."'},
+{tag:'Pronoun Agreement',q:'Choose the correct pronoun:',sb:'Neither of the boys remembered to bring <span class="blank">___</span> lunch.',opts:['their','its','our','his'],ci:3,ex:'"Neither" is singular. The boys are male, so the formal singular pronoun is "his." ("Their" is increasingly accepted informally but "his" is the traditional formal answer here.)'},
+{tag:'Pronoun Agreement',q:'Choose the correct pronoun:',sb:'A doctor must always respect <span class="blank">___</span> patients\' privacy.',opts:['their','its','our','his or her'],ci:3,ex:'"A doctor" is singular. "His or her" is the formal gender-inclusive singular pronoun choice. "Their" is also accepted in modern usage.'},
+// Verb Tense
+{tag:'Verb Tense',q:'Choose the correct verb form:',sb:'By the time the guests arrived, Maria already <span class="blank">___</span> dinner.',opts:['cooked','has cooked','had cooked','was cooking'],ci:2,ex:'Past perfect ("had cooked") describes an action completed before another past event. "By the time the guests arrived" signals that the cooking happened first.'},
+{tag:'Verb Tense',q:'Choose the correct verb form:',sb:'She <span class="blank">___</span> to the library every day last week.',opts:['goes','had gone','went','has gone'],ci:2,ex:'"Last week" indicates a completed past time period. Use simple past: "went."'},
+{tag:'Verb Tense',q:'Choose the correct verb form:',sb:'The scientists <span class="blank">___</span> their experiment before the funding ran out.',opts:['complete','completed','had completed','completing'],ci:2,ex:'The experiment was completed before another past event ("funding ran out"). Use past perfect: "had completed."'},
+{tag:'Verb Tense',q:'Choose the correct verb form:',sb:'If he <span class="blank">___</span> harder, he would pass the test.',opts:['studied','had studied','has studied','studies'],ci:0,ex:'Present unreal conditional: "If + simple past, ... would + base verb." The correct form is "studied."'},
+// Comma / Punctuation
+{tag:'Punctuation',q:'Which sentence uses the comma correctly?',sb:null,opts:['She likes cats, and she also likes dogs.','She likes cats and, she also likes dogs.','She likes cats and she, also likes dogs.','She likes, cats and she also likes dogs.'],ci:0,ex:'A comma goes before a coordinating conjunction (FANBOYS) that joins two independent clauses: "She likes cats, and she also likes dogs."'},
+{tag:'Punctuation',q:'Which sentence is correctly punctuated?',sb:null,opts:['However, the plan failed.','However the plan failed.','The plan however failed.','The plan, however failed.'],ci:0,ex:'An introductory conjunctive adverb like "However" must be followed by a comma: "However, the plan failed."'},
+{tag:'Punctuation',q:'Which sentence correctly uses a semicolon?',sb:null,opts:['I wanted to go; but it rained.','I wanted to go; it rained.','I wanted; to go it rained.','I wanted to; go, it rained.'],ci:1,ex:'A semicolon joins two independent clauses directly. "I wanted to go; it rained" is correct. Never use a semicolon before a coordinating conjunction like "but."'},
+{tag:'Punctuation',q:'Which sentence correctly uses an apostrophe?',sb:null,opts:['The cats bowl is empty.','The cats\' bowl is empty.','The cat\'s bowl is empty.','The cats\'s bowl is empty.'],ci:2,ex:'Singular possessive: add apostrophe + s → "The cat\'s bowl." "The cats\' bowl" would mean a bowl belonging to multiple cats. "Cats\'s" is never correct.'},
+// Word Choice / Confusables
+{tag:'Word Choice',q:'Choose the correct word:',sb:'Please <span class="blank">___</span> your belongings before you leave.',opts:['affect','effect','accept','gather'],ci:3,ex:'"Gather" means to collect or pick up. "Affect" and "effect" relate to influence/result; "accept" means to receive willingly. Only "gather" fits.'},
+{tag:'Word Choice',q:'Choose the correct word:',sb:'The new law will <span class="blank">___</span> millions of people.',opts:['affect','effect','except','accept'],ci:0,ex:'"Affect" is a verb meaning to have an influence on. "Effect" is typically a noun. "The law will affect people" → verb required.'},
+{tag:'Word Choice',q:'Choose the correct word:',sb:'All students <span class="blank">___</span> Tom were present.',opts:['accept','effect','except','affect'],ci:2,ex:'"Except" means with the exclusion of. "All students except Tom" = everyone but Tom.'},
+{tag:'Word Choice',q:'Choose the correct word:',sb:'The medicine had an unexpected <span class="blank">___</span> on the patient.',opts:['affect','accept','except','effect'],ci:3,ex:'"Effect" is a noun meaning result or outcome. "Had an effect on" is the correct noun usage.'}
+];
+let state={cur:0,answers:{},shuffles:{},showResults:false};
+function loadState(){try{const s=localStorage.getItem(SK);if(s){const p=JSON.parse(s);if(typeof p.cur==='number'&&typeof p.answers==='object'&&!Array.isArray(p.answers)&&typeof p.shuffles==='object'&&!Array.isArray(p.shuffles)){state=p;}else{localStorage.removeItem(SK);}}}catch(e){localStorage.removeItem(SK);}}
+function saveState(){localStorage.setItem(SK,JSON.stringify(state));}
+function getAttempts(){return parseInt(localStorage.getItem(ATK)||'0');}
+function incAttempts(){localStorage.setItem(ATK,getAttempts()+1);}
+function updAttDisp(){document.getElementById('attDisp').textContent='Total Attempts: '+getAttempts();}
+function getShuffle(i){if(!state.shuffles[i]){const arr=[0,1,2,3];for(let k=3;k>0;k--){const r=Math.floor(Math.random()*(k+1));[arr[k],arr[r]]=[arr[r],arr[k]];}state.shuffles[i]=arr;saveState();}return state.shuffles[i];}
+function renderDots(forResults){
+  const nd=document.getElementById('navDots');nd.innerHTML='';
+  if(forResults){const pill=document.createElement('button');pill.className='dot results-pill correct';pill.textContent='Results';nd.appendChild(pill);return;}
+  QS.forEach((_,i)=>{
+    const d=document.createElement('button');d.className='dot';d.textContent=i+1;
+    if(state.answers[i]!==undefined){const sh=getShuffle(i);const cs=sh.indexOf(QS[i].ci);if(state.answers[i]===cs)d.classList.add('correct');else d.classList.add('wrong');}
+    if(i===state.cur)d.classList.add('current');
+    d.onclick=()=>{state.cur=i;saveState();render();};
+    nd.appendChild(d);
+  });
+}
+function render(){
+  try{
+    if(state.showResults){renderResults();return;}
+    document.getElementById('quizArea').style.display='block';
+    document.getElementById('resultsArea').style.display='none';
+    renderDots(false);
+    const i=state.cur,q=QS[i],sh=getShuffle(i);
+    const answered=state.answers[i]!==undefined;
+    const cs=sh.indexOf(q.ci);
+    let html=`<div class="card">
+      <div class="q-meta"><span class="tag">${q.tag}</span><span class="counter">${i+1} / ${QS.length}</span></div>
+      <div class="q-text">${q.q}</div>`;
+    if(q.sb){html+=`<div class="sentence-box">${q.sb}</div>`;}
+    html+=`<div class="opts">`;
+    sh.forEach((origIdx,dispIdx)=>{
+      let cls='opt';
+      if(answered){if(dispIdx===cs)cls+=' correct';else if(dispIdx===state.answers[i])cls+=' wrong';}
+      html+=`<button class="${cls}" onclick="pick(${dispIdx})">${q.opts[origIdx]}</button>`;
+    });
+    html+='</div>';
+    if(answered&&state.answers[i]!==cs){html+=`<div class="explain">${q.ex}</div>`;}
+    html+=`<div class="nav-btns">
+      <button class="btn btn-outline" onclick="go(-1)"${i===0?' disabled':''}>Prev</button>
+      <button class="btn" onclick="${i===QS.length-1?'finishQuiz()':'go(1)'}">${i===QS.length-1?'See Results →':'Next'}</button>
+    </div></div>`;
+    document.getElementById('quizArea').innerHTML=html;
+  }catch(e){document.getElementById('quizArea').innerHTML='<div class="card">Error rendering. Please refresh.</div>';}
+}
+function renderResults(){
+  incAttempts();updAttDisp();
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  renderDots(true);
+  let correct=0,wrong=0,skipped=0,gridHTML='';
+  QS.forEach((q,i)=>{
+    const sh=getShuffle(i);const cs=sh.indexOf(q.ci);
+    if(state.answers[i]===undefined){skipped++;gridHTML+=`<div class="res-card s" onclick="goToQ(${i})">Q${i+1}<br>Skipped</div>`;}
+    else if(state.answers[i]===cs){correct++;gridHTML+=`<div class="res-card c" onclick="goToQ(${i})">Q${i+1}<br>Correct</div>`;}
+    else{wrong++;gridHTML+=`<div class="res-card w" onclick="goToQ(${i})">Q${i+1}<br>Wrong</div>`;}
+  });
+  document.getElementById('resultsArea').innerHTML=`<div class="card">
+    <h2 style="color:#185FA5;text-align:center;margin-bottom:8px">Results</h2>
+    <p style="text-align:center;font-size:1.1rem;margin-bottom:12px">${correct} / ${QS.length} Correct &nbsp;|&nbsp; ${wrong} Wrong &nbsp;|&nbsp; ${skipped} Skipped</p>
+    <div class="results-grid">${gridHTML}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px">
+      <button class="btn" onclick="startRetry()">Retry Wrong Questions</button>
+      <button class="btn btn-outline" onclick="copyRes()">Copy All Results</button>
+      <button class="btn btn-outline" onclick="confirmFresh()">Start Fresh</button>
+    </div></div>`;
+}
+function pick(dispIdx){if(state.answers[state.cur]!==undefined)return;state.answers[state.cur]=dispIdx;saveState();render();}
+function go(dir){state.cur=Math.max(0,Math.min(QS.length-1,state.cur+dir));saveState();render();}
+function finishQuiz(){state.showResults=true;saveState();render();}
+function goToQ(i){state.showResults=false;state.cur=i;saveState();render();}
+function startRetry(){
+  const wrongIdx=[];
+  QS.forEach((q,i)=>{const sh=getShuffle(i);if(state.answers[i]!==undefined&&state.answers[i]!==sh.indexOf(q.ci))wrongIdx.push(i);});
+  if(!wrongIdx.length){alert('No wrong questions!');return;}
+  wrongIdx.forEach(i=>{delete state.answers[i];delete state.shuffles[i];});
+  state.showResults=false;state.cur=wrongIdx[0];saveState();render();
+}
+function copyRes(){
+  let txt='[Grant] Grammar — 2026-06-10\n';
+  QS.forEach((q,i)=>{const sh=getShuffle(i);const cs=sh.indexOf(q.ci);const st=state.answers[i]===undefined?'Skipped':state.answers[i]===cs?'Correct':'Wrong';txt+=`Q${i+1} (${q.tag}): ${st}\n`;});
+  navigator.clipboard.writeText(txt).catch(()=>{});
+}
+function confirmFresh(){document.getElementById('freshModal').classList.add('show');}
+function closeFresh(){document.getElementById('freshModal').classList.remove('show');}
+function doFresh(){localStorage.removeItem(SK);state={cur:0,answers:{},shuffles:{},showResults:false};closeFresh();render();}
+window.pick=pick;window.go=go;window.finishQuiz=finishQuiz;window.goToQ=goToQ;
+window.startRetry=startRetry;window.copyRes=copyRes;window.confirmFresh=confirmFresh;
+window.closeFresh=closeFresh;window.doFresh=doFresh;
+loadState();updAttDisp();render();
+})();
+</script>
+</body>
+</html>

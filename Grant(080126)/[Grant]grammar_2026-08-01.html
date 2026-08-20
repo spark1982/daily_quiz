@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Grammar</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+html{margin:0 auto;}
+.wrap{max-width:700px;margin:0 auto;}
+.title-hd{text-align:center;font-size:1.5rem;font-weight:800;color:#1D9E75;padding:10px 0 2px;}
+.sub-hd{text-align:center;font-size:0.82rem;color:#555;margin-bottom:6px;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:6px 12px 10px;background:#fff;}
+.q-tag{display:inline-block;background:#1D9E75;color:#fff;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:8px;}
+.word-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.word-text{font-size:1.3rem;font-weight:800;color:#111;line-height:1.4;}
+.speak-btn{background:#e8edf4;border:none;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.opt-btn{display:block;width:100%;padding:12px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.95rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;white-space:pre-line;}
+.box-ctx{background:#f0f4ff;border-left:4px solid #185FA5;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.9rem;color:#222;line-height:1.6;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#1D9E75;}
+.prev-btn:disabled{opacity:0.5;cursor:default;}
+.next-btn{background:#1D9E75;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#1D9E75;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:10px;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:340px;margin:20px;text-align:center;}
+.timer-bar{background:#fff;border:1px solid #d0dce8;border-radius:10px;padding:8px 12px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.timer-setup{display:flex;align-items:center;gap:8px;font-size:0.85rem;color:#444;}
+.timer-setup label{font-weight:700;}
+.timer-setup input[type="number"]{width:56px;padding:5px 6px;border:1.5px solid #d0dce8;border-radius:6px;font-size:0.9rem;text-align:center;}
+.timer-start-btn{background:#185FA5;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;}
+.timer-running{display:flex;align-items:center;gap:8px;}
+.timer-label{font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.02em;}
+.timer-display{font-size:1.1rem;font-weight:900;color:#185FA5;font-family:'Courier New',monospace;letter-spacing:0.02em;}
+.timer-display.warn{color:#f5a623;}
+.timer-display.danger{color:#E24B4A;}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="title-hd">[Grant] Grammar</div>
+<div class="sub-hd" id="att-display">Total Attempts: 0</div>
+<div class="instruction">Choose the best answer to complete each sentence.</div>
+
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="20"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">20:00</span>
+  </div>
+</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / N</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #1D9E75;border-radius:14px;background:#fff;color:#1D9E75;cursor:pointer;white-space:nowrap;">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div id="tagWrap"><span class="q-tag" id="q-tag-label" style="display:none;"></span></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="box-ctx" id="box-ctx" style="display:none;"></div>
+  <div class="word-row">
+    <span class="word-text" id="q-word"></span>
+    
+  </div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#1D9E75;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="openFreshModalOriginal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:12px;">Start Fresh (Original Order)</button>
+  <button onclick="openFreshModalRandom()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh (Random Order)</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <h3 id="freshModalTitle" style="margin:0 0 10px;color:#185FA5;font-size:1.05rem;">Start Fresh?</h3>
+    <p id="freshModalText" style="font-size:0.95rem;color:#444;margin:0 0 16px;">All progress will be cleared.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="closeFreshModal()" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+</div>
+<script>
+(function(){
+
+var QUIZ_KEY = "quiz_grantgrammar_20_20260731_v1";
+var ATT_KEY = "quiz_grantgrammar_20260731_att_v1";
+var ORDER_KEY = QUIZ_KEY + '_order_v1';
+var QUIZ_LABEL = "[Grant] Grammar - Results";
+var TAG_COLORS = {};
+
+var RAW_QUESTIONS = [{"box": "Last winter, the pond ___ solid enough for us to skate on it.", "stem": "Choose the correct past tense verb.", "opts": ["froze", "freezed", "freeze", "frozed"], "ci": 0, "exp": "\"Freeze\" is an irregular verb; its correct past tense form is \"froze,\" not \"freezed\" or \"frozed.\" \"Freeze\" is the present tense form."}, {"box": "Of the two hiking trails, the mountain path is ___ than the riverside path.", "stem": "Choose the correct comparative adjective.", "opts": ["steeper", "more steeper", "steepest", "steepier"], "ci": 0, "exp": "When comparing exactly two things, add \"-er\" to short adjectives, making \"steeper\" correct. \"More steeper\" incorrectly doubles the comparative form, \"steepest\" is a superlative used for three or more items, and \"steepier\" is not a real word."}, {"box": "The audience ___ cheering loudly after the final performance.", "stem": "Choose the verb that agrees with the subject.", "opts": ["was", "were", "have been", "are"], "ci": 0, "exp": "\"Audience\" is a collective noun that is treated as singular when the group acts as one unit, so it takes the singular verb \"was.\" \"Were,\" \"have been,\" and \"are\" are all plural forms that do not match the singular subject here."}, {"box": "My cousin and ___ built a treehouse in the backyard together.", "stem": "Choose the correct pronoun.", "opts": ["I", "me", "myself", "mine"], "ci": 0, "exp": "Because the pronoun is part of the subject of the sentence (along with \"my cousin\"), the subject pronoun \"I\" is correct. \"Me\" is an object pronoun, \"myself\" is a reflexive pronoun with no matching subject to reflect back to, and \"mine\" is a possessive pronoun that does not fit this position."}, {"box": "___ almost time for the school assembly to begin.", "stem": "Choose the correct contraction.", "opts": ["It's", "Its", "Its'", "It is'"], "ci": 0, "exp": "\"It's\" is the contraction of \"it is,\" which fits the sentence (\"It is almost time...\"). \"Its\" is a possessive pronoun with no apostrophe, and \"its'\" and \"it is'\" are not correctly formed words at all."}, {"box": "The garden behind our school grows tomatoes, peppers, and herbs.", "stem": "What type of sentence is this?", "opts": ["Declarative", "Imperative", "Interrogative", "Exclamatory"], "ci": 0, "exp": "A declarative sentence simply states a fact or piece of information, which is exactly what this sentence does. An imperative sentence gives a command, an interrogative sentence asks a question, and an exclamatory sentence expresses strong emotion, none of which apply here."}, {"box": "Every summer, our family drives north to visit ___ National Park.", "stem": "Choose the correctly capitalized proper noun.", "opts": ["Yellowstone", "yellowstone", "Yellow stone", "YellowStone"], "ci": 0, "exp": "\"Yellowstone\" is the official name of the national park and must be capitalized as a proper noun. The other choices either fail to capitalize it, incorrectly split it into two words, or capitalize it in a nonstandard way."}, {"box": "I wanted to go outside to play, ___ it was raining too hard.", "stem": "Choose the option with the correct comma placement and conjunction.", "opts": [", but", "but", ", so", "yet,"], "ci": 0, "exp": "The two ideas contrast with each other, so the coordinating conjunction \"but\" is needed, and a comma belongs before it because it joins two complete thoughts. Leaving out the comma before \"but\" is incorrect for joining two independent clauses, \"so\" incorrectly suggests a result rather than a contrast, and placing the comma after \"yet\" instead of before it does not follow the standard pattern."}, {"box": "After the long hike, everyone ___ exhausted but happy.", "stem": "Choose the linking verb that completes the sentence.", "opts": ["felt", "ran", "jumped", "carried"], "ci": 0, "exp": "A linking verb connects the subject to a description rather than showing an action, and \"felt\" links \"everyone\" to the adjectives \"exhausted\" and \"happy.\" \"Ran,\" \"jumped,\" and \"carried\" are all action verbs that do not fit this linking role."}, {"box": "Out of all the desserts on the menu, the chocolate cake is ___.", "stem": "Choose the correct superlative form.", "opts": ["the most delicious", "the more delicious", "the deliciousest", "most delicious than others"], "ci": 0, "exp": "When comparing three or more things, longer adjectives use \"the most\" to form the superlative, making \"the most delicious\" correct. \"The more delicious\" is a comparative form used for two items, \"the deliciousest\" incorrectly adds \"-est\" to a long adjective, and \"most delicious than others\" mixes superlative and comparative patterns incorrectly."}, {"box": "The kitten hid ___ the couch when the vacuum turned on.", "stem": "Choose the correct preposition.", "opts": ["under", "between", "above", "across"], "ci": 0, "exp": "\"Under\" correctly describes the kitten's position beneath the couch. \"Between\" requires two objects to be positioned between, \"above\" would place the kitten higher than the couch rather than hidden beneath it, and \"across\" does not describe hiding underneath something."}, {"box": "Winning the championship filled the whole team with ___.", "stem": "Choose the abstract noun that best completes the sentence.", "opts": ["pride", "trophy", "stadium", "jersey"], "ci": 0, "exp": "An abstract noun names an idea or feeling rather than a physical object, and \"pride\" names the feeling the team experienced. \"Trophy,\" \"stadium,\" and \"jersey\" are all concrete nouns that name physical things."}, {"box": "By the time we arrive, the movie ___ already started.", "stem": "Choose the correct helping verb.", "opts": ["will have", "did have", "was have", "have will"], "ci": 0, "exp": "\"Will have\" correctly forms the future perfect tense, showing that the movie will already be finished starting before a future point in time. \"Did have\" incorrectly mixes past tense with \"have,\" and \"was have\" and \"have will\" are not grammatically correct verb combinations."}, {"box": "Ran across the field and dove for the ball.", "stem": "Is this a complete sentence or a sentence fragment?", "opts": ["Sentence fragment, because it is missing a subject", "Complete sentence, because it has a verb", "Sentence fragment, because it is missing a verb", "Complete sentence, because it has a direct object"], "ci": 0, "exp": "This group of words has two actions (\"ran\" and \"dove\") but never states who performed them, so it lacks a subject and is a sentence fragment. It is not a complete sentence, since a subject is required to know who ran and dove, and it does contain verbs, so \"missing a verb\" is not the actual problem."}, {"box": "You can have pizza for dinner, ___ you can make a sandwich instead.", "stem": "Choose the coordinating conjunction that best fits the meaning.", "opts": ["or", "and", "but", "so"], "ci": 0, "exp": "The sentence presents two alternative choices, and \"or\" is the coordinating conjunction used to show a choice between options. \"And\" would suggest both things happen together, \"but\" would suggest a contrast rather than a choice, and \"so\" would incorrectly suggest the second option is a result of the first."}, {"box": "The farmer counted three ___ grazing in the field.", "stem": "Choose the correct plural form.", "opts": ["sheep", "sheeps", "sheepes", "sheepies"], "ci": 0, "exp": "\"Sheep\" is an irregular noun whose plural form stays the same as the singular form. \"Sheeps,\" \"sheepes,\" and \"sheepies\" are all incorrect attempts to add a regular plural ending to a word that does not change form."}, {"box": "The two puppies chewed through ___ leashes during the walk.", "stem": "Choose the correctly formed possessive.", "opts": ["both puppies'", "both puppy's", "both puppies's", "both puppie's"], "ci": 0, "exp": "Because there are two puppies who together possess the leashes, the plural noun \"puppies\" takes an apostrophe after the final \"s\" to show plural possession. \"Puppy's\" incorrectly treats the noun as singular, and \"puppies's\" and \"puppie's\" are not standard possessive forms."}, {"box": "Please make sure to ___ your shoes before entering the house.", "stem": "Choose the correct homophone to complete the sentence.", "opts": ["wipe", "wype", "whipe", "wiped"], "ci": 0, "exp": "\"Wipe\" is the correctly spelled base verb needed after \"to\" in this sentence. \"Wype\" and \"whipe\" are misspellings that do not exist in Standard English, and \"wiped\" is the past tense form, which does not fit after \"to.\""}, {"box": "Every morning, the baker mixes the dough and then ___ it into the oven.", "stem": "Choose the verb that keeps the tense consistent with the rest of the sentence.", "opts": ["slides", "slid", "will slide", "was sliding"], "ci": 0, "exp": "The rest of the sentence uses the present tense verb \"mixes\" to describe the baker's daily routine, so the second verb should also be present tense, making \"slides\" correct. \"Slid\" shifts into the past tense, \"will slide\" shifts into the future tense, and \"was sliding\" shifts into the past progressive, none of which match \"mixes.\""}, {"box": "Have you finished reading the book for class yet?", "stem": "What type of sentence is this?", "opts": ["Interrogative", "Declarative", "Imperative", "Exclamatory"], "ci": 0, "exp": "An interrogative sentence asks a question, and this sentence asks whether the reading has been finished, ending appropriately with a question mark. A declarative sentence states a fact, an imperative sentence gives a command, and an exclamatory sentence expresses strong feeling, none of which describe a question."}];
+
+function shuffleArr(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function identityOrder(){ var o=[]; for(var i=0;i<RAW_QUESTIONS.length;i++) o.push(i); return o; }
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length!==RAW_QUESTIONS.length) return false;
+  var sorted = arr.slice().sort(function(a,b){return a-b;});
+  for(var i=0;i<sorted.length;i++) if(sorted[i]!==i) return false;
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad order');
+    return arr;
+  }catch(e){ localStorage.removeItem(ORDER_KEY); return null; }
+}
+function saveOrder(order){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(order)); }catch(e){} }
+function buildQuestions(raw, order){
+  var out=[];
+  for(var i=0;i<order.length;i++) out.push(raw[order[i]]);
+  return out;
+}
+var currentOrder = loadOrder() || identityOrder();
+var qs = buildQuestions(RAW_QUESTIONS, currentOrder);
+var pendingFreshMode = 'original';
+
+var state = {};
+function defaultState(){
+  return { cur:0, answers:{}, shuffles:{}, showResults:false, timerTotalSec:null, timerStartedAt:null };
+}
+function loadState(){
+  try{
+    var s = JSON.parse(localStorage.getItem(QUIZ_KEY) || 'null');
+    if(s && typeof s.cur==='number' && s.answers && s.shuffles){ state = s; }
+    else { state = defaultState(); }
+  }catch(e){ localStorage.removeItem(QUIZ_KEY); state = defaultState(); }
+}
+function saveState(){ localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); }
+
+function getShuffle(i){
+  if(!state.shuffles[i]){
+    var a=[0,1,2,3];
+    for(var k=3;k>0;k--){ var j=Math.floor(Math.random()*(k+1)); var t=a[k];a[k]=a[j];a[j]=t; }
+    state.shuffles[i]=a;
+  }
+  return state.shuffles[i];
+}
+function getCSI(i){ return getShuffle(i).indexOf(qs[i].ci); }
+
+function loadAttempts(){ return parseInt(localStorage.getItem(ATT_KEY)||'0',10); }
+
+var timerInterval = null;
+function formatTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function renderTimer(){
+  var setupEl = document.getElementById('timerSetup');
+  var runningEl = document.getElementById('timerRunning');
+  var displayEl = document.getElementById('timerDisplay');
+  if(!state.timerStartedAt){ setupEl.style.display='flex'; runningEl.style.display='none'; return; }
+  setupEl.style.display='none'; runningEl.style.display='flex';
+  var elapsed = (Date.now()-state.timerStartedAt)/1000;
+  var remaining = state.timerTotalSec - elapsed;
+  displayEl.classList.remove('warn','danger');
+  if(remaining<=0){ displayEl.textContent="Time's Up"; displayEl.classList.add('danger'); stopTimerInterval(); return; }
+  displayEl.textContent = formatTime(remaining);
+  if(remaining <= state.timerTotalSec*0.1) displayEl.classList.add('danger');
+  else if(remaining <= state.timerTotalSec*0.25) displayEl.classList.add('warn');
+}
+function startTimer(){
+  var input = document.getElementById('timerMinutesInput');
+  var minutes = parseFloat(input.value);
+  if(!minutes || minutes<=0) minutes = 20;
+  state.timerTotalSec = Math.round(minutes*60);
+  state.timerStartedAt = Date.now();
+  saveState(); renderTimer(); startTimerInterval();
+}
+function startTimerInterval(){ stopTimerInterval(); timerInterval = setInterval(renderTimer, 1000); }
+function stopTimerInterval(){ if(timerInterval){ clearInterval(timerInterval); timerInterval=null; } }
+
+function updateNav(){
+  var ans = Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent = ans + ' / ' + qs.length;
+  document.getElementById('prog-fill').style.width = (ans/qs.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function toggleJump(){
+  var p = document.getElementById('dot-panel');
+  var b = document.getElementById('jump-btn');
+  if(p.style.display==='none' || !p.style.display){
+    p.style.display='block'; b.innerHTML='Hide &#9652;'; renderDots();
+  } else {
+    p.style.display='none'; b.innerHTML='Jump &#9662;';
+  }
+}
+function renderDots(){
+  var p = document.getElementById('dot-panel');
+  if(p.style.display==='none' || !p.style.display) return;
+  var h='';
+  for(var i=0;i<qs.length;i++){
+    var bg = state.answers[i]===undefined ? '#d7dde6' : (state.answers[i]===getCSI(i) ? '#1D9E75' : '#E24B4A');
+    h += '<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';
+  }
+  if(Object.keys(state.answers).length===qs.length){
+    h += '<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';
+  }
+  p.innerHTML = h;
+}
+function goToQ(i){
+  state.cur=i; state.showResults=false; saveState(); render();
+  document.getElementById('dot-panel').style.display='none';
+  document.getElementById('jump-btn').innerHTML='Jump &#9662;';
+}
+
+function showResults(){
+  state.showResults=true;
+  localStorage.setItem(ATT_KEY, loadAttempts()+1);
+  saveState(); render();
+}
+
+function render(){
+  document.getElementById('att-display').textContent = 'Total Attempts: ' + loadAttempts();
+  if(state.showResults){ renderResults(); return; }
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('resultsArea').style.display='none';
+  updateNav();
+  renderTimer();
+
+  var i = state.cur;
+  var q = qs[i];
+  document.getElementById('q-num').textContent = 'Question ' + (i+1) + ' of ' + qs.length;
+  document.getElementById('q-word').innerHTML = q.stem;
+
+  var tagEl = document.getElementById('q-tag-label');
+  if(q.tag){
+    tagEl.style.display='inline-block';
+    tagEl.textContent = q.tag;
+    tagEl.style.background = TAG_COLORS[q.tag] || '#1D9E75';
+  } else {
+    tagEl.style.display='none';
+  }
+
+  var bx = document.getElementById('box-ctx');
+  if(q.box){ bx.style.display='block'; bx.innerHTML = q.box; }
+  else { bx.style.display='none'; }
+
+  var sh = getShuffle(i);
+  var ans = state.answers[i];
+  var csi = getCSI(i);
+  var html='';
+  for(var s=0;s<4;s++){
+    var oi = sh[s];
+    var cls='opt-btn';
+    var dis='';
+    if(ans!==undefined){
+      dis='disabled';
+      if(s===csi) cls+=' correct';
+      else if(s===ans) cls+=' wrong';
+    }
+    html += '<button class="'+cls+'" '+dis+' onclick="pick('+i+','+s+')">'+q.opts[oi]+'</button>';
+  }
+  document.getElementById('opts-area').innerHTML = html;
+
+  var eb = document.getElementById('exp-box');
+  if(ans!==undefined && ans!==csi){
+    eb.style.display='block';
+    eb.innerHTML = q.exp;
+  } else {
+    eb.style.display='none';
+  }
+
+  document.getElementById('next-btn').textContent = (i===qs.length-1) ? 'See Results \u2192' : 'Next';
+  document.querySelector('.prev-btn').disabled = (i===0);
+}
+
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  updateNav();
+
+  var c=0,w=0,sk=0;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]===undefined) sk++;
+    else if(state.answers[i]===getCSI(i)) c++;
+    else w++;
+  }
+  document.getElementById('results-summary').innerHTML =
+    '<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;'+
+    '<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;'+
+    '<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+
+  var html='';
+  for(var i=0;i<qs.length;i++){
+    var a = state.answers[i];
+    var label,bg,tc;
+    if(a===undefined){ label='Skipped'; bg='#d7dde6'; tc='#555'; }
+    else if(a===getCSI(i)){ label='Correct'; bg='#E1F5EE'; tc='#085041'; }
+    else { label='Wrong'; bg='#FCEBEB'; tc='#501313'; }
+    var plainStem = qs[i].stem.replace(/<[^>]*>/g,'');
+    if(plainStem.length>60) plainStem = plainStem.slice(0,60)+'...';
+    html += '<div class="results-card" onclick="goToQ('+i+')">'+
+            '<span style="font-size:0.92rem;font-weight:600;color:#333;">Q'+(i+1)+'. '+plainStem+'</span>'+
+            '<span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';white-space:nowrap;">'+label+'</span>'+
+            '</div>';
+  }
+  document.getElementById('results-cards').innerHTML = html;
+}
+
+function pick(qi, si){
+  if(state.answers[qi]!==undefined) return;
+  state.answers[qi]=si;
+  saveState(); render();
+}
+function go(dir){
+  if(dir===1 && state.cur===qs.length-1){ showResults(); return; }
+  state.cur = Math.max(0, Math.min(qs.length-1, state.cur+dir));
+  saveState(); render();
+}
+function retryWrong(){
+  var first=-1;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]!==undefined && state.answers[i]!==getCSI(i)){
+      if(first===-1) first=i;
+      delete state.answers[i];
+    }
+  }
+  state.timerStartedAt=null; state.timerTotalSec=null;
+  stopTimerInterval();
+  if(first!==-1){ state.cur=first; state.showResults=false; }
+  saveState(); render();
+}
+function copyRes(){
+  var lines=[QUIZ_LABEL];
+  for(var i=0;i<qs.length;i++){
+    var a = state.answers[i];
+    var plainStem = qs[i].stem.replace(/<[^>]*>/g,'');
+    lines.push('Q'+(i+1)+' '+plainStem+': '+(a===undefined?'Skipped':a===getCSI(i)?'Correct':'Wrong'));
+  }
+  var txt = lines.join('\n');
+  if(navigator.clipboard){ navigator.clipboard.writeText(txt).catch(function(){ fallbackCopy(txt); }); }
+  else { fallbackCopy(txt); }
+}
+function fallbackCopy(txt){
+  var ta=document.createElement('textarea');
+  ta.value=txt; document.body.appendChild(ta); ta.select();
+  document.execCommand('copy'); document.body.removeChild(ta);
+}
+
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var titleEl = document.getElementById('freshModalTitle');
+  var textEl = document.getElementById('freshModalText');
+  if(mode==='random'){
+    titleEl.textContent = 'Start Fresh (Random Order)?';
+    textEl.textContent = 'Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    titleEl.textContent = 'Start Fresh (Original Order)?';
+    textEl.textContent = 'Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  currentOrder = (pendingFreshMode==='random') ? shuffleArr(identityOrder()) : identityOrder();
+  saveOrder(currentOrder);
+  qs = buildQuestions(RAW_QUESTIONS, currentOrder);
+  state = defaultState();
+  saveState();
+  stopTimerInterval();
+  closeFreshModal();
+  render();
+}
+
+window.pick=pick; window.go=go; window.goToQ=goToQ; window.toggleJump=toggleJump;
+window.retryWrong=retryWrong; window.copyRes=copyRes; window.showResults=showResults;
+window.startTimer=startTimer;
+window.openFreshModalOriginal=openFreshModalOriginal; window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal; window.confirmFresh=confirmFresh;
+
+
+loadState(); saveState(); render();
+
+})();
+</script>
+</body>
+</html>

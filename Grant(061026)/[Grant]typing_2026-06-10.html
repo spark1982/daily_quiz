@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>[Grant] Typing</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f7fb;min-height:100vh;padding:16px}
+.date-header{font-size:2rem;font-weight:800;text-align:center;color:#185FA5;background:#fff;padding:12px;border-radius:10px;margin-bottom:6px}
+.quiz-title{font-size:1.4rem;font-weight:700;text-align:center;color:#185FA5;margin-bottom:14px}
+.card{background:#fff;border-radius:14px;padding:20px;max-width:720px;margin:0 auto 14px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.stats{display:flex;gap:20px;justify-content:center;margin-bottom:16px;font-size:1rem;font-weight:600;color:#185FA5}
+.stat span{font-size:1.4rem;display:block;text-align:center}
+#source{font-size:1rem;line-height:1.9;letter-spacing:.01em;color:#bbb;word-break:break-word}
+#source s{text-decoration:none}
+.correct{color:#1D9E75}
+.wrong{color:#fff;background:#E24B4A;border-radius:2px}
+.cursor{border-left:2px solid #185FA5;animation:blink .7s steps(1) infinite}
+@keyframes blink{0%,100%{border-color:#185FA5}50%{border-color:transparent}}
+textarea{width:100%;margin-top:14px;border:2px solid #dde3ef;border-radius:10px;padding:12px;font-size:1rem;font-family:inherit;resize:none;height:100px;outline:none;transition:border .15s}
+textarea:focus{border-color:#185FA5}
+textarea:disabled{background:#f4f7fb;color:#999}
+.btn{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:0.95rem;cursor:pointer;font-weight:600;margin-top:12px}
+.btn:hover{background:#1050a0}
+.btn-outline{background:#fff;color:#185FA5;border:2px solid #185FA5}
+.btn-outline:hover{background:#e8edf4}
+#result{display:none;text-align:center;padding:16px 0}
+#result h2{color:#185FA5;font-size:1.5rem;margin-bottom:12px}
+.result-row{display:flex;justify-content:center;gap:32px;margin-bottom:16px}
+.r-stat{text-align:center}
+.r-stat .val{font-size:2rem;font-weight:800;color:#185FA5}
+.r-stat .lbl{font-size:0.85rem;color:#888}
+.para-nav{display:flex;gap:8px;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+.pnav{width:28px;height:28px;border-radius:50%;border:2px solid #185FA5;background:#fff;color:#185FA5;font-size:0.75rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pnav.done{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.pnav.active{box-shadow:0 0 0 3px #185FA5}
+</style>
+</head>
+<body>
+<div class="date-header">2026-06-10</div>
+<div class="quiz-title">[Grant] Typing</div>
+<div class="card">
+  <div class="para-nav" id="parNav"></div>
+  <div class="stats">
+    <div>Time<span id="timerDisp">0.0s</span></div>
+    <div>WPM<span id="wpmDisp">—</span></div>
+    <div>Accuracy<span id="accDisp">—</span></div>
+  </div>
+  <div id="source"></div>
+  <textarea id="inp" placeholder="Start typing here..." spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <button class="btn btn-outline" onclick="resetPara()">Retry</button>
+    <button class="btn btn-outline" id="pauseBtn" onclick="togglePause()">Pause</button>
+  </div>
+  <div id="result">
+    <h2>All Done!</h2>
+    <div class="result-row">
+      <div class="r-stat"><div class="val" id="rTime">—</div><div class="lbl">Total Time</div></div>
+      <div class="r-stat"><div class="val" id="rWPM">—</div><div class="lbl">Avg WPM</div></div>
+      <div class="r-stat"><div class="val" id="rAcc">—</div><div class="lbl">Accuracy</div></div>
+    </div>
+    <button class="btn btn-outline" onclick="resetAll()">Start Over</button>
+  </div>
+</div>
+<script>
+const PARAS=[
+  "The Amazon rainforest, often called the \"lungs of the Earth,\" spans more than 5.5 million square kilometers across nine countries in South America. It is home to an estimated 10 percent of all species on Earth, many of which have not yet been discovered or named by scientists. The forest plays a critical role in regulating the global climate by absorbing vast quantities of carbon dioxide and releasing oxygen through photosynthesis.",
+  "Despite its importance, the Amazon faces severe threats from deforestation. Agricultural expansion, illegal logging, and cattle ranching have led to the destruction of large swaths of forest. Between 2000 and 2020, the Amazon lost approximately 513,000 square kilometers of forest cover — an area larger than the country of Spain. Scientists warn that if deforestation continues at this rate, the Amazon could reach a \"tipping point\" beyond which it cannot recover its original function as a rainforest.",
+  "Indigenous communities have lived in the Amazon for thousands of years and have developed sophisticated knowledge of its ecosystems. These communities have traditionally served as stewards of the forest, using its resources sustainably without causing long-term damage. However, they have faced increasing pressure from outside forces, including displacement from their ancestral lands and exposure to diseases against which they have little natural immunity.",
+  "International efforts to protect the Amazon include financial incentives for countries to preserve forest cover and stricter regulations on deforestation. Some environmentalists argue that global cooperation is essential, since the Amazon's role in the climate system affects people far beyond its borders. Yet progress has been slow and uneven, with some governments prioritizing short-term economic gains over long-term environmental sustainability."
+];
+
+let curPara=0,timerInterval=null,startTime=null,elapsed=0;
+let totalTime=0,totalChars=0,totalErrors=0;
+let paraDone=[],paused=false;
+
+function buildNav(){
+  const nav=document.getElementById('parNav');nav.innerHTML='';
+  PARAS.forEach((_,i)=>{
+    const b=document.createElement('button');b.className='pnav'+(i===curPara?' active':'')+(paraDone[i]?' done':'');
+    b.textContent=i+1;b.onclick=()=>{if(paraDone[i]){goToPara(i);}};
+    nav.appendChild(b);
+  });
+}
+
+function renderSource(typed){
+  const text=PARAS[curPara];
+  let html='';
+  for(let i=0;i<text.length;i++){
+    if(i<typed.length){
+      if(typed[i]===text[i])html+=`<span class="correct">${esc(text[i])}</span>`;
+      else html+=`<span class="wrong">${esc(text[i])}</span>`;
+    } else if(i===typed.length){
+      html+=`<span class="cursor">${esc(text[i])}</span>`;
+    } else {
+      html+=`<span>${esc(text[i])}</span>`;
+    }
+  }
+  document.getElementById('source').innerHTML=html;
+}
+
+function esc(c){return c==='<'?'&lt;':c==='>'?'&gt;':c==='&'?'&amp;':c;}
+
+function startTimer(){
+  if(timerInterval)return;
+  startTime=Date.now()-elapsed*1000;
+  timerInterval=setInterval(()=>{
+    elapsed=(Date.now()-startTime)/1000;
+    document.getElementById('timerDisp').textContent=elapsed.toFixed(1)+'s';
+  },100);
+}
+
+function stopTimer(){
+  clearInterval(timerInterval);timerInterval=null;
+}
+
+function calcStats(typed){
+  const text=PARAS[curPara];
+  let errors=0;
+  for(let i=0;i<Math.min(typed.length,text.length);i++){if(typed[i]!==text[i])errors++;}
+  const words=text.trim().split(/\s+/).length;
+  const wpm=elapsed>0?Math.round(words/(elapsed/60)):0;
+  const acc=typed.length>0?Math.round(((typed.length-errors)/typed.length)*100):100;
+  document.getElementById('wpmDisp').textContent=wpm;
+  document.getElementById('accDisp').textContent=acc+'%';
+  return{errors,words,wpm,acc};
+}
+
+document.getElementById('inp').addEventListener('input',function(){
+  const typed=this.value;
+  const text=PARAS[curPara];
+  if(typed.length===1&&!timerInterval)startTimer();
+  renderSource(typed);
+  if(typed.length>0)calcStats(typed);
+  if(typed===text){
+    stopTimer();
+    const{errors}=calcStats(typed);
+    totalTime+=elapsed;
+    totalChars+=text.length;
+    totalErrors+=errors;
+    paraDone[curPara]=true;
+    this.disabled=true;
+    buildNav();
+    if(curPara<PARAS.length-1){
+      setTimeout(()=>nextPara(),800);
+    } else {
+      showFinalResult();
+    }
+  }
+});
+
+function resetStats(){
+  document.getElementById('timerDisp').textContent='0.0s';
+  document.getElementById('wpmDisp').textContent='—';
+  document.getElementById('accDisp').textContent='—';
+}
+
+function resetPara(){
+  stopTimer();elapsed=0;paused=false;
+  document.getElementById('pauseBtn').textContent='Pause';
+  resetStats();
+  const inp=document.getElementById('inp');inp.disabled=false;inp.value='';inp.focus();
+  renderSource('');
+}
+
+function nextPara(){
+  curPara++;elapsed=0;startTime=null;paused=false;
+  document.getElementById('pauseBtn').textContent='Pause';
+  resetStats();
+  const inp=document.getElementById('inp');inp.disabled=false;inp.value='';inp.focus();
+  renderSource('');buildNav();
+}
+
+function goToPara(i){
+  curPara=i;elapsed=0;startTime=null;paused=false;
+  document.getElementById('pauseBtn').textContent='Pause';
+  resetStats();
+  const inp=document.getElementById('inp');inp.disabled=false;inp.value='';inp.focus();
+  renderSource('');buildNav();
+}
+
+function togglePause(){
+  if(!timerInterval&&!paused)return; // 아직 시작 안 함
+  if(!paused){
+    paused=true;stopTimer();
+    document.getElementById('pauseBtn').textContent='Resume';
+    document.getElementById('inp').disabled=true;
+  } else {
+    paused=false;
+    startTime=Date.now()-elapsed*1000;
+    timerInterval=setInterval(()=>{
+      elapsed=(Date.now()-startTime)/1000;
+      document.getElementById('timerDisp').textContent=elapsed.toFixed(1)+'s';
+    },100);
+    document.getElementById('pauseBtn').textContent='Pause';
+    const inp=document.getElementById('inp');inp.disabled=false;inp.focus();
+  }
+}
+
+function showFinalResult(){
+  document.getElementById('result').style.display='block';
+  const avgWpm=Math.round(totalChars/5/(totalTime/60));
+  const acc=Math.round(((totalChars-totalErrors)/totalChars)*100);
+  document.getElementById('rTime').textContent=totalTime.toFixed(1)+'s';
+  document.getElementById('rWPM').textContent=avgWpm;
+  document.getElementById('rAcc').textContent=acc+'%';
+}
+
+function resetAll(){
+  curPara=0;totalTime=0;totalChars=0;totalErrors=0;paraDone=[];paused=false;
+  document.getElementById('result').style.display='none';
+  document.getElementById('pauseBtn').textContent='Pause';
+  stopTimer();elapsed=0;
+  resetStats();
+  const inp=document.getElementById('inp');inp.disabled=false;inp.value='';inp.focus();
+  renderSource('');buildNav();
+}
+window.resetPara=resetPara;window.nextPara=nextPara;window.resetAll=resetAll;window.togglePause=togglePause;
+
+buildNav();renderSource('');document.getElementById('inp').focus();
+</script>
+</body>
+</html>

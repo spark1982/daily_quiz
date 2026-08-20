@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Possessives Quiz</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 14px;}
+#date-display{font-size:2rem;font-weight:800;color:#185FA5;text-align:center;background:#fff;width:100%;max-width:640px;padding:10px 0 4px;}
+#quiz-title{font-size:1.2rem;font-weight:700;color:#1a2e4a;text-align:center;margin-bottom:4px;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+
+/* attempt bar */
+#att-bar{font-size:0.8rem;color:#555;text-align:center;margin-bottom:8px;}
+
+/* top nav */
+#top-nav{width:100%;max-width:640px;background:#fff;border-radius:12px;padding:10px 14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.07);}
+#nav-row{display:flex;align-items:center;gap:10px;}
+#nav-counter{font-size:0.85rem;font-weight:700;color:#1a2e4a;white-space:nowrap;}
+#progress-track{flex:1;height:8px;background:#d7dde6;border-radius:4px;overflow:hidden;}
+#progress-fill{height:100%;background:#1D9E75;border-radius:4px;transition:width 0.3s;}
+#btn-jump{padding:5px 12px;border:2px solid #1D9E75;border-radius:20px;background:#fff;color:#1D9E75;font-size:0.8rem;font-weight:700;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding-top:10px;display:none;flex-wrap:wrap;gap:6px;}
+#dot-panel.open{display:flex;}
+.dot{width:26px;height:26px;border-radius:50%;background:#d7dde6;border:none;cursor:pointer;font-size:0.65rem;font-weight:700;color:#fff;}
+.dot.correct{background:#1D9E75;}
+.dot.wrong{background:#E24B4A;}
+.dot.current{outline:2px solid #185FA5;outline-offset:2px;}
+#results-pill{display:none;padding:5px 14px;border-radius:20px;background:#1D9E75;color:#fff;font-size:0.8rem;font-weight:700;cursor:pointer;border:none;}
+
+/* card */
+#quiz-screen{display:none;width:100%;max-width:640px;}
+#card{background:#fff;border-radius:16px;padding:26px 20px;box-shadow:0 4px 14px rgba(0,0,0,0.08);}
+#q-num{font-size:0.78rem;color:#9ca3af;margin-bottom:6px;}
+#q-text{font-size:1.05rem;color:#1e293b;font-weight:600;line-height:1.5;margin-bottom:20px;}
+.opt{display:block;width:100%;text-align:left;background:#e8edf4;border:2px solid transparent;border-radius:10px;padding:13px 15px;margin-bottom:10px;font-size:0.95rem;color:#111111;cursor:pointer;}
+.opt:hover:not(:disabled){border-color:#1D9E75;background:#d4f0e5;}
+.opt.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;font-weight:700;}
+.opt.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;font-weight:700;}
+.opt:disabled{cursor:default;}
+
+/* explanation */
+#explanation{display:none;margin-top:16px;background:#fefce8;border-left:4px solid #facc15;border-radius:8px;padding:13px 15px;font-size:0.88rem;color:#4b5563;line-height:1.6;}
+#explanation strong{color:#1e293b;}
+
+/* bottom nav */
+#bottom-nav{display:flex;justify-content:space-between;margin-top:20px;gap:10px;}
+.nav-btn{flex:1;padding:12px;border:none;border-radius:10px;font-size:0.95rem;font-weight:700;cursor:pointer;}
+#btn-prev{background:#e8edf4;color:#374151;}
+#btn-next{background:#1D9E75;color:#fff;}
+#btn-prev:disabled{opacity:0.35;cursor:default;}
+#btn-next:disabled{opacity:0.35;cursor:default;}
+
+/* results */
+#results-screen{display:none;width:100%;max-width:640px;}
+#results-card{background:#fff;border-radius:16px;padding:26px 20px;box-shadow:0 4px 14px rgba(0,0,0,0.08);}
+#results-heading{font-size:1.4rem;font-weight:800;color:#1D9E75;text-align:center;margin-bottom:6px;}
+#results-score{font-size:2.4rem;font-weight:900;color:#1D9E75;text-align:center;margin-bottom:16px;}
+#results-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
+.res-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:#f5f7fa;}
+.res-qnum{font-size:0.78rem;font-weight:700;color:#6b7280;min-width:24px;}
+.res-status{font-size:0.78rem;font-weight:700;padding:3px 8px;border-radius:12px;}
+.res-status.correct{background:#E1F5EE;color:#1D9E75;}
+.res-status.wrong{background:#FCEBEB;color:#E24B4A;}
+.res-status.skipped{background:#f3f4f6;color:#6b7280;}
+.res-text{font-size:0.82rem;color:#374151;flex:1;}
+.res-correct-text{font-size:0.78rem;color:#1D9E75;font-weight:600;}
+.res-jump-btn{font-size:0.75rem;padding:4px 10px;border:none;border-radius:8px;background:#185FA5;color:#fff;cursor:pointer;font-weight:700;}
+#results-actions{display:flex;flex-direction:column;gap:10px;}
+#btn-retry{padding:13px;border:none;border-radius:10px;background:#1D9E75;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;}
+#btn-copy{padding:13px;border:none;border-radius:10px;background:#185FA5;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;}
+#btn-startfresh{padding:13px;border:none;border-radius:10px;background:#e8edf4;color:#374151;font-size:1rem;font-weight:700;cursor:pointer;}
+
+/* modals */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;align-items:center;justify-content:center;}
+.overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:20px;padding:32px 26px;text-align:center;max-width:320px;width:90%;}
+.modal-box p{color:#374151;margin-bottom:22px;font-size:0.97rem;line-height:1.5;}
+.modal-btn{padding:11px 24px;border-radius:10px;font-size:0.95rem;font-weight:700;border:none;cursor:pointer;}
+#btn-sf-cancel{background:#e8edf4;color:#374151;margin-right:8px;}
+#btn-sf-ok{background:#E24B4A;color:#fff;}
+</style>
+</head>
+<body>
+<!-- ===== Universal Quiz Timer (auto-injected) ===== -->
+<style>
+  #qzTimerBar { background: #ffffff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-family: 'Segoe UI', Arial, sans-serif; }
+  #qzTimerSetup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+  #qzTimerSetup label { font-weight: 700; }
+  #qzTimerInput { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+  #qzTimerStartBtn { background: #185FA5; color: #ffffff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  #qzTimerStartBtn:active { opacity: 0.8; }
+  #qzTimerRunning { display: none; align-items: center; gap: 8px; }
+  #qzTimerLabel { font-size: 0.78rem; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 0.02em; }
+  #qzTimerDisplay { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+  #qzTimerDisplay.qz-warn { color: #f5a623; }
+  #qzTimerDisplay.qz-danger { color: #E24B4A; }
+</style>
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label for="qzTimerInput">Set Time Limit:</label>
+    <input type="number" id="qzTimerInput" min="1" max="180" value="20"> min
+    <button id="qzTimerStartBtn" type="button">Start</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span id="qzTimerLabel">Time Left</span>
+    <span id="qzTimerDisplay">20:00</span>
+  </div>
+</div>
+<script>
+(function(){
+  var QZ_KEY = 'qzTimer_' + location.pathname;
+  var qz = { totalSec: null, startedAt: null };
+  try {
+    var raw = localStorage.getItem(QZ_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p.totalSec === 'number' && typeof p.startedAt === 'number') qz = p;
+    }
+  } catch(e) {}
+  var qzInterval = null;
+
+  function qzSave() { try { localStorage.setItem(QZ_KEY, JSON.stringify(qz)); } catch(e) {} }
+  function qzFormat(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60), s = sec % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function qzRender() {
+    var setupEl = document.getElementById('qzTimerSetup');
+    var runEl = document.getElementById('qzTimerRunning');
+    var disp = document.getElementById('qzTimerDisplay');
+    if (!setupEl || !runEl || !disp) return;
+    if (!qz.startedAt) {
+      setupEl.style.display = 'flex';
+      runEl.style.display = 'none';
+      return;
+    }
+    setupEl.style.display = 'none';
+    runEl.style.display = 'flex';
+    var elapsed = (Date.now() - qz.startedAt) / 1000;
+    var remaining = qz.totalSec - elapsed;
+    disp.classList.remove('qz-warn', 'qz-danger');
+    if (remaining <= 0) {
+      disp.textContent = "Time's Up";
+      disp.classList.add('qz-danger');
+      qzStopInterval();
+      return;
+    }
+    disp.textContent = qzFormat(remaining);
+    if (remaining <= qz.totalSec * 0.1) disp.classList.add('qz-danger');
+    else if (remaining <= qz.totalSec * 0.25) disp.classList.add('qz-warn');
+  }
+  function qzStartInterval() {
+    qzStopInterval();
+    qzInterval = setInterval(qzRender, 1000);
+  }
+  function qzStopInterval() {
+    if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+  }
+  function qzStart() {
+    var input = document.getElementById('qzTimerInput');
+    var minutes = parseFloat(input.value);
+    if (!minutes || minutes <= 0) minutes = 20;
+    qz.totalSec = Math.round(minutes * 60);
+    qz.startedAt = Date.now();
+    qzSave();
+    qzRender();
+    qzStartInterval();
+  }
+
+  var btn = document.getElementById('qzTimerStartBtn');
+  if (btn) btn.addEventListener('click', qzStart);
+  qzRender();
+  if (qz.startedAt) qzStartInterval();
+
+  function qzResetTimer() {
+    qz.totalSec = null;
+    qz.startedAt = null;
+    qzSave();
+    qzStopInterval();
+    qzRender();
+  }
+  var qzRetryRe = /retry|restart|reset|start\s*fresh|try\s*again|\uB2E4\uC2DC\s*\uC2DC\uC791|\uCC98\uC74C\uBD80\uD0B0/i;
+  document.addEventListener('click', function(ev) {
+    var el = ev.target, depth = 0;
+    while (el && depth < 4) {
+      if (el.id === 'qzTimerBar' || el.id === 'qzAttemptsBar') return;
+      var isClickable = el.tagName === 'BUTTON' || el.tagName === 'A' ||
+        (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) ||
+        (el.getAttribute && el.getAttribute('role') === 'button');
+      if (isClickable) {
+        var txt = (el.textContent || el.value || '').trim();
+        if (txt.length > 0 && txt.length < 40 && qzRetryRe.test(txt)) {
+          qzResetTimer();
+          return;
+        }
+      }
+      el = el.parentElement;
+      depth++;
+    }
+  }, true);
+})();
+</script>
+<!-- ===== End Universal Quiz Timer ===== -->
+
+
+<div id="quiz-title">[Grant] Possessives Quiz</div>
+<p class="instruction">Choose the sentence that uses the possessive form correctly.</p>
+<div id="att-bar">Total Attempts: <span id="att-count">0</span></div>
+
+<div id="top-nav">
+  <div id="nav-row">
+    <span id="nav-counter">0 / 50</span>
+    <div id="progress-track"><div id="progress-fill" style="width:0%"></div></div>
+    <button id="btn-jump" onclick="window.toggleJump()">Jump</button>
+  </div>
+  <div id="dot-panel"></div>
+</div>
+
+<div id="quiz-screen">
+  <div id="card">
+    <div id="q-num"></div>
+    <div id="q-text"></div>
+    <div id="choices"></div>
+    <div id="explanation"></div>
+  </div>
+  <div id="bottom-nav">
+    <button class="nav-btn" id="btn-prev" onclick="window.goPrev()" disabled>Prev</button>
+    <button class="nav-btn" id="btn-next" onclick="window.goNext()">Next</button>
+  </div>
+</div>
+
+<div id="results-screen">
+  <div id="results-card">
+    <div id="results-heading">Results</div>
+    <div id="results-score"></div>
+    <div id="results-grid"></div>
+    <div id="results-actions">
+      <button id="btn-retry" onclick="window.retryWrong()">Retry Wrong Questions</button>
+      <button id="btn-copy" onclick="window.copyResults()">Copy All Results</button>
+      <button id="btn-startfresh" onclick="window.askFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="sf-overlay">
+  <div class="modal-box">
+    <p>Start over? All progress will be lost.</p>
+    <button class="modal-btn" id="btn-sf-cancel" onclick="window.cancelFresh()">Cancel</button>
+    <button class="modal-btn" id="btn-sf-ok" onclick="window.confirmFresh()">Start Fresh</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var KEY='quiz_grantpossessive_v1';
+var ATT_KEY='quiz_grantpossessive_att_v1';
+var TOTAL=50;
+
+var questions=[
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The dog wagged it's tail happily.","My sisters car is parked outside.","The cat licked its paw slowly.","Those books are their's to keep."],ci:2,exp:"<strong>\"its\"</strong> (no apostrophe) is the correct possessive pronoun.<br>\u2022 <em>it's</em> = <em>it is</em> (contraction, not possessive).<br>\u2022 <em>sisters car</em> is missing the apostrophe \u2014 should be <em>sister's</em> or <em>sisters'</em>.<br>\u2022 <em>their's</em> does not exist; the correct form is <em>theirs</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The childrens' playground is closed today.","I borrowed my friend's bicycle yesterday.","The mens' locker room is on the left.","Please put the books back in there place."],ci:1,exp:"<strong>\"friend's\"</strong> correctly adds <em>'s</em> to a singular noun.<br>\u2022 <em>childrens'</em> is wrong \u2014 <em>children</em> is already plural; the possessive is <em>children's</em>.<br>\u2022 <em>mens'</em> is wrong \u2014 <em>men</em> is already plural; the possessive is <em>men's</em>.<br>\u2022 <em>there</em> is a location word; the possessive adjective is <em>their</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The womens' meeting starts at nine.","Have you seen Johns new laptop?","She forgot to bring hers notebook.","The students' essays were returned today."],ci:3,exp:"<strong>\"students'\"</strong> correctly marks plural possessive.<br>\u2022 <em>womens'</em> is wrong \u2014 <em>women</em> is already plural; it should be <em>women's</em>.<br>\u2022 <em>Johns</em> is missing the apostrophe \u2014 should be <em>John's</em>.<br>\u2022 <em>hers</em> is a standalone pronoun; it cannot precede a noun. Use <em>her notebook</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["That bicycle over there is her's.","The dogs bone is buried in the yard.","We visited our grandparents' house last summer.","The team lost there best player."],ci:2,exp:"<strong>\"grandparents'\"</strong> correctly places the apostrophe after the plural noun.<br>\u2022 <em>her's</em> does not exist; the correct form is <em>hers</em>.<br>\u2022 <em>dogs</em> is missing the apostrophe \u2014 should be <em>dog's</em>.<br>\u2022 <em>there</em> is a location word; the possessive adjective is <em>their</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["My two brothers bicycle tires are flat.","The fox hid it's cubs in the den.","The principal's announcement surprised everyone.","All the score's were listed on the board."],ci:2,exp:"<strong>\"principal's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>brothers</em> is missing the apostrophe \u2014 should be <em>brothers'</em>.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>.<br>\u2022 <em>score's</em> incorrectly adds an apostrophe to a simple plural noun."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The boy's shoes were muddy after the game.","All the deers' tracks led into the forest.","They left there homework on the bus.","The babys' toys were scattered on the floor."],ci:0,exp:"<strong>\"boy's\"</strong> correctly marks singular possessive.<br>\u2022 <em>deers'</em> is wrong \u2014 <em>deer</em> is already plural; the possessive is <em>deer's</em>.<br>\u2022 <em>there</em> should be <em>their</em> (possessive adjective).<br>\u2022 <em>babys'</em> is a misspelling \u2014 the correct plural is <em>babies</em>, so the possessive is <em>babies'</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["James' car broke down on the highway.","The sheeps' wool was thick and warm.","She returned the book to it's shelf.","Those mittens are your's to keep."],ci:0,exp:"<strong>\"James'\"</strong> is an accepted possessive for names ending in <em>s</em>.<br>\u2022 <em>sheeps'</em> is wrong \u2014 <em>sheep</em> is already plural; the possessive is <em>sheep's</em>.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>.<br>\u2022 <em>your's</em> does not exist; the correct form is <em>yours</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The geeses' feathers floated on the lake.","We heard the neighbors dog barking all night.","The coach praised the team's effort.","He left his keys in the car, but their fine."],ci:2,exp:"<strong>\"team's\"</strong> correctly shows singular possessive.<br>\u2022 <em>geeses'</em> is wrong \u2014 <em>geese</em> is already plural; the possessive is <em>geese's</em>.<br>\u2022 <em>neighbors dog</em> is missing the apostrophe \u2014 should be <em>neighbor's</em>.<br>\u2022 <em>their</em> should be <em>they're</em> (they are) in that context."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The teachers all brought there own supplies.","Mikes report was the best in the class.","The museum's collection includes rare artifacts.","Both of the mens' uniforms need to be cleaned."],ci:2,exp:"<strong>\"museum's\"</strong> correctly uses <em>'s</em> for a singular possessive.<br>\u2022 <em>there</em> should be <em>their</em> (possessive adjective).<br>\u2022 <em>Mikes</em> is missing the apostrophe \u2014 should be <em>Mike's</em>.<br>\u2022 <em>mens'</em> is wrong \u2014 <em>men</em> is already plural; the possessive is <em>men's</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The oxes' cart was loaded with grain.","Each of the girls brought her own lunch.","The company lost most of it's clients.","Is that jacket your's or mine?"],ci:1,exp:"<strong>\"her\"</strong> is the correct possessive adjective with a singular referent (<em>each girl</em>).<br>\u2022 <em>oxes'</em> is wrong \u2014 the correct plural of <em>ox</em> is <em>oxen</em>; the possessive is <em>oxen's</em>.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>.<br>\u2022 <em>your's</em> does not exist; the correct form is <em>yours</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The apple's in the basket are fresh.","My boss's office is on the third floor.","The student forgot there pencil.","She is going to there house after school."],ci:1,exp:"<strong>\"boss's\"</strong> correctly forms the possessive of a noun ending in <em>s</em>.<br>\u2022 <em>apple's</em> incorrectly adds an apostrophe to a simple plural noun.<br>\u2022 Both uses of <em>there</em> are wrong \u2014 the possessive adjective is <em>their</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The peoples' voices were heard at the rally.","That red bike is mine's, not yours.","I can't find Sarahs glasses anywhere.","The people's choice award was announced."],ci:3,exp:"<strong>\"people's\"</strong> is correct \u2014 <em>people</em> is already an irregular plural; the possessive is <em>people's</em>.<br>\u2022 <em>peoples'</em> double-marks the plural \u2014 wrong.<br>\u2022 <em>mine's</em> does not exist; the correct form is <em>mine</em>.<br>\u2022 <em>Sarahs</em> is missing the apostrophe \u2014 should be <em>Sarah's</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The library returned it's books to the shelf.","We parked are car in the wrong spot.","The childrens park was newly renovated.","The lawyer reviewed her client's contract."],ci:3,exp:"<strong>\"client's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>.<br>\u2022 <em>are</em> should be <em>our</em> (possessive adjective).<br>\u2022 <em>childrens park</em> is missing the apostrophe \u2014 should be <em>children's</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The mices' nest was found in the attic.","Put the groceries in there proper place.","Toms car has a broken headlight.","The mice's droppings were found near the wall."],ci:3,exp:"<strong>\"mice's\"</strong> is correct \u2014 <em>mice</em> is already the plural of <em>mouse</em>; the possessive is <em>mice's</em>.<br>\u2022 <em>mices'</em> is wrong \u2014 <em>mices</em> is not a word.<br>\u2022 <em>there</em> should be <em>their</em> (possessive adjective).<br>\u2022 <em>Toms</em> is missing the apostrophe \u2014 should be <em>Tom's</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The bird cleaned it's feathers carefully.","That new house on the corner is our's.","The three dogs leashes were tangled up.","The girls' soccer team won the championship."],ci:3,exp:"<strong>\"girls'\"</strong> correctly places the apostrophe after the plural noun.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>.<br>\u2022 <em>our's</em> does not exist; the correct form is <em>ours</em>.<br>\u2022 <em>dogs leashes</em> is missing the apostrophe \u2014 should be <em>dogs'</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The cat's meow woke everyone up.","The student's all passed the exam.","The fish swam to there side of the tank.","The engine lost it's power on the hill."],ci:0,exp:"<strong>\"cat's\"</strong> correctly shows singular possessive.<br>\u2022 <em>student's</em> incorrectly uses the possessive apostrophe on a plural subject \u2014 should be <em>students</em>.<br>\u2022 <em>there</em> should be <em>their</em> (possessive adjective).<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The doctors office was clean and bright.","Theirs car was towed from the parking lot.","The nurse checked the patient's blood pressure.","The bird built it's nest in the oak tree."],ci:2,exp:"<strong>\"patient's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>doctors office</em> is missing the apostrophe \u2014 should be <em>doctor's</em>.<br>\u2022 <em>Theirs</em> is a standalone pronoun; it cannot precede a noun. Use <em>their car</em>.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The lices' eggs are difficult to remove.","My fathers car needs an oil change.","The lice's life cycle is quite complex.","She left there phone on the kitchen counter."],ci:2,exp:"<strong>\"lice's\"</strong> is correct \u2014 <em>lice</em> is already the plural of <em>louse</em>; the possessive is <em>lice's</em>.<br>\u2022 <em>lices'</em> is wrong \u2014 <em>lices</em> is not a word.<br>\u2022 <em>fathers</em> is missing the apostrophe \u2014 should be <em>father's</em>.<br>\u2022 <em>there</em> should be <em>their</em> (possessive adjective)."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["My brother's room is always a mess.","The teacher's all went to the conference.","That winning lottery ticket is mines.","The horse lost it's shoe during the race."],ci:0,exp:"<strong>\"brother's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>teacher's</em> incorrectly uses the possessive apostrophe on a plural subject \u2014 should be <em>teachers</em>.<br>\u2022 <em>mines</em> does not exist; the correct form is <em>mine</em>.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The students left there bags in the hall.","Emmas dress was the prettiest at the party.","She borrowed hers sister's umbrella.","The mayor's speech lasted over an hour."],ci:3,exp:"<strong>\"mayor's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>there</em> should be <em>their</em> (possessive adjective).<br>\u2022 <em>Emmas</em> is missing the apostrophe \u2014 should be <em>Emma's</em>.<br>\u2022 <em>hers</em> is a standalone pronoun; it cannot precede a noun. Use <em>her sister's</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The engine stopped because it's battery died.","Is this seat yours or someone else's?","Yours coat is hanging by the door.","I saw Davids painting at the gallery."],ci:1,exp:"<strong>\"yours\"</strong> and <strong>\"someone else's\"</strong> are both correct possessive forms used appropriately.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>.<br>\u2022 <em>Yours</em> is a standalone pronoun; it cannot precede a noun. Use <em>your coat</em>.<br>\u2022 <em>Davids</em> is missing the apostrophe \u2014 should be <em>David's</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The geese's honking could be heard from far away.","The geeses' pond was frozen in winter.","The parents forgot to sign there kids forms.","The winning idea was ours' to celebrate."],ci:0,exp:"<strong>\"geese's\"</strong> is correct \u2014 <em>geese</em> is already the plural of <em>goose</em>; the possessive is <em>geese's</em>.<br>\u2022 <em>geeses'</em> is wrong \u2014 <em>geeses</em> is not a word.<br>\u2022 <em>there</em> should be <em>their</em> (possessive adjective).<br>\u2022 <em>ours'</em> does not exist; the correct form is <em>ours</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The schools cafeteria was renovated last year.","The robot completed it's task without error.","Theirs strategy won the competition.","The children's hospital raised millions last month."],ci:3,exp:"<strong>\"children's\"</strong> is correct \u2014 <em>children</em> is already plural; the possessive is <em>children's</em>.<br>\u2022 <em>schools</em> is missing the apostrophe \u2014 should be <em>school's</em>.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>.<br>\u2022 <em>Theirs</em> is a standalone pronoun; it cannot precede a noun. Use <em>their strategy</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The company's revenue doubled this year.","The trophy is her's to keep forever.","The pond was known for it's beauty.","The mens' bathroom is under renovation."],ci:0,exp:"<strong>\"company's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>her's</em> does not exist; the correct form is <em>hers</em>.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>.<br>\u2022 <em>mens'</em> is wrong \u2014 <em>men</em> is already plural; the possessive is <em>men's</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["Rachels project received the highest grade.","The dog buried it's bone near the fence.","The neighbors house has a new roof.","The firefighter's helmet was dented in the blaze."],ci:3,exp:"<strong>\"firefighter's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>Rachels</em> is missing the apostrophe \u2014 should be <em>Rachel's</em>.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>.<br>\u2022 <em>neighbors</em> is missing the apostrophe \u2014 should be <em>neighbor's</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The players' jerseys were washed after the game.","The player's all cheered when they won.","The coach told them to do there best.","The stadium lost it's electricity during the storm."],ci:0,exp:"<strong>\"players'\"</strong> correctly places the apostrophe after the plural noun.<br>\u2022 <em>player's</em> incorrectly uses the possessive apostrophe on a plural subject \u2014 should be <em>players</em>.<br>\u2022 <em>there</em> should be <em>their</em> (possessive adjective).<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["Alexs bike is the fastest on the block.","That seat by the window is mines.","The president's decision caused controversy.","The clock stopped because it's spring broke."],ci:2,exp:"<strong>\"president's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>Alexs</em> is missing the apostrophe \u2014 should be <em>Alex's</em>.<br>\u2022 <em>mines</em> does not exist; the correct form is <em>mine</em>.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The deers' antlers were impressive.","The deer's hoofprints were visible in the snow.","The garden belongs to ours' family.","The hikers set up camp on there own."],ci:1,exp:"<strong>\"deer's\"</strong> is correct \u2014 <em>deer</em> is already the plural form; the possessive is <em>deer's</em>.<br>\u2022 <em>deers'</em> is wrong \u2014 <em>deers</em> is not standard.<br>\u2022 <em>ours'</em> does not exist, and <em>ours</em> cannot precede a noun \u2014 use <em>our</em>.<br>\u2022 <em>there</em> should be <em>their</em> (possessive adjective)."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The professor's lecture was hard to follow.","The snake shed it's skin in the sun.","Theirs house is the one with the blue door.","The apple's fell from the tree in the wind."],ci:0,exp:"<strong>\"professor's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>.<br>\u2022 <em>Theirs</em> is a standalone pronoun; it cannot precede a noun. Use <em>their house</em>.<br>\u2022 <em>apple's</em> incorrectly adds an apostrophe to a simple plural noun."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The pilots announcement came over the speakers.","The nurses' station is located on the second floor.","The award was her's after years of hard work.","The machine overheated because it's fan broke."],ci:1,exp:"<strong>\"nurses'\"</strong> correctly places the apostrophe after the plural noun.<br>\u2022 <em>pilots</em> is missing the apostrophe \u2014 should be <em>pilot's</em>.<br>\u2022 <em>her's</em> does not exist; the correct form is <em>hers</em>.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The decision is your's to make.","The athlete's training schedule was intense.","The fans cheered for there favorite team.","Marks phone ran out of battery on the trip."],ci:1,exp:"<strong>\"athlete's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>your's</em> does not exist; the correct form is <em>yours</em>.<br>\u2022 <em>there</em> should be <em>their</em> (possessive adjective).<br>\u2022 <em>Marks</em> is missing the apostrophe \u2014 should be <em>Mark's</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The volcano revealed it's lava flows.","The senators speech drew a large crowd.","The twins' birthday party was a huge success.","Ours neighborhood is the safest in town."],ci:2,exp:"<strong>\"twins'\"</strong> correctly places the apostrophe after the plural noun.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>.<br>\u2022 <em>senators</em> is missing the apostrophe \u2014 should be <em>senator's</em>.<br>\u2022 <em>Ours</em> is a standalone pronoun; it cannot precede a noun. Use <em>our neighborhood</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The journalist's article was published today.","The kids lost there mittens in the snow.","This parking spot is mines for the whole day.","The submarine lost it's signal underwater."],ci:0,exp:"<strong>\"journalist's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>there</em> should be <em>their</em> (possessive adjective).<br>\u2022 <em>mines</em> does not exist; the correct form is <em>mine</em>.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["Annas painting won first place at the fair.","The gold medal was her's after the final race.","The phone lost it's signal in the tunnel.","The soldiers' bravery was honored at the ceremony."],ci:3,exp:"<strong>\"soldiers'\"</strong> correctly places the apostrophe after the plural noun.<br>\u2022 <em>Annas</em> is missing the apostrophe \u2014 should be <em>Anna's</em>.<br>\u2022 <em>her's</em> does not exist; the correct form is <em>hers</em>.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["My sister's cat knocked over a vase.","The cat's all gathered near the food bowl.","The family moved to there new home in spring.","Theirs plan to win was very creative."],ci:0,exp:"<strong>\"sister's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>cat's</em> incorrectly uses the possessive apostrophe on a plural subject \u2014 should be <em>cats</em>.<br>\u2022 <em>there</em> should be <em>their</em> (possessive adjective).<br>\u2022 <em>Theirs</em> is a standalone pronoun; it cannot precede a noun. Use <em>their plan</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The doctors' opinions differed on the diagnosis.","The final answer is your's to decide.","The queens crown was stolen from the palace.","The computer crashed because it's memory was full."],ci:0,exp:"<strong>\"doctors'\"</strong> correctly places the apostrophe after the plural noun.<br>\u2022 <em>your's</em> does not exist; the correct form is <em>yours</em>.<br>\u2022 <em>queens</em> is missing the apostrophe \u2014 should be <em>queen's</em>.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The wolf howled as it's pack ran through the forest.","The children's laughter filled the playground.","The scouts set up there tents by the river.","Ours team won every game this season."],ci:1,exp:"<strong>\"children's\"</strong> is correct \u2014 <em>children</em> is already plural; the possessive is <em>children's</em>.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>.<br>\u2022 <em>there</em> should be <em>their</em> (possessive adjective).<br>\u2022 <em>Ours</em> is a standalone pronoun; it cannot precede a noun. Use <em>our team</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The knights armor was heavy and ornate.","The victory was their's after hours of effort.","The women's restroom is past the lobby.","The satellite lost it's orbit around the planet."],ci:2,exp:"<strong>\"women's\"</strong> is correct \u2014 <em>women</em> is already plural; the possessive is <em>women's</em>.<br>\u2022 <em>knights</em> is missing the apostrophe \u2014 should be <em>knight's</em>.<br>\u2022 <em>their's</em> does not exist; the correct form is <em>theirs</em>.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The runners stretched there legs before the race.","Julias notes were the most detailed in class.","The prize was her's after months of training.","The captain's log recorded every detail of the voyage."],ci:3,exp:"<strong>\"captain's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>there</em> should be <em>their</em> (possessive adjective).<br>\u2022 <em>Julias</em> is missing the apostrophe \u2014 should be <em>Julia's</em>.<br>\u2022 <em>her's</em> does not exist; the correct form is <em>hers</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The engineer's blueprints were approved last week.","The plant dropped it's leaves in the fall.","The best seat in the house is mines.","The book's on the shelf need to be reorganized."],ci:0,exp:"<strong>\"engineer's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>.<br>\u2022 <em>mines</em> does not exist; the correct form is <em>mine</em>.<br>\u2022 <em>book's</em> incorrectly adds an apostrophe to a simple plural noun."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["This opportunity is your's to take.","The robot opened it's compartment slowly.","The men's volleyball team practices on Tuesdays.","The tourists lost there luggage at the airport."],ci:2,exp:"<strong>\"men's\"</strong> is correct \u2014 <em>men</em> is already plural; the possessive is <em>men's</em>.<br>\u2022 <em>your's</em> does not exist; the correct form is <em>yours</em>.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>.<br>\u2022 <em>there</em> should be <em>their</em> (possessive adjective)."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The professors lecture covered three chapters.","Ours plan is better than theirs.","The spaceship adjusted it's course.","The artist's studio was filled with paintings."],ci:3,exp:"<strong>\"artist's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>professors</em> is missing the apostrophe \u2014 should be <em>professor's</em>.<br>\u2022 <em>Ours</em> is a standalone pronoun; it cannot precede a noun. Use <em>our plan</em>.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The baby's first word surprised everyone.","The players left there equipment on the field.","The championship belt was her's to defend.","Marks score was the highest in the class."],ci:0,exp:"<strong>\"baby's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>there</em> should be <em>their</em> (possessive adjective).<br>\u2022 <em>her's</em> does not exist; the correct form is <em>hers</em>.<br>\u2022 <em>Marks</em> is missing the apostrophe \u2014 should be <em>Mark's</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The glacier slowly lost it's mass over decades.","The judges' scores were revealed at the end.","Theirs approach to the problem was unique.","Benjamins kite got stuck in the tree."],ci:1,exp:"<strong>\"judges'\"</strong> correctly places the apostrophe after the plural noun.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>.<br>\u2022 <em>Theirs</em> is a standalone pronoun; it cannot precede a noun. Use <em>their approach</em>.<br>\u2022 <em>Benjamins</em> is missing the apostrophe \u2014 should be <em>Benjamin's</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The pilots cockpit was filled with instruments.","That parking spot is your's for the day.","The fans cheered for there team from the stands.","The company's profits increased by twenty percent."],ci:3,exp:"<strong>\"company's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>pilots</em> is missing the apostrophe \u2014 should be <em>pilot's</em>.<br>\u2022 <em>your's</em> does not exist; the correct form is <em>yours</em>.<br>\u2022 <em>there</em> should be <em>their</em> (possessive adjective)."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The river overflowed it's banks after the storm.","The responsibility was ours' to handle.","The astronaut's helmet visor cracked on reentry.","The tree's in the park were planted long ago."],ci:2,exp:"<strong>\"astronaut's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>.<br>\u2022 <em>ours'</em> does not exist; the correct form is <em>ours</em>.<br>\u2022 <em>tree's</em> incorrectly adds an apostrophe to a simple plural noun."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The scientists published there findings in a journal.","Carolines drawing was selected for the art show.","The orchestra's final performance was breathtaking.","That trophy on the shelf is mines."],ci:2,exp:"<strong>\"orchestra's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>there</em> should be <em>their</em> (possessive adjective).<br>\u2022 <em>Carolines</em> is missing the apostrophe \u2014 should be <em>Caroline's</em>.<br>\u2022 <em>mines</em> does not exist; the correct form is <em>mine</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The record was her's to beat that afternoon.","The submarine revealed it's location by accident.","The engineers report was submitted on Friday.","The people's trust is difficult to rebuild."],ci:3,exp:"<strong>\"people's\"</strong> is correct \u2014 <em>people</em> is already an irregular plural; the possessive is <em>people's</em>.<br>\u2022 <em>her's</em> does not exist; the correct form is <em>hers</em>.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>.<br>\u2022 <em>engineers</em> is missing the apostrophe \u2014 should be <em>engineer's</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The senator's vote changed the outcome of the bill.","The notebook on the desk is your's.","The hikers lost there way in the mountains.","The tornado revealed it's path of destruction."],ci:0,exp:"<strong>\"senator's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>\u2022 <em>your's</em> does not exist; the correct form is <em>yours</em>.<br>\u2022 <em>there</em> should be <em>their</em> (possessive adjective).<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>."},
+  {q:"Which sentence uses the possessive form CORRECTLY?",opts:["The generals strategy surprised the enemy.","The final score was their's to celebrate.","The rover sent back it's images from Mars.","The women's choir performed at the ceremony."],ci:3,exp:"<strong>\"women's\"</strong> is correct \u2014 <em>women</em> is already plural; the possessive is <em>women's</em>.<br>\u2022 <em>generals</em> is missing the apostrophe \u2014 should be <em>general's</em>.<br>\u2022 <em>their's</em> does not exist; the correct form is <em>theirs</em>.<br>\u2022 <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>."}
+];
+
+// Shuffle options per question (stable per session via stored shuffle)
+var state={cur:0,answers:{},shuffles:{},showResults:false};
+
+function loadState(){
+  try{
+    var d=localStorage.getItem(KEY);
+    if(d){
+      var p=JSON.parse(d);
+      if(typeof p.cur==='number'&&p.cur>=0&&p.cur<TOTAL&&p.answers&&p.shuffles){
+        state=p;
+        return;
+      }
+    }
+  }catch(e){}
+  resetState();
+}
+function saveState(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function resetState(){
+  state={cur:0,answers:{},shuffles:{},showResults:false};
+  saveState();
+}
+
+function getAtt(){try{return parseInt(localStorage.getItem(ATT_KEY)||'0');}catch(e){return 0;}}
+function incAtt(){try{localStorage.setItem(ATT_KEY,String(getAtt()+1));}catch(e){}}
+function updateAttDisplay(){document.getElementById('att-count').textContent=getAtt();}
+
+function getShuffle(qi){
+  if(!state.shuffles[qi]){
+    var arr=[0,1,2,3];
+    for(var i=arr.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=arr[i];arr[i]=arr[j];arr[j]=t;}
+    state.shuffles[qi]=arr;
+    saveState();
+  }
+  return state.shuffles[qi];
+}
+
+function answeredCount(){return Object.keys(state.answers).length;}
+
+function render(){
+  var quizScreen=document.getElementById('quiz-screen');
+  var resultsScreen=document.getElementById('results-screen');
+  if(state.showResults){
+    quizScreen.style.display='none';
+    resultsScreen.style.display='block';
+    renderResults();
+    updateTopNav();
+    return;
+  }
+  quizScreen.style.display='block';
+  resultsScreen.style.display='none';
+  var qi=state.cur;
+  var q=questions[qi];
+  var shuffle=getShuffle(qi);
+  var answered=state.answers.hasOwnProperty(qi);
+  var chosen=state.answers[qi]; // index into shuffled array
+
+  document.getElementById('q-num').textContent='Question '+(qi+1)+' of '+TOTAL;
+  document.getElementById('q-text').textContent=q.q;
+
+  // Find where the correct option ended up in the shuffle
+  var correctShuffledIdx=shuffle.indexOf(q.ci);
+
+  var cd=document.getElementById('choices');
+  cd.innerHTML='';
+  shuffle.forEach(function(origIdx,si){
+    var btn=document.createElement('button');
+    btn.className='opt';
+    btn.textContent=String.fromCharCode(65+si)+'. '+q.opts[origIdx];
+    if(answered){
+      btn.disabled=true;
+      if(si===correctShuffledIdx){btn.classList.add('correct');}
+      else if(si===chosen){btn.classList.add('wrong');}
+    }
+    btn.onclick=(function(sidx){return function(){choose(sidx);};})(si);
+    cd.appendChild(btn);
+  });
+
+  var ex=document.getElementById('explanation');
+  if(answered){ex.innerHTML=q.exp;ex.style.display='block';}
+  else{ex.style.display='none';}
+
+  var prevBtn=document.getElementById('btn-prev');
+  var nextBtn=document.getElementById('btn-next');
+  prevBtn.disabled=(qi===0);
+  if(qi===TOTAL-1){
+    if(answered){nextBtn.disabled=false;nextBtn.textContent='See Results';}
+    else{nextBtn.disabled=true;nextBtn.textContent='See Results';}
+  } else {
+    nextBtn.disabled=false;
+    nextBtn.textContent='Next';
+  }
+
+  updateTopNav();
+}
+
+function choose(shuffledIdx){
+  var qi=state.cur;
+  if(state.answers.hasOwnProperty(qi))return;
+  state.answers[qi]=shuffledIdx;
+  saveState();
+  render();
+}
+
+function updateTopNav(){
+  var ans=answeredCount();
+  document.getElementById('nav-counter').textContent=ans+' / '+TOTAL;
+  document.getElementById('progress-fill').style.width=Math.round(ans/TOTAL*100)+'%';
+  buildDots();
+  var rp=document.getElementById('results-pill');
+  if(ans===TOTAL){rp.style.display='inline-block';}
+  else{rp.style.display='none';}
+}
+
+function buildDots(){
+  var panel=document.getElementById('dot-panel');
+  panel.innerHTML='';
+  var rp=document.createElement('button');
+  rp.id='results-pill';rp.textContent='Results';
+  rp.style.cssText='display:none;padding:5px 14px;border-radius:20px;background:#1D9E75;color:#fff;font-size:0.8rem;font-weight:700;cursor:pointer;border:none;';
+  rp.onclick=function(){window.goResults();};
+  if(answeredCount()===TOTAL)rp.style.display='inline-block';
+  panel.appendChild(rp);
+  for(var i=0;i<TOTAL;i++){
+    var b=document.createElement('button');
+    b.className='dot';
+    b.textContent=i+1;
+    if(i===state.cur)b.classList.add('current');
+    if(state.answers.hasOwnProperty(i)){
+      var q=questions[i];
+      var sh=getShuffle(i);
+      var correctSI=sh.indexOf(q.ci);
+      b.classList.add(state.answers[i]===correctSI?'correct':'wrong');
+    }
+    b.onclick=(function(idx){return function(){state.cur=idx;saveState();render();};})(i);
+    panel.appendChild(b);
+  }
+}
+
+function renderResults(){
+  incAtt();
+  updateAttDisplay();
+  var correct=0,wrong=0,skipped=0;
+  for(var i=0;i<TOTAL;i++){
+    if(!state.answers.hasOwnProperty(i)){skipped++;}
+    else{
+      var q=questions[i];var sh=getShuffle(i);var csi=sh.indexOf(q.ci);
+      if(state.answers[i]===csi)correct++;else wrong++;
+    }
+  }
+  document.getElementById('results-score').textContent=correct+' / '+TOTAL;
+  var grid=document.getElementById('results-grid');
+  grid.innerHTML='';
+  for(var i=0;i<TOTAL;i++){
+    var q=questions[i];
+    var row=document.createElement('div');row.className='res-row';
+    var qn=document.createElement('span');qn.className='res-qnum';qn.textContent='Q'+(i+1);
+    var st=document.createElement('span');st.className='res-status';
+    var txt=document.createElement('span');txt.className='res-text';
+    var sh=getShuffle(i);var csi=sh.indexOf(q.ci);
+    if(!state.answers.hasOwnProperty(i)){
+      st.classList.add('skipped');st.textContent='Skipped';
+      txt.textContent=q.opts[q.ci];
+    } else if(state.answers[i]===csi){
+      st.classList.add('correct');st.textContent='Correct';
+      txt.textContent=q.opts[q.ci];
+    } else {
+      st.classList.add('wrong');st.textContent='Wrong';
+      var chosenOrigIdx=sh[state.answers[i]];
+      txt.innerHTML='You chose: '+q.opts[chosenOrigIdx]+'<br><span class="res-correct-text">Correct: '+q.opts[q.ci]+'</span>';
+    }
+    var jb=document.createElement('button');jb.className='res-jump-btn';jb.textContent='Review';
+    jb.onclick=(function(idx){return function(){state.cur=idx;state.showResults=false;saveState();render();};})(i);
+    row.appendChild(qn);row.appendChild(st);row.appendChild(txt);row.appendChild(jb);
+    grid.appendChild(row);
+  }
+}
+
+window.goNext=function(){
+  if(state.cur===TOTAL-1){window.goResults();return;}
+  state.cur++;saveState();render();
+};
+window.goPrev=function(){if(state.cur>0){state.cur--;saveState();render();}};
+window.goResults=function(){state.showResults=true;saveState();render();};
+window.toggleJump=function(){
+  var panel=document.getElementById('dot-panel');
+  var btn=document.getElementById('btn-jump');
+  if(panel.classList.contains('open')){panel.classList.remove('open');btn.textContent='Jump';}
+  else{panel.classList.add('open');btn.textContent='Hide';}
+};
+window.retryWrong=function(){
+  var first=-1;
+  for(var i=0;i<TOTAL;i++){
+    var q=questions[i];var sh=getShuffle(i);var csi=sh.indexOf(q.ci);
+    if(!state.answers.hasOwnProperty(i)||state.answers[i]!==csi){
+      delete state.answers[i];
+      if(first===-1)first=i;
+    }
+  }
+  if(first===-1)first=0;
+  state.cur=first;state.showResults=false;saveState();render();
+};
+window.copyResults=function(){
+  var lines=['[Grant] Possessives Quiz Results - June 18, 2026'];
+  var correct=0;
+  for(var i=0;i<TOTAL;i++){
+    var q=questions[i];var sh=getShuffle(i);var csi=sh.indexOf(q.ci);
+    var status='Skipped';
+    if(state.answers.hasOwnProperty(i)){status=state.answers[i]===csi?'Correct':'Wrong';}
+    else{status='Skipped';}
+    if(status==='Correct')correct++;
+    lines.push('Q'+(i+1)+': '+status);
+  }
+  lines.push('Score: '+correct+'/'+TOTAL);
+  try{navigator.clipboard.writeText(lines.join('\n'));}catch(e){alert(lines.join('\n'));}
+};
+window.askFresh=function(){document.getElementById('sf-overlay').classList.add('show');};
+window.cancelFresh=function(){document.getElementById('sf-overlay').classList.remove('show');};
+window.confirmFresh=function(){
+  document.getElementById('sf-overlay').classList.remove('show');
+  resetState();
+  render();
+  updateAttDisplay();
+};
+
+loadState();
+updateAttDisplay();
+render();
+})();
+</script>
+</body>
+</html>

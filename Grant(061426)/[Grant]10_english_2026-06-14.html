@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] English</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;margin:0 auto;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px 0;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;background:#fff;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.tag-badge{display:inline-block;background:#1D9E75;color:#fff;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:8px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.q-text{font-size:0.97rem;font-weight:600;color:#111;margin-bottom:10px;line-height:1.6;}
+.passage-box{background:#f5f7fa;border-left:4px solid #185FA5;border-radius:8px;padding:12px 14px;margin-bottom:10px;font-size:0.88rem;color:#333;line-height:1.7;}
+.passage-box p{margin:0 0 10px 0;}
+.passage-box p:last-child{margin:0;}
+.extra-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:12px 14px;margin-bottom:10px;font-size:0.88rem;color:#333;line-height:1.7;display:none;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.93rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-14</div>
+<div class="title-hd">[Grant] English</div>
+<div class="instruction">Read the passage and choose the best answer for each question.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 25</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump ▾</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="tag-badge" id="q-tag"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="passage-box" id="passage-main"></div>
+  <div class="extra-box" id="passage-extra"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_english_25_20260613_v1';
+var ATT_KEY='quiz_english_att_20260613_v1';
+
+var P1="Bioluminescence is the ability of living things to produce their own light, and it ranks among the most spectacular phenomena in the natural world. Deep in the ocean, where sunlight cannot reach, countless creatures glow in shades of blue, green, and red. On warm summer evenings, fireflies transform meadows into natural light shows. Even certain types of fungi cast a soft glow across dark forest floors. Far from being a mere curiosity, bioluminescence is a biological tool that organisms have evolved for specific purposes over millions of years.";
+var P2="At the chemical level, bioluminescence results from a reaction between a molecule called luciferin and an enzyme called luciferase. When these two compounds interact in the presence of oxygen, energy is released as visible light rather than heat. Unlike a light bulb, which wastes much of its energy as heat, a bioluminescent organism converts nearly all of its chemical energy directly into cold, bright light. Scientists call this kind of efficient light production 'cold light.' This high efficiency explains why bioluminescence has evolved independently in dozens of unrelated species, from deep-sea fish to land-dwelling insects.";
+var P3="Scientists have identified at least three main purposes that bioluminescence serves in nature. First, many deep-sea creatures use light to attract prey, dangling glowing lures near their mouths in the pitch-black depths. Second, some species use bioluminescence for communication. Fireflies, for example, flash distinctive patterns to attract mates of the same species. Third, several marine organisms produce sudden bright flashes to startle or confuse predators, buying precious seconds to escape. The same remarkable ability thus serves very different survival strategies depending on the organism.";
+var P4="Humans have learned to harness bioluminescence for remarkable scientific purposes. Researchers insert the luciferase gene into bacteria or cancer cells, causing those cells to glow so they can be tracked under a microscope. Medical scientists use bioluminescent markers to study how diseases spread through the body without invasive surgery. Environmental scientists have also used bioluminescent bacteria as pollution detectors, since these organisms dim or stop glowing when exposed to toxic chemicals. As scientists continue to unlock the secrets of nature's living light, new applications in medicine, environmental science, and engineering continue to emerge.";
+var PExtra="While bioluminescence occurs naturally throughout the animal kingdom, researchers have recently begun creating artificially glowing plants through genetic engineering. By inserting the luciferase gene into common houseplants such as tobacco and petunia, scientists at several universities produced plants that emit a steady, faint green glow in darkness. These engineered plants require no electricity and produce no heat. If the technology could be scaled up, such living lamps might one day provide soft, eco-friendly lighting in public spaces or along sidewalks. The experiment demonstrates that natural bioluminescence, once considered a curiosity of the deep ocean, can be repurposed by human ingenuity for entirely new goals.";
+
+var qs=[
+ {tag:'Inference',ex2:false,q:'Based on the passage, why has bioluminescence evolved independently in so many different species?',
+  opts:['All bioluminescent species share a common glowing ancestor.',
+        'Most environments require some form of light production to survive.',
+        'Its high efficiency makes it a useful adaptation in many different contexts.',
+        'Scientists artificially introduced bioluminescence into wild species.'],
+  ci:2,exp:'The passage states that "high efficiency explains why bioluminescence has evolved independently in dozens of unrelated species." This implies the efficiency of cold light makes it advantageous in many contexts, not that all organisms share a common ancestor or that scientists intervened.'},
+ {tag:'Main Idea',ex2:false,q:'What is the main idea of this passage?',
+  opts:['Fireflies are the most well-known bioluminescent organisms on Earth.',
+        'Bioluminescence is a chemically efficient, naturally occurring light that serves various biological purposes and has practical scientific uses.',
+        'Scientists have only recently begun studying bioluminescent creatures in the deep ocean.',
+        'Deep-sea fish are the most important organisms that use bioluminescence.'],
+  ci:1,exp:'The passage covers what bioluminescence is, how it works chemically, why organisms use it, and how humans apply it. Option B captures all four areas, making it the most accurate main idea.'},
+ {tag:'Theme',ex2:false,q:'What is the central theme of this passage?',
+  opts:['Human technology is always superior to nature\'s solutions.',
+        'Life in the deep ocean is more complex than life on land.',
+        'Nature\'s biological systems can inspire and directly benefit human science and technology.',
+        'Studying chemistry is the best way to understand living things.'],
+  ci:2,exp:'The passage moves from natural bioluminescence to human applications, showing how nature\'s light-producing chemistry has been adopted in medicine and environmental science. This illustrates how natural systems inspire and enable human innovation.'},
+ {tag:'Predict',ex2:false,q:'Based on the passage, what would scientists most likely discover if they found a new deep-sea species that produces bright flashes of light?',
+  opts:['The species cannot survive outside the deep ocean.',
+        'The species uses its light to attract prey, communicate, or confuse predators.',
+        'The species lacks the enzyme luciferase.',
+        'The species produces light through a heat-based reaction.'],
+  ci:1,exp:'The passage identifies three purposes of bioluminescence in the deep ocean: attracting prey, communication, and startling predators. Any new glowing deep-sea species would most likely fit one of these known biological functions.'},
+ {tag:'Summary',ex2:false,q:'Which of the following best summarizes this passage?',
+  opts:['Bioluminescence is caused by a chemical reaction and is found only in ocean creatures.',
+        'Bioluminescence allows organisms to glow, and scientists use this ability to track cancer cells.',
+        'Bioluminescence is a natural light-producing ability that serves survival functions in nature and has been adopted for human scientific applications.',
+        'Fireflies and deep-sea fish are the two main types of bioluminescent organisms on Earth.'],
+  ci:2,exp:'A good summary covers all main sections: the natural phenomenon, its chemistry, its purposes, and its human applications. Option C is the only choice that captures all four dimensions without oversimplifying or focusing on just one detail.'},
+ {tag:'Tone',ex2:false,q:'What is the overall tone of this passage?',
+  opts:['Alarmed and urgent',
+        'Informative and admiring',
+        'Humorous and playful',
+        'Critical and skeptical'],
+  ci:1,exp:'The author describes bioluminescence as "spectacular" and "remarkable" and traces its many impressive properties and uses. The tone is informative (explaining facts) and admiring (expressing appreciation for the phenomenon), not alarm or humor.'},
+ {tag:'Point of View',ex2:false,q:'From what point of view is this passage written?',
+  opts:['First-person, from a scientist\'s personal perspective',
+        'Second-person, addressing the reader directly',
+        'Third-person, with a narrator presenting factual information about a topic',
+        'First-person plural, representing the scientific community'],
+  ci:2,exp:'The passage uses third-person constructions ("organisms have evolved," "scientists have identified") and presents factual information without identifying a specific narrator — a characteristic third-person informational perspective.'},
+ {tag:"Author's Purpose",ex2:false,q:"What is the author's main purpose in writing this passage?",
+  opts:['To persuade readers to fund bioluminescence research',
+        'To entertain readers with an exciting story about deep-sea creatures',
+        'To inform readers about the nature, chemistry, and applications of bioluminescence',
+        'To argue that bioluminescent lighting should replace electric lights'],
+  ci:2,exp:'The passage presents factual information about what bioluminescence is, how it works, why organisms use it, and how humans apply it. This is primarily informational writing, not persuasion or entertainment.'},
+ {tag:'Cause & Effect',ex2:false,q:'According to paragraph 2, what directly causes bioluminescence to produce light?',
+  opts:['Deep-sea creatures absorbing sunlight and re-emitting it at night',
+        'Fireflies mixing air with special chemicals in their abdomens',
+        'A reaction between luciferin and luciferase in the presence of oxygen',
+        'Scientists inserting special light-producing genes into organisms'],
+  ci:2,exp:'Paragraph 2 states: "bioluminescence results from a reaction between a molecule called luciferin and an enzyme called luciferase" in the presence of oxygen. This is the direct chemical cause described in the passage.'},
+ {tag:'Compare & Contrast',ex2:false,q:'How is bioluminescent light different from the light produced by a regular light bulb?',
+  opts:['Bioluminescent light lasts much longer than light from a bulb.',
+        'Bioluminescent light produces far less waste heat than a light bulb does.',
+        'Bioluminescent light can only be seen underwater.',
+        'A light bulb uses less total energy than bioluminescent organisms do.'],
+  ci:1,exp:'The passage states: "Unlike a light bulb, which wastes much of its energy as heat, a bioluminescent organism converts nearly all of its chemical energy directly into cold, bright light." The key difference is how much energy is wasted as heat.'},
+ {tag:'Text Structure',ex2:false,q:'How is paragraph 3 primarily organized?',
+  opts:['Chronological order describing when each use was discovered',
+        'Problem and solution',
+        'Cause and effect',
+        'A numbered list of distinct purposes'],
+  ci:3,exp:'Paragraph 3 uses signal words "First," "Second," and "Third" to list three distinct purposes of bioluminescence. This is an enumerated list structure, not chronological, cause-effect, or problem-solution.'},
+ {tag:'Subject Analysis',ex2:false,q:'Based on the passage, which quality best describes bioluminescent organisms?',
+  opts:['Fragile and dependent on human protection to survive',
+        'Adaptable, using light in very different ways depending on their needs',
+        'Limited to cold, deep-ocean environments',
+        'Recently evolved with no connection to ancient life forms'],
+  ci:1,exp:'The passage shows organisms using bioluminescence for prey attraction, communication, and predator defense — all different uses depending on the species. This demonstrates adaptability, not fragility, geographic limitation, or recent origin.'},
+ {tag:'Supporting Details',ex2:false,q:'Which detail from the passage best supports the claim that bioluminescence is highly efficient?',
+  opts:['Bioluminescent creatures are found in both ocean and land environments.',
+        'Scientists have inserted the luciferase gene into cancer cells.',
+        'Bioluminescent organisms convert nearly all chemical energy directly into light rather than heat.',
+        'Fireflies flash distinctive patterns to attract mates of the same species.'],
+  ci:2,exp:'Efficiency means producing the desired result with minimal waste. The passage directly states that bioluminescent organisms convert "nearly all" chemical energy into light, wasting little as heat. This is the strongest detail supporting efficiency.'},
+ {tag:'Problem & Solution',ex2:false,q:'In the context of deep-sea environments, what challenge does bioluminescence help organisms solve?',
+  opts:['The inability to filter salt from seawater',
+        'The need to find food, communicate, and avoid predators in complete darkness',
+        'The extreme water pressure that can crush most living things',
+        'The lack of oxygen available in deep-sea environments'],
+  ci:1,exp:'The passage identifies three uses of bioluminescence critical in the dark deep sea: attracting prey (food), communication (finding mates), and startling predators (safety). All three address the fundamental challenge of surviving in complete darkness.'},
+ {tag:'Setting',ex2:false,q:'According to the passage, in which setting would you NOT expect to find bioluminescent organisms?',
+  opts:['The deep ocean where sunlight cannot reach',
+        'A summer meadow on a warm evening',
+        'A dark forest floor',
+        'A dry desert at midday'],
+  ci:3,exp:'The passage mentions deep-ocean creatures, fireflies in meadows, and fungi on forest floors. A dry desert at midday is not mentioned and represents an environment where cold light would offer no known survival advantage.'},
+ {tag:'Figurative Language',ex2:false,q:'What does the author mean by calling bioluminescence "nature\'s living light"?',
+  opts:['Bioluminescent organisms only glow while they are actively moving.',
+        'Bioluminescence is light produced by living organisms as part of their biology, unlike mechanical or electrical sources.',
+        'Nature produces more total light than human technology does.',
+        'Living things can eventually replace all artificial light sources.'],
+  ci:1,exp:'"Living light" contrasts with manufactured light: it is light generated by life itself through biological processes. The phrase emphasizes that the light comes from living organisms, not from electrical or mechanical devices.'},
+ {tag:'Analogy',ex2:false,q:'The author compares bioluminescent light to a light bulb in order to...',
+  opts:['Show that light bulbs are superior to natural light sources.',
+        'Illustrate that both use the same chemical reaction to produce light.',
+        'Help readers understand bioluminescence\'s high efficiency by contrasting it with something familiar.',
+        'Argue that humans should build a new type of light bulb based on biology.'],
+  ci:2,exp:'The light bulb comparison is a familiar reference point used to highlight bioluminescence\'s unusual efficiency (very little heat waste). The contrast helps readers understand what "cold light" means in practical terms.'},
+ {tag:'Synonym & Antonym',ex2:false,q:'As used in paragraph 2, "efficient" most nearly means...',
+  opts:['Producing the desired result with little waste',
+        'Extremely powerful and intensely bright',
+        'Slow and careful in scientific processes',
+        'Invisible to the human eye under normal conditions'],
+  ci:0,exp:'"Efficient" describes a process that achieves its goal (producing light) while wasting minimal energy (as heat). Option A captures this meaning precisely. The passage contrasts bioluminescence\'s efficiency with a light bulb\'s waste.'},
+ {tag:'Guess the Meaning',ex2:false,q:'In paragraph 1, the word "phenomena" most likely means...',
+  opts:['Dangerous events caused by living organisms',
+        'Noticeable or remarkable occurrences or facts',
+        'Chemical compounds found inside living cells',
+        'Types of environments where creatures live'],
+  ci:1,exp:'The passage calls bioluminescence one of the "most spectacular phenomena," suggesting it is a remarkable natural occurrence worth noting. "Phenomena" (singular: phenomenon) means observable events or facts that can be studied.'},
+ {tag:'Preposition',ex2:false,q:'In paragraph 3, which preposition correctly fits this phrase from the passage: "dangling glowing lures ___ their mouths in the pitch-black depths"?',
+  opts:['above',
+        'behind',
+        'near',
+        'beneath'],
+  ci:2,exp:'The passage states "dangling glowing lures near their mouths in the pitch-black depths." The preposition "near" indicates that the lure is close to the creature\'s mouth, visible to passing prey but positioned just outside.'},
+ {tag:'Genre',ex2:false,q:'What genre does this passage most likely belong to?',
+  opts:['Science fiction',
+        'Historical fiction',
+        'Informational nonfiction',
+        'Narrative poetry'],
+  ci:2,exp:'The passage presents factual scientific information about a real natural phenomenon, using precise vocabulary and structured explanation. This is characteristic of informational nonfiction, not fiction or poetry.'},
+ {tag:'Kind of Writing',ex2:false,q:'This passage is best described as which type of writing?',
+  opts:['A personal narrative about encountering bioluminescent creatures',
+        'A scientific explanation of a natural phenomenon and its applications',
+        'A persuasive argument for replacing electric lights with living light',
+        'A fictional account of a scientist\'s discovery in the deep ocean'],
+  ci:1,exp:'The passage explains what bioluminescence is (definition), how it works (chemistry), why organisms use it (purposes), and how humans apply it (applications). This structure is characteristic of scientific expository writing.'},
+ {tag:'Fact vs Opinion',ex2:false,q:'Which of the following is an OPINION expressed in the passage?',
+  opts:['"Bioluminescence results from a reaction between luciferin and luciferase."',
+        '"Fireflies flash distinctive patterns to attract mates of the same species."',
+        '"Bioluminescence ranks among the most spectacular phenomena in the natural world."',
+        '"Scientists insert the luciferase gene into bacteria or cancer cells."'],
+  ci:2,exp:'Options A, B, and D are verifiable scientific facts. Option C ("ranks among the most spectacular phenomena") is the author\'s evaluative judgment — a claim about relative importance that cannot be objectively proven.'},
+ {tag:'Title',ex2:false,q:'Which title would best suit this passage?',
+  opts:['"How Fireflies Light Up Summer Nights"',
+        '"Bioluminescence: Nature\'s Living Light and Its Scientific Uses"',
+        '"Deep-Sea Creatures and Their Predators"',
+        '"The History of the Light Bulb vs. Natural Light"'],
+  ci:1,exp:'The passage covers all aspects of bioluminescence: the natural phenomenon, its chemistry, its biological purposes, and human scientific applications. Option B captures all these dimensions. The other options each focus on only one narrow part.'},
+ {tag:'Text-to-Text',ex2:true,q:'Based on both passages, what do they together suggest about bioluminescence?',
+  opts:['Bioluminescent organisms cannot survive in laboratory conditions.',
+        'Scientists have already replaced all electric lights with bioluminescent plants.',
+        'Natural bioluminescence has been made obsolete by engineered alternatives.',
+        'Bioluminescence, originally a natural survival tool, continues to inspire new scientific and technological innovations.'],
+  ci:3,exp:'The main passage shows bioluminescence used naturally and in medicine and environmental science. The additional passage shows it adapted for engineered glowing plants. Together they demonstrate that this natural ability keeps inspiring new human innovations across many fields.'}
+];
+
+var state={};
+function loadState(){try{var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');if(s&&typeof s.cur==='number'&&s.cur>=0&&s.cur<qs.length&&s.answers&&typeof s.answers==='object'&&s.shuffles&&typeof s.shuffles==='object'){state=s;}else{resetState();}}catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){if(!state.shuffles[i]){var a=[0,1,2,3];for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}state.shuffles[i]=a;}return state.shuffles[i];}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAttempts(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function updateNav(){var ans=Object.keys(state.answers).length;document.getElementById('nav-count').textContent=ans+' / '+qs.length;document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';renderDots();}
+function toggleJump(){var p=document.getElementById('dot-panel');var b=document.getElementById('jump-btn');if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}else{p.style.display='none';b.textContent='Jump ▾';}}
+function renderDots(){var p=document.getElementById('dot-panel');if(p.style.display==='none')return;var h='';for(var i=0;i<qs.length;i++){var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===getCSI(i)?'#185FA5':'#E24B4A');h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';}if(Object.keys(state.answers).length===qs.length){h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';}p.innerHTML=h;}
+function goToQ(i){state.cur=i;state.showResults=false;saveState();render();document.getElementById('dot-panel').style.display='none';document.getElementById('jump-btn').textContent='Jump ▾';}
+function showResults(){state.showResults=true;localStorage.setItem(ATT_KEY,loadAttempts()+1);saveState();render();}
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAttempts();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('resultsArea').style.display='none';
+  updateNav();
+  var i=state.cur;var q=qs[i];
+  document.getElementById('q-tag').textContent=q.tag;
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-text').textContent=q.q;
+  document.getElementById('passage-main').innerHTML='<p>'+P1+'</p><p>'+P2+'</p><p>'+P3+'</p><p>'+P4+'</p>';
+  var ex=document.getElementById('passage-extra');
+  if(q.ex2){ex.style.display='block';ex.innerHTML='<strong>Additional Passage:</strong><br><br><p>'+PExtra+'</p>';}
+  else{ex.style.display='none';}
+  var sh=getShuffle(i);var ans=state.answers[i];var csi=getCSI(i);
+  var html='';
+  for(var s=0;s<4;s++){var oi=sh[s];var cls='opt-btn';var dis='';if(ans!==undefined){dis='disabled';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}html+='<button class="'+cls+'" '+dis+' onclick="pick('+i+','+s+')">'+escHtml(q.opts[oi])+'</button>';}
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');
+  if(ans!==undefined&&ans!==csi){eb.style.display='block';eb.textContent=q.exp;}else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  updateNav();
+  var c=0,w=0,sk=0;
+  for(var i=0;i<qs.length;i++){if(state.answers[i]===undefined)sk++;else if(state.answers[i]===getCSI(i))c++;else w++;}
+  document.getElementById('results-summary').innerHTML='<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';
+  for(var i=0;i<qs.length;i++){var a=state.answers[i];var label,bg,tc;if(a===undefined){label='Skipped';bg='#d7dde6';tc='#555';}else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}else{label='Wrong';bg='#FCEBEB';tc='#501313';}html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.9rem;color:#333;">Q'+(i+1)+': '+escHtml(qs[i].tag)+'</span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';}
+  document.getElementById('results-cards').innerHTML=html;
+}
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){if(dir===1&&state.cur===qs.length-1){showResults();return;}state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));saveState();render();}
+function retryWrong(){var first=-1;for(var i=0;i<qs.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){if(first===-1)first=i;delete state.answers[i];}}if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}}
+function copyRes(){var lines=['[Grant] English - Results (2026-06-14)'];for(var i=0;i<qs.length;i++){var a=state.answers[i];var label=a===undefined?'Skipped':a===getCSI(i)?'Correct':'Wrong';lines.push('Q'+(i+1)+' ('+qs[i].tag+'): '+label);}var txt=lines.join('\n');if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fallbackCopy(txt);});}else{fallbackCopy(txt);}}
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;window.openFreshModal=openFreshModal;
+window.confirmFresh=confirmFresh;window.showResults=showResults;
+
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

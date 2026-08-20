@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT Reading</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0 auto;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.passage-label{font-size:0.8rem;font-weight:700;color:#185FA5;margin-bottom:6px;}
+.passage-box{background:#f5f7fa;border-left:4px solid #185FA5;border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:0.88rem;color:#333;line-height:1.7;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.q-text{font-size:0.97rem;font-weight:600;color:#111;margin-bottom:10px;line-height:1.6;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.93rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-18</div>
+<div class="title-hd">[Sion] SAT Reading</div>
+<div class="instruction">Read each passage and choose the best answer for each question.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 10</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="passage-label" id="passage-label"></div>
+  <div class="passage-box" id="passage-main"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_satreading_10_20260617_v1';
+var ATT_KEY='quiz_satreading_att_20260617_v1';
+
+var P1="Bioluminescence, the production of light by living organisms, occurs in a striking range of species, from deep-sea anglerfish to terrestrial fireflies. The phenomenon results from a chemical reaction in which a molecule called luciferin reacts with oxygen, catalyzed by an enzyme called luciferase, releasing energy as light rather than heat. Scientists have identified at least forty independent evolutionary origins of bioluminescence, suggesting that the trait offers significant survival advantages across vastly different environments. In the deep ocean, where sunlight never penetrates, many creatures use light to lure prey, startle predators, or attract mates. Researchers continue to study these natural light-producing systems not only to understand marine ecosystems but also because luciferase has become a valuable tool in medical and biological research, helping scientists track gene activity inside living cells.";
+var P2="When Johannes Gutenberg introduced movable-type printing in Europe around 1440, books had long been copied by hand, a slow process that limited their availability to wealthy institutions. Gutenberg's press, which used reusable metal letters arranged into pages, allowed identical texts to be reproduced quickly and in large numbers. Within decades, printed books spread across Europe, dramatically lowering costs and increasing literacy rates among merchants, students, and clergy alike. The technology also accelerated the spread of new ideas: religious reformers, scientists, and political thinkers could now distribute their arguments far beyond what handwritten manuscripts had ever allowed. Some historians argue that the printing press did as much to reshape European society as any single political event of the era, since it transformed how knowledge itself was created, shared, and challenged.";
+var P3="City planners increasingly view urban green spaces, such as parks and tree-lined streets, as more than aesthetic additions to a cityscape. Recent studies suggest that access to green space is linked to lower stress levels, improved air quality, and even reduced rates of certain chronic illnesses among city residents. Some economists have also examined the financial side of these benefits, noting that property values near well-maintained parks tend to rise over time, generating additional tax revenue for municipalities. Critics caution that without careful planning, new green spaces can drive up nearby housing costs, potentially displacing the very residents who once relied on affordable neighborhoods. As cities balance growth with livability, many are experimenting with policies designed to expand green space while protecting long-term residents from displacement.";
+var P4="In the late nineteenth century, French painter Georges Seurat developed a technique known as pointillism, in which an image is composed entirely of small, distinct dots of color rather than blended brushstrokes. Viewed up close, a pointillist painting can appear as a chaotic field of individual dots; from a distance, however, the human eye blends these dots into smooth gradients of color and tone. Seurat based his method on contemporary theories of color perception, believing that placing complementary colors directly next to each other would create a more vivid visual effect than mixing paint on a palette. His most famous work, A Sunday Afternoon on the Island of La Grande Jatte, took roughly two years to complete and remains a defining example of the technique's painstaking precision.";
+var P5="As solar and wind power generation has expanded rapidly in recent years, engineers have faced a persistent challenge: these renewable sources do not produce electricity at a constant rate, since sunlight and wind vary throughout the day. Large-scale battery storage systems have emerged as one solution, allowing excess electricity generated during peak production to be saved and released later when demand is high but generation is low. Lithium-ion batteries, similar in basic chemistry to those used in smartphones and electric vehicles, currently dominate this market, though researchers are actively developing alternative technologies that rely on more abundant materials. Some engineers argue that without significant advances in storage capacity, renewable energy alone cannot fully replace traditional power plants that can generate electricity on demand.";
+
+var passages=[P1,P1,P2,P2,P3,P3,P4,P4,P5,P5];
+var cats=['Science','Science','History','History','Social Science','Social Science','Arts','Arts','Technology','Technology'];
+
+var qs=[
+ {q:"As used in the passage, \"catalyzed\" most nearly means",
+  opts:['Sped up or enabled','Completely prevented','Accidentally discovered','Permanently destroyed'],
+  ci:0,exp:"The passage explains that the enzyme luciferase helps the reaction occur — \"catalyzed\" here means it enabled or accelerated the chemical reaction."},
+ {q:'Which choice best describes the main purpose of the passage?',
+  opts:['To argue that bioluminescence is rare and poorly understood','To explain how bioluminescence works and why it has evolved so often','To criticize the use of luciferase in medical research','To compare fireflies and anglerfish in exhaustive detail'],
+  ci:1,exp:'The passage describes the chemical process behind bioluminescence, notes its many independent evolutionary origins, and explains its uses — informing readers, not arguing or criticizing.'},
+ {q:"Based on the passage, what can be inferred about books before Gutenberg's press?",
+  opts:['They were copied by hand and therefore limited in availability','They were printed quickly using metal letters','They were primarily written by merchants','They had little influence on European society'],
+  ci:0,exp:'The passage states books "had long been copied by hand, a slow process that limited their availability," directly supporting this inference.'},
+ {q:'Which choice best supports the idea that the printing press had a broad social impact?',
+  opts:['"a slow process that limited their availability to wealthy institutions"','"reusable metal letters arranged into pages"','"dramatically lowering costs and increasing literacy rates among merchants, students, and clergy alike"','"around 1440"'],
+  ci:2,exp:'This phrase directly shows the press affecting multiple social groups (merchants, students, clergy) by lowering costs and raising literacy — clear evidence of broad social impact.'},
+ {q:"What is the author's primary purpose in mentioning the criticism in the passage?",
+  opts:['To dismiss the value of green spaces entirely','To present a complicating perspective on an otherwise positive trend','To argue that property values are unimportant to city planning','To prove that all green space projects fail'],
+  ci:1,exp:'The author first presents benefits, then introduces a counterpoint about displacement, offering a more balanced, complicating view rather than dismissing or proving anything absolute.'},
+ {q:'According to the passage, what is one financial benefit cities may gain from green spaces?',
+  opts:['Lower property taxes for all residents','Increased tax revenue from rising nearby property values','Reduced cost of building new parks','Elimination of housing displacement'],
+  ci:1,exp:'The passage states that rising property values near parks generate "additional tax revenue for municipalities."'},
+ {q:"As used in the passage, \"painstaking\" most nearly means",
+  opts:['Careless and rushed','Requiring great care and effort','Extremely colorful','Financially expensive'],
+  ci:1,exp:'The passage describes a technique built from many tiny, individually placed dots taking years to complete — "painstaking" describes the careful, effortful nature of this process.'},
+ {q:'Based on the passage, what can be inferred about why Seurat placed complementary colors next to each other?',
+  opts:['He believed it would make the painting less expensive to produce','He believed it would create a more vivid effect than mixing paint directly','He wanted to make the painting harder to view from a distance','He was attempting to copy a technique used in photography'],
+  ci:1,exp:'The passage states Seurat believed placing complementary colors next to each other "would create a more vivid visual effect than mixing paint on a palette."'},
+ {q:'Which choice best states the main idea of the passage?',
+  opts:['Battery storage is unnecessary for renewable energy to succeed','Battery storage helps address the inconsistent output of renewable energy sources','Lithium-ion batteries are the only viable storage technology','Wind power produces more consistent energy than solar power'],
+  ci:1,exp:'The passage explains that renewable sources vary in output and that battery storage helps balance supply and demand — the central idea of the passage.'},
+ {q:'Which detail from the passage best supports the claim that battery technology is still evolving?',
+  opts:['"these renewable sources do not produce electricity at a constant rate"','"researchers are actively developing alternative technologies that rely on more abundant materials"','"similar in basic chemistry to those used in smartphones and electric vehicles"','"without significant advances in storage capacity"'],
+  ci:1,exp:'This phrase directly states that researchers are still developing new technologies, showing the field continues to evolve.'}
+];
+
+var state={};
+function loadState(){
+  try{
+    var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');
+    if(s&&typeof s.cur==='number'&&s.cur>=0&&s.cur<qs.length&&s.answers&&s.shuffles){state=s;}
+    else resetState();
+  }catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}
+}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){
+  if(!state.shuffles[i]){
+    var a=[0,1,2,3];
+    for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}
+    state.shuffles[i]=a; saveState();
+  }
+  return state.shuffles[i];
+}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAtt(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function updateNav(){
+  var ans=Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent=ans+' / '+qs.length;
+  document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';
+  var p=document.getElementById('dot-panel');
+  if(p.style.display!=='none')renderDots();
+}
+
+function toggleJump(){
+  var p=document.getElementById('dot-panel');
+  var b=document.getElementById('jump-btn');
+  if(p.style.display==='none'){p.style.display='block';b.innerHTML='Hide &#9652;';renderDots();}
+  else{p.style.display='none';b.innerHTML='Jump &#9662;';}
+}
+
+function renderDots(){
+  var p=document.getElementById('dot-panel');
+  var h='';
+  for(var i=0;i<qs.length;i++){
+    var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===getCSI(i)?'#185FA5':'#E24B4A');
+    h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';
+  }
+  if(Object.keys(state.answers).length===qs.length){
+    h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';
+  }
+  p.innerHTML=h;
+}
+
+function goToQ(i){
+  state.cur=i; state.showResults=false; saveState(); render();
+  document.getElementById('dot-panel').style.display='none';
+  document.getElementById('jump-btn').innerHTML='Jump &#9662;';
+}
+
+function showResults(){
+  state.showResults=true;
+  localStorage.setItem(ATT_KEY,loadAtt()+1);
+  saveState(); render();
+}
+
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAtt();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('resultsArea').style.display='none';
+  updateNav();
+  var i=state.cur; var q=qs[i];
+  document.getElementById('passage-label').textContent='Passage '+(Math.floor(i/2)+1)+' of 5 — '+cats[i];
+  document.getElementById('passage-main').textContent=passages[i];
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-text').textContent=q.q;
+  var sh=getShuffle(i); var ans=state.answers[i]; var csi=getCSI(i);
+  var html='';
+  for(var s=0;s<4;s++){
+    var oi=sh[s]; var cls='opt-btn'; var dis='';
+    if(ans!==undefined){dis='disabled ';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}
+    html+='<button class="'+cls+'" '+dis+'onclick="pick('+i+','+s+')">'+esc(q.opts[oi])+'</button>';
+  }
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');
+  if(ans!==undefined){eb.style.display='block';eb.textContent=q.exp;}
+  else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  updateNav();
+  var c=0,w=0,sk=0;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]===undefined)sk++;
+    else if(state.answers[i]===getCSI(i))c++;
+    else w++;
+  }
+  document.getElementById('results-summary').innerHTML=
+    '<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;'+
+    '<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;'+
+    '<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i]; var label,bg,tc;
+    if(a===undefined){label='Skipped';bg='#d7dde6';tc='#555';}
+    else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}
+    else{label='Wrong';bg='#FCEBEB';tc='#501313';}
+    html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.9rem;color:#333;">Q'+(i+1)+': '+cats[i]+'</span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';
+  }
+  document.getElementById('results-cards').innerHTML=html;
+}
+
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){
+  if(dir===1&&state.cur===qs.length-1){showResults();return;}
+  state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));
+  saveState();render();
+}
+function retryWrong(){
+  var first=-1;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){
+      if(first===-1)first=i; delete state.answers[i];
+    }
+  }
+  if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}
+}
+function copyRes(){
+  var lines=['[Sion] SAT Reading - Results (2026-06-18)'];
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    var label=a===undefined?'Skipped':(a===getCSI(i)?'Correct':'Wrong');
+    lines.push('Q'+(i+1)+' ('+cats[i]+'): '+label);
+  }
+  var txt=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fallbackCopy(txt);});}
+  else fallbackCopy(txt);
+}
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;window.openFreshModal=openFreshModal;
+window.confirmFresh=confirmFresh;window.showResults=showResults;
+
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

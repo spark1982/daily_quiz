@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>[Sion] SAT grammar</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh}
+.top-bar{background:#fff;text-align:center;padding:10px 12px 4px}
+.date-lbl{font-size:2rem;font-weight:800;color:#185FA5}
+.title-lbl{font-size:1.25rem;font-weight:700;color:#185FA5;margin-top:2px}
+.att-lbl{font-size:0.85rem;color:#555;margin-top:2px;padding-bottom:6px}
+.nav-row{background:#fff;display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;border-top:1px solid #e0e7ef;justify-content:center}
+.nav-dot{width:32px;height:32px;border-radius:50%;border:2px solid #ccc;background:#e8edf4;font-size:0.72rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#333}
+.nav-dot.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.nav-dot.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.nav-dot.active{border-color:#185FA5;color:#185FA5}
+.nav-dot.results-pill{width:auto;padding:0 12px;border-radius:16px;font-size:0.8rem}
+.quiz-area{max-width:700px;margin:16px auto 0;padding:0 12px 40px}
+.card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.tag-badge{display:inline-block;background:#185FA5;color:#fff;border-radius:20px;padding:3px 12px;font-size:0.78rem;font-weight:600;margin-bottom:10px}
+.q-num{font-size:0.85rem;color:#666;margin-bottom:4px}
+.q-text{font-size:1rem;line-height:1.7;margin-bottom:16px;color:#111}
+.q-text .blank{font-weight:700;color:#185FA5}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt-btn{background:#e8edf4;color:#111;border:2px solid transparent;border-radius:8px;padding:11px 16px;font-size:0.92rem;text-align:left;cursor:pointer;transition:all 0.15s;font-family:inherit;line-height:1.45}
+.opt-btn:hover{background:#d0d9e8}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt-btn.wrong{background:#FCEBEC;border-color:#E24B4A;color:#501313}
+.opt-btn.revealed{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt-btn:disabled{cursor:default}
+.exp-box{background:#f7f9fc;border-left:4px solid #185FA5;padding:10px 14px;border-radius:0 8px 8px 0;margin-top:12px;font-size:0.88rem;color:#333;line-height:1.65;display:none}
+.nav-btns{display:flex;gap:10px;margin-top:18px;justify-content:flex-end}
+.nav-btn{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:0.9rem;font-weight:600;cursor:pointer}
+.nav-btn.prev-btn{background:#e8edf4;color:#185FA5}
+.results-area{max-width:700px;margin:16px auto;padding:0 12px 40px;display:none}
+.results-card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.results-title{font-size:1.3rem;font-weight:700;color:#185FA5;margin-bottom:14px}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+.res-item{border-radius:8px;padding:8px;text-align:center;cursor:pointer;font-size:0.82rem;font-weight:600;border:2px solid transparent}
+.res-item.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.res-item.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.res-item.skipped{background:#f0f4f8;border-color:#aaa;color:#555}
+.score-line{font-size:1.1rem;font-weight:700;color:#185FA5;margin-bottom:8px}
+.action-btn{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:0.88rem;font-weight:600;cursor:pointer;margin-right:8px;margin-top:8px}
+.action-btn.sec{background:#e8edf4;color:#185FA5}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-box{background:#fff;border-radius:12px;padding:24px;max-width:360px;width:90%;text-align:center}
+.modal-box p{font-size:1rem;color:#333;margin-bottom:18px;line-height:1.5}
+.btn-blue{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:9px 22px;font-size:0.9rem;font-weight:600;cursor:pointer;margin:4px}
+.btn-gray{background:#e8edf4;color:#333;border:none;border-radius:8px;padding:9px 22px;font-size:0.9rem;cursor:pointer;margin:4px}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <div class="date-lbl">2026-06-12</div>
+  <div class="title-lbl">[Sion] SAT grammar</div>
+  <div class="att-lbl" id="attLbl">Total Attempts: 0</div>
+</div>
+<div class="nav-row" id="navRow"></div>
+<div class="quiz-area" id="quizArea">
+  <div class="card">
+    <div class="tag-badge" id="tagBadge"></div>
+    <div class="q-num" id="qNum"></div>
+    <div class="q-text" id="qText"></div>
+    <div class="opts" id="opts"></div>
+    <div class="exp-box" id="expBox"></div>
+    <div class="nav-btns">
+      <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+      <button class="nav-btn" id="nextBtn" onclick="go(1)">Next</button>
+    </div>
+  </div>
+</div>
+<div class="results-area" id="resultsArea">
+  <div class="results-card">
+    <div class="results-title">Results</div>
+    <div class="score-line" id="scoreLine"></div>
+    <div class="res-grid" id="resGrid"></div>
+    <div style="margin-top:14px">
+      <button class="action-btn" onclick="copyRes()">Copy All Results</button>
+      <button class="action-btn sec" onclick="openFreshModal()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p>Reset all progress and start fresh?</p>
+    <button class="btn-blue" onclick="confirmFresh()">Yes, Start Fresh</button>
+    <button class="btn-gray" onclick="closeFreshModal()">Cancel</button>
+  </div>
+</div>
+<script>
+(function(){
+const KEY='quiz_satgrammar_10_v1';
+const ATT_KEY='quiz_satgrammar_attempts_v1';
+var qs=[
+{tag:'Subject-Verb Agreement',q:'The collection of rare manuscripts <span class="blank">[BLANK]</span> stored in a climate-controlled vault to prevent deterioration.',opts:['are','is','were','have been'],ci:1,exp:'"Collection" is the subject — a singular noun. Even though "manuscripts" (plural) appears nearby, the verb must agree with "collection." The correct answer is "is." Were/have been would be used for past actions, and "are" incorrectly treats a singular subject as plural.'},
+{tag:'Pronoun-Antecedent Agreement',q:'When the committee released its findings, <span class="blank">[BLANK]</span> recommendations immediately sparked debate among city officials.',opts:['their','its','it\'s','they\'re'],ci:1,exp:'"Committee" is a collective noun treated as singular in this sentence (note "its findings"). The pronoun referring to the committee must also be singular: "its." "Their" would be used if the antecedent were plural. "It\'s" and "they\'re" are contractions, not possessive pronouns.'},
+{tag:'Verb Tense and Mood',q:'By the time the researchers publish their report next spring, they <span class="blank">[BLANK]</span> the data for nearly three years.',opts:['analyzed','will have been analyzing','have analyzed','are analyzing'],ci:1,exp:'The signal phrase "by the time...next spring" indicates a future perfect context — an action that will be ongoing until a specific future point. "Will have been analyzing" (future perfect progressive) correctly captures both the ongoing nature and the future endpoint. Simple past "analyzed" is wrong, and present tenses don\'t fit the future timeframe.'},
+{tag:'Parallel Structure',q:'The director praised the team for finishing the project on time, staying within budget, and <span class="blank">[BLANK]</span> exceptional results.',opts:['to deliver','their delivery of','delivering','delivered'],ci:2,exp:'The sentence lists three parallel activities introduced by "for": finishing, staying, and ___ing. To maintain parallel structure, the third item must also be a gerund (-ing form). "Delivering" is correct. "To deliver" is an infinitive, "their delivery of" breaks the pattern, and "delivered" is a past tense verb.'},
+{tag:'Punctuation — Commas and Semicolons',q:'The scientist conducted dozens of experiments <span class="blank">[BLANK]</span> none of them produced the result she had predicted.',opts:['and','however,','; however,',', however'],ci:2,exp:'The two clauses are independent ("The scientist conducted..." and "none of them produced..."). "However" is a conjunctive adverb that must be preceded by a semicolon and followed by a comma when joining two independent clauses: "; however,". A comma alone before "however" creates a comma splice. "And" would work but is not offered as a complete option here.'},
+{tag:'Modifiers',q:'<span class="blank">[BLANK]</span> the lab at midnight, the alarm system was triggered by the researchers.',opts:['Entering','Having entered','When they entered','After the researchers entered'],ci:2,exp:'The original participial phrase "Entering the lab at midnight" dangles — it modifies "the alarm system," implying the alarm entered the lab. The clearest fix is "When they entered the lab at midnight," which provides a clear subject. Option A and B both create dangling modifiers. Option D is grammatically correct and also acceptable, but C is more concise and natural.'},
+{tag:'Transitions and Logical Flow',q:'Early clinical trials showed the drug was highly effective in reducing symptoms. <span class="blank">[BLANK]</span>, longer-term studies revealed serious side effects that had not appeared in initial testing.',opts:['Therefore','Similarly','Nevertheless','Consequently'],ci:2,exp:'The second sentence introduces a contrast or complication: the drug seemed effective, but later studies revealed problems. "Nevertheless" signals a concession or contrast, which fits perfectly. "Therefore" and "Consequently" suggest a logical result flowing from the first sentence, which is incorrect. "Similarly" signals continuation, not contrast.'},
+{tag:'Sentence Boundaries',q:'The author\'s early novels received little critical attention. <span class="blank">[BLANK]</span> later work, however, transformed her reputation entirely.',opts:['Her','Her;','Her, but her','Her, which was'],ci:0,exp:'"Her later work, however, transformed her reputation entirely." is a complete, correct sentence that follows the previous one. The subject of the new sentence is "Her later work." No semicolon is needed after "Her" because "Her later work" is not a complete clause on its own — it is the subject of the following verb. Options B, C, and D all create grammatical errors.'},
+{tag:'Word Choice and Precision',q:'The archaeologist\'s theory, while <span class="blank">[BLANK]</span>, remains unproven due to a lack of physical evidence.',opts:['interesting','plausible','exciting','compelling'],ci:1,exp:'The sentence signals a contrast: the theory has some merit but lacks proof. "Plausible" (meaning capable of being believed; seeming reasonable) is the most precise word here — it implies a degree of credibility that makes the "but unproven" contrast logical. "Interesting," "exciting," and "compelling" are vaguer and do not carry the implication of reasonableness that the contrast requires.'},
+{tag:'Conciseness and Redundancy',q:'The new bridge design is innovative and <span class="blank">[BLANK]</span>.',opts:['represents a novel and unprecedented approach to construction','breaks from prior tradition in a new way','introduces fresh construction methods not seen before','offers a new approach to construction'],ci:3,exp:'"Offers a new approach to construction" is the only concise, non-redundant choice. "Represents a novel and unprecedented approach" stacks three synonyms — novel, unprecedented, and new — all meaning the same thing. "Breaks from prior tradition in a new way" pairs "prior tradition" (redundant) and adds yet another "new." "Introduces fresh construction methods not seen before" uses both "fresh" and "not seen before" to say the same thing twice. Only "offers a new approach to construction" expresses the idea without any redundancy.'}
+];
+
+var state={cur:0,answers:{},shuffles:{},showResults:false};
+function loadState(){try{var s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&typeof s.cur==='number'&&typeof s.answers==='object'&&s.answers!==null&&typeof s.shuffles==='object'&&s.shuffles!==null){if(s.cur<0||s.cur>=qs.length)s.cur=0;state=s;}}catch(e){localStorage.removeItem(KEY);}}
+function saveState(){localStorage.setItem(KEY,JSON.stringify(state));}
+function loadAttempts(){return parseInt(localStorage.getItem(ATT_KEY)||'0');}
+function saveAttempts(n){localStorage.setItem(ATT_KEY,String(n));}
+function getShuffled(i){if(!state.shuffles[i]){var arr=qs[i].opts.map((_,j)=>j);for(var k=arr.length-1;k>0;k--){var r=Math.floor(Math.random()*(k+1));var t=arr[k];arr[k]=arr[r];arr[r]=t;}state.shuffles[i]=arr;saveState();}return state.shuffles[i];}
+
+function render(){
+  try{
+    document.getElementById('attLbl').textContent='Total Attempts: '+loadAttempts();
+    buildNav();
+    if(state.showResults){
+      document.getElementById('quizArea').style.display='none';
+      document.getElementById('resultsArea').style.display='block';
+      buildResults();
+    } else {
+      document.getElementById('quizArea').style.display='block';
+      document.getElementById('resultsArea').style.display='none';
+      buildQ();
+    }
+  }catch(e){document.getElementById('quizArea').innerHTML='<div class="card"><p style="color:red">Error. Please refresh.</p></div>';document.getElementById('quizArea').style.display='block';}
+}
+function buildNav(){
+  var row=document.getElementById('navRow');row.innerHTML='';
+  for(var i=0;i<qs.length;i++){
+    var d=document.createElement('button');d.className='nav-dot';d.textContent=i+1;
+    if(state.answers[i]!==undefined)d.className+=(state.answers[i]===qs[i].ci?' correct':' wrong');
+    if(!state.showResults&&i===state.cur)d.className+=' active';
+    (function(idx){d.onclick=function(){if(state.showResults){state.showResults=false;saveState();}state.cur=idx;saveState();render();};})(i);
+    row.appendChild(d);
+  }
+  if(state.showResults){var p=document.createElement('button');p.className='nav-dot results-pill active';p.textContent='Results';p.onclick=function(){state.showResults=true;saveState();render();};row.appendChild(p);}
+}
+function buildQ(){
+  var q=qs[state.cur];
+  document.getElementById('tagBadge').textContent=q.tag;
+  document.getElementById('qNum').textContent='Question '+(state.cur+1)+' / '+qs.length;
+  document.getElementById('qText').innerHTML=q.q;
+  var shuffled=getShuffled(state.cur);var answered=state.answers[state.cur]!==undefined;var chosen=state.answers[state.cur];
+  var container=document.getElementById('opts');container.innerHTML='';
+  shuffled.forEach(function(origIdx){
+    var btn=document.createElement('button');btn.className='opt-btn';btn.textContent=q.opts[origIdx];
+    if(answered){btn.disabled=true;if(origIdx===q.ci)btn.className='opt-btn revealed';if(origIdx===chosen&&chosen!==q.ci)btn.className='opt-btn wrong';if(origIdx===chosen&&chosen===q.ci)btn.className='opt-btn correct';}
+    (function(oIdx){btn.onclick=function(){pick(oIdx);};})(origIdx);
+    container.appendChild(btn);
+  });
+  var exp=document.getElementById('expBox');
+  if(answered&&chosen!==q.ci){exp.style.display='block';exp.textContent=q.exp;}else{exp.style.display='none';}
+  document.getElementById('nextBtn').textContent=(state.cur===qs.length-1?'See Results →':'Next');
+}
+function pick(origIdx){if(state.answers[state.cur]!==undefined)return;state.answers[state.cur]=origIdx;saveState();render();}
+function go(dir){
+  if(dir===1&&state.cur===qs.length-1){var att=loadAttempts()+1;saveAttempts(att);state.showResults=true;saveState();render();return;}
+  state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));saveState();render();
+}
+function buildResults(){
+  var correct=0;var lines=['[Sion] SAT Grammar Results - 2026-06-12'];
+  var grid=document.getElementById('resGrid');grid.innerHTML='';
+  for(var i=0;i<qs.length;i++){
+    var item=document.createElement('div');item.className='res-item';var ans=state.answers[i];
+    if(ans===undefined){item.className+=' skipped';item.textContent='Q'+(i+1)+': Skipped';}
+    else if(ans===qs[i].ci){item.className+=' correct';item.textContent='Q'+(i+1)+': Correct';correct++;lines.push('Q'+(i+1)+': Correct');}
+    else{item.className+=' wrong';item.textContent='Q'+(i+1)+': Wrong';lines.push('Q'+(i+1)+': Wrong');}
+    (function(idx){item.onclick=function(){state.showResults=false;state.cur=idx;saveState();render();};})(i);
+    grid.appendChild(item);
+  }
+  document.getElementById('scoreLine').textContent='Score: '+correct+' / '+qs.length+' correct';
+  lines.push('Score: '+correct+'/'+qs.length);window._resText=lines.join('\n');
+}
+function copyRes(){if(navigator.clipboard){navigator.clipboard.writeText(window._resText||'');}else{var ta=document.createElement('textarea');ta.value=window._resText||'';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function closeFreshModal(){document.getElementById('freshModal').style.display='none';}
+function confirmFresh(){localStorage.removeItem(KEY);state={cur:0,answers:{},shuffles:{},showResults:false};closeFreshModal();render();}
+
+window.pick=pick;window.go=go;window.copyRes=copyRes;window.openFreshModal=openFreshModal;window.closeFreshModal=closeFreshModal;window.confirmFresh=confirmFresh;
+
+loadState();render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>[Grant] Math Competition</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f7fb;min-height:100vh;padding:16px}
+.date-header{font-size:2rem;font-weight:800;text-align:center;color:#185FA5;background:#fff;padding:12px;border-radius:10px;margin-bottom:6px}
+.quiz-title{font-size:1.4rem;font-weight:700;text-align:center;color:#185FA5;margin-bottom:4px}
+.attempts{text-align:center;font-size:0.95rem;color:#555;margin-bottom:10px}
+.nav-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;margin-bottom:14px;padding:8px}
+.dot{width:30px;height:30px;border-radius:50%;border:2px solid #185FA5;background:#fff;color:#185FA5;font-size:0.7rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.dot.correct{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.dot.wrong{background:#E24B4A;border-color:#E24B4A;color:#fff}
+.dot.current{box-shadow:0 0 0 3px #185FA5}
+.dot.results-pill{width:auto;padding:0 12px;border-radius:15px;font-size:0.8rem}
+.card{background:#fff;border-radius:14px;padding:20px;max-width:680px;margin:0 auto 14px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.q-meta{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.tag{background:#185FA5;color:#fff;border-radius:12px;padding:3px 10px;font-size:0.75rem;font-weight:600}
+.counter{font-size:0.85rem;color:#888}
+.q-text{font-size:1.05rem;color:#111;margin-bottom:16px;line-height:1.6}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{background:#e8edf4;color:#111111;border:2px solid transparent;border-radius:10px;padding:12px 16px;cursor:pointer;font-size:0.98rem;text-align:left;transition:all .15s}
+.opt:hover{border-color:#185FA5}
+.opt.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.opt.reveal{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.explain{margin-top:12px;background:#f0f6ff;border-left:4px solid #185FA5;padding:10px 14px;border-radius:6px;font-size:0.92rem;color:#1a3a6b;display:none}
+.nav-btns{display:flex;justify-content:space-between;margin-top:16px}
+.btn{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:0.95rem;cursor:pointer;font-weight:600}
+.btn:hover{background:#1050a0}
+.btn-outline{background:#fff;color:#185FA5;border:2px solid #185FA5}
+.btn-outline:hover{background:#e8edf4}
+/* Fractions */
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 2px}
+.frac .num,.frac .den{padding:0 4px;font-size:0.95em}
+.frac .bar{height:2px;background:currentColor;width:100%}
+/* Radicals */
+.rad{display:inline-flex;align-items:center;vertical-align:middle;line-height:1}
+.rad-idx{font-size:0.6em;line-height:1;align-self:flex-start;margin-top:0.1em;margin-right:1px}
+.rad-sign{display:inline-flex;align-items:center;line-height:1}
+.rad-tick{font-size:1.35em;line-height:1;position:relative;top:0.06em}
+.rad-body{border-top:2px solid currentColor;padding:1px 5px 1px 1px;display:inline-flex;align-items:center;line-height:1.25;flex-wrap:nowrap;gap:2px}
+/* Results */
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin:16px 0}
+.res-card{border-radius:10px;padding:10px;cursor:pointer;text-align:center;font-size:0.88rem;font-weight:600}
+.res-card.c{background:#E1F5EE;color:#085041;border:2px solid #1D9E75}
+.res-card.w{background:#FCEBEB;color:#501313;border:2px solid #E24B4A}
+.res-card.s{background:#f0f0f0;color:#555;border:2px solid #999}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:14px;padding:28px;max-width:340px;width:90%;text-align:center}
+.modal h3{color:#185FA5;margin-bottom:12px}
+.modal-btns{display:flex;gap:10px;justify-content:center;margin-top:18px}
+</style>
+</head>
+<body>
+<div class="date-header">2026-06-10</div>
+<div class="quiz-title">[Grant] Math Competition</div>
+<div class="attempts" id="attDisp">Total Attempts: 0</div>
+<div class="nav-dots" id="navDots"></div>
+<div id="quizArea" style="display:none"></div>
+<div id="resultsArea" style="display:none"></div>
+<div class="modal-overlay" id="freshModal">
+  <div class="modal">
+    <h3>Start Fresh?</h3>
+    <p>All progress will be reset.</p>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeFresh()">Cancel</button>
+      <button class="btn" onclick="doFresh()">Reset</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+const SK='quiz_mathcomp_28_v1', ATK='quiz_mathcomp_attempts_v1';
+function rad(n,inner){const idx=n?`<span class="rad-idx">${n}</span>`:'';return`<span class="rad">${idx}<span class="rad-sign"><span class="rad-tick">√</span><span class="rad-body">${inner}</span></span></span>`;}
+function sup(b,e){return`${b}<sup>${e}</sup>`;}
+function frac(n,d){return`<span class="frac"><span class="num">${n}</span><span class="bar"></span><span class="den">${d}</span></span>`;}
+
+const QS=[
+// Chapter 1
+{tag:'Ch.1',q:`Solve: (1 + 2) × 2`,opts:['6','8','9','3'],ci:0,ex:'(1+2)×2 = 3×2 = 6.'},
+{tag:'Ch.1',q:`How many integers are between −10 and 10 (not including −10 and 10)?`,opts:['17','19','21','18'],ci:1,ex:'Integers from −9 to 9: that is 9+1+9 = 19 integers.'},
+{tag:'Ch.1',q:`Solve: 20(50 + 4) − 1000`,opts:['1000','1008','80','1080'],ci:2,ex:'20×54 − 1000 = 1080 − 1000 = 80.'},
+{tag:'Ch.1',q:`Jake reads from page 186 to page 563, inclusive. If he reads the same number of pages for 14 days, how many pages should he read each day?`,opts:['25','26','28','27'],ci:3,ex:'Total pages = 563−186+1 = 378. 378÷14 = 27 pages per day.'},
+// Chapter 2
+{tag:'Ch.2',q:`What are the remainders when 123,456 is divided by 4, 5, 8, 9, and 10, respectively?`,opts:['0, 1, 0, 3, 6','1, 0, 1, 3, 6','0, 1, 0, 4, 6','0, 1, 0, 3, 5'],ci:0,ex:'÷4: 123456=4×30864, r=0. ÷5: ends in 6, r=1. ÷8: last 3 digits 456=8×57, r=0. ÷9: digit sum=1+2+3+4+5+6=21, 21÷9 r=3. ÷10: ends in 6, r=6.'},
+{tag:'Ch.2',q:`Jerry is thinking of a number between 1 and 100 that is a multiple of both 11 and 5. What number is it?`,opts:['22','55','77','33'],ci:1,ex:'LCM(11,5)=55. Only 55 is between 1 and 100.'},
+{tag:'Ch.2',q:`What is the smallest three-digit whole number that is a multiple of 5?`,opts:['105','110','100','115'],ci:2,ex:'100 is the smallest three-digit number, and 100÷5=20, so 100 is the answer.'},
+{tag:'Ch.2',q:`A number is randomly chosen from 1 to 100, inclusive. What is the probability that the number is divisible by both 5 and 3? Express as a percent.`,opts:['5%','8%','10%','6%'],ci:3,ex:'Divisible by both 5 and 3 means divisible by 15. Multiples of 15 from 1–100: 15,30,45,60,75,90 → 6 numbers. 6/100 = 6%.'},
+// Chapter 3
+{tag:'Ch.3',q:`Is 163 a prime number?`,opts:['Yes, 163 is prime.','No; 163 = 7 × 23','No; 163 = 11 × 13 + 10','No; 163 = 3 × 53 + 4'],ci:0,ex:'Check divisibility by primes up to √163 ≈ 12.8: 2, 3, 5, 7, 11. None divide 163 evenly, so 163 is prime.'},
+{tag:'Ch.3',q:`What is the smallest three-digit prime number?`,opts:['100','101','103','107'],ci:1,ex:'100 = 4×25 (not prime). 101 is not divisible by 2, 3, 5, or 7 (7²=49<101<121=11²), so 101 is prime.'},
+{tag:'Ch.3',q:`Express 252 as a product of prime factors using exponents.`,opts:[`2 × 3 × 7 × 6`,`2<sup>3</sup> × 3<sup>2</sup> × 7`,`2<sup>2</sup> × 3<sup>2</sup> × 7`,`2<sup>2</sup> × 3 × 7<sup>2</sup>`],ci:2,ex:'252 = 4×63 = 4×9×7 = 2²×3²×7.'},
+{tag:'Ch.3',q:`If a³ × b² = 200, and a and b are prime numbers, what is the value of a + b?`,opts:['5','6','9','7'],ci:3,ex:'200 = 8×25 = 2³×5². So a=2, b=5. a+b = 7.'},
+// Chapter 4
+{tag:'Ch.4',q:`Find the sum of all the factors of 30.`,opts:['72','60','48','96'],ci:0,ex:'30 = 2×3×5. Sum of factors = (1+2)(1+3)(1+5) = 3×4×6 = 72.'},
+{tag:'Ch.4',q:`Find the prime factorization of 8,000.`,opts:[`2<sup>3</sup> × 5<sup>3</sup>`,`2<sup>6</sup> × 5<sup>3</sup>`,`2<sup>5</sup> × 5<sup>3</sup>`,`2<sup>6</sup> × 5<sup>2</sup>`],ci:1,ex:'8000 = 8×1000 = 2³×(2×5)³ = 2³×2³×5³ = 2⁶×5³.'},
+{tag:'Ch.4',q:`Find the number of factors for 13<sup>9</sup> × 31<sup>4</sup>.`,opts:['36','40','50','60'],ci:2,ex:'Number of factors = (9+1)(4+1) = 10×5 = 50.'},
+{tag:'Ch.4',q:`Find the positive difference between the number of factors and the sum of all the factors for 210.`,opts:['450','500','555','560'],ci:3,ex:'210=2×3×5×7. Factors count=(1+1)⁴=16. Sum=(1+2)(1+3)(1+5)(1+7)=3×4×6×8=576. Difference=576−16=560.'},
+// Chapter 5
+{tag:'Ch.5',q:`How many factors of 3<sup>10</sup> × 7<sup>5</sup> × 13<sup>2</sup> are divisible by 3?`,opts:['180','150','120','60'],ci:0,ex:'Must include 3 at least once: 10 choices for 3 (exponent 1–10), 6 choices for 7 (0–5), 3 choices for 13 (0–2). Total: 10×6×3 = 180.'},
+{tag:'Ch.5',q:`Find the number of factors of 2<sup>2</sup>3<sup>4</sup>5<sup>3</sup> that are divisible by 6.`,opts:['24','32','40','48'],ci:1,ex:'Divisible by 6=2×3: need ≥1 factor of 2 (2 choices: 1,2) and ≥1 factor of 3 (4 choices: 1–4), and 5 (4 choices: 0–3). Total: 2×4×4 = 32.'},
+{tag:'Ch.5',q:`Find the number of factors of 2<sup>2</sup>3<sup>4</sup>5<sup>3</sup> that are perfect cubes.`,opts:['3','6','4','8'],ci:2,ex:'Perfect cube: exponents divisible by 3. For 2^a (0≤a≤2): only a=0 (1 choice). For 3^b (0≤b≤4): b=0 or 3 (2 choices). For 5^c (0≤c≤3): c=0 or 3 (2 choices). Total: 1×2×2 = 4.'},
+{tag:'Ch.5',q:`Find the sum of all the odd factors of 2<sup>2</sup>3<sup>2</sup>5<sup>2</sup>.`,opts:['300','360','392','403'],ci:3,ex:'Odd factors exclude the factor of 2. Sum = (1+3+9)(1+5+25) = 13×31 = 403.'},
+// Chapter 6
+{tag:'Ch.6',q:`Hannah bought 3 pencils, which cost 28 cents each, with a one-dollar bill. How much did she receive in change? Express in cents.`,opts:['16','12','18','22'],ci:0,ex:'3×28 = 84 cents. Change = 100 − 84 = 16 cents.'},
+{tag:'Ch.6',q:`At a store, pens sell for 99¢, pencils for 49¢, and erasers for 39¢. Riley needs 2 pens, 3 pencils, and 5 erasers. How much money does he need? Express in dollars.`,opts:['$4.80','$5.40','$5.80','$6.00'],ci:1,ex:'2×99 + 3×49 + 5×39 = 198 + 147 + 195 = 540 cents = $5.40.'},
+{tag:'Ch.6',q:`How many ways are there to make 17 cents using pennies and/or nickels?`,opts:['3','2','4','5'],ci:2,ex:'0 nickels: 17 pennies (1 way). 1 nickel: 12 pennies (1 way). 2 nickels: 7 pennies (1 way). 3 nickels: 2 pennies (1 way). Total: 4 ways.'},
+{tag:'Ch.6',q:`Ten adults and ten children go to see a movie. The total cost was $210 and an adult ticket costs $14. How much did a child ticket cost?`,opts:['$5','$6','$8','$7'],ci:3,ex:'Adults: 10×$14 = $140. Remaining: $210−$140 = $70. Per child: $70÷10 = $7.'},
+// Chapter 7
+{tag:'Ch.7',q:`Simplify: ${rad('','2<sup>32</sup>')} × ${rad('','2<sup>−32</sup>')}`,opts:['1','2','0','4'],ci:0,ex:'√(2³²) × √(2⁻³²) = √(2³² × 2⁻³²) = √(2⁰) = √1 = 1.'},
+{tag:'Ch.7',q:`Simplify: <sup>6</sup>${rad('','2<sup>14</sup>')} × <sup>3</sup>${rad('','2<sup>5</sup>')}`,opts:['8','16','32','4'],ci:1,ex:'= 2^(14/6) × 2^(5/3) = 2^(7/3) × 2^(5/3) = 2^(12/3) = 2⁴ = 16.'},
+{tag:'Ch.7',q:`Find the largest perfect square less than 500.`,opts:['441','400','484','529'],ci:2,ex:'√500 ≈ 22.36. The largest integer ≤ 22.36 is 22. 22² = 484.'},
+{tag:'Ch.7',q:`Simplify: <sup>9</sup>${rad('','5<sup>2</sup>')} × <sup>18</sup>${rad('','5<sup>2</sup>')} × <sup>3</sup>${rad('','5<sup>8</sup>')}`,opts:['25','15','5','125'],ci:3,ex:'= 5^(2/9) × 5^(2/18) × 5^(8/3) = 5^(2/9) × 5^(1/9) × 5^(24/9) = 5^(27/9) = 5³ = 125.'}
+];
+
+let state={cur:0,answers:{},shuffles:{},showResults:false};
+function loadState(){
+  try{
+    const s=localStorage.getItem(SK);
+    if(s){
+      const p=JSON.parse(s);
+      if(typeof p.cur==='number'&&p.cur>=0&&p.cur<=QS.length&&typeof p.answers==='object'&&!Array.isArray(p.answers)&&typeof p.shuffles==='object'&&!Array.isArray(p.shuffles)){
+        state=p;
+      } else { localStorage.removeItem(SK); }
+    }
+  }catch(e){localStorage.removeItem(SK);}
+}
+function saveState(){localStorage.setItem(SK,JSON.stringify(state));}
+function getAttempts(){return parseInt(localStorage.getItem(ATK)||'0');}
+function incAttempts(){localStorage.setItem(ATK,getAttempts()+1);}
+function updAttDisp(){document.getElementById('attDisp').textContent='Total Attempts: '+getAttempts();}
+function getShuffle(i){
+  if(!state.shuffles[i]){
+    const q=QS[i];
+    let arr=q.opts.map((_,j)=>j);
+    for(let k=arr.length-1;k>0;k--){const r=Math.floor(Math.random()*(k+1));[arr[k],arr[r]]=[arr[r],arr[k]];}
+    state.shuffles[i]=arr;
+    saveState();
+  }
+  return state.shuffles[i];
+}
+function renderDots(forResults){
+  const nd=document.getElementById('navDots');
+  nd.innerHTML='';
+  if(forResults){
+    const pill=document.createElement('button');
+    pill.className='dot results-pill correct';pill.textContent='Results';nd.appendChild(pill);
+    return;
+  }
+  QS.forEach((_,i)=>{
+    const d=document.createElement('button');
+    d.className='dot';d.textContent=i+1;
+    if(state.answers[i]!==undefined){
+      const q=QS[i];const sh=getShuffle(i);
+      const chosen=state.answers[i];const correctShuffled=sh.indexOf(q.ci);
+      if(chosen===correctShuffled)d.classList.add('correct');else d.classList.add('wrong');
+    }
+    if(i===state.cur)d.classList.add('current');
+    d.onclick=()=>{state.cur=i;saveState();render();};
+    nd.appendChild(d);
+  });
+}
+function render(){
+  try{
+    if(state.showResults){renderResults();return;}
+    document.getElementById('quizArea').style.display='block';
+    document.getElementById('resultsArea').style.display='none';
+    renderDots(false);
+    const i=state.cur,q=QS[i],sh=getShuffle(i);
+    const answered=state.answers[i]!==undefined;
+    const correctShuffled=sh.indexOf(q.ci);
+    let html=`<div class="card">
+      <div class="q-meta"><span class="tag">${q.tag}</span><span class="counter">${i+1} / ${QS.length}</span></div>
+      <div class="q-text">${q.q}</div>
+      <div class="opts">`;
+    sh.forEach((origIdx,dispIdx)=>{
+      let cls='opt';
+      if(answered){
+        if(dispIdx===correctShuffled)cls+=' correct';
+        else if(dispIdx===state.answers[i])cls+=' wrong';
+      }
+      html+=`<button class="${cls}" onclick="pick(${dispIdx})">${q.opts[origIdx]}</button>`;
+    });
+    html+='</div>';
+    if(answered&&state.answers[i]!==correctShuffled){
+      html+=`<div class="explain" style="display:block">${q.ex}</div>`;
+    }
+    html+=`<div class="nav-btns">
+      <button class="btn btn-outline" onclick="go(-1)"${i===0?' disabled':''}>Prev</button>
+      <button class="btn" onclick="${i===QS.length-1?'finishQuiz()':'go(1)'}">${i===QS.length-1?'See Results →':'Next'}</button>
+    </div></div>`;
+    document.getElementById('quizArea').innerHTML=html;
+  }catch(e){document.getElementById('quizArea').innerHTML='<div class="card">Error rendering question. Please refresh.</div>';}
+}
+function renderResults(){
+  incAttempts();updAttDisp();
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  renderDots(true);
+  let correct=0,wrong=0,skipped=0;
+  let gridHTML='';
+  QS.forEach((q,i)=>{
+    const sh=getShuffle(i);
+    const correctShuffled=sh.indexOf(q.ci);
+    if(state.answers[i]===undefined){skipped++;gridHTML+=`<div class="res-card s" onclick="goToQ(${i})">Q${i+1}<br>Skipped</div>`;}
+    else if(state.answers[i]===correctShuffled){correct++;gridHTML+=`<div class="res-card c" onclick="goToQ(${i})">Q${i+1}<br>Correct</div>`;}
+    else{wrong++;gridHTML+=`<div class="res-card w" onclick="goToQ(${i})">Q${i+1}<br>Wrong</div>`;}
+  });
+  document.getElementById('resultsArea').innerHTML=`
+    <div class="card">
+      <h2 style="color:#185FA5;text-align:center;margin-bottom:8px">Results</h2>
+      <p style="text-align:center;font-size:1.1rem;margin-bottom:12px">${correct} / ${QS.length} Correct &nbsp;|&nbsp; ${wrong} Wrong &nbsp;|&nbsp; ${skipped} Skipped</p>
+      <div class="results-grid">${gridHTML}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px">
+        <button class="btn" onclick="startRetry()">Retry Wrong Questions</button>
+        <button class="btn btn-outline" onclick="copyRes()">Copy All Results</button>
+        <button class="btn btn-outline" onclick="confirmFresh()">Start Fresh</button>
+      </div>
+    </div>`;
+}
+function pick(dispIdx){
+  if(state.answers[state.cur]!==undefined)return;
+  state.answers[state.cur]=dispIdx;
+  saveState();render();
+}
+function go(dir){
+  state.cur=Math.max(0,Math.min(QS.length-1,state.cur+dir));
+  saveState();render();
+}
+function finishQuiz(){state.showResults=true;saveState();render();}
+function goToQ(i){state.showResults=false;state.cur=i;saveState();render();}
+function startRetry(){
+  const wrongIdx=[];
+  QS.forEach((q,i)=>{
+    const sh=getShuffle(i);
+    if(state.answers[i]!==undefined&&state.answers[i]!==sh.indexOf(q.ci))wrongIdx.push(i);
+  });
+  if(!wrongIdx.length){alert('No wrong questions!');return;}
+  const subAnswers={};
+  wrongIdx.forEach(i=>{delete state.answers[i];delete state.shuffles[i];});
+  state.showResults=false;state.cur=wrongIdx[0];saveState();render();
+}
+function copyRes(){
+  let txt=`[Grant] Math Competition — 2026-06-10\n`;
+  QS.forEach((q,i)=>{
+    const sh=getShuffle(i);
+    const correctShuffled=sh.indexOf(q.ci);
+    const status=state.answers[i]===undefined?'Skipped':state.answers[i]===correctShuffled?'Correct':'Wrong';
+    txt+=`Q${i+1}: ${status}\n`;
+  });
+  navigator.clipboard.writeText(txt).catch(()=>{});
+}
+function confirmFresh(){document.getElementById('freshModal').classList.add('show');}
+function closeFresh(){document.getElementById('freshModal').classList.remove('show');}
+function doFresh(){localStorage.removeItem(SK);state={cur:0,answers:{},shuffles:{},showResults:false};closeFresh();render();}
+
+window.pick=pick;window.go=go;window.finishQuiz=finishQuiz;window.goToQ=goToQ;
+window.startRetry=startRetry;window.copyRes=copyRes;window.confirmFresh=confirmFresh;
+window.closeFresh=closeFresh;window.doFresh=doFresh;
+
+loadState();updAttDisp();render();
+})();
+</script>
+</body>
+</html>

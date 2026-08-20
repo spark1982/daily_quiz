@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Both] Korean Sentences</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh;padding:16px}
+.date-label{font-size:2rem;font-weight:800;text-align:center;color:#185FA5;background:#fff;padding:10px 0 2px}
+.title{text-align:center;font-size:1.4rem;font-weight:700;color:#185FA5;background:#fff;padding:2px 0 4px}
+.attempts{text-align:center;font-size:0.9rem;color:#555;background:#fff;padding:2px 0 10px}
+.container{max-width:680px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.1);overflow:hidden}
+.dot-nav{display:flex;flex-wrap:wrap;gap:6px;padding:14px 16px;background:#f7f9fc;border-bottom:1px solid #e0e6ef;justify-content:center}
+.dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;cursor:pointer;border:2px solid #c5d2e0;background:#e8edf4;color:#333;transition:.15s}
+.dot.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.dot.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.dot.active{border-color:#185FA5;background:#d0e4f7;color:#185FA5}
+.results-pill{background:#185FA5;color:#fff;border-radius:20px;padding:4px 14px;font-size:0.8rem;font-weight:600}
+#quizArea{display:none;padding:20px 20px 10px}
+.tag-badge{display:inline-block;background:#185FA5;color:#fff;border-radius:20px;padding:3px 12px;font-size:0.75rem;font-weight:600;margin-bottom:10px}
+.q-counter{font-size:0.85rem;color:#666;margin-bottom:6px}
+.stem-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.q-text{font-size:1.6rem;font-weight:700;color:#111;line-height:1.4}
+.speak-btn{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:0.9rem;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.speak-btn:active{background:#1251a3}
+.options{display:grid;gap:10px}
+.opt-btn{width:100%;text-align:left;padding:12px 16px;border-radius:8px;border:2px solid transparent;background:#e8edf4;color:#111111;font-size:0.97rem;cursor:pointer;transition:.15s}
+.opt-btn:hover{border-color:#185FA5}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.opt-btn.reveal{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.explain{margin-top:14px;padding:12px;background:#f0f5ff;border-left:4px solid #185FA5;border-radius:4px;font-size:0.9rem;color:#222}
+.nav-btns{display:flex;gap:10px;margin-top:18px;padding-bottom:10px}
+.btn{padding:10px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer;transition:.15s}
+.btn-blue{background:#185FA5;color:#fff}.btn-blue:hover{background:#1251a3}
+.btn-gray{background:#e8edf4;color:#333}.btn-gray:hover{background:#d0dae8}
+#resultsArea{display:none;padding:20px}
+.res-header{font-size:1.2rem;font-weight:700;color:#185FA5;margin-bottom:14px;text-align:center}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:18px}
+.res-card{padding:10px;border-radius:8px;background:#f0f4f8;cursor:pointer;text-align:center;font-size:0.85rem;font-weight:600;border:2px solid transparent}
+.res-card.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.res-card.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.res-card.skipped{background:#fff3cd;border-color:#e6a817;color:#7a5500}
+.res-actions{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:12px;padding:28px;max-width:340px;width:90%;text-align:center}
+.modal h3{margin-bottom:10px;color:#185FA5}
+.modal p{margin-bottom:18px;color:#444;font-size:0.95rem}
+.modal-btns{display:flex;gap:10px;justify-content:center}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="date-label">2026-06-11</div>
+<div class="title">[Both] Korean Sentences</div>
+<div class="attempts" id="attemptsLabel">Total Attempts: 0</div>
+<div class="dot-nav" id="dotNav"></div>
+<div id="quizArea"></div>
+<div id="resultsArea"></div>
+</div>
+<div class="modal-overlay" id="freshModal">
+<div class="modal">
+<h3>Start Fresh</h3>
+<p>This will reset all your answers and progress.</p>
+<div class="modal-btns">
+<button class="btn btn-blue" onclick="doFresh()">Reset</button>
+<button class="btn btn-gray" onclick="closeFreshModal()">Cancel</button>
+</div>
+</div>
+</div>
+<script>
+(function(){
+const KEY='quiz_korsen_20_v1';
+const ATT_KEY='quiz_korsen_attempts_v1';
+var qs=[
+{stem:'배고파.',opts:["I'm hungry.","I'm tired.","I'm bored.","I'm thirsty."],ci:0,exp:'배고파 means "I am hungry."'},
+{stem:'나 피곤해.',opts:["I'm sorry.","I'm tired.","I'm hungry.","It\'s okay."],ci:1,exp:'피곤해 means "tired." 나 = I.'},
+{stem:'이거 뭐야?',opts:["Are you ready?","I understand.","What is this?","I love you."],ci:2,exp:'이거 = this, 뭐야 = what is it? Together: "What is this?"'},
+{stem:'주말이다!',opts:["It\'s delicious!","I won!","I\'m sad.","It\'s the weekend!"],ci:3,exp:'주말 = weekend, -이다 = it is. "It\'s the weekend!"'},
+{stem:'고마워.',opts:["Thank you.","I\'m sorry.","I\'m annoyed.","Give me some water."],ci:0,exp:'고마워 means "Thank you." (casual)'},
+{stem:'나 이겼어!',opts:["Come quickly!","I won!","I\'m very full.","Are you ready?"],ci:1,exp:'이겼어 = won (past tense of 이기다). "I won!"'},
+{stem:'알겠어.',opts:["I\'m sad.","Just so-so.","I understand.","I have to do my homework."],ci:2,exp:'알겠어 means "I understand" or "Got it."'},
+{stem:'짜증나.',opts:["I like this.","I\'m tired.","It\'s the weekend!","I\'m annoyed."],ci:3,exp:'짜증나 means "I\'m annoyed" or "This is frustrating."'},
+{stem:'미안해.',opts:["I\'m sorry.","Thank you.","I love you.","I\'m fine."],ci:0,exp:'미안해 means "I\'m sorry." (casual)'},
+{stem:'물 좀 줘.',opts:["Come quickly!","Give me some water.","I\'m hungry.","I understand."],ci:1,exp:'물 = water, 좀 = a little/please, 줘 = give me. "Give me some water, please."'},
+{stem:'사랑해.',opts:["I\'m sad.","I\'m sorry.","I love you.","I\'m annoyed."],ci:2,exp:'사랑해 means "I love you." (casual)'},
+{stem:'빨리 와!',opts:["It\'s delicious!","I\'m very full.","It\'s the weekend!","Come quickly!"],ci:3,exp:'빨리 = quickly/fast, 와 = come. "Come quickly!" or "Hurry up!"'},
+{stem:'괜찮아.',opts:["It\'s okay.","I won!","What is this?","I\'m tired."],ci:0,exp:'괜찮아 means "It\'s okay" or "I\'m fine."'},
+{stem:'그냥 그래.',opts:["I have to do my homework.","Just so-so.","Are you ready?","I like this."],ci:1,exp:'그냥 = just/simply, 그래 = so/that way. "Just so-so" or "Same as usual."'},
+{stem:'나 숙제 해야 돼.',opts:["I\'m bored.","I\'m sorry.","I have to do my homework.","I understand."],ci:2,exp:'숙제 = homework, 해야 돼 = have to do. "I have to do my homework."'},
+{stem:'슬퍼.',opts:["I\'m annoyed.","I\'m tired.","I love you.","I\'m sad."],ci:3,exp:'슬퍼 means "I\'m sad."'},
+{stem:'맛있다!',opts:["It\'s delicious!","Are you ready?","Just so-so.","I won!"],ci:0,exp:'맛있다 means "It\'s delicious!" or "It tastes good!"'},
+{stem:'이거 마음에 들어.',opts:["Give me some water.","I like this.","I\'m very full.","It\'s okay."],ci:1,exp:'마음에 들다 = to like, to be appealing. "I like this."'},
+{stem:'엄청 배불러.',opts:["I\'m hungry.","I\'m tired.","I\'m very full.","Come quickly!"],ci:2,exp:'엄청 = very/extremely, 배불러 = full (from eating). "I\'m very full."'},
+{stem:'준비됐어?',opts:["I love you.","I\'m sorry.","Just so-so.","Are you ready?"],ci:3,exp:'준비됐어 = (are you) ready/prepared. "Are you ready?"'}
+];
+
+var state={cur:0,answers:{},shuffles:{},showResults:false};
+
+function loadState(){
+  try{var s=localStorage.getItem(KEY);if(!s)return;var p=JSON.parse(s);
+  if(typeof p.cur!=='number'||typeof p.answers!=='object'||typeof p.shuffles!=='object')throw 0;
+  if(p.cur<0||p.cur>=qs.length)p.cur=0;state=p;}catch(e){localStorage.removeItem(KEY);}
+}
+function saveState(){localStorage.setItem(KEY,JSON.stringify(state));}
+function getAttempts(){return parseInt(localStorage.getItem(ATT_KEY)||'0');}
+function incAttempts(){localStorage.setItem(ATT_KEY,String(getAttempts()+1));}
+function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function getShuffled(qi){if(!state.shuffles[qi]){state.shuffles[qi]=shuffle([0,1,2,3]);saveState();}return state.shuffles[qi];}
+
+function speak(text){
+  if(!window.speechSynthesis)return;
+  var u=new SpeechSynthesisUtterance(text);u.lang='ko-KR';u.rate=0.9;
+  speechSynthesis.cancel();speechSynthesis.speak(u);
+}
+
+function render(){
+  document.getElementById('attemptsLabel').textContent='Total Attempts: '+getAttempts();
+  buildDots();
+  if(state.showResults){showResults();return;}
+  showQuestion();
+}
+
+function buildDots(){
+  var nav=document.getElementById('dotNav');var html='';
+  for(var i=0;i<qs.length;i++){
+    var cls='dot';
+    if(state.answers[i]===undefined){}
+    else if(state.answers[i]===qs[i].ci)cls+=' correct';
+    else cls+=' wrong';
+    if(i===state.cur&&!state.showResults)cls+=' active';
+    html+='<div class="'+cls+'" onclick="goToQ('+i+')">'+(i+1)+'</div>';
+  }
+  if(state.showResults)html+='<span class="results-pill">Results</span>';
+  nav.innerHTML=html;
+}
+
+function showQuestion(){
+  var qa=document.getElementById('quizArea');
+  document.getElementById('resultsArea').style.display='none';
+  qa.style.display='block';
+  var i=state.cur,q=qs[i];
+  var order=getShuffled(i);
+  var ans=state.answers[i];
+  var answered=(ans!==undefined);
+  var html='<div class="tag-badge">Korean Sentences</div>';
+  html+='<div class="q-counter">'+(i+1)+' / '+qs.length+'</div>';
+  html+='<div class="stem-row"><div class="q-text">'+q.stem+'</div>';
+  html+='<button class="speak-btn" onclick="speak(\''+q.stem.replace(/'/g,"\\'")+'\')">Listen</button></div>';
+  html+='<div class="options">';
+  for(var k=0;k<4;k++){
+    var oi=order[k];
+    var cls='opt-btn';
+    if(answered){if(oi===q.ci)cls+=' reveal';if(oi===ans&&ans!==q.ci)cls+=' wrong';}
+    html+='<button class="'+cls+'" onclick="pick('+oi+')">'+q.opts[oi]+'</button>';
+  }
+  html+='</div>';
+  if(answered&&ans!==q.ci)html+='<div class="explain"><strong>Explanation:</strong> '+q.exp+'</div>';
+  html+='<div class="nav-btns">';
+  if(i>0)html+='<button class="btn btn-gray" onclick="go(-1)">Prev</button>';
+  if(i<qs.length-1)html+='<button class="btn btn-blue" onclick="go(1)">Next</button>';
+  else html+='<button class="btn btn-blue" onclick="finishQuiz()">See Results &#8594;</button>';
+  html+='</div>';
+  qa.innerHTML=html;
+}
+
+function pick(oi){var i=state.cur;if(state.answers[i]!==undefined)return;state.answers[i]=oi;saveState();showQuestion();}
+function go(d){state.cur+=d;if(state.cur<0)state.cur=0;if(state.cur>=qs.length)state.cur=qs.length-1;saveState();showQuestion();}
+function goToQ(i){if(state.showResults){state.showResults=false;state.cur=i;saveState();render();return;}state.cur=i;saveState();showQuestion();buildDots();}
+function finishQuiz(){incAttempts();state.showResults=true;saveState();render();}
+
+function showResults(){
+  var qa=document.getElementById('quizArea');var ra=document.getElementById('resultsArea');
+  qa.style.display='none';ra.style.display='block';
+  var c=0,w=0,s=0;
+  for(var i=0;i<qs.length;i++){var a=state.answers[i];if(a===undefined)s++;else if(a===qs[i].ci)c++;else w++;}
+  var html='<div class="res-header">Results: '+c+' / '+qs.length+'</div><div class="res-grid">';
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];var cls='res-card ',lbl='';
+    if(a===undefined){cls+='skipped';lbl='Skipped';}else if(a===qs[i].ci){cls+='correct';lbl='Correct';}else{cls+='wrong';lbl='Wrong';}
+    html+='<div class="'+cls+'" onclick="goToQ('+i+')">Q'+(i+1)+': '+lbl+'</div>';
+  }
+  html+='</div><div class="res-actions">';
+  html+='<button class="btn btn-blue" onclick="startRetry()">Retry Wrong Questions</button>';
+  html+='<button class="btn btn-gray" onclick="copyRes()">Copy All Results</button>';
+  html+='<button class="btn btn-gray" onclick="confirmFresh()">Start Fresh</button></div>';
+  ra.innerHTML=html;buildDots();
+}
+
+var retryList=[],retryIdx=0,retryAnswers={};
+function startRetry(){
+  retryList=[];for(var i=0;i<qs.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==qs[i].ci)retryList.push(i);}
+  if(!retryList.length){alert('No wrong questions!');return;}
+  retryIdx=0;retryAnswers={};showRetry();
+}
+function showRetry(){
+  var qa=document.getElementById('quizArea');var ra=document.getElementById('resultsArea');
+  qa.style.display='none';ra.style.display='none';
+  var el=document.getElementById('retryArea');
+  if(!el){el=document.createElement('div');el.id='retryArea';el.style.cssText='padding:20px';document.querySelector('.container').appendChild(el);}
+  el.style.display='block';
+  if(retryIdx>=retryList.length){
+    var c=0;for(var x=0;x<retryList.length;x++){if(retryAnswers[x]===qs[retryList[x]].ci)c++;}
+    el.innerHTML='<div style="font-weight:700;color:#185FA5;margin-bottom:14px">Retry Complete: '+c+'/'+retryList.length+' correct</div><button class="btn btn-blue" onclick="backToResults()">Back to Results</button>';return;
+  }
+  var qi=retryList[retryIdx],q=qs[qi];var order=getShuffled(qi);var ans=retryAnswers[retryIdx];var answered=(ans!==undefined);
+  var html='<div style="font-weight:700;color:#185FA5;margin-bottom:10px">Retry '+(retryIdx+1)+'/'+retryList.length+'</div>';
+  html+='<div class="stem-row"><div class="q-text">'+q.stem+'</div><button class="speak-btn" onclick="speak(\''+q.stem.replace(/'/g,"\\'")+'\')">Listen</button></div>';
+  html+='<div class="options">';
+  for(var k=0;k<4;k++){var oi=order[k];var cls='opt-btn';if(answered){if(oi===q.ci)cls+=' reveal';if(oi===ans&&ans!==q.ci)cls+=' wrong';}html+='<button class="'+cls+'" onclick="retryPick('+oi+')">'+q.opts[oi]+'</button>';}
+  html+='</div>';
+  if(answered&&ans!==q.ci)html+='<div class="explain">'+q.exp+'</div>';
+  html+='<div class="nav-btns"><button class="btn btn-blue" onclick="retryNext()">'+(retryIdx<retryList.length-1?'Next':'Finish Retry')+'</button></div>';
+  el.innerHTML=html;
+}
+function retryPick(oi){if(retryAnswers[retryIdx]!==undefined)return;retryAnswers[retryIdx]=oi;showRetry();}
+function retryNext(){retryIdx++;showRetry();}
+function backToResults(){var r=document.getElementById('retryArea');if(r)r.style.display='none';state.showResults=true;saveState();render();}
+
+function copyRes(){
+  var lines=['[Both] Korean Sentences 2026-06-11'];var c=0,w=0,s=0;
+  for(var i=0;i<qs.length;i++){var a=state.answers[i];if(a===undefined){s++;lines.push('Q'+(i+1)+': Skipped');}else if(a===qs[i].ci){c++;lines.push('Q'+(i+1)+': Correct');}else{w++;lines.push('Q'+(i+1)+': Wrong');}}
+  lines.splice(1,0,'Score: '+c+'/'+qs.length);
+  var txt=lines.join('\n');
+  if(navigator.clipboard)navigator.clipboard.writeText(txt);
+  else{var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+}
+function confirmFresh(){document.getElementById('freshModal').classList.add('show');}
+function closeFreshModal(){document.getElementById('freshModal').classList.remove('show');}
+function doFresh(){localStorage.removeItem(KEY);state={cur:0,answers:{},shuffles:{},showResults:false};closeFreshModal();render();}
+
+window.pick=pick;window.go=go;window.finishQuiz=finishQuiz;window.goToQ=goToQ;
+window.startRetry=startRetry;window.copyRes=copyRes;window.confirmFresh=confirmFresh;
+window.closeFreshModal=closeFreshModal;window.doFresh=doFresh;
+window.retryPick=retryPick;window.retryNext=retryNext;window.backToResults=backToResults;
+window.speak=speak;
+
+loadState();render();
+})();
+</script>
+</body>
+</html>

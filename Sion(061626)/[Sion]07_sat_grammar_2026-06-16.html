@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT Grammar</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0 auto;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.skill-tag{display:inline-block;background:#185FA5;color:#fff;font-size:0.75rem;font-weight:700;padding:2px 10px;border-radius:10px;margin-bottom:8px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.q-sentence{font-size:0.97rem;line-height:1.7;color:#111;background:#f5f7fa;border-radius:10px;padding:12px 14px;margin-bottom:10px;}
+.q-sentence u{text-decoration:underline;font-weight:700;color:#185FA5;}
+.q-text{font-size:0.95rem;color:#111;font-weight:600;margin-bottom:10px;line-height:1.4;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.93rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-16</div>
+<div class="title-hd">[Sion] SAT Grammar</div>
+<div class="instruction">Select the best version of the underlined portion in each sentence.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 10</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump ▾</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="skill-tag" id="skill-tag"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="q-sentence" id="q-sentence"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_satgrammar_10_20260615_v1';
+var ATT_KEY='quiz_satgrammar_att_20260615_v1';
+
+// sentence: HTML with <u> tags for underlined portion; q=question text; tag=skill label
+var qs=[
+ {tag:'Subject-Verb Agreement',
+  sentence:'The results of the long-term study <u>suggests</u> that regular aerobic exercise significantly reduces stress levels.',
+  q:'Which of the following is the best version of the underlined word?',
+  opts:['NO CHANGE: suggests','suggest','is suggesting','has suggested'],
+  ci:1,
+  exp:'The subject is "results" (plural), not "study." Plural subjects take plural verbs. "Suggest" is correct. The phrase "of the long-term study" is a prepositional phrase that interrupts the subject from its verb but does not change it.'},
+ {tag:'Apostrophe & Possessives',
+  sentence:'The school board announced <u>it\'s</u> new attendance policy at the beginning of the fall semester.',
+  q:'Which of the following is the best version of the underlined word?',
+  opts:['NO CHANGE: it\'s','its','its\'','it is'],
+  ci:1,
+  exp:'"It\'s" is a contraction meaning "it is." Here, the sentence needs the possessive form "its" (no apostrophe). The policy belongs to the school board, so "its new attendance policy" is correct.'},
+ {tag:'Conjunctive Adverbs & Punctuation',
+  sentence:'The experiment failed on its first attempt<u>; nevertheless,</u> the research team gained valuable data and decided to try again.',
+  q:'Which of the following is the best version of the underlined punctuation?',
+  opts:['NO CHANGE: ; nevertheless,',', nevertheless,','. Nevertheless;',', nevertheless'],
+  ci:0,
+  exp:'When "nevertheless" connects two independent clauses, a semicolon must come before it and a comma after it: "; nevertheless," This is the standard rule for conjunctive adverbs (also, however, therefore, furthermore, etc.).'},
+ {tag:'Verb Tense: Past Perfect',
+  sentence:'By the time the backup rescue team arrived at the scene, the first responders <u>already restored</u> power to the entire building.',
+  q:'Which of the following is the best version of the underlined verb phrase?',
+  opts:['NO CHANGE: already restored','have already restored','had already restored','were already restoring'],
+  ci:2,
+  exp:'"By the time...arrived" signals that one past action (restoring power) was completed before another past action (the team arriving). The past perfect "had already restored" is required to show this sequence.'},
+ {tag:'Parallel Structure',
+  sentence:'The coach emphasized the importance of practicing every day, sleeping at least eight hours, and <u>to eat</u> nutritious food before competitions.',
+  q:'Which of the following is the best version of the underlined phrase?',
+  opts:['NO CHANGE: to eat','eaten','eat','eating'],
+  ci:3,
+  exp:'The list uses gerunds (verb+-ing): "practicing," "sleeping," and therefore the third item must also be a gerund: "eating." Mixing gerunds with infinitives ("to eat") creates faulty parallel structure.'},
+ {tag:'Who vs. Whom',
+  sentence:'The committee selected the candidate <u>whom</u> they believed was the most experienced for the leadership position.',
+  q:'Which of the following is the best version of the underlined word?',
+  opts:['NO CHANGE: whom','who','that','which'],
+  ci:1,
+  exp:'"Who" is correct here. Although "whom" looks like the object of "believed," the clause is actually "who was the most experienced" — "who" is the subject of "was." "They believed" is a parenthetical expression that can be removed: "[they believed] was the most experienced" → "who was the most experienced."'},
+ {tag:'Redundancy & Conciseness',
+  sentence:'The two nonprofit organizations <u>collaborated together</u> to provide meals and shelter for families affected by the floods.',
+  q:'Which of the following is the best version of the underlined phrase?',
+  opts:['NO CHANGE: collaborated together','cooperated together','collaborated','worked together collaboratively'],
+  ci:2,
+  exp:'"Collaborate" already means "to work together," so adding "together" is redundant. The concise choice "collaborated" eliminates the unnecessary repetition. SAT always prefers the most concise correct option.'},
+ {tag:'Misplaced & Dangling Modifiers',
+  sentence:'<u>Running through the park at sunrise,</u> the birds were heard singing by the joggers.',
+  q:'Which of the following is the best revision of the underlined opening phrase and the rest of the sentence?',
+  opts:['NO CHANGE','Running through the park at sunrise, the joggers heard the birds singing.','The birds, running through the park at sunrise, were heard singing.','At sunrise in the park, the birds were heard while the joggers were running.'],
+  ci:1,
+  exp:'As written, "Running through the park" dangles—it appears to modify "the birds," not the joggers. The introductory participial phrase must be immediately followed by the noun it modifies. Option B correctly places "the joggers" right after the comma.'},
+ {tag:'Affect vs. Effect',
+  sentence:'Poor nutrition can have a severe negative <u>affect</u> on a student\'s ability to concentrate and perform well on exams.',
+  q:'Which of the following is the best version of the underlined word?',
+  opts:['NO CHANGE: affect','effect','affection','effective'],
+  ci:1,
+  exp:'"Effect" is the noun form meaning "result" or "impact." "Affect" is typically a verb meaning "to influence." Since the sentence uses the article "a" before the blank and places it after the adjectives "severe negative," a noun is needed. "Effect" is correct.'},
+ {tag:'That vs. Which',
+  sentence:'The ancient library, <u>that was built over five hundred years ago,</u> is now being carefully restored by a team of specialists.',
+  q:'Which of the following is the best version of the underlined clause?',
+  opts:['NO CHANGE: that was built over five hundred years ago,','which was built over five hundred years ago','that was built over five hundred years ago','which was built over five hundred years ago,'],
+  ci:3,
+  exp:'Non-restrictive (extra-information) clauses use "which" with commas, not "that." Since the clause simply adds information about a specific library already identified, it is non-restrictive. The correct form is ", which was built over five hundred years ago," with a comma at the end to match the opening comma.'}
+];
+
+var state={};
+function loadState(){try{var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');if(s&&typeof s.cur==='number'&&s.cur>=0&&s.cur<qs.length&&s.answers&&s.shuffles)state=s;else resetState();}catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+
+// For grammar questions: we never shuffle — option A = NO CHANGE is always first
+function getShuffle(i){if(!state.shuffles[i]){state.shuffles[i]=[0,1,2,3];saveState();}return state.shuffles[i];}
+function getCSI(i){return qs[i].ci;}
+
+function loadAtt(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function updateNav(){var ans=Object.keys(state.answers).length;document.getElementById('nav-count').textContent=ans+' / '+qs.length;document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';var p=document.getElementById('dot-panel');if(p.style.display!=='none')renderDots();}
+function toggleJump(){var p=document.getElementById('dot-panel');var b=document.getElementById('jump-btn');if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}else{p.style.display='none';b.textContent='Jump ▾';}}
+function renderDots(){var p=document.getElementById('dot-panel');var h='';for(var i=0;i<qs.length;i++){var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===getCSI(i)?'#185FA5':'#E24B4A');h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';}if(Object.keys(state.answers).length===qs.length){h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';}p.innerHTML=h;}
+function goToQ(i){state.cur=i;state.showResults=false;saveState();render();document.getElementById('dot-panel').style.display='none';document.getElementById('jump-btn').textContent='Jump ▾';}
+function showResults(){state.showResults=true;localStorage.setItem(ATT_KEY,loadAtt()+1);saveState();render();}
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAtt();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';document.getElementById('resultsArea').style.display='none';
+  updateNav();
+  var i=state.cur;var q=qs[i];
+  document.getElementById('skill-tag').textContent=q.tag;
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-sentence').innerHTML=q.sentence;
+  document.getElementById('q-text').textContent=q.q;
+  var ans=state.answers[i];var csi=getCSI(i);
+  var labels=['A','B','C','D'];
+  var html='';
+  for(var s=0;s<4;s++){var cls='opt-btn';var dis='';if(ans!==undefined){dis='disabled ';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}html+='<button class="'+cls+'" '+dis+'onclick="pick('+i+','+s+')">'+labels[s]+') '+esc(q.opts[s])+'</button>';}
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');
+  if(ans!==undefined&&ans!==csi){eb.style.display='block';eb.textContent=q.exp;}else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';document.getElementById('resultsArea').style.display='block';updateNav();
+  var c=0,w=0,sk=0;for(var i=0;i<qs.length;i++){if(state.answers[i]===undefined)sk++;else if(state.answers[i]===getCSI(i))c++;else w++;}
+  document.getElementById('results-summary').innerHTML='<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';for(var i=0;i<qs.length;i++){var a=state.answers[i];var label,bg,tc;if(a===undefined){label='Skipped';bg='#d7dde6';tc='#555';}else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}else{label='Wrong';bg='#FCEBEB';tc='#501313';}html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.9rem;color:#333;">Q'+(i+1)+': '+esc(qs[i].tag)+'</span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';}
+  document.getElementById('results-cards').innerHTML=html;
+}
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){if(dir===1&&state.cur===qs.length-1){showResults();return;}state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));saveState();render();}
+function retryWrong(){var first=-1;for(var i=0;i<qs.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){if(first===-1)first=i;delete state.answers[i];}}if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}}
+function copyRes(){var lines=['[Sion] SAT Grammar - Results (2026-06-16)'];for(var i=0;i<qs.length;i++){var a=state.answers[i];var label=a===undefined?'Skipped':(a===getCSI(i)?'Correct':'Wrong');lines.push('Q'+(i+1)+' ('+qs[i].tag+'): '+label);}var txt=lines.join('\n');if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fallbackCopy(txt);});}else fallbackCopy(txt);}
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;
+window.openFreshModal=openFreshModal;window.confirmFresh=confirmFresh;window.showResults=showResults;
+
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

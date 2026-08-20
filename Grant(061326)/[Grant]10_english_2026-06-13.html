@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] English</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;margin:0 auto;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px 0;color:#111;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.passage-box{background:#f5f7fa;border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:0.93rem;line-height:1.65;color:#222;border-left:4px solid #185FA5;}
+.passage-box p{margin:0 0 10px 0;}
+.passage-box p:last-child{margin:0;}
+.tag-badge{display:inline-block;background:#185FA5;color:#fff;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:8px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.q-text{font-size:1rem;font-weight:600;color:#111;margin-bottom:12px;line-height:1.5;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111111;font-size:0.93rem;text-align:left;cursor:pointer;transition:background 0.15s;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.results-card:hover{background:#e8edf4;}
+.results-pill{padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-13</div>
+<div class="title-hd">[Grant] English</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 25</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump ▾</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div id="passage-main" class="passage-box"></div>
+  <div id="passage-extra" class="passage-box" style="display:none;border-left-color:#1D9E75;background:#f0fdf8;"></div>
+  <div class="tag-badge" id="q-tag"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_english_25_20260613_v1';
+var ATT_KEY='quiz_english_attempts_20260613_v1';
+
+var P1="In 1969, a quiet Sunday evening turned into a moment the world would never forget. Neil Armstrong carefully descended the ladder of the Eagle lunar module and placed his boot on the dusty gray surface of the Moon. For the first time in history, a human being stood on another world. Millions watched the grainy black-and-white footage on their televisions, hardly believing what they were witnessing. Armstrong's calm voice carried those famous words across 238,855 miles of space to an awed planet below.";
+var P2="Behind this triumph lay years of relentless effort. The Apollo program had suffered its share of tragedies — most devastatingly, the Apollo 1 fire that claimed the lives of three astronauts in 1967. Yet NASA engineers refused to let grief become defeat. They redesigned the command module, improved safety protocols, and pressed on with quiet determination. Their goal remained fixed: beat the Soviet Union to the Moon and, in doing so, demonstrate the strength of American technology and ambition.";
+var P3="The journey itself was a dance of precision and daring. The Saturn V rocket — taller than a 36-story building — burned two million pounds of fuel in under three minutes. Once in lunar orbit, Armstrong and Buzz Aldrin transferred to the Eagle while Michael Collins remained in the command module above, circling alone in the silence of space. The landing was far from automatic. Armstrong piloted the craft manually over a boulder-strewn field, his heart rate spiking to 150 beats per minute before he found a smooth patch of ground.";
+var P4="The Moon landing changed how humanity thought about its place in the universe. Standing on the lunar surface, Armstrong described Earth as a small but extraordinarily beautiful marble hanging in the darkness. Scientists gained invaluable data from the 842 pounds of Moon rocks the crew brought back. Children who watched that Sunday broadcast grew up inspired to explore science, engineering, and space. Though nearly six decades have passed, the courage of the Apollo 11 crew continues to remind us that determination and imagination can carry us far beyond what once seemed impossible.";
+var P2b="In 1903, Orville and Wilbur Wright made the first powered airplane flight at Kitty Hawk, North Carolina. Their aircraft, the Flyer, remained airborne for only twelve seconds and traveled 120 feet. Like the Apollo mission sixty-six years later, the Wright brothers' achievement grew from repeated failure, careful study, and the unwavering belief that what seemed impossible was within reach. Both milestones transformed how humanity moves through the world — and beyond it.";
+
+var qs=[
+ {tag:'Inference',q:'Based on the passage, what can most reasonably be inferred about Neil Armstrong as a pilot during the lunar landing?',opts:['He relied entirely on the spacecraft\'s autopilot system.','He was a skilled pilot capable of adapting to unexpected obstacles.','He preferred orbiting the Moon to landing on its surface.','He had never encountered rocky terrain before the Moon landing.'],ci:1,exp:'The passage states Armstrong "piloted the craft manually over a boulder-strewn field" and found a smooth patch. This implies skilled adaptability, not reliance on autopilot.'},
+ {tag:'Main Idea',q:'What is the main idea of this passage?',opts:['Michael Collins played the most critical role in the Moon landing mission.','The Moon landing was a triumph achieved through years of effort, courage, and skill.','NASA\'s greatest challenge was the Apollo 1 fire in 1967.','Neil Armstrong was the most famous astronaut in history.'],ci:1,exp:'The passage covers the historic achievement of the Moon landing, the effort behind it, the details of the mission, and its lasting legacy — making option B the central idea.'},
+ {tag:'Theme',q:'What is the central theme of this passage?',opts:['Scientific discoveries always come with great risk.','Human curiosity and collaboration lead to unprecedented achievements.','Determination and imagination can help people overcome great challenges.','Space exploration is the most important goal of modern civilization.'],ci:2,exp:'The final sentence states "determination and imagination can carry us far beyond what once seemed impossible," directly expressing the central theme.'},
+ {tag:'Predict',q:'Based on the passage, if a similar crewed Moon mission were planned today, what would most likely be true?',opts:['Engineers would not review past safety records.','The mission would require exactly the same crew size.','Advances in technology would likely make the mission safer and more precise.','The mission could not succeed without the original Saturn V rocket.'],ci:2,exp:'The passage emphasizes how technology and determination drove progress. Modern technology improvements logically suggest safer, more precise missions.'},
+ {tag:'Summary',q:'Which of the following best summarizes the passage?',opts:['The passage describes the tragic Apollo 1 fire and its impact on the space program.','The passage explains why Michael Collins stayed in orbit during the Moon landing.','The passage recounts the historic Apollo 11 Moon landing, from earlier setbacks to its lasting impact on humanity.','The passage argues that the Moon landing was the single greatest achievement in history.'],ci:2,exp:'The passage covers the Moon landing event, the backstory of setbacks, the mission details, and the lasting legacy — making option C the best summary.'},
+ {tag:'Tone',q:'What is the overall tone of this passage?',opts:['Critical and skeptical','Humorous and lighthearted','Admiring and celebratory','Neutral and purely factual'],ci:2,exp:'The author uses words like "triumph," "courage," and "determination," and ends with an uplifting statement about human achievement, reflecting an admiring and celebratory tone.'},
+ {tag:'Point of View',q:'From what point of view is this passage written?',opts:['Neil Armstrong\'s first-person perspective','A third-person narrator observing and reflecting on historical events','A NASA scientist providing a technical report','A Soviet space agency official commenting on the mission'],ci:1,exp:'The passage uses third-person pronouns ("Armstrong," "they," "the crew") and the narrator reflects on events as a historian or author would, not as a participant.'},
+ {tag:"Author's Purpose",q:"What is the author's main purpose in writing this passage?",opts:['To argue that the Soviet Union should have won the Space Race','To inform readers about the Apollo 11 mission and inspire appreciation for human achievement','To explain the technical details of building the Saturn V rocket','To entertain readers with a fictional account of space travel'],ci:1,exp:'The author describes the real events of the Moon landing and its legacy, aiming to inform and inspire readers rather than argue or entertain with fiction.'},
+ {tag:'Cause & Effect',q:'According to the passage, what was one direct effect of the Apollo 1 fire?',opts:['NASA cancelled all further Moon missions.','The Soviet Union overtook the United States in the Space Race.','NASA engineers redesigned the command module and improved safety protocols.','Armstrong chose to pilot the Eagle manually.'],ci:2,exp:'The passage states: "They redesigned the command module, improved safety protocols, and pressed on with quiet determination" — a direct effect of the Apollo 1 tragedy.'},
+ {tag:'Compare & Contrast',q:'How were Armstrong\'s and Collins\'s roles during the Moon landing different?',opts:['Armstrong stayed in orbit while Collins landed on the surface.','Collins piloted the Eagle while Armstrong observed from orbit.','Armstrong landed on the Moon while Collins remained in the command module above.','Both Armstrong and Collins walked on the lunar surface together.'],ci:2,exp:'The passage clearly states Armstrong and Aldrin transferred to the Eagle (and landed), while "Michael Collins remained in the command module above."'},
+ {tag:'Text Structure',q:'How is this passage primarily organized?',opts:['Problem and solution','A comparison of the American and Soviet space programs','A narrative of the historic event followed by its background and lasting significance','A list from least to most important events in order'],ci:2,exp:'The passage opens with the Moon landing, moves to background (Apollo 1, preparation), details the mission, then discusses the lasting impact — a narrative with context and significance.'},
+ {tag:'Character Traits',q:'Which character trait best describes Neil Armstrong as shown in the passage?',opts:['Reckless and impulsive','Calm and skilled under pressure','Competitive and arrogant','Timid and overly cautious'],ci:1,exp:'Armstrong spoke with a "calm voice," piloted manually over rough terrain, and found a safe landing spot. These details show he was calm and skilled under pressure.'},
+ {tag:'Supporting Details',q:'Which detail from the passage best supports the idea that the Saturn V rocket was enormous?',opts:['It burned two million pounds of fuel in under three minutes.','It was taller than a 36-story building.','It carried three astronauts to the Moon.','It was launched from Florida in 1969.'],ci:1,exp:'Comparing the Saturn V to a 36-story building directly illustrates its enormous size, making option B the most relevant supporting detail.'},
+ {tag:'Situation',q:'What situation motivated the Apollo 11 Moon landing mission, according to the passage?',opts:['A United Nations request for international space cooperation','The desire to collect Moon rocks for scientific research','Competition with the Soviet Union and the goal of demonstrating American technology','A congressional order to establish a permanent Moon base'],ci:2,exp:'The passage states the goal was to "beat the Soviet Union to the Moon and, in doing so, demonstrate the strength of American technology and ambition."'},
+ {tag:'Setting',q:'Where does the primary action of this passage take place?',opts:['At NASA headquarters in Washington, D.C.','On the Moon and in lunar orbit','In television studios broadcasting the event worldwide','At Cape Canaveral during the rocket launch'],ci:1,exp:'The main events — the Moon landing and the lunar orbit operations — take place on the Moon and in lunar orbit, making option B correct.'},
+ {tag:'Figurative Language',q:'What does the phrase "a dance of precision and daring" in paragraph 3 mean?',opts:['The astronauts danced to celebrate a successful launch.','The mission required a combination of careful accuracy and brave risk-taking.','The Saturn V rocket moved gracefully through space like a dancer.','NASA planned a public celebration involving dance after the mission.'],ci:1,exp:'"Dance" is a metaphor comparing the complex mission to a dance — the word "precision" represents careful accuracy and "daring" represents bravery, making option B correct.'},
+ {tag:'Analogy',q:'Armstrong described Earth as "a small but extraordinarily beautiful marble hanging in the darkness." What does this analogy suggest?',opts:['Earth is physically smaller than the Moon in reality.','Earth is perfectly round and symmetrical in shape.','Earth appeared tiny yet strikingly beautiful in the vast darkness of space.','Armstrong found Earth to be ordinary when viewed from the Moon.'],ci:2,exp:'The marble analogy conveys that Earth looked small (like a marble) yet breathtaking against the darkness of space — tiny but beautiful.'},
+ {tag:'Synonym & Antonym',q:'As used in paragraph 2, which word is closest in meaning to "relentless"?',opts:['Casual','Persistent','Brief','Uncertain'],ci:1,exp:'"Relentless effort" means effort that never stops or lets up. "Persistent" (continuing despite difficulty) is the closest synonym.'},
+ {tag:'Guess the Meaning',q:'In paragraph 3, the word "strewn" most likely means:',opts:['Arranged in neat, orderly rows','Hidden beneath the surface of an object','Scattered across an area','Polished until smooth'],ci:2,exp:'"Boulder-strewn field" means a field with boulders scattered around it. "Strewn" means spread or scattered in a disorganized way.'},
+ {tag:'Preposition',q:'Which preposition correctly completes the sentence as it appears in the passage? "Armstrong piloted the craft manually ___ a boulder-strewn field."',opts:['from','beneath','inside','over'],ci:3,exp:'The passage states "Armstrong piloted the craft manually over a boulder-strewn field." "Over" is the correct preposition here, meaning above and across.'},
+ {tag:'Genre',q:'What genre does this passage most likely belong to?',opts:['Science fiction','Historical nonfiction','Autobiographical narrative','Fantasy adventure'],ci:1,exp:'The passage describes real historical events (the Apollo 11 Moon landing in 1969) using factual details, placing it in the genre of historical nonfiction.'},
+ {tag:'Kind of Writing',q:'This passage is best described as which type of writing?',opts:['A short story with fictional characters','A biography of Neil Armstrong','An informational article about a historical event','A persuasive essay arguing for space exploration'],ci:2,exp:'The passage presents factual information about the Apollo 11 mission, its context, and its legacy. It is an informational article, not a story, biography, or persuasive essay.'},
+ {tag:'Fact vs Opinion',q:'Which of the following is an OPINION expressed in the passage?',opts:['"Neil Armstrong placed his boot on the dusty gray surface of the Moon."','"The Saturn V rocket burned two million pounds of fuel in under three minutes."','"Armstrong described Earth as a small but extraordinarily beautiful marble."','"The courage of the Apollo 11 crew continues to remind us that determination and imagination can carry us far beyond what once seemed impossible."'],ci:3,exp:'Options A, B, and C are facts (verifiable events or direct quotes). Option D is the author\'s interpretation of the mission\'s legacy — an opinion, not a verifiable fact.'},
+ {tag:'Title',q:'Which title would best suit this passage?',opts:['"The Soviet Space Program\'s Downfall"','"Michael Collins: The Forgotten Astronaut"','"One Giant Leap: The Apollo 11 Mission and Its Lasting Legacy"','"How to Build a Saturn V Rocket"'],ci:2,exp:'The passage covers the Apollo 11 mission from context to achievement to lasting legacy. "One Giant Leap" captures this scope best, referencing Armstrong\'s famous words.'},
+ {tag:'Text-to-Text',q:'Read the additional passage below. Based on both passages, what do the Apollo 11 mission and the Wright brothers\' first flight have in common?',opts:['Both were directly funded by the United States government.','Both were achieved on the very first attempt without prior failure.','Both resulted from determination and belief in overcoming what seemed impossible.','Both required international collaboration to succeed.'],ci:2,ex2:true,exp:'The main passage ends with "determination and imagination can carry us far beyond what once seemed impossible." The second passage states the Wright brothers had "the unwavering belief that what seemed impossible was within reach." Both share this theme.'}
+];
+
+var state={};
+function loadState(){
+  try{
+    var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');
+    if(s&&typeof s.cur==='number'&&s.cur>=0&&s.cur<qs.length&&s.answers&&typeof s.answers==='object'&&s.shuffles&&typeof s.shuffles==='object'){state=s;}
+    else{resetState();}
+  }catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}
+}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){
+  if(!state.shuffles[i]){
+    var a=[0,1,2,3];
+    for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}
+    state.shuffles[i]=a;
+  }
+  return state.shuffles[i];
+}
+function getCorrectSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAttempts(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function updateAttempts(){localStorage.setItem(ATT_KEY,loadAttempts()+1);}
+function updateNav(){
+  var ans=Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent=ans+' / '+qs.length;
+  document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function toggleJump(){
+  var p=document.getElementById('dot-panel');
+  var b=document.getElementById('jump-btn');
+  if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}
+  else{p.style.display='none';b.textContent='Jump ▾';}
+}
+function renderDots(){
+  var p=document.getElementById('dot-panel');if(p.style.display==='none')return;
+  var h='';
+  for(var i=0;i<qs.length;i++){
+    var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===getCorrectSI(i)?'#185FA5':'#E24B4A');
+    h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';
+  }
+  if(Object.keys(state.answers).length===qs.length){
+    h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';
+  }
+  p.innerHTML=h;
+}
+function goToQ(i){
+  state.cur=i;state.showResults=false;saveState();render();
+  document.getElementById('dot-panel').style.display='none';
+  document.getElementById('jump-btn').textContent='Jump ▾';
+}
+function showResults(){state.showResults=true;updateAttempts();saveState();render();}
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAttempts();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('resultsArea').style.display='none';
+  updateNav();
+  var i=state.cur;
+  var q=qs[i];
+  document.getElementById('q-tag').textContent=q.tag;
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-text').textContent=q.q;
+  // passage display
+  document.getElementById('passage-main').innerHTML='<strong>Passage:</strong><br><br><p>'+P1+'</p><p>'+P2+'</p><p>'+P3+'</p><p>'+P4+'</p>';
+  if(q.ex2){
+    document.getElementById('passage-extra').style.display='block';
+    document.getElementById('passage-extra').innerHTML='<strong>Additional Passage:</strong><br><br><p>'+P2b+'</p>';
+  }else{
+    document.getElementById('passage-extra').style.display='none';
+  }
+  var sh=getShuffle(i);
+  var ans=state.answers[i];
+  var correctSI=getCorrectSI(i);
+  var html='';
+  for(var s=0;s<4;s++){
+    var oi=sh[s];
+    var cls='opt-btn';
+    var dis='';
+    if(ans!==undefined){
+      dis='disabled';
+      if(s===correctSI)cls+=' correct';
+      else if(s===ans)cls+=' wrong';
+    }
+    html+='<button class="'+cls+'" '+dis+' onclick="pick('+i+','+s+')">'+escHtml(q.opts[oi])+'</button>';
+  }
+  document.getElementById('opts-area').innerHTML=html;
+  var expBox=document.getElementById('exp-box');
+  if(ans!==undefined&&ans!==correctSI){expBox.style.display='block';expBox.textContent=q.exp;}
+  else{expBox.style.display='none';}
+  var nb=document.getElementById('next-btn');
+  if(i===qs.length-1){nb.textContent='See Results →';}
+  else{nb.textContent='Next';}
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  updateNav();
+  var correct=0,wrong=0,skipped=0;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]===undefined)skipped++;
+    else if(state.answers[i]===getCorrectSI(i))correct++;
+    else wrong++;
+  }
+  document.getElementById('results-summary').innerHTML='<span style="color:#1D9E75;font-weight:700;">'+correct+'</span> correct &nbsp; <span style="color:#E24B4A;font-weight:700;">'+wrong+'</span> wrong &nbsp; <span style="color:#888;font-weight:700;">'+skipped+'</span> skipped';
+  var html='';
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    var label,bg,tc;
+    if(a===undefined){label='Skipped';bg='#d7dde6';tc='#555';}
+    else if(a===getCorrectSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}
+    else{label='Wrong';bg='#FCEBEB';tc='#501313';}
+    html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.9rem;color:#333;">Q'+(i+1)+': '+escHtml(qs[i].tag)+'</span><span class="results-pill" style="background:'+bg+';color:'+tc+';">'+label+'</span></div>';
+  }
+  document.getElementById('results-cards').innerHTML=html;
+}
+function pick(qi,si){
+  if(state.answers[qi]!==undefined)return;
+  state.answers[qi]=si;saveState();render();
+}
+function go(dir){
+  if(dir===1&&state.cur===qs.length-1){showResults();return;}
+  state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));
+  saveState();render();
+}
+function retryWrong(){
+  var first=-1;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]!==undefined&&state.answers[i]!==getCorrectSI(i)){
+      if(first===-1)first=i;
+      delete state.answers[i];
+    }
+  }
+  if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}
+}
+function copyRes(){
+  var lines=['[Grant] English - Results (2026-06-13)'];
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    var label=a===undefined?'Skipped':a===getCorrectSI(i)?'Correct':'Wrong';
+    lines.push('Q'+(i+1)+' ('+qs[i].tag+'): '+label);
+  }
+  var txt=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fallbackCopy(txt);});}
+  else{fallbackCopy(txt);}
+}
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function startRetry(){retryWrong();}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){
+  document.getElementById('freshModal').style.display='none';
+  localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();
+}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;window.startRetry=startRetry;
+window.openFreshModal=openFreshModal;window.confirmFresh=confirmFresh;window.showResults=showResults;
+
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

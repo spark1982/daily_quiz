@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>[Sion] SAT Grammar</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f7fb;min-height:100vh;padding:16px}
+.date-header{font-size:2rem;font-weight:800;text-align:center;color:#185FA5;background:#fff;padding:12px;border-radius:10px;margin-bottom:6px}
+.quiz-title{font-size:1.4rem;font-weight:700;text-align:center;color:#185FA5;margin-bottom:4px}
+.attempts{text-align:center;font-size:0.95rem;color:#555;margin-bottom:10px}
+.nav-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;margin-bottom:14px;padding:8px}
+.dot{width:30px;height:30px;border-radius:50%;border:2px solid #185FA5;background:#fff;color:#185FA5;font-size:0.7rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.dot.correct{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.dot.wrong{background:#E24B4A;border-color:#E24B4A;color:#fff}
+.dot.current{box-shadow:0 0 0 3px #185FA5}
+.dot.results-pill{width:auto;padding:0 12px;border-radius:15px;font-size:0.8rem}
+.card{background:#fff;border-radius:14px;padding:20px;max-width:680px;margin:0 auto 14px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.q-meta{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.tag{background:#185FA5;color:#fff;border-radius:12px;padding:3px 10px;font-size:0.75rem;font-weight:600}
+.counter{font-size:0.85rem;color:#888}
+.q-text{font-size:1rem;color:#111;margin-bottom:16px;line-height:1.7}
+.underline{border-bottom:2px solid #333;padding-bottom:1px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{background:#e8edf4;color:#111111;border:2px solid transparent;border-radius:10px;padding:12px 16px;cursor:pointer;font-size:0.97rem;text-align:left;transition:all .15s}
+.opt:hover{border-color:#185FA5}
+.opt.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.explain{margin-top:12px;background:#f0f6ff;border-left:4px solid #185FA5;padding:10px 14px;border-radius:6px;font-size:0.92rem;color:#1a3a6b}
+.nav-btns{display:flex;justify-content:space-between;margin-top:16px}
+.btn{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:0.95rem;cursor:pointer;font-weight:600}
+.btn:hover{background:#1050a0}
+.btn-outline{background:#fff;color:#185FA5;border:2px solid #185FA5}
+.btn-outline:hover{background:#e8edf4}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin:16px 0}
+.res-card{border-radius:10px;padding:10px;cursor:pointer;text-align:center;font-size:0.88rem;font-weight:600}
+.res-card.c{background:#E1F5EE;color:#085041;border:2px solid #1D9E75}
+.res-card.w{background:#FCEBEB;color:#501313;border:2px solid #E24B4A}
+.res-card.s{background:#f0f0f0;color:#555;border:2px solid #999}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:14px;padding:28px;max-width:340px;width:90%;text-align:center}
+.modal h3{color:#185FA5;margin-bottom:12px}
+.modal-btns{display:flex;gap:10px;justify-content:center;margin-top:18px}
+</style>
+</head>
+<body>
+<div class="date-header">2026-06-10</div>
+<div class="quiz-title">[Sion] SAT Grammar</div>
+<div class="attempts" id="attDisp">Total Attempts: 0</div>
+<div class="nav-dots" id="navDots"></div>
+<div id="quizArea" style="display:none"></div>
+<div id="resultsArea" style="display:none"></div>
+<div class="modal-overlay" id="freshModal">
+  <div class="modal">
+    <h3>Start Fresh?</h3>
+    <p>All progress will be reset.</p>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeFresh()">Cancel</button>
+      <button class="btn" onclick="doFresh()">Reset</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+const SK='quiz_satgrammar_10_v1',ATK='quiz_satgrammar_attempts_v1';
+const QS=[
+{tag:'Parallel Structure',
+ q:'The club\'s annual report praised its volunteers not only for their willingness to organize events <span class="underline">but also raising funds</span> for local charities.',
+ opts:['but also raised funds','but also raising funds (no change)','but also to raise funds','but also in the raising of funds'],
+ ci:2,ex:'Parallel structure requires matching grammatical forms after "not only...but also." Since "to organize" uses the infinitive form, "but also to raise funds" is correct.'},
+{tag:'Comparison',
+ q:'Of all four siblings, Elena was considered <span class="underline">the more organized</span> and reliable one.',
+ opts:['the more organized','the most organized','more organizedly','most organizingly'],
+ ci:1,ex:'When comparing more than two items, the superlative (-est / most) is required. "The most organized" is correct here, as there are four siblings.'},
+{tag:'Pronoun Agreement',
+ q:'The researcher <span class="underline">that</span> discovered the new compound was awarded the Nobel Prize last December.',
+ opts:['which discovered','whom discovered','that discovered (no change needed)','who discovered'],
+ ci:3,ex:'When referring to a person, "who" must be used instead of "that." The correct sentence uses "who discovered."'},
+{tag:'Subject-Verb Agreement',
+ q:'Neither the principal nor the teachers <span class="underline">was</span> informed about the schedule change until the morning of the event.',
+ opts:['were informed','was informed (no change)','has been informed','is informed'],
+ ci:0,ex:'In "neither...nor" constructions, the verb agrees with the noun closest to it. "Teachers" is plural, so the verb must be "were informed."'},
+{tag:'Dangling Modifier',
+ q:'Having trained for six months, <span class="underline">the marathon was completed</span> by Kenji in under three hours.',
+ opts:['the marathon was completed by Kenji in under three hours (no change)','Kenji completed the marathon in under three hours','the marathon\'s completion by Kenji took under three hours','it was Kenji who completed the marathon in under three hours'],
+ ci:1,ex:'The modifier "Having trained for six months" must logically refer to the subject of the main clause. The marathon did not train — Kenji did. The corrected version makes Kenji the subject: "Kenji completed the marathon in under three hours."'},
+{tag:'Faulty Coordination',
+ q:'The experiment produced unexpected results, <span class="underline">the scientists decided to repeat it under different conditions</span>.',
+ opts:['the scientists decided to repeat it under different conditions (no change — comma splice)','so the scientists decided to repeat it under different conditions','but deciding to repeat it under different conditions','therefore deciding to repeat it under different conditions'],
+ ci:1,ex:'The original sentence is a comma splice — two independent clauses joined by only a comma. Adding a coordinating conjunction ("so") corrects the error.'},
+{tag:'Verb Tense / Mood',
+ q:'The director insisted that each cast member <span class="underline">memorizes</span> their lines before the first rehearsal.',
+ opts:['memorizes (no change)','would memorize','has memorized','memorize'],
+ ci:3,ex:'After verbs of insistence or recommendation (insist, recommend, require), the that-clause uses the base form of the verb (subjunctive mood). "Memorize" — not "memorizes" — is correct.'},
+{tag:'Word Choice',
+ q:'The student openly ________ the classroom rule against using phones during exams.',
+ opts:['flaunted','flouted','alluded to','proceeded'],
+ ci:1,ex:'"Flout" means to openly disregard a rule or convention. "Flaunt" means to display something proudly, which does not fit this context. "Flouted the rule" is correct.'},
+{tag:'Pronoun Reference',
+ q:'When Sophia told her advisor that <span class="underline">she</span> had been accepted to the program, she was overjoyed.',
+ opts:['When Sophia told her advisor that she had been accepted to the program, she was overjoyed. (ambiguous — no change)','When Sophia\'s advisor heard about the acceptance, she was overjoyed.','Sophia was overjoyed when telling her advisor that she had been accepted.','When Sophia told her advisor about being accepted to the program, the advisor was overjoyed.'],
+ ci:3,ex:'The original sentence is ambiguous — "she" could refer to either Sophia or her advisor. Replacing the second "she" with "the advisor" (or "Sophia") eliminates the ambiguity.'},
+{tag:'Comparison',
+ q:'No one in the research group is as careful about documenting findings as <span class="underline">her</span>.',
+ opts:['her (no change)','hers','than her','she'],
+ ci:3,ex:'In "as...as" comparisons, a subject pronoun is required because it acts as the subject of an implied verb ("as she [is]"). "As she" is the grammatically correct form.'}
+];
+let state={cur:0,answers:{},shuffles:{},showResults:false};
+function loadState(){try{const s=localStorage.getItem(SK);if(s){const p=JSON.parse(s);if(typeof p.cur==='number'&&typeof p.answers==='object'&&!Array.isArray(p.answers)&&typeof p.shuffles==='object'&&!Array.isArray(p.shuffles)){state=p;}else{localStorage.removeItem(SK);}}}catch(e){localStorage.removeItem(SK);}}
+function saveState(){localStorage.setItem(SK,JSON.stringify(state));}
+function getAttempts(){return parseInt(localStorage.getItem(ATK)||'0');}
+function incAttempts(){localStorage.setItem(ATK,getAttempts()+1);}
+function updAttDisp(){document.getElementById('attDisp').textContent='Total Attempts: '+getAttempts();}
+function getShuffle(i){if(!state.shuffles[i]){const arr=[0,1,2,3];for(let k=3;k>0;k--){const r=Math.floor(Math.random()*(k+1));[arr[k],arr[r]]=[arr[r],arr[k]];}state.shuffles[i]=arr;saveState();}return state.shuffles[i];}
+function renderDots(forResults){
+  const nd=document.getElementById('navDots');nd.innerHTML='';
+  if(forResults){const pill=document.createElement('button');pill.className='dot results-pill correct';pill.textContent='Results';nd.appendChild(pill);return;}
+  QS.forEach((_,i)=>{
+    const d=document.createElement('button');d.className='dot';d.textContent=i+1;
+    if(state.answers[i]!==undefined){const sh=getShuffle(i);const cs=sh.indexOf(QS[i].ci);if(state.answers[i]===cs)d.classList.add('correct');else d.classList.add('wrong');}
+    if(i===state.cur)d.classList.add('current');
+    d.onclick=()=>{state.cur=i;saveState();render();};
+    nd.appendChild(d);
+  });
+}
+function render(){
+  try{
+    if(state.showResults){renderResults();return;}
+    document.getElementById('quizArea').style.display='block';
+    document.getElementById('resultsArea').style.display='none';
+    renderDots(false);
+    const i=state.cur,q=QS[i],sh=getShuffle(i);
+    const answered=state.answers[i]!==undefined;
+    const cs=sh.indexOf(q.ci);
+    let html=`<div class="card">
+      <div class="q-meta"><span class="tag">${q.tag}</span><span class="counter">${i+1} / ${QS.length}</span></div>
+      <div class="q-text">${q.q}</div>
+      <div class="opts">`;
+    sh.forEach((origIdx,dispIdx)=>{
+      let cls='opt';
+      if(answered){if(dispIdx===cs)cls+=' correct';else if(dispIdx===state.answers[i])cls+=' wrong';}
+      html+=`<button class="${cls}" onclick="pick(${dispIdx})">${q.opts[origIdx]}</button>`;
+    });
+    html+='</div>';
+    if(answered&&state.answers[i]!==cs){html+=`<div class="explain">${q.ex}</div>`;}
+    html+=`<div class="nav-btns">
+      <button class="btn btn-outline" onclick="go(-1)"${i===0?' disabled':''}>Prev</button>
+      <button class="btn" onclick="${i===QS.length-1?'finishQuiz()':'go(1)'}">${i===QS.length-1?'See Results →':'Next'}</button>
+    </div></div>`;
+    document.getElementById('quizArea').innerHTML=html;
+  }catch(e){document.getElementById('quizArea').innerHTML='<div class="card">Error rendering. Please refresh.</div>';}
+}
+function renderResults(){
+  incAttempts();updAttDisp();
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  renderDots(true);
+  let correct=0,wrong=0,skipped=0,gridHTML='';
+  QS.forEach((q,i)=>{
+    const sh=getShuffle(i);const cs=sh.indexOf(q.ci);
+    if(state.answers[i]===undefined){skipped++;gridHTML+=`<div class="res-card s" onclick="goToQ(${i})">Q${i+1}<br>Skipped</div>`;}
+    else if(state.answers[i]===cs){correct++;gridHTML+=`<div class="res-card c" onclick="goToQ(${i})">Q${i+1}<br>Correct</div>`;}
+    else{wrong++;gridHTML+=`<div class="res-card w" onclick="goToQ(${i})">Q${i+1}<br>Wrong</div>`;}
+  });
+  document.getElementById('resultsArea').innerHTML=`<div class="card">
+    <h2 style="color:#185FA5;text-align:center;margin-bottom:8px">Results</h2>
+    <p style="text-align:center;font-size:1.1rem;margin-bottom:12px">${correct} / ${QS.length} Correct &nbsp;|&nbsp; ${wrong} Wrong &nbsp;|&nbsp; ${skipped} Skipped</p>
+    <div class="results-grid">${gridHTML}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px">
+      <button class="btn" onclick="startRetry()">Retry Wrong Questions</button>
+      <button class="btn btn-outline" onclick="copyRes()">Copy All Results</button>
+      <button class="btn btn-outline" onclick="confirmFresh()">Start Fresh</button>
+    </div></div>`;
+}
+function pick(dispIdx){if(state.answers[state.cur]!==undefined)return;state.answers[state.cur]=dispIdx;saveState();render();}
+function go(dir){state.cur=Math.max(0,Math.min(QS.length-1,state.cur+dir));saveState();render();}
+function finishQuiz(){state.showResults=true;saveState();render();}
+function goToQ(i){state.showResults=false;state.cur=i;saveState();render();}
+function startRetry(){
+  const wrongIdx=[];
+  QS.forEach((q,i)=>{const sh=getShuffle(i);if(state.answers[i]!==undefined&&state.answers[i]!==sh.indexOf(q.ci))wrongIdx.push(i);});
+  if(!wrongIdx.length){alert('No wrong questions!');return;}
+  wrongIdx.forEach(i=>{delete state.answers[i];delete state.shuffles[i];});
+  state.showResults=false;state.cur=wrongIdx[0];saveState();render();
+}
+function copyRes(){
+  let txt='[Sion] SAT Grammar — 2026-06-10\n';
+  QS.forEach((q,i)=>{const sh=getShuffle(i);const cs=sh.indexOf(q.ci);const st=state.answers[i]===undefined?'Skipped':state.answers[i]===cs?'Correct':'Wrong';txt+=`Q${i+1} (${q.tag}): ${st}\n`;});
+  navigator.clipboard.writeText(txt).catch(()=>{});
+}
+function confirmFresh(){document.getElementById('freshModal').classList.add('show');}
+function closeFresh(){document.getElementById('freshModal').classList.remove('show');}
+function doFresh(){localStorage.removeItem(SK);state={cur:0,answers:{},shuffles:{},showResults:false};closeFresh();render();}
+window.pick=pick;window.go=go;window.finishQuiz=finishQuiz;window.goToQ=goToQ;
+window.startRetry=startRetry;window.copyRes=copyRes;window.confirmFresh=confirmFresh;
+window.closeFresh=closeFresh;window.doFresh=doFresh;
+loadState();updAttDisp();render();
+})();
+</script>
+</body>
+</html>

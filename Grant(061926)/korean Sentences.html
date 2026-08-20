@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Korean → English Quiz</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh;padding:12px}
+#app{max-width:720px;margin:0 auto}
+.date-top{font-size:2rem;font-weight:800;text-align:center;color:#1D9E75;background:#fff;padding:10px 0 4px}
+.quiz-title{font-size:1.35rem;font-weight:700;text-align:center;color:#111;background:#fff;padding:4px 0 2px}
+.subtitle{text-align:center;font-size:0.9rem;color:#555;background:#fff;padding:2px 0 6px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:4px 0 10px}
+.nav-bar{background:#fff;border-radius:10px;padding:8px 12px;margin:8px 0;box-shadow:0 1px 4px rgba(0,0,0,0.07)}
+.progress-row{display:flex;align-items:center;gap:10px}
+.prog-label{font-size:0.85rem;color:#555;white-space:nowrap;min-width:60px}
+.prog-track{flex:1;height:7px;background:#d7dde6;border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;background:#1D9E75;border-radius:4px;transition:width 0.3s}
+.jump-btn{font-size:0.8rem;padding:3px 10px;border:1.5px solid #1D9E75;background:#fff;color:#1D9E75;border-radius:6px;cursor:pointer;white-space:nowrap}
+.dot-panel{display:none;flex-wrap:wrap;gap:5px;padding:8px 0 2px;max-height:170px;overflow-y:auto}
+.dot-panel.open{display:flex}
+.dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;cursor:pointer;border:none;color:#fff;background:#d7dde6;color:#555}
+.dot.correct{background:#1D9E75;color:#fff}
+.dot.wrong{background:#E24B4A;color:#fff}
+.dot.current{outline:2.5px solid #185FA5;outline-offset:2px}
+.results-pill{font-size:0.78rem;background:#1D9E75;color:#fff;border-radius:10px;padding:2px 10px;cursor:pointer;border:none;margin-left:4px}
+.quiz-area{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;display:none}
+.q-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.q-num{font-size:0.82rem;color:#888}
+.tag-badge{font-size:0.75rem;padding:2px 10px;border-radius:10px;background:#185FA5;color:#fff;font-weight:600}
+.tts-btn{background:none;border:none;cursor:pointer;font-size:1.3rem;padding:2px 4px;color:#185FA5;flex-shrink:0}
+.q-text{font-size:1.13rem;font-weight:600;color:#111;margin-bottom:14px;line-height:1.5}
+.options{display:flex;flex-direction:column;gap:9px}
+.opt-btn{background:#e8edf4;color:#111;border:2px solid transparent;border-radius:9px;padding:11px 14px;font-size:0.97rem;text-align:left;cursor:pointer;transition:background 0.15s;line-height:1.4}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.opt-btn.revealed{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt-btn:disabled{cursor:default}
+.explanation{margin-top:12px;padding:10px 12px;background:#f0f7f4;border-left:3px solid #1D9E75;border-radius:6px;font-size:0.88rem;color:#333;display:none}
+.nav-btns{display:flex;justify-content:space-between;margin-top:14px;gap:10px}
+.prev-btn,.next-btn{padding:9px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer}
+.prev-btn{background:#e8edf4;color:#333}
+.next-btn{background:#1D9E75;color:#fff}
+.results-screen{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;display:none}
+.results-screen.show{display:block}
+.results-heading{font-size:1.3rem;font-weight:700;color:#1D9E75;text-align:center;margin-bottom:6px}
+.results-score{font-size:1rem;text-align:center;color:#555;margin-bottom:14px}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-bottom:16px}
+.r-card{border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;font-size:0.82rem;font-weight:600}
+.r-card.correct{background:#E1F5EE;color:#085041}
+.r-card.wrong{background:#FCEBEB;color:#501313}
+.r-card.skipped{background:#f5f7fa;color:#555}
+.r-card-q{font-size:0.7rem;margin-bottom:2px}
+.results-btns{display:flex;flex-direction:column;gap:9px}
+.retry-btn{background:#1D9E75;color:#fff;border:none;padding:11px;border-radius:8px;font-size:0.97rem;font-weight:600;cursor:pointer}
+.copy-btn{background:#185FA5;color:#fff;border:none;padding:11px;border-radius:8px;font-size:0.97rem;font-weight:600;cursor:pointer}
+.fresh-btn{background:#e8edf4;color:#333;border:none;padding:11px;border-radius:8px;font-size:0.97rem;font-weight:600;cursor:pointer}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:12px;padding:24px 20px;max-width:320px;width:90%;text-align:center}
+.modal-title{font-size:1.05rem;font-weight:700;margin-bottom:8px}
+.modal-msg{font-size:0.9rem;color:#555;margin-bottom:18px}
+.modal-btns{display:flex;gap:10px;justify-content:center}
+.modal-cancel{background:#e8edf4;color:#333;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;cursor:pointer}
+.modal-confirm{background:#E24B4A;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;font-weight:600;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="date-top">June 13, 2025</div>
+  <div class="quiz-title">Korean → English Quiz</div>
+  <div class="subtitle" id="att-display">Korean Sentences | Total Attempts: 0</div>
+  <div class="instruction">Read each Korean sentence and choose the correct English translation.</div>
+
+  <div class="nav-bar">
+    <div class="progress-row">
+      <span class="prog-label" id="prog-label">0 / 120</span>
+      <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+      <button class="jump-btn" onclick="window.toggleDots()">Jump</button>
+    </div>
+    <div class="dot-panel" id="dot-panel"></div>
+  </div>
+
+  <div class="quiz-area" id="quiz-area">
+    <div class="q-header">
+      <span class="q-num" id="q-num">Q1</span>
+      <span class="tag-badge">Korean</span>
+      <button class="tts-btn" id="tts-btn" onclick="window.speakKorean()" title="Listen">&#128266;</button>
+    </div>
+    <div class="q-text" id="q-text"></div>
+    <div class="options" id="options"></div>
+    <div class="explanation" id="explanation"></div>
+    <div class="nav-btns">
+      <button class="prev-btn" onclick="window.goPrev()">Prev</button>
+      <button class="next-btn" id="next-btn" onclick="window.goNext()">Next</button>
+    </div>
+  </div>
+
+  <div class="results-screen" id="results-screen">
+    <div class="results-heading">Results</div>
+    <div class="results-score" id="results-score"></div>
+    <div class="results-grid" id="results-grid"></div>
+    <div class="results-btns">
+      <button class="retry-btn" onclick="window.retryWrong()">Retry Wrong Ones</button>
+      <button class="copy-btn" onclick="window.copyResults()">Copy All Results</button>
+      <button class="fresh-btn" onclick="window.startFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="fresh-modal">
+  <div class="modal-box">
+    <div class="modal-title">Start Fresh?</div>
+    <div class="modal-msg">All progress will be cleared. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="window.cancelFresh()">Cancel</button>
+      <button class="modal-confirm" onclick="window.confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+const STORAGE_KEY = 'quiz_korean_english_120_v1';
+const ATT_KEY = 'quiz_korean_english_120_att_v1';
+
+const ALL_QUESTIONS = [
+  // --- GROUP 1 ---
+  {k:"별일 없어? / 잘 지내?", e:"Nothing much? / How's it going?", opts:["Nothing much? / How's it going?","I'm tired.","I'm hungry.","I'm thirsty."]},
+  {k:"나 피곤해.", e:"I'm tired.", opts:["I'm tired.","I'm bored.","I'm busy.","I want to go home."]},
+  {k:"오늘 학교 갔어.", e:"I went to school today.", opts:["I went to school today.","I'm doing homework.","I don't go to school tomorrow.","It's Tuesday today."]},
+  {k:"배고파.", e:"I'm hungry.", opts:["I'm hungry.","I'm thirsty.","I'm tired.","I'm full."]},
+  {k:"목말라.", e:"I'm thirsty.", opts:["I'm thirsty.","I'm hungry.","I'm cold.","I'm hot."]},
+  {k:"나 집에 가고 싶어.", e:"I want to go home.", opts:["I want to go home.","Let's go now.","I'm bored.","I want to eat more."]},
+  {k:"지금 뭐 해?", e:"What are you doing now?", opts:["What are you doing now?","When is Dad coming?","Where is Mom?","What is this?"]},
+  {k:"나 숙제 해야 돼.", e:"I have to do homework.", opts:["I have to do homework.","I'm doing homework.","I don't want to do anything.","I can do it."]},
+  {k:"귀찮아.", e:"I don't feel like it.", opts:["I don't feel like it.","I'm bored.","I'm tired.","I don't know."]},
+  {k:"이거 뭐야?", e:"What is this?", opts:["What is this?","Is this mine?","Where is this?","What is that?"]},
+  {k:"모르겠어.", e:"I don't know.", opts:["I don't know.","I got it.","I understand.","I'm not sure what to do."]},
+  {k:"알겠어.", e:"I got it. / I understand.", opts:["I got it. / I understand.","I don't know.","I see.","Never mind."]},
+  {k:"그건 내 거야.", e:"That's mine.", opts:["That's mine.","This is yours.","That's theirs.","This is mine."]},
+  {k:"이건 니 거야.", e:"This is yours.", opts:["This is yours.","That's mine.","This is mine.","That's yours."]},
+  {k:"내 이름은 시훈이야.", e:"My name is Sihun.", opts:["My name is Sihun.","I am thirteen years old.","Nice to meet you.","I am Sihun."]},
+  {k:"나 열세 살이야.", e:"I'm thirteen years old.", opts:["I'm thirteen years old.","My name is Sihun.","I'm in middle school.","I'm twelve years old."]},
+  {k:"엄마 어디 있어?", e:"Where is Mom?", opts:["Where is Mom?","When is Dad coming?","Where is Dad?","Where did Mom go?"]},
+  {k:"아빠 언제 와?", e:"When is Dad coming?", opts:["When is Dad coming?","Where is Dad?","When are we leaving?","When is Mom coming?"]},
+  {k:"나 심심해.", e:"I'm bored.", opts:["I'm bored.","I'm tired.","I don't feel like it.","I'm lonely."]},
+  {k:"같이 놀자.", e:"Let's play together.", opts:["Let's play together.","Let's go together.","Let's eat together.","Can I play with friends?"]},
+  {k:"이거 재밌다!", e:"This is so fun!", opts:["This is so fun!","This is funny!","This is amazing!","I won!"]},
+  {k:"싫어.", e:"I don't like it. / No way.", opts:["I don't like it. / No way.","I like it.","I hate this.","Never."]},
+  {k:"좋아!", e:"I like it! / Okay!", opts:["I like it! / Okay!","No way.","Great!","I love it!"]},
+  {k:"진짜?", e:"Really?", opts:["Really?","That's a lie!","For real?","Seriously?"]},
+  {k:"거짓말!", e:"That's a lie!", opts:["That's a lie!","Really?","No way!","Stop it!"]},
+  {k:"장난이야.", e:"I'm just kidding.", opts:["I'm just kidding.","That's a lie!","Really?","Stop joking."]},
+  {k:"무서워.", e:"I'm scared.", opts:["I'm scared.","I'm nervous.","It's okay.","Don't be scared."]},
+  {k:"괜찮아.", e:"It's okay.", opts:["It's okay.","I'm scared.","I'm fine.","No problem."]},
+  {k:"미안해.", e:"I'm sorry.", opts:["I'm sorry.","Thank you.","You're welcome.","Excuse me."]},
+  {k:"고마워.", e:"Thank you.", opts:["Thank you.","I'm sorry.","You're welcome.","No problem."]},
+  {k:"천만에.", e:"You're welcome.", opts:["You're welcome.","Thank you.","I'm sorry.","No worries."]},
+  {k:"잘했어!", e:"Good job!", opts:["Good job!","Well done!","Amazing!","You're great!"]},
+  {k:"대단해!", e:"That's amazing!", opts:["That's amazing!","Good job!","You're great!","Incredible!"]},
+  {k:"조용히 해.", e:"Be quiet.", opts:["Be quiet.","Stop it.","Be careful.","Calm down."]},
+  {k:"아 웃겨!", e:"Oh, that's so funny!", opts:["Oh, that's so funny!","This is fun!","Ha, really?","That's hilarious!"]},
+  {k:"나 아파.", e:"I'm not feeling well.", opts:["I'm not feeling well.","My head hurts.","My stomach hurts.","I caught a cold."]},
+  {k:"머리 아파.", e:"I have a headache.", opts:["I have a headache.","My stomach hurts.","I'm sick.","My back hurts."]},
+  {k:"배 아파.", e:"My stomach hurts.", opts:["My stomach hurts.","I have a headache.","I'm sick.","I'm not feeling well."]},
+  {k:"감기 걸렸어.", e:"I caught a cold.", opts:["I caught a cold.","I'm not feeling well.","I have a fever.","I'm tired."]},
+  {k:"덥다.", e:"It's hot.", opts:["It's hot.","It's cold.","It's warm.","I'm hot."]},
+  {k:"춥다.", e:"It's cold.", opts:["It's cold.","It's hot.","It's cool.","I'm cold."]},
+  {k:"비 온다.", e:"It's raining.", opts:["It's raining.","It's snowing.","The weather is nice.","It's cloudy."]},
+  {k:"눈 온다!", e:"It's snowing!", opts:["It's snowing!","It's raining!","The weather is nice!","It's freezing!"]},
+  {k:"날씨 좋다.", e:"The weather is nice.", opts:["The weather is nice.","It's sunny.","It's warm outside.","Today's weather is great."]},
+  {k:"오늘은 화요일이야.", e:"Today is Tuesday.", opts:["Today is Tuesday.","Tomorrow is Tuesday.","It's the weekend.","Today is Monday."]},
+  {k:"내일은 학교 안 가.", e:"I don't go to school tomorrow.", opts:["I don't go to school tomorrow.","I went to school today.","It's the weekend.","I don't have class."]},
+  {k:"주말이다!", e:"It's the weekend!", opts:["It's the weekend!","Today is Saturday.","It's a holiday!","No school today!"]},
+  {k:"너무 일러.", e:"It's too early.", opts:["It's too early.","It's too late.","Wake up!","It's not time yet."]},
+  {k:"너무 늦어.", e:"It's too late.", opts:["It's too late.","It's too early.","Hurry up.","We're running late."]},
+  {k:"잘 자.", e:"Good night.", opts:["Good night.","Sweet dreams.","Sleep tight.","Good morning."]},
+  {k:"좋은 꿈 꿔.", e:"Sweet dreams.", opts:["Sweet dreams.","Good night.","Sleep well.","Have a nice sleep."]},
+  {k:"나 못 자겠어.", e:"I can't sleep.", opts:["I can't sleep.","I'm sleepy.","I'm tired.","I don't want to sleep."]},
+  {k:"일어나!", e:"Wake up!", opts:["Wake up!","Get up!","Rise and shine!","Come on, get up!"]},
+  {k:"다녀오겠습니다.", e:"I'm heading out. / I'll be back.", opts:["I'm heading out. / I'll be back.","I'm back.","See you later.","I'm leaving."]},
+  {k:"다녀왔습니다.", e:"I'm back.", opts:["I'm back.","I'm heading out.","I'm home.","Welcome back."]},
+  {k:"밥 먹자.", e:"Let's eat.", opts:["Let's eat.","It's delicious!","I want to eat more.","Stop eating."]},
+  {k:"맛있다!", e:"It's delicious!", opts:["It's delicious!","It doesn't taste good.","I want to eat more.","I'm full."]},
+  {k:"맛없어.", e:"It doesn't taste good.", opts:["It doesn't taste good.","It's delicious!","It's okay.","It's too salty."]},
+  {k:"더 먹고 싶어.", e:"I want to eat more.", opts:["I want to eat more.","Stop eating.","I'm full.","It's delicious!"]},
+  {k:"그만 먹어.", e:"Stop eating.", opts:["Stop eating.","Let's eat.","I want to eat more.","I'm full."]},
+  {k:"물 좀 줘.", e:"Give me some water.", opts:["Give me some water.","Buy this for me.","Can I drink this?","I'm thirsty."]},
+  {k:"이거 사 줘.", e:"Buy this for me.", opts:["Buy this for me.","Give me some water.","Can I have this?","Can I buy this?"]},
+  {k:"안 돼.", e:"No, you can't. / Not allowed.", opts:["No, you can't. / Not allowed.","I can do it.","Okay.","Stop it."]},
+  {k:"할 수 있어.", e:"I can do it.", opts:["I can do it.","I can't do it.","You can do it.","It's possible."]},
+
+  // --- GROUP 2 ---
+  {k:"나 이거 좋아해.", e:"I like this.", opts:["I like this.","I don't like this.","I love this.","This is okay."]},
+  {k:"나 이거 싫어해.", e:"I don't like this.", opts:["I don't like this.","I like this.","I hate this.","I love this."]},
+  {k:"나 무서워.", e:"I'm scared.", opts:["I'm scared.","I'm nervous.","It's okay.","I'm worried."]},
+  {k:"괜찮을 거야.", e:"It'll be okay.", opts:["It'll be okay.","It's okay.","Don't worry.","You'll be fine."]},
+  {k:"나 화났어.", e:"I'm angry.", opts:["I'm angry.","I'm upset.","I'm annoyed.","I'm frustrated."]},
+  {k:"진정해.", e:"Calm down.", opts:["Calm down.","Be quiet.","Stop it.","Relax."]},
+  {k:"나 기분 좋아.", e:"I'm in a good mood.", opts:["I'm in a good mood.","I'm in a bad mood.","I'm happy.","I feel great."]},
+  {k:"나 기분 나빠.", e:"I'm in a bad mood.", opts:["I'm in a bad mood.","I'm in a good mood.","I'm sad.","I'm upset."]},
+  {k:"나 지루해.", e:"I'm bored.", opts:["I'm bored.","I'm tired.","I don't feel like it.","I'm not interested."]},
+  {k:"너무 재밌어!", e:"This is so much fun!", opts:["This is so much fun!","This is funny!","This is exciting!","I'm having fun!"]},
+  {k:"나 이겼어!", e:"I won!", opts:["I won!","I lost.","I came in first.","I beat you!"]},
+  {k:"졌어...", e:"I lost...", opts:["I lost...","I won!","I gave up.","I failed."]},
+  {k:"다음에 이길 거야.", e:"I'll win next time.", opts:["I'll win next time.","I lost.","I'll do better.","Next time I'll try harder."]},
+  {k:"힘내!", e:"Cheer up! / You can do it!", opts:["Cheer up! / You can do it!","Good job!","Keep going!","Don't give up!"]},
+  {k:"조심해.", e:"Be careful.", opts:["Be careful.","Be quiet.","Calm down.","Watch out!"]},
+  {k:"기다려.", e:"Wait.", opts:["Wait.","Just a moment.","Come here.","Stay there."]},
+  {k:"빨리 와!", e:"Come quickly!", opts:["Come quickly!","Hurry up!","Let's go!","Run here!"]},
+  {k:"잠깐만.", e:"Just a moment.", opts:["Just a moment.","Wait.","Hold on.","One second."]},
+  {k:"지금 가자.", e:"Let's go now.", opts:["Let's go now.","Come quickly!","Hurry up.","Are you ready?"]},
+  {k:"준비됐어?", e:"Are you ready?", opts:["Are you ready?","Let's go now.","Not yet.","I'm ready."]},
+  {k:"아직.", e:"Not yet.", opts:["Not yet.","I'm done.","Almost.","Just a moment."]},
+  {k:"됐어.", e:"I'm done. / That's enough.", opts:["I'm done. / That's enough.","Not yet.","I'm finished.","That's it."]},
+  {k:"진짜 멋있다!", e:"That's really cool!", opts:["That's really cool!","That's so cute!","That's amazing!","You look great!"]},
+  {k:"귀엽다!", e:"That's so cute!", opts:["That's so cute!","That's cool!","How adorable!","You're cute!"]},
+  {k:"나 좋아해?", e:"Do you like me?", opts:["Do you like me?","Do you love me?","Are you my friend?","Do you know me?"]},
+  {k:"응, 좋아해.", e:"Yes, I like you.", opts:["Yes, I like you.","No, I don't like you.","Yes, I love you.","Yes, I do."]},
+  {k:"아니, 안 좋아해.", e:"No, I don't like you.", opts:["No, I don't like you.","Yes, I like you.","No, I don't.","I'm not sure."]},
+  {k:"오늘 기분 어때?", e:"How are you feeling today?", opts:["How are you feeling today?","How was your day?","What's your mood?","Are you okay today?"]},
+  {k:"그냥 그래.", e:"Just okay. / So-so.", opts:["Just okay. / So-so.","I'm fine.","Not bad.","Pretty good."]},
+  {k:"행복해.", e:"I'm happy.", opts:["I'm happy.","I'm sad.","I'm in a good mood.","I'm excited."]},
+  {k:"슬퍼.", e:"I'm sad.", opts:["I'm sad.","I'm happy.","I'm upset.","I'm crying."]},
+  {k:"사랑해.", e:"I love you.", opts:["I love you.","I like you.","I miss you.","I care about you."]},
+  {k:"나도 사랑해.", e:"I love you too.", opts:["I love you too.","I love you.","Me too.","I like you too."]},
+  {k:"잘 먹겠습니다.", e:"Thank you for the meal. (before eating)", opts:["Thank you for the meal. (before eating)","I enjoyed the meal.","Let's eat.","It looks delicious."]},
+  {k:"잘 먹었습니다.", e:"I enjoyed the meal. (after eating)", opts:["I enjoyed the meal. (after eating)","Thank you for the meal.","It was delicious.","I'm full now."]},
+  {k:"잘못했어요.", e:"I did something wrong. / I'm sorry.", opts:["I did something wrong. / I'm sorry.","I'll never do it again.","I made a mistake.","Please forgive me."]},
+  {k:"다신 안 그럴게요.", e:"I won't do it again.", opts:["I won't do it again.","I did something wrong.","I promise.","I'll be more careful."]},
+  {k:"보고싶어.", e:"I miss you.", opts:["I miss you.","I love you.","I want to see you.","Come back soon."]},
+  {k:"그거 만지지 마.", e:"Don't touch that.", opts:["Don't touch that.","Put that down.","Don't go near that.","Leave that alone."]},
+  {k:"그거 더러운거야.", e:"That's dirty.", opts:["That's dirty.","Don't touch that.","That's gross.","It's unclean."]},
+  {k:"그만해.", e:"Stop it.", opts:["Stop it.","That's enough.","Cut it out.","Knock it off."]},
+  {k:"그만 할래.", e:"I want to stop.", opts:["I want to stop.","Stop it.","I'm done.","Let me rest."]},
+  {k:"하지마.", e:"Don't do that.", opts:["Don't do that.","Stop it.","Don't touch that.","Cut it out."]},
+  {k:"친구랑 좀 놀아도 돼요?", e:"Can I hang out with my friend?", opts:["Can I hang out with my friend?","Can I play outside?","May I go to a friend's house?","Can I invite a friend over?"]},
+  {k:"뭐 먹고 싶어.", e:"I want to eat something.", opts:["I want to eat something.","What do you want to eat?","I'm hungry.","Let's get food."]},
+  {k:"이거 먹어도 돼요?", e:"Can I eat this?", opts:["Can I eat this?","Is this mine?","Can I have some?","May I try this?"]},
+  {k:"청소해.", e:"Clean up.", opts:["Clean up.","Do the laundry.","Wash the dishes.","Tidy your room."]},
+  {k:"이거 마음에 들어.", e:"I like this.", opts:["I like this.","This is okay.","I love this.","This is nice."]},
+  {k:"짜증나.", e:"I'm annoyed.", opts:["I'm annoyed.","I'm angry.","I'm frustrated.","I'm fed up."]},
+  {k:"가방 챙겼어?", e:"Did you pack your bag?", opts:["Did you pack your bag?","Did you do your homework?","Did you wake up?","Did you wash your face?"]},
+  {k:"가져와.", e:"Bring it here.", opts:["Bring it here.","Put it there.","Take it away.","Hand it to me."]},
+  {k:"얼른 가서 씻어.", e:"Go wash up quickly.", opts:["Go wash up quickly.","Did you wash your face?","Take a shower.","Go brush your teeth."]},
+  {k:"세수 했어?", e:"Did you wash your face?", opts:["Did you wash your face?","Did you shower?","Did you brush your teeth?","Did you wash your hands?"]},
+  {k:"무거워?", e:"Is it heavy?", opts:["Is it heavy?","It's not heavy at all.","Can you carry it?","How heavy is it?"]},
+  {k:"하나도 안 무거워.", e:"It's not heavy at all.", opts:["It's not heavy at all.","Is it heavy?","It's a little heavy.","It's very light."]},
+  {k:"배불러?", e:"Are you full?", opts:["Are you full?","I'm very full.","I'm still hungry.","Did you eat enough?"]},
+  {k:"엄청 배불러.", e:"I'm very full.", opts:["I'm very full.","Are you full?","I can't eat anymore.","I ate too much."]},
+  {k:"오늘 날씨 좋다.", e:"The weather is nice today.", opts:["The weather is nice today.","It's a beautiful day.","It's sunny today.","Great weather, isn't it?"]},
+  {k:"갖다 놔.", e:"Put it back.", opts:["Put it back.","Bring it here.","Leave it there.","Set it down."]}
+];
+
+// Remove duplicate 모르겠어 (keep only one) and 창난이야→장난이야
+// Actually keep all 120 as-is; the two 모르겠어 entries are in different groups, both valid.
+
+const TOTAL = ALL_QUESTIONS.length;
+
+function defaultState(){
+  const shuffles = {};
+  ALL_QUESTIONS.forEach((_,i)=>{
+    const arr = ALL_QUESTIONS[i].opts.map((_,j)=>j);
+    for(let k=arr.length-1;k>0;k--){const r=Math.floor(Math.random()*(k+1));[arr[k],arr[r]]=[arr[r],arr[k]];}
+    shuffles[i]=arr;
+  });
+  return {cur:0, answers:{}, shuffles, showResults:false};
+}
+
+function saveState(){
+  try{localStorage.setItem(STORAGE_KEY, JSON.stringify(state));}catch(e){}
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return defaultState();
+    const s = JSON.parse(raw);
+    if(typeof s.cur !== 'number' || s.cur < 0 || s.cur >= TOTAL) throw new Error();
+    if(typeof s.answers !== 'object' || typeof s.shuffles !== 'object') throw new Error();
+    return s;
+  }catch(e){
+    localStorage.removeItem(STORAGE_KEY);
+    return defaultState();
+  }
+}
+
+function getAttempts(){
+  try{return parseInt(localStorage.getItem(ATT_KEY)||'0');}catch(e){return 0;}
+}
+function incAttempts(){
+  try{localStorage.setItem(ATT_KEY, String(getAttempts()+1));}catch(e){}
+}
+
+let state = loadState();
+let dotsOpen = false;
+let retryMode = false;
+let retryList = [];
+let retryIndex = 0;
+let retryAnswers = {};
+
+function updateAttDisplay(){
+  const el = document.getElementById('att-display');
+  if(el) el.textContent = 'Korean Sentences | Total Attempts: ' + getAttempts();
+}
+
+function render(){
+  updateAttDisplay();
+  const qa = document.getElementById('quiz-area');
+  const rs = document.getElementById('results-screen');
+  if(state.showResults){
+    qa.style.display='none';
+    rs.classList.add('show');
+    renderResults();
+    return;
+  }
+  qa.style.display='block';
+  rs.classList.remove('show');
+
+  const q = retryMode ? ALL_QUESTIONS[retryList[retryIndex]] : ALL_QUESTIONS[state.cur];
+  const qIdx = retryMode ? retryList[retryIndex] : state.cur;
+  const total = retryMode ? retryList.length : TOTAL;
+  const cur = retryMode ? retryIndex : state.cur;
+
+  document.getElementById('q-num').textContent = 'Q' + (cur+1) + ' / ' + total;
+  document.getElementById('q-text').textContent = q.k;
+  document.getElementById('tts-btn').setAttribute('data-korean', q.k);
+
+  const shuffle = state.shuffles[qIdx] || q.opts.map((_,i)=>i);
+  const answered = state.answers[qIdx];
+  const correctIdx = q.opts.indexOf(q.e);
+
+  const optDiv = document.getElementById('options');
+  optDiv.innerHTML='';
+  shuffle.forEach((origIdx, pos)=>{
+    const btn = document.createElement('button');
+    btn.className='opt-btn';
+    btn.textContent = q.opts[origIdx];
+    btn.disabled = answered !== undefined;
+    if(answered !== undefined){
+      if(origIdx === correctIdx) btn.classList.add(answered === origIdx ? 'correct' : 'revealed');
+      else if(answered === origIdx) btn.classList.add('wrong');
+    }
+    btn.onclick = () => window.chooseAnswer(origIdx);
+    optDiv.appendChild(btn);
+  });
+
+  const expDiv = document.getElementById('explanation');
+  if(answered !== undefined && answered !== correctIdx){
+    expDiv.style.display='block';
+    expDiv.textContent = 'The correct answer is: ' + q.e;
+  } else {
+    expDiv.style.display='none';
+  }
+
+  const nextBtn = document.getElementById('next-btn');
+  if(cur === total-1) nextBtn.textContent = 'See Results →';
+  else nextBtn.textContent = 'Next';
+
+  updateProgress();
+  updateDots();
+}
+
+function updateProgress(){
+  const answered = Object.keys(state.answers).length;
+  document.getElementById('prog-label').textContent = answered + ' / ' + TOTAL;
+  document.getElementById('prog-fill').style.width = (answered/TOTAL*100)+'%';
+}
+
+function updateDots(){
+  const panel = document.getElementById('dot-panel');
+  panel.innerHTML='';
+  for(let i=0;i<TOTAL;i++){
+    const dot = document.createElement('button');
+    dot.className='dot';
+    dot.textContent = i+1;
+    if(state.answers[i] !== undefined){
+      const q = ALL_QUESTIONS[i];
+      const correctIdx = q.opts.indexOf(q.e);
+      dot.classList.add(state.answers[i]===correctIdx?'correct':'wrong');
+    }
+    if(!retryMode && i===state.cur) dot.classList.add('current');
+    dot.onclick=()=>window.jumpTo(i);
+    panel.appendChild(dot);
+  }
+  if(Object.keys(state.answers).length === TOTAL){
+    const pill = document.createElement('button');
+    pill.className='results-pill';
+    pill.textContent='Results';
+    pill.onclick=()=>{state.showResults=true;saveState();render();};
+    panel.appendChild(pill);
+  }
+}
+
+window.toggleDots = function(){
+  dotsOpen=!dotsOpen;
+  const panel=document.getElementById('dot-panel');
+  const btn = document.querySelector('.jump-btn');
+  if(dotsOpen){panel.classList.add('open');btn.textContent='Hide';}
+  else{panel.classList.remove('open');btn.textContent='Jump';}
+};
+
+window.jumpTo = function(i){
+  if(retryMode) return;
+  state.cur=i;
+  saveState();
+  render();
+};
+
+window.chooseAnswer = function(origIdx){
+  const qIdx = retryMode ? retryList[retryIndex] : state.cur;
+  if(state.answers[qIdx]!==undefined) return;
+  state.answers[qIdx]=origIdx;
+  saveState();
+  render();
+};
+
+window.goPrev = function(){
+  if(retryMode){
+    if(retryIndex>0){retryIndex--;render();}
+    return;
+  }
+  if(state.cur>0){state.cur--;saveState();render();}
+};
+
+window.goNext = function(){
+  if(retryMode){
+    if(retryIndex<retryList.length-1){retryIndex++;render();}
+    else{showRetryResults();} 
+    return;
+  }
+  const total = TOTAL;
+  if(state.cur<total-1){state.cur++;saveState();render();}
+  else{
+    state.showResults=true;
+    incAttempts();
+    saveState();
+    render();
+  }
+};
+
+window.speakKorean = function(){
+  const btn = document.getElementById('tts-btn');
+  const txt = btn.getAttribute('data-korean');
+  if(!txt) return;
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(txt);
+    u.lang='ko-KR';
+    window.speechSynthesis.speak(u);
+  }
+};
+
+function renderResults(){
+  const correct = Object.keys(state.answers).filter(i=>state.answers[i]===ALL_QUESTIONS[i].opts.indexOf(ALL_QUESTIONS[i].e)).length;
+  const wrong = Object.keys(state.answers).filter(i=>state.answers[i]!==ALL_QUESTIONS[i].opts.indexOf(ALL_QUESTIONS[i].e)).length;
+  const skipped = TOTAL - Object.keys(state.answers).length;
+  document.getElementById('results-score').textContent = correct + ' correct, ' + wrong + ' wrong, ' + skipped + ' skipped — out of ' + TOTAL;
+
+  const grid = document.getElementById('results-grid');
+  grid.innerHTML='';
+  for(let i=0;i<TOTAL;i++){
+    const card = document.createElement('div');
+    if(state.answers[i]===undefined){
+      card.className='r-card skipped';
+      card.innerHTML='<div class="r-card-q">Q'+(i+1)+'</div>Skipped';
+    } else {
+      const correctIdx=ALL_QUESTIONS[i].opts.indexOf(ALL_QUESTIONS[i].e);
+      const ok = state.answers[i]===correctIdx;
+      card.className='r-card '+(ok?'correct':'wrong');
+      card.innerHTML='<div class="r-card-q">Q'+(i+1)+'</div>'+(ok?'Correct':'Wrong');
+    }
+    card.onclick=()=>window.jumpFromResults(i);
+    grid.appendChild(card);
+  }
+}
+
+window.jumpFromResults = function(i){
+  state.showResults=false;
+  state.cur=i;
+  retryMode=false;
+  saveState();
+  render();
+};
+
+window.retryWrong = function(){
+  const wrong = Object.keys(state.answers).filter(i=>state.answers[i]!==ALL_QUESTIONS[i].opts.indexOf(ALL_QUESTIONS[i].e)).map(Number);
+  if(wrong.length===0){alert('No wrong answers to retry!');return;}
+  retryMode=true;
+  retryList=wrong;
+  retryIndex=0;
+  retryAnswers={};
+  wrong.forEach(i=>{ delete state.answers[i]; });
+  state.showResults=false;
+  saveState();
+  render();
+};
+
+function showRetryResults(){
+  const correct = retryList.filter(i=>state.answers[i]===ALL_QUESTIONS[i].opts.indexOf(ALL_QUESTIONS[i].e)).length;
+  alert('Retry done! ' + correct + ' / ' + retryList.length + ' correct.');
+  retryMode=false;
+  state.showResults=true;
+  saveState();
+  render();
+}
+
+window.copyResults = function(){
+  const lines = ['Korean-English Quiz Results'];
+  for(let i=0;i<TOTAL;i++){
+    let s='Q'+(i+1)+': ';
+    if(state.answers[i]===undefined) s+='Skipped';
+    else{
+      const correctIdx=ALL_QUESTIONS[i].opts.indexOf(ALL_QUESTIONS[i].e);
+      s+=(state.answers[i]===correctIdx?'Correct':'Wrong');
+    }
+    lines.push(s);
+  }
+  const text=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(text).catch(()=>{});}
+  else{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+};
+
+window.startFresh = function(){
+  document.getElementById('fresh-modal').classList.add('show');
+};
+window.cancelFresh = function(){
+  document.getElementById('fresh-modal').classList.remove('show');
+};
+window.confirmFresh = function(){
+  document.getElementById('fresh-modal').classList.remove('show');
+  localStorage.removeItem(STORAGE_KEY);
+  retryMode=false;
+  state=defaultState();
+  saveState();
+  render();
+};
+
+// init
+if(state.showResults){
+  render();
+} else {
+  document.getElementById('quiz-area').style.display='block';
+  render();
+}
+})();
+</script>
+</body>
+</html>

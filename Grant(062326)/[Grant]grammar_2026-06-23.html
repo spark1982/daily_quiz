@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Grammar</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0 auto;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#2D6A9E;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.tag-badge{display:inline-block;background:#2D6A9E;color:#fff;font-size:0.74rem;font-weight:700;padding:3px 10px;border-radius:12px;margin-bottom:10px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.q-text{font-size:1rem;font-weight:600;color:#111;margin-bottom:14px;line-height:1.6;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#eaf1f7;color:#111;font-size:0.95rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#eaf1f7;color:#2D6A9E;}
+.next-btn{background:#2D6A9E;color:#fff;}
+.prog-track{background:#d6e2ec;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#2D6A9E;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#eaf1f7;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#eaf1f7;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-23</div>
+<div class="title-hd">[Grant] Grammar</div>
+<div class="instruction">Choose the best answer for each grammar question.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 20</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #2D6A9E;border-radius:14px;background:#fff;color:#2D6A9E;cursor:pointer;white-space:nowrap;">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="tag-badge" id="tag-badge"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#2D6A9E;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#2D6A9E;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#eaf1f7;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#eaf1f7;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_grantgrammar_20_20260622_v1';
+var ATT_KEY='quiz_grantgrammar_att_20260622_v1';
+
+var qs=[
+ {tag:'Conjunctive Adverbs',q:'Which word in this sentence is a conjunctive adverb? "I finished my homework; however, I still felt tired."',
+  opts:['however','finished','homework','tired'],ci:0,
+  exp:'"However" is a conjunctive adverb because it connects two independent clauses and shows a contrast between them.'},
+ {tag:'Noun Clauses',q:'Which part of this sentence is a noun clause? "What she said surprised everyone."',
+  opts:['What she said','surprised everyone','everyone','said'],ci:0,
+  exp:'"What she said" is a noun clause because it acts as the subject of the sentence.'},
+ {tag:'Gerunds',q:'Which word is a gerund in this sentence? "Swimming is her favorite summer activity."',
+  opts:['Swimming','favorite','summer','activity'],ci:0,
+  exp:'"Swimming" is a gerund because it is a verb form ending in -ing that acts as a noun, here the subject of the sentence.'},
+ {tag:'Infinitives',q:'Which phrase is the infinitive in this sentence? "She wants to travel around the world someday."',
+  opts:['to travel','wants','around the world','someday'],ci:0,
+  exp:'"To travel" is an infinitive because it combines "to" with the base form of a verb and acts as a noun, here naming what she wants.'},
+ {tag:'Participial Phrases',q:'Which phrase is the participial phrase in this sentence? "Smiling brightly, the coach congratulated the team."',
+  opts:['Smiling brightly','the coach','congratulated','the team'],ci:0,
+  exp:'"Smiling brightly" is a participial phrase because it begins with a participle, "smiling," and describes the coach.'},
+ {tag:'Predicate Nouns',q:'Which word is the predicate noun in this sentence? "My older brother became a firefighter last year."',
+  opts:['firefighter','brother','became','year'],ci:0,
+  exp:'"Firefighter" is the predicate noun because it follows the linking verb "became" and renames the subject, "brother."'},
+ {tag:'Independent vs Dependent Clauses',q:'Which part of this sentence is the dependent clause? "Because the storm was approaching, we canceled the picnic."',
+  opts:['Because the storm was approaching','we canceled the picnic','the storm','the picnic'],ci:0,
+  exp:'"Because the storm was approaching" is a dependent clause because it cannot stand alone as a complete sentence; it relies on the independent clause that follows it.'},
+ {tag:'Oxford Comma in a Series',q:'Which sentence uses commas correctly in a series?',
+  opts:['We packed apples, bananas, and grapes for the trip.','We packed apples bananas, and grapes for the trip.','We packed apples, bananas and, grapes for the trip.','We packed apples, bananas, and, grapes for the trip.'],ci:0,
+  exp:'Commas should separate each item in a series, including before "and": "apples, bananas, and grapes."'},
+ {tag:'Commas with Direct Address',q:'Which sentence correctly punctuates direct address?',
+  opts:['Please pass the salt, Grandpa.','Please pass the salt Grandpa.','Please, pass the salt Grandpa.','Please pass, the salt Grandpa.'],ci:0,
+  exp:'A comma is needed before the name "Grandpa" because the speaker is directly addressing him.'},
+ {tag:'Capitalization of Titles',q:'Which sentence capitalizes the book title correctly?',
+  opts:['My favorite book is Charlotte\'s Web.','My favorite book is charlotte\'s web.','My favorite book is Charlotte\'s web.','My Favorite book is Charlotte\'s Web.'],ci:0,
+  exp:'Both main words in a book title should be capitalized: "Charlotte\'s Web."'},
+ {tag:'Apostrophes in Contractions',q:'Which sentence uses an apostrophe correctly in a contraction?',
+  opts:['I can\'t find my shoes anywhere.','I cant find my shoes anywhere.','I ca\'nt find my shoes anywhere.','I can\'t\' find my shoes anywhere.'],ci:0,
+  exp:'The contraction "can\'t" correctly places the apostrophe where the missing letters, "no," would be.'},
+ {tag:'Subject Pronouns vs Object Pronouns',q:'Which pronoun correctly completes this sentence? "My sister and ___ went to the museum."',
+  opts:['I','me','myself','mine'],ci:0,
+  exp:'"I" is a subject pronoun and is correct here because "my sister and I" are the subject performing the action "went."'},
+ {tag:'Correlative Conjunctions',q:'Which pair of words correctly completes this sentence? "___ the rain ___ the wind could stop the race."',
+  opts:['Neither / nor','Either / or','Not only / but','Both / or'],ci:0,
+  exp:'"Neither / nor" is the correct correlative conjunction pair for a sentence saying that two things are both untrue.'},
+ {tag:'Transition Words for Sequence',q:'Which transition word best shows the order of events? "First, mix the batter. ___, pour it into the pan."',
+  opts:['Next','However','Although','Meanwhile'],ci:0,
+  exp:'"Next" is the best transition word because it shows the sequence of steps in a process.'},
+ {tag:'Tense Shift Errors',q:'Which sentence avoids an incorrect tense shift?',
+  opts:['She walked to the park and played on the swings.','She walked to the park and plays on the swings.','She walks to the park and played on the swings.','She walking to the park and played on the swings.'],ci:0,
+  exp:'"She walked to the park and played on the swings" keeps a consistent past tense throughout the sentence.'},
+ {tag:'Modal Verbs',q:'Which word is the modal verb in this sentence? "You should finish your project before dinner."',
+  opts:['should','finish','project','dinner'],ci:0,
+  exp:'"Should" is a modal verb because it expresses obligation or advice and is paired with the main verb "finish."'},
+ {tag:'Comma Splices',q:'Which sentence corrects the comma splice? "I love pizza, I eat it every Friday."',
+  opts:['I love pizza, and I eat it every Friday.','I love pizza I eat it every Friday.','I love pizza, I eat, it every Friday.','I love, pizza I eat it every Friday.'],ci:0,
+  exp:'Adding the coordinating conjunction "and" after the comma fixes the comma splice by properly joining the two independent clauses.'},
+ {tag:'Semicolons to Join Independent Clauses',q:'Which sentence uses a semicolon correctly?',
+  opts:['The bakery closed early; the bread had sold out.','The bakery closed early; because the bread had sold out.','The bakery; closed early the bread had sold out.','The bakery closed early the bread; had sold out.'],ci:0,
+  exp:'A semicolon can join two independent clauses that are closely related in meaning without needing a conjunction.'},
+ {tag:'Adjective vs Adverb Confusion',q:'Which word correctly completes this sentence? "He did ___ on his spelling test."',
+  opts:['well','good','gooder','best of'],ci:0,
+  exp:'"Well" is an adverb that correctly describes how he did on the test; "good" is an adjective and cannot describe the verb "did."'},
+ {tag:'Vague Pronoun Reference',q:'Which sentence avoids a vague pronoun reference?',
+  opts:['When Jake met Carlos, Jake shared his snack.','When Jake met Carlos, he shared his snack.','When Jake met Carlos, they shared his snack.','When Jake met Carlos, him shared his snack.'],ci:0,
+  exp:'Using the name "Jake" instead of the pronoun "he" makes it clear exactly who shared the snack, avoiding a vague pronoun reference.'}
+];
+
+var state={};
+function loadState(){
+  try{
+    var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');
+    if(s&&typeof s.cur==='number'&&s.cur>=0&&s.cur<qs.length&&s.answers&&s.shuffles){state=s;}
+    else resetState();
+  }catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}
+}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){
+  if(!state.shuffles[i]){
+    var a=[0,1,2,3];
+    for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}
+    state.shuffles[i]=a; saveState();
+  }
+  return state.shuffles[i];
+}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAtt(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function updateNav(){
+  var ans=Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent=ans+' / '+qs.length;
+  document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';
+  renderDots();
+}
+
+function toggleJump(){
+  var p=document.getElementById('dot-panel');
+  var b=document.getElementById('jump-btn');
+  if(p.style.display==='block'){p.style.display='none';b.innerHTML='Jump &#9662;';}
+  else{p.style.display='block';b.innerHTML='Hide &#9652;';renderDots();}
+}
+
+function renderDots(){
+  var p=document.getElementById('dot-panel');
+  if(p.style.display!=='block')return;
+  var h='';
+  for(var i=0;i<qs.length;i++){
+    var bg=state.answers[i]===undefined?'#d6e2ec':(state.answers[i]===getCSI(i)?'#2D6A9E':'#E24B4A');
+    h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';
+  }
+  if(Object.keys(state.answers).length===qs.length){
+    h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#2D6A9E;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';
+  }
+  p.innerHTML=h;
+}
+
+function goToQ(i){
+  state.cur=i; state.showResults=false; saveState(); render();
+  document.getElementById('dot-panel').style.display='none';
+  document.getElementById('jump-btn').innerHTML='Jump &#9662;';
+}
+
+function showResults(){
+  state.showResults=true;
+  localStorage.setItem(ATT_KEY,loadAtt()+1);
+  saveState(); render();
+}
+
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAtt();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('resultsArea').style.display='none';
+  updateNav();
+  var i=state.cur; var q=qs[i];
+  document.getElementById('tag-badge').textContent=q.tag;
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-text').textContent=q.q;
+  var sh=getShuffle(i); var ans=state.answers[i]; var csi=getCSI(i);
+  var html='';
+  for(var s=0;s<4;s++){
+    var oi=sh[s]; var cls='opt-btn'; var dis='';
+    if(ans!==undefined){dis='disabled ';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}
+    html+='<button class="'+cls+'" '+dis+'onclick="pick('+i+','+s+')">'+esc(q.opts[oi])+'</button>';
+  }
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');
+  if(ans!==undefined){eb.style.display='block';eb.textContent=q.exp;}
+  else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  updateNav();
+  var c=0,w=0,sk=0;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]===undefined)sk++;
+    else if(state.answers[i]===getCSI(i))c++;
+    else w++;
+  }
+  document.getElementById('results-summary').innerHTML=
+    '<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;'+
+    '<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;'+
+    '<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i]; var label,bg,tc;
+    if(a===undefined){label='Skipped';bg='#d6e2ec';tc='#555';}
+    else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}
+    else{label='Wrong';bg='#FCEBEB';tc='#501313';}
+    html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.9rem;color:#333;">Q'+(i+1)+': '+esc(qs[i].tag)+'</span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';
+  }
+  document.getElementById('results-cards').innerHTML=html;
+}
+
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){
+  if(dir===1&&state.cur===qs.length-1){showResults();return;}
+  state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));
+  saveState();render();
+}
+function retryWrong(){
+  var first=-1;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){
+      if(first===-1)first=i; delete state.answers[i];
+    }
+  }
+  if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}
+}
+function copyRes(){
+  var lines=['[Grant] Grammar - Results (2026-06-23)'];
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    var label=a===undefined?'Skipped':(a===getCSI(i)?'Correct':'Wrong');
+    lines.push('Q'+(i+1)+' ('+qs[i].tag+'): '+label);
+  }
+  var txt=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fallbackCopy(txt);});}
+  else fallbackCopy(txt);
+}
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;window.openFreshModal=openFreshModal;
+window.confirmFresh=confirmFresh;window.showResults=showResults;
+
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

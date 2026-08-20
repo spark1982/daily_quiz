@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Speed Quiz</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;margin:0 auto;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.tag-badge{display:inline-block;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:6px;color:#fff;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.q-text{font-size:1rem;font-weight:600;color:#111;margin-bottom:12px;line-height:1.7;}
+.timer-wrap{display:flex;align-items:center;gap:10px;margin:0 0 12px;}
+.timer-num{font-size:1.6rem;font-weight:800;min-width:34px;text-align:center;color:#185FA5;}
+.timer-track{flex:1;background:#d7dde6;border-radius:5px;height:10px;overflow:hidden;}
+.timer-fill{height:10px;border-radius:5px;width:100%;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.5;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn.reveal{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.7;}
+.timeout-msg{text-align:center;color:#E24B4A;font-weight:700;font-size:0.9rem;margin-top:6px;display:none;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-13</div>
+<div class="title-hd">[Grant] Speed Quiz</div>
+<div class="instruction">Answer each question within 15 seconds. The quiz advances automatically.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 40</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump ▾</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="tag-badge" id="q-tag"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="timer-wrap" id="timer-wrap">
+    <div class="timer-num" id="timer-num">40</div>
+    <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+  </div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="timeout-msg" id="timeout-msg">⏱ Time's up! The correct answer is highlighted.</div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.05rem;margin-bottom:14px;line-height:2;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong &amp; Timed Out</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#7b61ff;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_grantspeed_40_20260613_v1';
+var ATT_KEY='quiz_grantspeed_att_20260613_v1';
+var TIMER_SECS=40;
+var TAG_COLORS={'Gauss':'#185FA5','Intervals':'#7b61ff','Add & Sub':'#1D9E75','Multiply':'#c07800'};
+var timerInterval=null, autoAdvTimer=null, timerVal=TIMER_SECS;
+
+var qs=[
+// ── Chapter 1: The Story of Gauss ──────────────────────────────
+{tag:'Gauss',q:'Compute: 2 + 3 + 4 + 5 + 6 + 7 + 8',
+ opts:['33','35','37','40'],ci:1,
+ exp:'Pair first and last: (2+8)=10. Average × count = 5 × 7 = 35.'},
+{tag:'Gauss',q:'Compute: 4 + 6 + 8 + 10 + 12 + 14',
+ opts:['48','51','54','60'],ci:2,
+ exp:'Average × count: (4+14)÷2 = 9. &ensp;9 × 6 = 54.'},
+{tag:'Gauss',q:'Compute: 17 + 18 + 19 + 20 + 21 + 22 + 23',
+ opts:['133','137','140','145'],ci:2,
+ exp:'Middle value = 20. &ensp;20 × 7 = 140.'},
+{tag:'Gauss',q:'Compute: 100 + 102 + 104 + 106 + 108 + 110',
+ opts:['600','620','630','640'],ci:2,
+ exp:'Average = (100+110)÷2 = 105. &ensp;105 × 6 = 630.'},
+{tag:'Gauss',q:'An auditorium has 10 rows. The 1st row has 30 seats, the 2nd has 34, the 3rd has 38, and so on. How many seats in total?',
+ opts:['420','450','480','510'],ci:2,
+ exp:'Arithmetic seq: a₁=30, d=4, n=10. Last row = 30+9×4 = 66. Sum = 10×(30+66)÷2 = 480.'},
+{tag:'Gauss',q:'Compute: 1 + 2 + 3 + … + 50',
+ opts:['1,250','1,275','1,300','1,325'],ci:1,
+ exp:'n(n+1)÷2 = 50×51÷2 = 1,275.'},
+{tag:'Gauss',q:'Compute: 2 + 4 + 6 + 8 + … + 48 + 50',
+ opts:['600','625','650','675'],ci:2,
+ exp:'Factor out 2: 2×(1+2+…+25) = 2×325 = 650.'},
+{tag:'Gauss',q:'Compute: 1 + 3 + 5 + 7 + … + 47 + 49',
+ opts:['575','600','625','650'],ci:2,
+ exp:'Sum of first n odd numbers = n². There are 25 terms → 25² = 625.'},
+{tag:'Gauss',q:'There are 20 teams in a volleyball league. Each team plays every other team exactly once. How many matches are played in total?',
+ opts:['180','185','190','195'],ci:2,
+ exp:'C(20,2) = 20×19÷2 = 190.'},
+{tag:'Gauss',q:'Find the sum of all multiples of 4 that are ≤ 40.',
+ opts:['200','210','220','240'],ci:2,
+ exp:'4+8+…+40 = 4×(1+2+…+10) = 4×55 = 220.'},
+// ── Chapter 2: Intervals ────────────────────────────────────────
+{tag:'Intervals',q:'Joe places 5 matchsticks in a row, each 10 cm apart. How far is the 5th matchstick from the 1st? (cm)',
+ opts:['30','40','50','60'],ci:1,
+ exp:'5 matchsticks → 4 intervals. 4 × 10 = 40 cm.'},
+{tag:'Intervals',q:'A sailor tied 7 knots on a rope. The distance from the 1st to the 7th knot was 18 m. What is the distance between two consecutive knots? (m)',
+ opts:['2','3','4','6'],ci:1,
+ exp:'7 knots → 6 intervals. 18 ÷ 6 = 3 m.'},
+{tag:'Intervals',q:'A 500 m road is planted with trees every 5 m, with trees at both ends. How many trees are planted?',
+ opts:['99','100','101','102'],ci:2,
+ exp:'500 ÷ 5 = 100 intervals → 100 + 1 = 101 trees.'},
+{tag:'Intervals',q:'It takes John 8 minutes to saw a log into 3 equal lengths. How long does it take to saw the same log into 9 equal lengths? (minutes)',
+ opts:['24','28','32','36'],ci:2,
+ exp:'3 pieces = 2 cuts → 4 min/cut. 9 pieces = 8 cuts → 8×4 = 32 min.'},
+{tag:'Intervals',q:'25 trees are planted at 5 m intervals from one end of a road to the other. How long is the road? (m)',
+ opts:['100','110','120','125'],ci:2,
+ exp:'25 trees → 24 intervals. 24 × 5 = 120 m.'},
+{tag:'Intervals',q:'16 lamp posts are placed along a 300 m road, including both ends. How far apart are two consecutive lamp posts? (m)',
+ opts:['15','18','20','25'],ci:2,
+ exp:'16 posts → 15 intervals. 300 ÷ 15 = 20 m.'},
+{tag:'Intervals',q:'21 trees are planted along an 800 m road, including both ends. How far apart are two consecutive trees? (m)',
+ opts:['35','38','40','42'],ci:2,
+ exp:'21 trees → 20 intervals. 800 ÷ 20 = 40 m.'},
+{tag:'Intervals',q:'A grandfather clock takes 6 seconds to chime 3 times. How long does it take to chime 6 times? (seconds)',
+ opts:['10','12','15','18'],ci:2,
+ exp:'3 chimes = 2 intervals → 3 sec/interval. 6 chimes = 5 intervals → 5×3 = 15 sec.'},
+{tag:'Intervals',q:'Pots of flowers line all 4 sides of a square garden with each side 24 m long. Pots are placed every 3 m (corners included). How many pots are needed?',
+ opts:['28','30','32','36'],ci:2,
+ exp:'Each side: 24÷3+1 = 9 posts. Square (corners shared): 4×(9−1) = 32.'},
+{tag:'Intervals',q:'Stella tied 6 knots on a ribbon. The distance between the 2nd and 5th knots was 60 cm. What is the distance between the 1st and 6th knots? (cm)',
+ opts:['80','90','100','120'],ci:2,
+ exp:'2nd→5th = 3 intervals = 60 cm → 20 cm each. 1st→6th = 5 intervals = 100 cm.'},
+// ── Chapter 3: Tricks in Addition and Subtraction ───────────────
+{tag:'Add & Sub',q:'Compute: 24 + 55 + 76',
+ opts:['145','150','155','165'],ci:2,
+ exp:'24 + 76 = 100; 100 + 55 = 155.'},
+{tag:'Add & Sub',q:'Compute: 55 + 33 + 45 + 27',
+ opts:['150','155','160','165'],ci:2,
+ exp:'55+45 = 100; 33+27 = 60; 100+60 = 160.'},
+{tag:'Add & Sub',q:'Compute: 88 + 28 + 34',
+ opts:['140','145','150','160'],ci:2,
+ exp:'28+34 = 62; 88+62 = 150.'},
+{tag:'Add & Sub',q:'Compute: 514 + 186',
+ opts:['690','695','700','710'],ci:2,
+ exp:'14+186 = 200; 500+200 = 700.'},
+{tag:'Add & Sub',q:'Compute: 257 + 243',
+ opts:['490','495','500','510'],ci:2,
+ exp:'7+3=10 (carry); 5+4+1=10 (carry); 2+2+1=5 → 500.'},
+{tag:'Add & Sub',q:'Compute: 28 + 57 + 23 + 22',
+ opts:['120','125','130','135'],ci:2,
+ exp:'28+22 = 50; 57+23 = 80; 50+80 = 130.'},
+{tag:'Add & Sub',q:'Compute: 248 + 275 + 752 + 525',
+ opts:['1,750','1,780','1,800','1,820'],ci:2,
+ exp:'248+752 = 1,000; 275+525 = 800; 1,000+800 = 1,800.'},
+{tag:'Add & Sub',q:'Compute: 650 − 238 − 162',
+ opts:['230','240','250','260'],ci:2,
+ exp:'238+162 = 400; 650−400 = 250.'},
+{tag:'Add & Sub',q:'Compute: 573 − (188 + 273)',
+ opts:['102','108','112','120'],ci:2,
+ exp:'188+273 = 461; 573−461 = 112.'},
+{tag:'Add & Sub',q:'Compute: 937 − (337 + 260)',
+ opts:['330','335','340','350'],ci:2,
+ exp:'337+260 = 597; 937−597 = 340.'},
+// ── Chapter 4: Tricks in Multiplication ────────────────────────
+{tag:'Multiply',q:'Compute: 25 × 32 × 4',
+ opts:['2,400','2,800','3,200','3,600'],ci:2,
+ exp:'25×4 = 100; 100×32 = 3,200.'},
+{tag:'Multiply',q:'Compute: 24 × 25',
+ opts:['500','550','600','650'],ci:2,
+ exp:'×25 = ÷4×100. 24÷4 = 6; 6×100 = 600.'},
+{tag:'Multiply',q:'Compute: 48 × 125',
+ opts:['4,800','5,000','6,000','6,400'],ci:2,
+ exp:'×125 = ÷8×1,000. 48÷8 = 6; 6×1,000 = 6,000.'},
+{tag:'Multiply',q:'Compute: 70 × 14 + 30 × 14',
+ opts:['1,200','1,300','1,400','1,500'],ci:2,
+ exp:'(70+30)×14 = 100×14 = 1,400.'},
+{tag:'Multiply',q:'Compute: 40 × 99',
+ opts:['3,900','3,940','3,960','4,000'],ci:2,
+ exp:'40×(100−1) = 4,000−40 = 3,960.'},
+{tag:'Multiply',q:'Compute: 45 × 99',
+ opts:['4,400','4,440','4,455','4,500'],ci:2,
+ exp:'45×(100−1) = 4,500−45 = 4,455.'},
+{tag:'Multiply',q:'Compute: 46 × 11',
+ opts:['496','500','506','516'],ci:2,
+ exp:'×11 trick: 4_(4+6)_6. Since 4+6=10, carry → 506.'},
+{tag:'Multiply',q:'Compute: 46 × 101',
+ opts:['4,606','4,640','4,646','4,660'],ci:2,
+ exp:'46×100 + 46×1 = 4,600+46 = 4,646.'},
+{tag:'Multiply',q:'Compute: 2 × 25 × 4 × 5',
+ opts:['800','900','1,000','1,200'],ci:2,
+ exp:'(4×25)×(2×5) = 100×10 = 1,000.'},
+{tag:'Multiply',q:'Compute: 53 × 7 + 47 × 7',
+ opts:['630','665','700','735'],ci:2,
+ exp:'(53+47)×7 = 100×7 = 700.'}
+];
+
+var state={};
+function loadState(){try{var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');if(s&&typeof s.cur==='number'&&s.answers&&s.shuffles){state=s;}else{resetState();}}catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){if(!state.shuffles[i]){var a=[0,1,2,3];for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}state.shuffles[i]=a;}return state.shuffles[i];}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAttempts(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function clearTimers(){clearInterval(timerInterval);clearTimeout(autoAdvTimer);timerInterval=null;autoAdvTimer=null;}
+
+function startTimer(){
+  timerVal=TIMER_SECS;
+  updateTimerUI();
+  timerInterval=setInterval(function(){
+    timerVal--;
+    updateTimerUI();
+    if(timerVal<=0){
+      clearInterval(timerInterval);timerInterval=null;
+      state.answers[state.cur]=-1; // timeout
+      saveState();
+      render();
+      autoAdvTimer=setTimeout(function(){go(1);},2000);
+    }
+  },1000);
+}
+
+function updateTimerUI(){
+  var el=document.getElementById('timer-num');
+  var bar=document.getElementById('timer-fill');
+  if(!el||!bar)return;
+  el.textContent=Math.max(0,timerVal);
+  var pct=(Math.max(0,timerVal)/TIMER_SECS*100).toFixed(1)+'%';
+  bar.style.width=pct;
+  var col=timerVal>8?'#1D9E75':timerVal>4?'#f5a623':'#E24B4A';
+  bar.style.background=col;
+  el.style.color=col;
+}
+
+function updateNav(){
+  var ans=Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent=ans+' / '+qs.length;
+  document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function toggleJump(){var p=document.getElementById('dot-panel');var b=document.getElementById('jump-btn');if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}else{p.style.display='none';b.textContent='Jump ▾';}}
+function renderDots(){
+  var p=document.getElementById('dot-panel');if(p.style.display==='none')return;
+  var h='';
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    var bg=a===undefined?'#d7dde6':a===-1?'#f5a623':a===getCSI(i)?'#185FA5':'#E24B4A';
+    h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';
+  }
+  if(Object.keys(state.answers).length===qs.length){h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';}
+  p.innerHTML=h;
+}
+function goToQ(i){clearTimers();state.cur=i;state.showResults=false;saveState();render();document.getElementById('dot-panel').style.display='none';document.getElementById('jump-btn').textContent='Jump ▾';}
+function showResults(){clearTimers();state.showResults=true;localStorage.setItem(ATT_KEY,loadAttempts()+1);saveState();render();}
+
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAttempts();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('resultsArea').style.display='none';
+  updateNav();
+  var i=state.cur;var q=qs[i];
+  var tb=document.getElementById('q-tag');tb.textContent=q.tag;tb.style.background=TAG_COLORS[q.tag]||'#555';
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-text').innerHTML=q.q;
+  var sh=getShuffle(i);var ans=state.answers[i];var csi=getCSI(i);
+  var isAnswered=(ans!==undefined);
+  var isTO=(ans===-1);
+
+  // Timer display
+  var tw=document.getElementById('timer-wrap');
+  tw.style.display=isAnswered?'none':'flex';
+
+  // Options
+  var html='';
+  for(var s=0;s<4;s++){
+    var oi=sh[s];var cls='opt-btn';var dis='';
+    if(isAnswered){
+      dis='disabled';
+      if(s===csi)cls+=isTO?' reveal':' correct';
+      else if(s===ans&&!isTO)cls+=' wrong';
+    }
+    html+='<button class="'+cls+'" '+dis+' onclick="pick('+i+','+s+')">'+ escHtml(q.opts[oi])+'</button>';
+  }
+  document.getElementById('opts-area').innerHTML=html;
+
+  // Timeout message
+  var tm=document.getElementById('timeout-msg');
+  tm.style.display=isTO?'block':'none';
+
+  // Explanation (show on wrong or timeout)
+  var eb=document.getElementById('exp-box');
+  if(isAnswered&&(isTO||ans!==csi)){eb.innerHTML=q.exp;eb.style.display='block';}
+  else{eb.style.display='none';}
+
+  // Next button label
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+
+  // Start timer only for unanswered questions
+  clearTimers();
+  if(!isAnswered){startTimer();}
+}
+
+function renderResults(){
+  clearTimers();
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  updateNav();
+  var c=0,w=0,to=0;
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    if(a===undefined){}
+    else if(a===-1)to++;
+    else if(a===getCSI(i))c++;
+    else w++;
+  }
+  document.getElementById('results-summary').innerHTML=
+    '<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;'+
+    '<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;'+
+    '<span style="color:#f5a623;font-weight:700;">'+to+'</span> timed out';
+  var html='';
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];var label,bg,tc;
+    if(a===undefined){label='Skipped';bg='#d7dde6';tc='#555';}
+    else if(a===-1){label='Timed Out';bg='#fff3cd';tc='#856404';}
+    else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}
+    else{label='Wrong';bg='#FCEBEB';tc='#501313';}
+    html+='<div class="results-card" onclick="goToQ('+i+')">'+
+          '<span style="font-size:0.88rem;font-weight:600;color:#333;">Q'+(i+1)+' &mdash; '+escHtml(qs[i].tag)+'</span>'+
+          '<span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';
+  }
+  document.getElementById('results-cards').innerHTML=html;
+}
+
+function pick(qi,si){
+  if(state.answers[qi]!==undefined)return;
+  clearTimers();
+  state.answers[qi]=si;
+  saveState();
+  render();
+  var csi=getCSI(qi);
+  var delay=(si===csi)?1000:1500;
+  autoAdvTimer=setTimeout(function(){go(1);},delay);
+}
+
+function go(dir){
+  clearTimers();
+  if(dir===1&&state.cur===qs.length-1){showResults();return;}
+  if(dir===1&&state.answers[state.cur]===undefined){
+    // Skip = timeout
+    state.answers[state.cur]=-1;saveState();
+  }
+  state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));
+  saveState();render();
+}
+
+function retryWrong(){
+  var first=-1;
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    if(a!==undefined&&(a===-1||a!==getCSI(i))){
+      if(first===-1)first=i;
+      delete state.answers[i];
+      delete state.shuffles[i];
+    }
+  }
+  if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}
+}
+function copyRes(){
+  var lines=['[Grant] Speed Quiz 2026-06-13'];
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    var r=a===undefined?'Skipped':a===-1?'Timed Out':a===getCSI(i)?'Correct':'Wrong';
+    lines.push('Q'+(i+1)+' ('+qs[i].tag+'): '+r);
+  }
+  var txt=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fb(txt);});}else{fb(txt);}
+}
+function fb(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;window.showResults=showResults;
+window.retryWrong=retryWrong;window.copyRes=copyRes;window.openFreshModal=openFreshModal;window.confirmFresh=confirmFresh;
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

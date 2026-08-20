@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Math Competition</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh;padding:16px}
+.date-label{font-size:2rem;font-weight:800;text-align:center;color:#185FA5;background:#fff;padding:10px 0 2px}
+.title{text-align:center;font-size:1.4rem;font-weight:700;color:#185FA5;background:#fff;padding:2px 0 4px}
+.attempts{text-align:center;font-size:0.9rem;color:#555;background:#fff;padding:2px 0 10px}
+.container{max-width:720px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.1);overflow:hidden}
+.dot-nav{display:flex;flex-wrap:wrap;gap:6px;padding:14px 16px;background:#f7f9fc;border-bottom:1px solid #e0e6ef;justify-content:center}
+.dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;cursor:pointer;border:2px solid #c5d2e0;background:#e8edf4;color:#333;transition:.15s}
+.dot.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.dot.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.dot.active{border-color:#185FA5;background:#d0e4f7;color:#185FA5}
+.results-pill{background:#185FA5;color:#fff;border-radius:20px;padding:4px 14px;font-size:0.8rem;font-weight:600}
+#quizArea{display:none;padding:20px 20px 10px}
+.tag-badge{display:inline-block;background:#185FA5;color:#fff;border-radius:20px;padding:3px 12px;font-size:0.75rem;font-weight:600;margin-bottom:10px}
+.q-counter{font-size:0.85rem;color:#666;margin-bottom:6px}
+.q-text{font-size:1.05rem;line-height:1.6;color:#111;margin-bottom:16px}
+.options{display:grid;gap:10px}
+.opt-btn{width:100%;text-align:left;padding:12px 16px;border-radius:8px;border:2px solid transparent;background:#e8edf4;color:#111111;font-size:0.97rem;cursor:pointer;transition:.15s;line-height:1.5}
+.opt-btn:hover{border-color:#185FA5}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.opt-btn.reveal{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.explain{margin-top:14px;padding:12px;background:#f0f5ff;border-left:4px solid #185FA5;border-radius:4px;font-size:0.9rem;color:#222;line-height:1.5}
+.nav-btns{display:flex;gap:10px;margin-top:18px;padding-bottom:10px}
+.btn{padding:10px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer;transition:.15s}
+.btn-blue{background:#185FA5;color:#fff}.btn-blue:hover{background:#1251a3}
+.btn-gray{background:#e8edf4;color:#333}.btn-gray:hover{background:#d0dae8}
+#resultsArea{display:none;padding:20px}
+.res-header{font-size:1.2rem;font-weight:700;color:#185FA5;margin-bottom:14px;text-align:center}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:18px}
+.res-card{padding:10px;border-radius:8px;background:#f0f4f8;cursor:pointer;text-align:center;font-size:0.85rem;font-weight:600;border:2px solid transparent}
+.res-card.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.res-card.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.res-card.skipped{background:#fff3cd;border-color:#e6a817;color:#7a5500}
+.res-actions{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:12px;padding:28px;max-width:340px;width:90%;text-align:center}
+.modal h3{margin-bottom:10px;color:#185FA5}
+.modal p{margin-bottom:18px;color:#444;font-size:0.95rem}
+.modal-btns{display:flex;gap:10px;justify-content:center}
+.retry-area{display:none;padding:20px}
+.retry-header{font-size:1rem;font-weight:700;color:#185FA5;margin-bottom:14px}
+/* Radical notation */
+.rad{display:inline-flex;align-items:center;vertical-align:middle;line-height:1}
+.rad-idx{font-size:0.6em;line-height:1;align-self:flex-start;margin-top:0.1em;margin-right:1px}
+.rad-sign{display:inline-flex;align-items:center;line-height:1}
+.rad-tick{font-size:1.35em;line-height:1;position:relative;top:0.06em}
+.rad-body{border-top:2px solid currentColor;padding:1px 5px 1px 1px;display:inline-flex;align-items:center;line-height:1.25;flex-wrap:nowrap;gap:2px}
+/* Fraction */
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:.95em;line-height:1.1}
+.frac .num{border-bottom:1.5px solid #111;padding:0 3px;text-align:center}
+.frac .den{padding:0 3px;text-align:center}
+@media(max-width:500px){.q-text{font-size:0.98rem}.opt-btn{font-size:0.92rem}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="date-label">2026-06-11</div>
+<div class="title">[Grant] Math Competition</div>
+<div class="attempts" id="attemptsLabel">Total Attempts: 0</div>
+<div class="dot-nav" id="dotNav"></div>
+<div id="quizArea"></div>
+<div id="resultsArea"></div>
+</div>
+<div class="modal-overlay" id="freshModal">
+<div class="modal">
+<h3>Start Fresh</h3>
+<p>This will reset all your answers and progress.</p>
+<div class="modal-btns">
+<button class="btn btn-blue" onclick="doFresh()">Reset</button>
+<button class="btn btn-gray" onclick="closeFreshModal()">Cancel</button>
+</div>
+</div>
+</div>
+<script>
+(function(){
+const KEY='quiz_mathcomp_28_v1';
+const ATT_KEY='quiz_mathcomp_attempts_v1';
+
+function sup(n){return '<sup>'+n+'</sup>';}
+function rad(idx,inner){var i=idx?'<span class="rad-idx">'+idx+'</span>':'';return '<span class="rad">'+i+'<span class="rad-sign"><span class="rad-tick">&#8730;</span><span class="rad-body">'+inner+'</span></span></span>';}
+
+var qs=[
+// Chapter 1
+{tag:'Chapter 1',q:'Solve: 1 &times; (2 + 3) &times; 4 + 5 &times; 6 + 7 &times; 8',opts:['106','88','92','115'],ci:0,exp:'Left to right with PEMDAS: 1&times;(2+3)&times;4 = 1&times;5&times;4 = 20; 5&times;6 = 30; 7&times;8 = 56. Total = 20+30+56 = 106.'},
+{tag:'Chapter 1',q:'Solve: 2((2 + 3) &times; 4 &minus; 18)',opts:['10','4','16','8'],ci:1,exp:'Inner: (2+3)=5, 5&times;4=20, 20&minus;18=2. Then 2&times;2=4.'},
+{tag:'Chapter 1',q:'Solve: 32 &divide; 16 &times; 6 &divide; 3 &times; 10 &divide; 5 + 18 &divide; 9 &times; 12 &divide; 6 &times; 8 &divide; 4',opts:['12','20','16','24'],ci:2,exp:'Left part: 32&divide;16=2, &times;6=12, &divide;3=4, &times;10=40, &divide;5=8. Right part: 18&divide;9=2, &times;12=24, &divide;6=4, &times;8=32, &divide;4=8. Total=8+8=16.'},
+{tag:'Chapter 1',q:'Solve: 720 &divide; 6 &divide; 5 &divide; 4 &divide; 3 &divide; 2 &divide; 1',opts:['6','2','10','1'],ci:3,exp:'720&divide;6=120; &divide;5=24; &divide;4=6; &divide;3=2; &divide;2=1; &divide;1=1.'},
+// Chapter 2
+{tag:'Chapter 2',q:'Is 8,715 divisible by 15?',opts:['No','Yes','Divisible by 5 only','Divisible by 3 only'],ci:1,exp:'Divisibility by 15 requires divisibility by both 3 and 5. 8715 ends in 5 (div by 5). Digit sum: 8+7+1+5=21, divisible by 3. So 8715 is divisible by 15. Yes.'},
+{tag:'Chapter 2',q:'Which of these numbers is divisible by 8? {25,412 | 34,612 | 78,512 | 56,388}',opts:['25,412','34,612','78,512','56,388'],ci:2,exp:'A number is divisible by 8 if its last 3 digits are. 412&divide;8=51.5 (no); 612&divide;8=76.5 (no); 512&divide;8=64 (yes!); 388&divide;8=48.5 (no). Answer: 78,512.'},
+{tag:'Chapter 2',q:'How many multiples of 3 are between 11 and 302?',opts:['97','94','100','96'],ci:0,exp:'First multiple of 3 &ge;12 is 12; last &le;302 is 300. Count = (300&minus;12)&divide;3+1 = 288&divide;3+1 = 96+1 = 97.'},
+{tag:'Chapter 2',q:'Marina\'s favorite number is more than 40 and less than 70, and divisible by both 8 and 7. What is it?',opts:['42','48','63','56'],ci:3,exp:'LCM(8,7)=56. 56 is between 40 and 70. Answer: 56.'},
+// Chapter 3
+{tag:'Chapter 3',q:'What is the largest prime number less than 100?',opts:['89','97','91','93'],ci:1,exp:'91=7&times;13 (not prime); 93=3&times;31 (not prime); 97 has no factors other than 1 and itself &mdash; it is prime. Answer: 97.'},
+{tag:'Chapter 3',q:'What prime numbers end in 5?',opts:['5 and 15','5 and 25','15 only','Only 5'],ci:3,exp:'Any number ending in 5 (other than 5 itself) is divisible by 5, so not prime. The only prime ending in 5 is 5 itself.'},
+{tag:'Chapter 3',q:'Find a pair of twin primes between 70 and 100. (Twin primes differ by 2.)',opts:['71 and 73','79 and 83','83 and 89','89 and 97'],ci:0,exp:'Primes between 70 and 100: 71, 73, 79, 83, 89, 97. Pairs differing by 2: 71 and 73 (73&minus;71=2). That\'s the only twin prime pair in this range.'},
+{tag:'Chapter 3',q:'Find the smallest whole number that is not a prime and has exactly 3 different prime factors.',opts:['42','60','30','24'],ci:2,exp:'2&times;3&times;5=30, which has exactly 3 distinct prime factors (2, 3, 5) and is the smallest such product. 24=2&sup3;&times;3 has only 2 distinct prime factors.'},
+// Chapter 4
+{tag:'Chapter 4',q:'Find the sum of all the factors of 30.',opts:['48','60','72','64'],ci:2,exp:'Factors of 30: 1,2,3,5,6,10,15,30. Sum = 1+2+3+5+6+10+15+30 = 72.'},
+{tag:'Chapter 4',q:'Find the prime factorization of 8,000.',opts:['2<sup>6</sup> &times; 5<sup>3</sup>','2<sup>5</sup> &times; 5<sup>4</sup>','2<sup>7</sup> &times; 5<sup>2</sup>','2<sup>4</sup> &times; 5<sup>4</sup>'],ci:0,exp:'8000 = 8&times;1000 = 2&sup3;&times;2&sup3;&times;5&sup3; = 2<sup>6</sup>&times;5<sup>3</sup>. (2<sup>6</sup>=64, 5<sup>3</sup>=125, 64&times;125=8000 ✓)'},
+{tag:'Chapter 4',q:'Find the number of factors for 13<sup>9</sup>31<sup>4</sup>.',opts:['40','45','36','50'],ci:3,exp:'Number of factors = (9+1)(4+1) = 10&times;5 = 50.'},
+{tag:'Chapter 4',q:'Find the number of factors for 12,000.',opts:['36','48','60','54'],ci:1,exp:'12000 = 2<sup>5</sup>&times;3&times;5<sup>3</sup>. Factors = (5+1)(1+1)(3+1) = 6&times;2&times;4 = 48.'},
+// Chapter 5
+{tag:'Chapter 5',q:'Find the number of odd factors for 2<sup>5</sup>3<sup>8</sup>7<sup>4</sup>.',opts:['45','54','36','63'],ci:0,exp:'Odd factors have 0 powers of 2. Count = (8+1)(4+1) = 9&times;5 = 45.'},
+{tag:'Chapter 5',q:'How many perfect cubes are there between 1 and 100, inclusive?',opts:['6','8','3','4'],ci:3,exp:'1<sup>3</sup>=1, 2<sup>3</sup>=8, 3<sup>3</sup>=27, 4<sup>3</sup>=64, 5<sup>3</sup>=125>100. So 4 perfect cubes: 1, 8, 27, 64.'},
+{tag:'Chapter 5',q:'Find the sum of all factors that are perfect squares for 2<sup>2</sup>3<sup>3</sup>5<sup>3</sup>.',opts:['900','1300','1200','1100'],ci:1,exp:'Perfect square factors have only even exponents. For 2<sup>2</sup>: use 2<sup>0</sup> or 2<sup>2</sup>; for 3<sup>3</sup>: use 3<sup>0</sup> or 3<sup>2</sup>; for 5<sup>3</sup>: use 5<sup>0</sup> or 5<sup>2</sup>. Sum = (1+4)(1+9)(1+25) = 5&times;10&times;26 = 1300.'},
+{tag:'Chapter 5',q:'Find the sum of all even factors for 2<sup>2</sup>3<sup>2</sup>5<sup>2</sup>.',opts:['2016','2821','2418','1890'],ci:2,exp:'Sum of all factors = (1+2+4)(1+3+9)(1+5+25)=7&times;13&times;31=2821. Sum of odd factors (0 powers of 2) = (1)(1+3+9)(1+5+25)=13&times;31=403. Even sum = 2821&minus;403 = 2418.'},
+// Chapter 6
+{tag:'Chapter 6',q:'Hannah bought 3 pencils at 28 cents each with a one-dollar bill. How much change did she receive, in cents?',opts:['12','16','20','8'],ci:1,exp:'3&times;28=84 cents. 100&minus;84=16 cents change.'},
+{tag:'Chapter 6',q:'Pens cost 99&cent; each, pencils 49&cent; each, erasers 39&cent; each. Riley needs 2 pens, 3 pencils, and 5 erasers. How much does he need (in dollars)?',opts:['$5.40','$5.85','$4.95','$6.15'],ci:0,exp:'2&times;99=198&cent;; 3&times;49=147&cent;; 5&times;39=195&cent;. Total=540&cent;=$5.40.'},
+{tag:'Chapter 6',q:'How many ways are there to make 17 cents using only pennies and/or nickels?',opts:['3','5','2','4'],ci:3,exp:'0 nickels: 17 pennies; 1 nickel (5&cent;): 12 pennies; 2 nickels (10&cent;): 7 pennies; 3 nickels (15&cent;): 2 pennies. 4 nickels = 20&cent; > 17. So 4 ways.'},
+{tag:'Chapter 6',q:'4 adults and 2 children went to an aquarium. Adult ticket: $14, child ticket: $5. What was the total cost?',opts:['$56','$72','$66','$58'],ci:2,exp:'4&times;$14 + 2&times;$5 = $56 + $10 = $66.'},
+// Chapter 7
+{tag:'Chapter 7',q:'Simplify '+rad('','100')+'.',opts:['10','50','5','20'],ci:0,exp:'&#8730;100 = 10 since 10&sup2;=100.'},
+{tag:'Chapter 7',q:'Find the two consecutive integers that are closest to '+rad('3','150')+'.',opts:['4 and 5','6 and 7','5 and 6','3 and 4'],ci:2,exp:'5<sup>3</sup>=125 and 6<sup>3</sup>=216. Since 125 &lt; 150 &lt; 216, &#8731;150 lies between 5 and 6.'},
+{tag:'Chapter 7',q:'Simplify ('+rad('3','27,000,000')+')&sup2;.',opts:['9,000','90,000','900','900,000'],ci:1,exp:'27,000,000 = 27&times;10<sup>6</sup> = 3<sup>3</sup>&times;(10<sup>2</sup>)<sup>3</sup> = (300)<sup>3</sup>. So &#8731;27,000,000 = 300. Then 300<sup>2</sup> = 90,000.'},
+{tag:'Chapter 7',q:'Simplify '+rad('2','11')+' &times; '+rad('3','11')+' &times; '+rad('6','11')+'.',opts:['33','&#8730;11','121','11'],ci:3,exp:'11<sup>1/2</sup>&times;11<sup>1/3</sup>&times;11<sup>1/6</sup> = 11<sup>(3+2+1)/6</sup> = 11<sup>6/6</sup> = 11<sup>1</sup> = 11.'}
+];
+
+var state={cur:0,answers:{},shuffles:{},showResults:false};
+
+function loadState(){
+  try{
+    var s=localStorage.getItem(KEY);
+    if(!s)return;
+    var p=JSON.parse(s);
+    if(typeof p.cur!=='number'||typeof p.answers!=='object'||typeof p.shuffles!=='object')throw 0;
+    if(p.cur<0||p.cur>=qs.length)p.cur=0;
+    state=p;
+  }catch(e){localStorage.removeItem(KEY);}
+}
+function saveState(){localStorage.setItem(KEY,JSON.stringify(state));}
+function getAttempts(){return parseInt(localStorage.getItem(ATT_KEY)||'0');}
+function incAttempts(){localStorage.setItem(ATT_KEY,String(getAttempts()+1));}
+
+function shuffle(arr){
+  var a=arr.slice();
+  for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}
+  return a;
+}
+function getShuffled(qi){
+  if(!state.shuffles[qi]){
+    var order=shuffle([0,1,2,3]);
+    state.shuffles[qi]=order;
+    saveState();
+  }
+  return state.shuffles[qi];
+}
+
+function render(){
+  document.getElementById('attemptsLabel').textContent='Total Attempts: '+getAttempts();
+  buildDots();
+  if(state.showResults){showResults();return;}
+  showQuestion();
+}
+
+function buildDots(){
+  var nav=document.getElementById('dotNav');
+  var html='';
+  for(var i=0;i<qs.length;i++){
+    var cls='dot';
+    if(state.answers[i]===undefined){}
+    else if(state.answers[i]===qs[i].ci)cls+=' correct';
+    else cls+=' wrong';
+    if(i===state.cur&&!state.showResults)cls+=' active';
+    html+='<div class="'+cls+'" onclick="goToQ('+i+')">'+(i+1)+'</div>';
+  }
+  if(state.showResults)html+='<span class="results-pill">Results</span>';
+  nav.innerHTML=html;
+}
+
+function showQuestion(){
+  var qa=document.getElementById('quizArea');
+  var ra=document.getElementById('resultsArea');
+  qa.style.display='block';ra.style.display='none';
+  var i=state.cur,q=qs[i];
+  var order=getShuffled(i);
+  var ans=state.answers[i];
+  var answered=(ans!==undefined);
+  var html='<div class="tag-badge">'+q.tag+'</div>';
+  html+='<div class="q-counter">'+(i+1)+' / '+qs.length+'</div>';
+  html+='<div class="q-text">'+q.q+'</div>';
+  html+='<div class="options">';
+  for(var k=0;k<4;k++){
+    var oi=order[k];
+    var cls='opt-btn';
+    if(answered){
+      if(oi===q.ci)cls+=' reveal';
+      if(oi===ans&&ans!==q.ci)cls+=' wrong';
+    }
+    html+='<button class="'+cls+'" onclick="pick('+oi+')">'+q.opts[oi]+'</button>';
+  }
+  html+='</div>';
+  if(answered&&ans!==q.ci){
+    html+='<div class="explain"><strong>Explanation:</strong> '+q.exp+'</div>';
+  }
+  html+='<div class="nav-btns">';
+  if(i>0)html+='<button class="btn btn-gray" onclick="go(-1)">Prev</button>';
+  if(i<qs.length-1)html+='<button class="btn btn-blue" onclick="go(1)">Next</button>';
+  else html+='<button class="btn btn-blue" onclick="finishQuiz()">See Results &#8594;</button>';
+  html+='</div>';
+  qa.innerHTML=html;
+}
+
+function pick(oi){
+  var i=state.cur;
+  if(state.answers[i]!==undefined)return;
+  state.answers[i]=oi;
+  saveState();
+  showQuestion();
+}
+
+function go(d){
+  state.cur+=d;
+  if(state.cur<0)state.cur=0;
+  if(state.cur>=qs.length)state.cur=qs.length-1;
+  saveState();showQuestion();
+}
+
+function goToQ(i){
+  if(state.showResults){state.showResults=false;state.cur=i;saveState();render();return;}
+  state.cur=i;saveState();showQuestion();buildDots();
+}
+
+function finishQuiz(){
+  incAttempts();
+  state.showResults=true;
+  saveState();render();
+}
+
+function showResults(){
+  var qa=document.getElementById('quizArea');
+  var ra=document.getElementById('resultsArea');
+  qa.style.display='none';ra.style.display='block';
+  var correct=0,wrong=0,skipped=0;
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    if(a===undefined)skipped++;
+    else if(a===qs[i].ci)correct++;
+    else wrong++;
+  }
+  var html='<div class="res-header">Results: '+correct+' / '+qs.length+'</div>';
+  html+='<div class="res-grid">';
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    var cls='res-card ';
+    var lbl='';
+    if(a===undefined){cls+='skipped';lbl='Skipped';}
+    else if(a===qs[i].ci){cls+='correct';lbl='Correct';}
+    else{cls+='wrong';lbl='Wrong';}
+    html+='<div class="'+cls+'" onclick="goToQ('+i+')">Q'+(i+1)+': '+lbl+'</div>';
+  }
+  html+='</div>';
+  html+='<div class="res-actions">';
+  html+='<button class="btn btn-blue" onclick="startRetry()">Retry Wrong Questions</button>';
+  html+='<button class="btn btn-gray" onclick="copyRes()">Copy All Results</button>';
+  html+='<button class="btn btn-gray" onclick="confirmFresh()">Start Fresh</button>';
+  html+='</div>';
+  ra.innerHTML=html;
+  buildDots();
+}
+
+var retryList=[];
+var retryIdx=0;
+var retryAnswers={};
+
+function startRetry(){
+  retryList=[];
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]!==undefined&&state.answers[i]!==qs[i].ci)retryList.push(i);
+  }
+  if(retryList.length===0){alert('No wrong questions to retry!');return;}
+  retryIdx=0;retryAnswers={};
+  showRetry();
+}
+
+function showRetry(){
+  var qa=document.getElementById('quizArea');
+  var ra=document.getElementById('resultsArea');
+  qa.style.display='none';ra.style.display='none';
+  var existing=document.getElementById('retryArea');
+  if(!existing){existing=document.createElement('div');existing.id='retryArea';existing.className='retry-area';document.querySelector('.container').appendChild(existing);}
+  existing.style.display='block';
+  if(retryIdx>=retryList.length){
+    var c=0;for(var x in retryAnswers){if(retryAnswers[x]===qs[retryList[x]].ci)c++;}
+    existing.innerHTML='<div class="retry-header">Retry Complete: '+c+'/'+retryList.length+' correct</div><button class="btn btn-blue" onclick="backToResults()">Back to Results</button>';
+    return;
+  }
+  var qi=retryList[retryIdx],q=qs[qi];
+  var order=getShuffled(qi);
+  var ans=retryAnswers[retryIdx];
+  var answered=(ans!==undefined);
+  var html='<div class="retry-header">Retry '+(retryIdx+1)+'/'+retryList.length+' (Q'+(qi+1)+')</div>';
+  html+='<div class="tag-badge">'+q.tag+'</div>';
+  html+='<div class="q-text">'+q.q+'</div>';
+  html+='<div class="options">';
+  for(var k=0;k<4;k++){
+    var oi=order[k];
+    var cls='opt-btn';
+    if(answered){if(oi===q.ci)cls+=' reveal';if(oi===ans&&ans!==q.ci)cls+=' wrong';}
+    html+='<button class="'+cls+'" onclick="retryPick('+oi+')">'+q.opts[oi]+'</button>';
+  }
+  html+='</div>';
+  if(answered&&ans!==q.ci)html+='<div class="explain"><strong>Explanation:</strong> '+q.exp+'</div>';
+  html+='<div class="nav-btns">';
+  if(retryIdx<retryList.length-1)html+='<button class="btn btn-blue" onclick="retryNext()">Next</button>';
+  else html+='<button class="btn btn-blue" onclick="retryNext()">Finish Retry</button>';
+  html+='</div>';
+  existing.innerHTML=html;
+}
+
+function retryPick(oi){
+  if(retryAnswers[retryIdx]!==undefined)return;
+  retryAnswers[retryIdx]=oi;
+  showRetry();
+}
+function retryNext(){retryIdx++;showRetry();}
+function backToResults(){
+  var r=document.getElementById('retryArea');
+  if(r)r.style.display='none';
+  state.showResults=true;saveState();render();
+}
+
+function copyRes(){
+  var lines=['[Grant] Math Competition - 2026-06-11','Results: '];
+  var c=0,w=0,s=0;
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    if(a===undefined){s++;lines.push('Q'+(i+1)+': Skipped');}
+    else if(a===qs[i].ci){c++;lines.push('Q'+(i+1)+': Correct');}
+    else{w++;lines.push('Q'+(i+1)+': Wrong (answered: '+qs[i].opts[a]+', correct: '+qs[i].opts[qs[i].ci]+')');}
+  }
+  lines[1]='Results: '+c+' Correct, '+w+' Wrong, '+s+' Skipped';
+  var txt=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(txt);}
+  else{var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+}
+
+function confirmFresh(){document.getElementById('freshModal').classList.add('show');}
+function closeFreshModal(){document.getElementById('freshModal').classList.remove('show');}
+function doFresh(){
+  localStorage.removeItem(KEY);
+  state={cur:0,answers:{},shuffles:{},showResults:false};
+  closeFreshModal();render();
+}
+
+window.pick=pick;window.go=go;window.finishQuiz=finishQuiz;window.goToQ=goToQ;
+window.startRetry=startRetry;window.copyRes=copyRes;window.confirmFresh=confirmFresh;
+window.closeFreshModal=closeFreshModal;window.doFresh=doFresh;
+window.retryPick=retryPick;window.retryNext=retryNext;window.backToResults=backToResults;
+
+loadState();render();
+})();
+</script>
+</body>
+</html>

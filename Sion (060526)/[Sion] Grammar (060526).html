@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAT Grammar Quiz 5</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; background: #f4f7fb; color: #1a1a2e; min-height: 100vh; }
+
+  #due-date { text-align: center; font-size: 2rem; font-weight: 800; color: #185FA5; background: white; padding: 14px 0 10px; }
+
+  .header { background: #185FA5; color: white; padding: 18px 20px 14px; text-align: center; }
+  .header h1 { font-size: 1.35rem; font-weight: 700; }
+  .header p  { font-size: 0.85rem; margin-top: 4px; opacity: 0.88; }
+
+  #dot-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 14px 16px; background: white; border-bottom: 1px solid #dde3ed; }
+  .dot { width: 36px; height: 36px; border-radius: 50%; background: #c5cfe0; color: #444; font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid transparent; transition: background 0.2s; flex-shrink: 0; }
+  .dot.current      { border-color: #185FA5; background: #dbeafe; color: #185FA5; }
+  .dot.correct      { background: #1D9E75; color: white; }
+  .dot.wrong        { background: #E24B4A; color: white; }
+  .dot.results-pill { width: auto; border-radius: 18px; padding: 0 14px; background: #185FA5; color: white; font-size: 0.75rem; }
+
+  #quiz-area { display: none; padding: 18px 16px 100px; max-width: 720px; margin: 0 auto; }
+
+  .q-header   { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .q-num      { font-size: 0.82rem; color: #185FA5; font-weight: 700; }
+  .type-badge { background: #185FA5; color: white; font-size: 0.7rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; }
+  .counter    { margin-left: auto; font-size: 0.8rem; color: #555; font-weight: 600; }
+
+  .question-inst { font-size: 0.88rem; color: #555; font-style: italic; margin-bottom: 10px; line-height: 1.5; }
+  .question-text { font-size: 1.02rem; line-height: 1.7; margin-bottom: 18px; color: #1a1a2e; }
+  .question-text u { text-decoration: underline; text-underline-offset: 3px; }
+
+  .options    { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+  .opt-btn    { width: 100%; padding: 13px 16px; border-radius: 10px; border: 2px solid transparent; background: #e8edf4; color: #111111; font-size: 0.97rem; text-align: left; cursor: pointer; transition: background 0.15s; line-height: 1.5; -webkit-tap-highlight-color: transparent; }
+  .opt-btn.reveal-ans { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .opt-btn.wrong-ans  { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+  .opt-btn:disabled   { cursor: default; }
+
+  .explanation { background: #fff8e7; border-left: 4px solid #f5a623; border-radius: 6px; padding: 12px 14px; font-size: 0.88rem; line-height: 1.6; color: #3a2e00; margin-bottom: 16px; }
+
+  .nav-row  { display: flex; gap: 10px; margin-top: 8px; }
+  .nav-btn  { flex: 1; padding: 13px; border-radius: 10px; border: none; font-size: 0.95rem; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .btn-prev { background: #dde3ed; color: #185FA5; }
+  .btn-next { background: #185FA5; color: white; }
+
+  #results-screen { display: none; padding: 18px 16px 100px; max-width: 720px; margin: 0 auto; }
+  #results-screen.show { display: block; }
+
+  .results-title { text-align: center; font-size: 1.4rem; font-weight: 800; color: #185FA5; margin-bottom: 6px; }
+  .results-score { text-align: center; font-size: 2.2rem; font-weight: 900; color: #1a1a2e; margin-bottom: 18px; }
+  .results-score span { color: #185FA5; }
+
+  .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 22px; }
+  .r-card { border-radius: 10px; padding: 12px 10px; text-align: center; font-size: 0.82rem; cursor: pointer; border: 2px solid transparent; }
+  .r-card.correct { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .r-card.wrong   { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+  .r-card.skipped { background: #f0f0f0; border-color: #aaa; color: #444; }
+  .r-card .r-q     { font-weight: 800; font-size: 0.95rem; }
+  .r-card .r-status { font-size: 0.75rem; margin-top: 2px; }
+
+  .wrong-list { margin-bottom: 22px; }
+  .wrong-item { background: white; border-radius: 10px; padding: 14px; margin-bottom: 12px; border: 1px solid #dde3ed; }
+  .wrong-item .wi-q    { font-size: 0.82rem; font-weight: 700; color: #185FA5; margin-bottom: 6px; }
+  .wrong-item .wi-text { font-size: 0.93rem; line-height: 1.6; margin-bottom: 8px; }
+  .wi-answer  { font-size: 0.85rem; margin-top: 4px; }
+  .wi-your    { color: #E24B4A; }
+  .wi-correct { color: #1D9E75; font-weight: 700; }
+
+  .copy-btn  { background: #185FA5; color: white; border: none; border-radius: 8px; padding: 10px 18px; font-size: 0.88rem; font-weight: 700; cursor: pointer; margin-right: 10px; margin-bottom: 10px; }
+  .fresh-btn { background: #dde3ed; color: #185FA5; border: none; border-radius: 8px; padding: 10px 18px; font-size: 0.88rem; font-weight: 700; cursor: pointer; margin-bottom: 10px; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay.show { display: flex; }
+  .modal-box { background: white; border-radius: 14px; padding: 26px 22px; max-width: 320px; width: 90%; text-align: center; }
+  .modal-box h3 { font-size: 1.1rem; margin-bottom: 10px; }
+  .modal-box p  { font-size: 0.88rem; color: #555; margin-bottom: 20px; }
+  .modal-btns   { display: flex; gap: 10px; }
+  .modal-cancel  { flex: 1; padding: 11px; border-radius: 8px; background: #dde3ed; color: #333; border: none; font-weight: 700; cursor: pointer; font-size: 0.9rem; }
+  .modal-confirm { flex: 1; padding: 11px; border-radius: 8px; background: #E24B4A; color: white; border: none; font-weight: 700; cursor: pointer; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+
+<div id="due-date">Due: Thursday, June 5</div>
+
+<div class="header">
+  <h1>SAT Grammar Practice — Set 5</h1>
+  <p>10 Questions · All Topics</p>
+</div>
+
+<div id="dot-nav"></div>
+<div id="quiz-area"></div>
+<div id="results-screen"></div>
+
+<div class="modal-overlay" id="fresh-modal">
+  <div class="modal-box">
+    <h3>Start Fresh?</h3>
+    <p>All your answers will be cleared and the quiz will restart.</p>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmStartFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'sat_grammar_quiz_v5';
+
+const questions = [
+
+  // Q1 — Future Perfect: action completed before a future point
+  // "By the time the conference ends, the researchers will present their findings."
+  // The presenting will be COMPLETED before the conference ends → future perfect: "will have presented"
+  // (A) will present = simple future (action at that moment, not completed before) ✗
+  // (B) will have presented = future perfect ✓
+  // (C) have presented = present perfect (wrong tense) ✗
+  // (D) are presenting = present progressive (wrong tense) ✗
+  {
+    inst: "The underlined portion contains an error. Choose the best replacement.",
+    type: "Verb Tense & Mood",
+    text: "By the time the international conference ends on Friday, the lead researchers <u>will present</u> their findings to delegates from more than forty countries.",
+    options: [
+      "(A) will present",
+      "(B) will have presented",
+      "(C) have presented",
+      "(D) are presenting"
+    ],
+    ci: 1,
+    explanation: "The phrase 'By the time... ends' signals that one action will be completed before another future event. This requires the future perfect tense: 'will have presented.' Simple future ('will present') suggests the action happens at that moment, not before. Present perfect ('have presented') and present progressive ('are presenting') are both the wrong tense for a future context."
+  },
+
+  // Q2 — Subject-Verb Agreement: "each of" = singular
+  // "Each of the contestants were given three minutes to present their argument."
+  // "Each" is always singular → verb must be "was"
+  // (A) were = plural ✗
+  // (B) was = singular ✓
+  // (C) have been = plural present perfect ✗
+  // (D) are = plural present ✗
+  {
+    inst: "The underlined word contains an error. Choose the best replacement.",
+    type: "Subject-Verb Agreement",
+    text: "Each of the twelve contestants <u>were</u> given exactly three minutes to present their argument to the panel of judges.",
+    options: [
+      "(A) were",
+      "(B) was",
+      "(C) have been",
+      "(D) are"
+    ],
+    ci: 1,
+    explanation: "'Each' is always singular — it refers to every individual member of a group separately, one at a time. Even when followed by 'of the [plural noun],' the verb must agree with 'each,' not with the noun in the prepositional phrase. The correct verb is 'was.' This is one of the most commonly tested subject-verb agreement rules on the SAT."
+  },
+
+  // Q3 — Pronoun Case: object of preposition "to"
+  // "The mentor to who she owed her entire career had quietly retired the previous year."
+  // "to" is a preposition → requires object case → "whom"
+  // Test: replace with him/her → "to her she owed" → "to whom she owed" ✓
+  // (A) who = subject case ✗
+  // (B) whom = object case ✓
+  // (C) whoever = subject case, indefinite ✗
+  // (D) whomever = object case but used for open/indefinite sets, not specific referents ✗
+  {
+    inst: "The underlined word contains an error. Choose the best replacement.",
+    type: "Pronoun Case",
+    text: "The mentor to <u>who</u> she owed her entire career in medicine had quietly retired to the countryside the previous year.",
+    options: [
+      "(A) who",
+      "(B) whom",
+      "(C) whoever",
+      "(D) whomever"
+    ],
+    ci: 1,
+    explanation: "'To' is a preposition, and the object of a preposition must be in the objective case. 'Who' is a subject pronoun and cannot follow a preposition. The correct form is 'whom.' Test: substitute 'him' — 'the mentor to him she owed her career' confirms the objective case. 'Whomever' is also objective case but is used for open, indefinite sets (e.g., 'give it to whomever you like'), not for referring to a specific, identified person."
+  },
+
+  // Q4 — Parallel Structure: infinitive list, one item breaks with "that" clause
+  // "The manager asked the team to review the data, update the slides, and that they present the findings."
+  // "to review... to update... and that they present" — "that they present" breaks infinitive parallel
+  // Correct: "to review, update, and present" (shared "to" for all three) → third item = bare infinitive "present"
+  // (A) that they present the findings ✗ — subordinate clause, breaks parallel
+  // (B) presenting the findings ✗ — gerund, breaks parallel
+  // (C) present the findings ✓ — bare infinitive, parallel with "review" and "update"
+  // (D) to be presenting the findings ✗ — progressive infinitive, breaks parallel
+  {
+    inst: "The underlined portion contains an error. Choose the best replacement.",
+    type: "Parallel Structure",
+    text: "Before the board meeting, the manager asked the team to review the quarterly data, update the slide deck, and <u>that they present the findings</u> clearly and concisely.",
+    options: [
+      "(A) that they present the findings",
+      "(B) presenting the findings",
+      "(C) present the findings",
+      "(D) to be presenting the findings"
+    ],
+    ci: 2,
+    explanation: "When a single 'to' governs a list of infinitives, all items in the list must be bare infinitives (the base form without 'to'): 'to review, update, and present.' 'That they present' introduces a subordinate clause, 'presenting' is a gerund, and 'to be presenting' uses a progressive infinitive — all three break the parallel structure established by 'to review' and 'update.'"
+  },
+
+  // Q5 — Dangling Modifier: past participial phrase
+  // "Revised extensively by the editor, the author finally gave her approval."
+  // "Revised by the editor" modifies whatever follows — but "the author" didn't revise it; the manuscript was revised.
+  // The manuscript must be the subject of the main clause.
+  // (A) the author finally gave her approval ✗ — author can't be "revised by editor"
+  // (B) the manuscript finally received the author's approval ✓ — manuscript was revised ✓
+  // (C) the author's approval of the manuscript was finally given ✗ — "approval" wasn't revised ✗
+  // (D) the author, pleased with the changes, gave her approval ✗ — changes meaning (author is pleased, not revised)
+  {
+    inst: "Choose the best revision of the underlined portion to fix the dangling modifier.",
+    type: "Dangling Modifier",
+    text: "Revised extensively by the editor over the course of three weeks, <u>the author finally gave her approval and agreed to move forward with publication</u>.",
+    options: [
+      "(A) the author finally gave her approval and agreed to move forward with publication",
+      "(B) the manuscript finally received the author's approval and was cleared for publication",
+      "(C) the author's approval of the manuscript was finally given and publication could proceed",
+      "(D) the author, pleased with the editorial changes, gave her approval for publication"
+    ],
+    ci: 1,
+    explanation: "The participial phrase 'Revised extensively by the editor' describes something that was revised — the manuscript, not the author. The noun immediately following the comma must be what the phrase modifies. Only (B) correctly places 'the manuscript' as the subject. In (A) and (C), the author or her approval appears to have been revised by the editor. (D) changes the meaning by adding information not present in the original."
+  },
+
+  // Q6 — Word Choice: "comprised of" vs. "composed of"
+  // "The jury is comprised of twelve citizens selected at random."
+  // "Comprised of" is a widely tested SAT error. "Comprise" means "to include/contain" and takes no "of."
+  // Correct forms: "composed of" OR "comprises" (without "of")
+  // (A) comprised of ✗ — nonstandard; "comprise" already means "contain," adding "of" is redundant/incorrect
+  // (B) composed of ✓ — standard and correct
+  // (C) comprising of ✗ — "comprising" also takes no "of"; same error pattern
+  // (D) constituted of ✗ — "constituted" is not used with "of" in standard English
+  {
+    inst: "The underlined portion contains an error. Choose the best replacement.",
+    type: "Word Choice",
+    text: "The review panel is <u>comprised of</u> seven independent scientists with no financial ties to the pharmaceutical industry.",
+    options: [
+      "(A) comprised of",
+      "(B) composed of",
+      "(C) comprising of",
+      "(D) constituted of"
+    ],
+    ci: 1,
+    explanation: "'Comprise' means 'to include or contain' and is used without 'of': 'The panel comprises seven scientists.' The phrase 'comprised of' is considered an error in standard written English because it misuses 'comprise' as a passive. The correct alternative is 'composed of,' which is always followed by 'of.' Similarly, 'comprising of' and 'constituted of' both incorrectly attach 'of' to verbs that do not take it."
+  },
+
+  // Q7 — Faulty Coordination: comma splice with conjunctive adverb "therefore"
+  // "The sample size was too small, therefore the results could not be generalized."
+  // "therefore" is a conjunctive adverb, not a coordinating conjunction.
+  // A comma before a conjunctive adverb creates a comma splice. Needs semicolon before "therefore."
+  // (A) , therefore the results ✗ — comma splice
+  // (B) ; therefore, the results ✓ — semicolon + conjunctive adverb + comma ✓
+  // (C) , so the results ✓? — "so" IS a coordinating conjunction, comma + "so" is correct...
+  //     BUT "so" and "therefore" have slightly different register; more importantly,
+  //     only ONE answer can be correct. Redesign to make (C) wrong.
+  // Redesign (C): ", therefore, the results" — comma before AND after "therefore" = still splice ✗ ✓
+  // (D) . Therefore the results ✗ — period creates new sentence but "therefore" needs comma after it ✗
+  // Now only (B) is correct ✓
+  {
+    inst: "The underlined portion contains an error. Choose the best replacement.",
+    type: "Faulty Coordination",
+    text: "The initial sample size was far too small, <u>therefore the results</u> could not be responsibly generalized to the broader population.",
+    options: [
+      "(A) therefore the results",
+      "(B) ; therefore, the results",
+      "(C) , therefore, the results",
+      "(D) . Therefore the results"
+    ],
+    ci: 1,
+    explanation: "'Therefore' is a conjunctive adverb, not a coordinating conjunction like 'so' or 'but.' A comma alone cannot join two independent clauses when the linking word is a conjunctive adverb — this creates a comma splice. The correct punctuation is a semicolon before 'therefore' and a comma after it: '; therefore,' Option (C) keeps the comma before 'therefore,' which is still a splice. Option (D) starts a new sentence but omits the required comma after 'therefore.'"
+  },
+
+  // Q8 — Comparison: "taller than any mountain" includes itself → needs "any other"
+  // "K2 is more dangerous than any peak in the Himalayas."
+  // K2 IS in the Himalayas → comparing to itself → illogical → needs "any other peak"
+  // (A) any peak ✗ — includes K2 itself
+  // (B) any other peak ✓ — excludes K2 from the comparison group
+  // (C) all peaks ✗ — "more dangerous than all peaks" includes K2 itself, same error
+  // (D) every peak ✗ — same problem as (A) and (C)
+  {
+    inst: "The underlined portion contains an error. Choose the best replacement.",
+    type: "Comparison",
+    text: "Many mountaineers argue that K2 is more technically dangerous than <u>any peak</u> in the Himalayan range.",
+    options: [
+      "(A) any peak",
+      "(B) any other peak",
+      "(C) all peaks",
+      "(D) every peak"
+    ],
+    ci: 1,
+    explanation: "K2 is itself a peak in the Himalayan range. Saying it is 'more dangerous than any peak in the Himalayas' illogically includes K2 in its own comparison group — implying K2 is more dangerous than itself. To exclude the subject from the group being compared, 'other' is required: 'more dangerous than any other peak.' Options (C) and (D) have the same logical flaw as (A)."
+  },
+
+  // Q9 — Subjunctive: "as if" requires subjunctive "were" (not "was")
+  // "The CEO spoke as if the merger was already a done deal."
+  // "as if" introduces a hypothetical/contrary-to-fact condition → subjunctive → "were"
+  // (A) was ✗ — indicative mood, wrong for hypothetical
+  // (B) were ✓ — subjunctive mood ✓
+  // (C) is ✗ — present indicative, wrong tense and mood
+  // (D) would be ✗ — conditional, not used in the "as if" clause itself
+  {
+    inst: "The underlined word contains an error. Choose the best replacement.",
+    type: "Subjunctive Mood",
+    text: "Throughout the press conference, the CEO spoke as if the merger <u>was</u> already a done deal, though negotiations were still ongoing.",
+    options: [
+      "(A) was",
+      "(B) were",
+      "(C) is",
+      "(D) would be"
+    ],
+    ci: 1,
+    explanation: "'As if' introduces a hypothetical or contrary-to-fact situation, which requires the subjunctive mood. In the subjunctive, 'were' replaces 'was' for all subjects — singular and plural alike. Since the merger was not actually finalized, the situation is contrary to fact, making 'were' the correct choice. 'Would be' belongs in the result clause of a conditional, not inside an 'as if' clause."
+  },
+
+  // Q10 — Adjective vs. Adverb
+  // "She speaks French fluent." — "fluent" is an adjective modifying a noun.
+  // Here it modifies the verb "speaks" → needs adverb → "fluently"
+  // (A) fluent ✗ — adjective, cannot modify a verb
+  // (B) fluently ✓ — adverb, correctly modifies the verb "speaks"
+  // (C) in a fluent way ✗ — prepositional phrase, wordy and not SAT-standard correction
+  // (D) with fluency ✗ — prepositional phrase, grammatically possible but not the clean SAT fix;
+  //     also changes the register. More importantly: only adverb form is the standard tested answer.
+  //     To make (D) clearly wrong: change sentence so "with fluency" doesn't fit well.
+  // Sentence: "The interpreter translated the speech fluent, without pausing once."
+  // "with fluency" here would be OK... Let's use a clearer context:
+  // "After years abroad, he now writes academic French fluent."
+  // "with fluency" still fits. Honestly for SAT, (B) is always the answer for adj/adv.
+  // Let's just make (D) "fluency" (noun) which is clearly wrong without "with":
+  {
+    inst: "The underlined word contains an error. Choose the best replacement.",
+    type: "Adjective vs. Adverb",
+    text: "After ten years of living in Paris, Nadia speaks and writes academic French remarkably <u>fluent</u>.",
+    options: [
+      "(A) fluent",
+      "(B) fluently",
+      "(C) more fluent",
+      "(D) fluency"
+    ],
+    ci: 1,
+    explanation: "'Fluent' is an adjective and can only modify a noun (e.g., 'a fluent speaker'). Here, the word modifies the verbs 'speaks and writes,' so an adverb is required. The adverb form is 'fluently.' 'More fluent' is a comparative adjective and still cannot modify a verb. 'Fluency' is a noun, which also cannot serve as a modifier for a verb."
+  }
+
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let state = {
+  current: 0,
+  answers: new Array(questions.length).fill(null),
+  showResults: false
+};
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) {
+      const p = JSON.parse(s);
+      if (p && Array.isArray(p.answers) && p.answers.length === questions.length) {
+        state = p; return true;
+      }
+    }
+  } catch(e) {}
+  return false;
+}
+
+// ── DOT NAV ───────────────────────────────────────────────────────────────────
+function renderDotNav() {
+  const nav = document.getElementById('dot-nav');
+  nav.innerHTML = '';
+  if (state.showResults) {
+    const pill = document.createElement('div');
+    pill.className = 'dot results-pill';
+    pill.textContent = 'Results';
+    nav.appendChild(pill);
+    return;
+  }
+  questions.forEach((q, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    d.textContent = i + 1;
+    if (state.answers[i] !== null) d.classList.add(state.answers[i] === q.ci ? 'correct' : 'wrong');
+    if (i === state.current) d.classList.add('current');
+    d.onclick = () => { state.current = i; saveState(); render(); };
+    nav.appendChild(d);
+  });
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render() {
+  try {
+    const qa = document.getElementById('quiz-area');
+    const rs = document.getElementById('results-screen');
+    if (state.showResults) {
+      qa.style.display = 'none';
+      rs.classList.add('show');
+      renderResults();
+    } else {
+      qa.style.display = 'block';
+      rs.classList.remove('show');
+      renderQuestion(state.current);
+    }
+    renderDotNav();
+  } catch(e) {
+    document.getElementById('quiz-area').innerHTML = '<p style="color:red;padding:20px">Error: ' + e.message + '</p>';
+  }
+}
+
+function renderQuestion(qi) {
+  const q = questions[qi];
+  const answered = state.answers[qi] !== null;
+  const answeredCount = state.answers.filter(a => a !== null).length;
+
+  let html = `
+    <div class="q-header">
+      <span class="q-num">Q${qi + 1} / ${questions.length}</span>
+      <span class="type-badge">${q.type}</span>
+      <span class="counter">${answeredCount} / ${questions.length}</span>
+    </div>
+    <div class="question-inst">${q.inst}</div>
+    <div class="question-text">${q.text}</div>
+    <div class="options">
+  `;
+
+  q.options.forEach((opt, idx) => {
+    let cls = 'opt-btn';
+    if (answered) {
+      if (idx === q.ci) cls += ' reveal-ans';
+      else if (idx === state.answers[qi]) cls += ' wrong-ans';
+    }
+    html += `<button class="${cls}" ${answered ? 'disabled' : ''} onclick="selectAnswer(${qi},${idx})">${opt}</button>`;
+  });
+
+  html += '</div>';
+
+  if (answered && state.answers[qi] !== q.ci) {
+    html += `<div class="explanation">💡 ${q.explanation}</div>`;
+  }
+
+  const isLast = qi === questions.length - 1;
+  html += '<div class="nav-row">';
+  if (qi > 0) html += `<button class="nav-btn btn-prev" onclick="goTo(${qi-1})">← Prev</button>`;
+  html += isLast
+    ? `<button class="nav-btn btn-next" onclick="showResultsScreen()">See Results →</button>`
+    : `<button class="nav-btn btn-next" onclick="goTo(${qi+1})">Next →</button>`;
+  html += '</div>';
+
+  document.getElementById('quiz-area').innerHTML = html;
+}
+
+function selectAnswer(qi, idx) {
+  if (state.answers[qi] !== null) return;
+  state.answers[qi] = idx;
+  saveState();
+  render();
+}
+
+function goTo(qi) { state.current = qi; saveState(); render(); }
+function showResultsScreen() { state.showResults = true; saveState(); render(); }
+
+// ── RESULTS ───────────────────────────────────────────────────────────────────
+function renderResults() {
+  let correct = 0;
+  questions.forEach((q, i) => { if (state.answers[i] === q.ci) correct++; });
+
+  let html = `
+    <div class="results-title">Quiz Results</div>
+    <div class="results-score"><span>${correct}</span> / ${questions.length}</div>
+    <div class="results-grid">
+  `;
+
+  questions.forEach((q, i) => {
+    const a = state.answers[i];
+    let cls, label;
+    if (a === null)      { cls = 'skipped'; label = 'Skipped'; }
+    else if (a === q.ci) { cls = 'correct'; label = '✓ Correct'; }
+    else                 { cls = 'wrong';   label = '✗ Wrong'; }
+    html += `<div class="r-card ${cls}" onclick="jumpTo(${i})">
+      <div class="r-q">Q${i+1}</div>
+      <div class="r-status">${label}</div>
+      <div style="font-size:0.72rem;margin-top:3px">${q.type}</div>
+    </div>`;
+  });
+
+  html += '</div><div class="wrong-list">';
+
+  questions.forEach((q, i) => {
+    const a = state.answers[i];
+    if (a === q.ci) return;
+    html += `<div class="wrong-item">
+      <div class="wi-q">Q${i+1} — ${q.type}</div>
+      <div class="wi-text">${q.text}</div>
+      <div class="wi-answer wi-your">${a !== null ? 'Your answer: ' + q.options[a] : 'Skipped'}</div>
+      <div class="wi-answer wi-correct">Correct: ${q.options[q.ci]}</div>
+      <div class="explanation" style="margin-top:10px">💡 ${q.explanation}</div>
+    </div>`;
+  });
+
+  html += `</div>
+    <button class="copy-btn" onclick="copyResults()">📋 Copy All Results</button>
+    <button class="fresh-btn" onclick="openFreshModal()">🔄 Start Fresh</button>`;
+
+  document.getElementById('results-screen').innerHTML = html;
+}
+
+function jumpTo(qi) { state.showResults = false; state.current = qi; saveState(); render(); }
+
+function copyResults() {
+  let correct = 0;
+  let text = 'SAT Grammar Quiz — Set 5\n========================\n';
+  questions.forEach((q, i) => {
+    const a = state.answers[i];
+    let status;
+    if (a === null)      status = 'Skipped';
+    else if (a === q.ci) { status = 'Correct'; correct++; }
+    else                 status = 'Wrong';
+    text += `Q${i+1} (${q.type}): ${status}\n`;
+    if (status !== 'Correct') text += `  Correct: ${q.options[q.ci]}\n`;
+  });
+  text += `\nScore: ${correct} / ${questions.length}`;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => alert('Copied!'));
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      alert('Copied!');
+    }
+  } catch(e) { alert('Copy failed.'); }
+}
+
+function openFreshModal()  { document.getElementById('fresh-modal').classList.add('show'); }
+function closeFreshModal() { document.getElementById('fresh-modal').classList.remove('show'); }
+function confirmStartFresh() {
+  closeFreshModal();
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+  state = { current: 0, answers: new Array(questions.length).fill(null), showResults: false };
+  saveState();
+  render();
+}
+
+loadState();
+render();
+</script>
+</body>
+</html>

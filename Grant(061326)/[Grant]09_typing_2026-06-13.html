@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Typing</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;margin:0 auto;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 8px 0;color:#111;}
+.para-btns{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.para-btn{flex:1;min-width:80px;padding:9px 6px;border:none;border-radius:8px;font-size:0.88rem;font-weight:600;cursor:pointer;background:#e8edf4;color:#333;}
+.para-btn.active{background:#185FA5;color:#fff;}
+.para-btn.done{background:#1D9E75;color:#fff;}
+.stats-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.stat-box{flex:1;min-width:60px;background:#f5f7fa;border-radius:8px;padding:8px 10px;text-align:center;}
+.stat-label{font-size:0.72rem;color:#888;margin-bottom:2px;}
+.stat-val{font-size:1.1rem;font-weight:700;color:#185FA5;}
+.passage-card{background:#f5f7fa;border-radius:10px;padding:14px 16px;margin-bottom:10px;font-size:1rem;line-height:1.8;letter-spacing:0.02em;min-height:80px;word-break:break-word;}
+.input-card{background:#fff;border:2px solid #d7dde6;border-radius:10px;padding:6px;}
+#typingInput{width:100%;border:none;outline:none;resize:none;font-size:1rem;line-height:1.7;padding:8px;font-family:inherit;background:#fff;height:200px;overflow-y:auto;}
+.banner{background:#185FA5;color:#fff;border-radius:10px;padding:14px;text-align:center;margin-bottom:10px;display:none;}
+.banner-row{font-size:0.95rem;margin:4px 0;}
+.btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.action-btn{flex:1;min-width:80px;padding:10px 8px;border:none;border-radius:8px;font-size:0.88rem;font-weight:600;cursor:pointer;}
+.retry-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.copy-btn{background:#1D9E75;color:#fff;}
+.clear-btn{background:#FCEBEB;color:#E24B4A;}
+.history-card{background:#f5f7fa;border-radius:10px;padding:12px 16px;margin-top:12px;}
+.hist-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #e0e6ed;font-size:0.88rem;color:#333;}
+.hist-row:last-child{border-bottom:none;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-13</div>
+<div class="title-hd">[Grant] Typing</div>
+
+<div class="para-btns">
+  <button class="para-btn" id="pbtn0" onclick="switchPara(0)">Para 1</button>
+  <button class="para-btn" id="pbtn1" onclick="switchPara(1)">Para 2</button>
+  <button class="para-btn" id="pbtn2" onclick="switchPara(2)">Para 3</button>
+  <button class="para-btn" id="pbtn3" onclick="switchPara(3)">Para 4</button>
+</div>
+
+<div class="stats-row">
+  <div class="stat-box"><div class="stat-label">WPM</div><div class="stat-val" id="stat-wpm">0</div></div>
+  <div class="stat-box"><div class="stat-label">Accuracy</div><div class="stat-val" id="stat-acc">—</div></div>
+  <div class="stat-box"><div class="stat-label">Time</div><div class="stat-val" id="stat-time">0s</div></div>
+  <div class="stat-box"><div class="stat-label">Errors</div><div class="stat-val" id="stat-err">0</div></div>
+</div>
+
+<div class="passage-card" id="passage-display"></div>
+<div class="input-card">
+  <textarea id="typingInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Start typing here..."></textarea>
+</div>
+
+<div class="banner" id="banner">
+  <div class="banner-row" id="banner-wpm"></div>
+  <div class="banner-row" id="banner-acc"></div>
+  <div class="banner-row" id="banner-err"></div>
+</div>
+
+<div class="btn-row">
+  <button class="action-btn retry-btn" onclick="retryPara()">Retry</button>
+  <button class="action-btn next-btn" id="next-para-btn" onclick="nextPara()">Next Paragraph</button>
+  <button class="action-btn copy-btn" onclick="copyHistory()">Copy Results</button>
+  <button class="action-btn clear-btn" onclick="openClearModal()">Clear History</button>
+</div>
+
+<div class="history-card" id="history-card">
+  <strong style="font-size:0.9rem;color:#185FA5;">Session History</strong>
+  <div id="history-rows"><div style="color:#aaa;font-size:0.85rem;margin-top:6px;">No completed paragraphs yet.</div></div>
+</div>
+
+<div class="modal-overlay" id="clearModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Clear all history? This cannot be undone.</p>
+    <button onclick="confirmClear()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Clear</button>
+    <button onclick="closeClearModal()" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var HIST_KEY='quiz_granttyping_v2';
+var paragraphs=[
+  "In 1969, a quiet Sunday evening turned into a moment the world would never forget. Neil Armstrong carefully descended the ladder of the Eagle lunar module and placed his boot on the dusty gray surface of the Moon. For the first time in history, a human being stood on another world. Millions watched the grainy black-and-white footage on their televisions, hardly believing what they were witnessing. Armstrong's calm voice carried those famous words across 238,855 miles of space to an awed planet below.",
+  "Behind this triumph lay years of relentless effort. The Apollo program had suffered its share of tragedies — most devastatingly, the Apollo 1 fire that claimed the lives of three astronauts in 1967. Yet NASA engineers refused to let grief become defeat. They redesigned the command module, improved safety protocols, and pressed on with quiet determination. Their goal remained fixed: beat the Soviet Union to the Moon and, in doing so, demonstrate the strength of American technology and ambition.",
+  "The journey itself was a dance of precision and daring. The Saturn V rocket — taller than a 36-story building — burned two million pounds of fuel in under three minutes. Once in lunar orbit, Armstrong and Buzz Aldrin transferred to the Eagle while Michael Collins remained in the command module above, circling alone in the silence of space. The landing was far from automatic. Armstrong piloted the craft manually over a boulder-strewn field, his heart rate spiking to 150 beats per minute before he found a smooth patch of ground.",
+  "The Moon landing changed how humanity thought about its place in the universe. Standing on the lunar surface, Armstrong described Earth as a small but extraordinarily beautiful marble hanging in the darkness. Scientists gained invaluable data from the 842 pounds of Moon rocks the crew brought back. Children who watched that Sunday broadcast grew up inspired to explore science, engineering, and space. Though nearly six decades have passed, the courage of the Apollo 11 crew continues to remind us that determination and imagination can carry us far beyond what once seemed impossible."
+];
+
+var state={
+  curPara:0,
+  started:false,
+  finished:false,
+  elapsed:0,
+  paraStats:[],
+  done:false
+};
+
+var timerInterval=null;
+var advanceTimeout=null;
+var startTime=null;
+var historyData=[];
+
+function loadHistory(){
+  try{var h=JSON.parse(localStorage.getItem(HIST_KEY)||'[]');if(Array.isArray(h))historyData=h;}catch(e){historyData=[];}
+}
+function saveHistory(){localStorage.setItem(HIST_KEY,JSON.stringify(historyData));}
+
+function initPara(){
+  state.started=false;
+  state.finished=false;
+  state.elapsed=0;
+  state.done=false;
+  startTime=null;
+  clearInterval(timerInterval);timerInterval=null;
+  clearTimeout(advanceTimeout);advanceTimeout=null;
+  var inp=document.getElementById('typingInput');
+  inp.value='';
+  inp.readOnly=false;
+  document.getElementById('banner').style.display='none';
+  updateStats();
+  renderPassage();
+  updateParaBtns();
+  inp.focus();
+}
+
+function startTimer(){
+  state.started=true;
+  startTime=Date.now();
+  timerInterval=setInterval(function(){
+    state.elapsed=((Date.now()-startTime)/1000);
+    document.getElementById('stat-time').textContent=state.elapsed.toFixed(1)+'s';
+  },100);
+}
+
+
+function renderPassage(){
+  var inp=document.getElementById('typingInput');
+  var typed=inp.value;
+  var target=paragraphs[state.curPara];
+  var html='';
+  for(var i=0;i<target.length;i++){
+    var ch=target[i];
+    var style='';
+    if(i<typed.length){
+      if(typed[i]===ch){style='color:#1D9E75;';}
+      else{style='color:#E24B4A;';}
+    } else if(i===typed.length){
+      style='color:#bbb;border-bottom:2px solid #185FA5;';
+    } else {
+      style='color:#bbb;';
+    }
+    var escaped=ch==='<'?'&lt;':ch==='>'?'&gt;':ch==='&'?'&amp;':ch;
+    html+='<span style="'+style+'">'+escaped+'</span>';
+  }
+  document.getElementById('passage-display').innerHTML=html;
+}
+
+function updateStats(){
+  var inp=document.getElementById('typingInput');
+  var typed=inp.value;
+  var target=paragraphs[state.curPara];
+  var errors=0;
+  for(var i=0;i<typed.length;i++){if(i<target.length&&typed[i]!==target[i])errors++;}
+  document.getElementById('stat-err').textContent=errors;
+  if(state.started&&state.elapsed>0){
+    var words=typed.trim().split(/\s+/).length;
+    var wpm=Math.round(words/(state.elapsed/60));
+    document.getElementById('stat-wpm').textContent=wpm;
+    var correct=0;
+    for(var i=0;i<typed.length&&i<target.length;i++){if(typed[i]===target[i])correct++;}
+    var acc=typed.length>0?Math.round(correct/typed.length*100):100;
+    document.getElementById('stat-acc').textContent=acc+'%';
+  } else {
+    document.getElementById('stat-wpm').textContent='0';
+    document.getElementById('stat-acc').textContent='—';
+    document.getElementById('stat-time').textContent='0s';
+  }
+}
+
+function finishPara(){
+  if(state.done)return;
+  state.done=true;
+  clearInterval(timerInterval);timerInterval=null;
+  var inp=document.getElementById('typingInput');
+  var typed=inp.value;
+  var target=paragraphs[state.curPara];
+  var correct=0;
+  for(var i=0;i<typed.length&&i<target.length;i++){if(typed[i]===target[i])correct++;}
+  var errors=0;
+  for(var i=0;i<typed.length;i++){if(i<target.length&&typed[i]!==target[i])errors++;}
+  var acc=typed.length>0?Math.round(correct/typed.length*100):0;
+  var words=typed.trim().split(/\s+/).length;
+  var wpm=state.elapsed>0?Math.round(words/(state.elapsed/60)):0;
+  inp.readOnly=true;
+  var rec={para:state.curPara+1,wpm:wpm,acc:acc,errors:errors,time:state.elapsed.toFixed(1),date:'2026-06-13'};
+  state.paraStats.push(rec);
+  historyData.push(rec);
+  saveHistory();
+  document.getElementById('banner').style.display='block';
+  document.getElementById('banner-wpm').textContent='WPM: '+wpm;
+  document.getElementById('banner-acc').textContent='Accuracy: '+acc+'%';
+  document.getElementById('banner-err').textContent='Errors: '+errors;
+  renderHistory();
+}
+
+function updateParaBtns(){
+  for(var i=0;i<4;i++){
+    var btn=document.getElementById('pbtn'+i);
+    var isDone=state.paraStats.some(function(s){return s.para===i+1;});
+    btn.className='para-btn'+(isDone?' done':i===state.curPara?' active':'');
+  }
+}
+
+function renderHistory(){
+  var rows=document.getElementById('history-rows');
+  if(historyData.length===0){rows.innerHTML='<div style="color:#aaa;font-size:0.85rem;margin-top:6px;">No completed paragraphs yet.</div>';return;}
+  var h='';
+  for(var i=historyData.length-1;i>=0;i--){
+    var r=historyData[i];
+    h+='<div class="hist-row"><span>Para '+r.para+' — '+r.date+'</span><span>'+r.wpm+' WPM / '+r.acc+'% / '+r.errors+' err</span></div>';
+  }
+  rows.innerHTML=h;
+}
+
+function switchPara(i){
+  state.curPara=i;
+  state.paraStats=state.paraStats.filter(function(s){return s.para!==i+1;});
+  initPara();
+}
+
+function retryPara(){
+  if(state.done&&state.paraStats.length>0&&state.paraStats[state.paraStats.length-1].para===state.curPara+1){
+    state.paraStats.pop();
+  }
+  clearTimeout(advanceTimeout);
+  clearInterval(timerInterval);
+  initPara();
+}
+
+function nextPara(){
+  if(state.curPara<3){
+    state.curPara++;
+    initPara();
+  }
+}
+
+function copyHistory(){
+  if(historyData.length===0){return;}
+  var lines=['[Grant] Typing Results (2026-06-13)'];
+  for(var i=0;i<historyData.length;i++){
+    var r=historyData[i];
+    lines.push('Para '+r.para+': '+r.wpm+' WPM, '+r.acc+'% accuracy, '+r.errors+' errors, '+r.time+'s');
+  }
+  var txt=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fb(txt);});}
+  else{fb(txt);}
+}
+function fb(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+
+function openClearModal(){document.getElementById('clearModal').style.display='flex';}
+function closeClearModal(){document.getElementById('clearModal').style.display='none';}
+function confirmClear(){
+  closeClearModal();
+  historyData=[];
+  saveHistory();
+  state.paraStats=[];
+  renderHistory();
+  updateParaBtns();
+}
+
+var inp=document.getElementById('typingInput');
+inp.addEventListener('input',function(){
+  var target=paragraphs[state.curPara];
+  if(state.done){inp.value=inp.value.slice(0,target.length);return;}
+  if(inp.value.length>target.length)inp.value=inp.value.slice(0,target.length);
+  if(!state.started&&inp.value.length>0)startTimer();
+  renderPassage();updateStats();
+  if(inp.value.length>=target.length)finishPara();
+});
+
+window.switchPara=switchPara;
+window.retryPara=retryPara;
+window.nextPara=nextPara;
+window.copyHistory=copyHistory;
+window.openClearModal=openClearModal;
+window.closeClearModal=closeClearModal;
+window.confirmClear=confirmClear;
+
+loadHistory();
+renderHistory();
+initPara();
+})();
+</script>
+</body>
+</html>

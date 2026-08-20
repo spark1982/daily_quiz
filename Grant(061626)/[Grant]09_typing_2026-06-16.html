@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Typing</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0 auto;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.para-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.para-tab{padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-size:0.88rem;font-weight:600;background:#e8edf4;color:#555;}
+.para-tab.active{background:#185FA5;color:#fff;}
+.para-tab.done{background:#1D9E75;color:#fff;}
+.stats-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;font-size:0.9rem;}
+.stat-box{background:#f5f7fa;border-radius:8px;padding:8px 14px;flex:1;min-width:70px;text-align:center;}
+.stat-label{font-size:0.75rem;color:#888;display:block;}
+.stat-val{font-size:1.1rem;font-weight:700;color:#185FA5;}
+.passage-card{background:#f5f7fa;border-radius:10px;padding:14px;margin-bottom:10px;font-size:0.95rem;line-height:1.8;word-break:break-word;}
+.passage-card span{color:#bbb;}
+.passage-card span.correct{color:#1D9E75;}
+.passage-card span.wrong{color:#E24B4A;}
+.passage-card span.cursor{border-bottom:2px solid #185FA5;}
+.input-card{background:#f5f7fa;border-radius:10px;padding:10px 14px;margin-bottom:10px;}
+.input-card textarea{width:100%;border:none;background:transparent;font-size:0.95rem;font-family:inherit;resize:none;outline:none;line-height:1.8;color:#111;min-height:80px;}
+.complete-banner{background:#E1F5EE;border:2px solid #1D9E75;border-radius:10px;padding:14px;margin-bottom:10px;text-align:center;display:none;}
+.complete-banner .cb-title{font-size:1rem;font-weight:700;color:#085041;margin-bottom:6px;}
+.complete-banner .cb-stats{font-size:0.9rem;color:#085041;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.btn-row button{flex:1;padding:10px;border-radius:10px;border:none;cursor:pointer;font-size:0.88rem;font-weight:600;}
+.btn-retry{background:#e8edf4;color:#185FA5;}
+.btn-next{background:#185FA5;color:#fff;}
+.btn-copy{background:#1D9E75;color:#fff;}
+.btn-clear{background:#e8edf4;color:#E24B4A;}
+.history-card{background:#f5f7fa;border-radius:10px;padding:12px 14px;margin-bottom:8px;}
+.history-title{font-weight:700;color:#185FA5;font-size:0.9rem;margin-bottom:4px;}
+.history-row{font-size:0.85rem;color:#555;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-16</div>
+<div class="title-hd">[Grant] Typing</div>
+<div class="instruction">Type each paragraph exactly as shown above.</div>
+
+<div class="para-tabs" id="para-tabs"></div>
+<div class="stats-row">
+  <div class="stat-box"><span class="stat-label">WPM</span><span class="stat-val" id="stat-wpm">0</span></div>
+  <div class="stat-box"><span class="stat-label">Accuracy</span><span class="stat-val" id="stat-acc">-</span></div>
+  <div class="stat-box"><span class="stat-label">Time</span><span class="stat-val" id="stat-time">0s</span></div>
+  <div class="stat-box"><span class="stat-label">Errors</span><span class="stat-val" id="stat-err">0</span></div>
+</div>
+<div class="passage-card" id="passage-card"></div>
+<div class="input-card"><textarea id="typingInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Start typing here..."></textarea></div>
+<div class="complete-banner" id="complete-banner">
+  <div class="cb-title" id="cb-title">Paragraph Complete!</div>
+  <div class="cb-stats" id="cb-stats"></div>
+</div>
+<div class="btn-row">
+  <button class="btn-retry" onclick="retryPara()">Retry</button>
+  <button class="btn-next" onclick="nextPara()">Next Paragraph</button>
+  <button class="btn-copy" onclick="copyHistory()">Copy Results</button>
+  <button class="btn-clear" onclick="openClearModal()">Clear History</button>
+</div>
+<div id="history-area"></div>
+
+<div class="modal-overlay" id="clearModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Clear all history? This cannot be undone.</p>
+    <button onclick="confirmClear()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Clear</button>
+    <button onclick="closeClearModal()" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var HIST_KEY='quiz_granttyping_v2';
+
+var paragraphs=[
+  "Coral reefs are among the most diverse ecosystems on Earth. Often called \"the rainforests of the sea,\" they cover less than one percent of the ocean floor yet provide habitat for more than a quarter of all marine species. Built from colonies of tiny animals called polyps, reefs grow slowly—only about one centimeter per year in ideal conditions. Despite their fragile nature, they have existed for hundreds of millions of years, quietly shaping the ecology of the world's oceans.",
+  "At the heart of every coral reef is a partnership between corals and microscopic algae called zooxanthellae. These algae live inside coral tissue and provide up to ninety percent of the coral's energy through photosynthesis. In return, the coral offers the algae shelter and nutrients from the surrounding water. This mutualistic relationship gives healthy coral its vivid color and supports the reef's growth. However, when ocean temperatures rise even slightly above normal, corals expel the algae in a stress response called bleaching.",
+  "Bleaching does not kill corals immediately, but it leaves them weak and vulnerable to disease. If temperatures remain high for several weeks, bleached corals begin to die. Large-scale bleaching events, now driven largely by climate change, have devastated reefs worldwide. The Great Barrier Reef in Australia has experienced mass bleaching multiple times since 1998, losing roughly half of its coral cover in recent decades. Scientists warn that without significant reductions in global carbon emissions, most coral reefs could be severely degraded by 2050.",
+  "Despite this grim outlook, conservation efforts are providing some hope. Marine biologists are cultivating heat-resistant coral strains in underwater nurseries and transplanting them onto damaged reefs. Some research teams are experimenting with assisted evolution, selectively breeding corals that can tolerate warmer waters. Local communities worldwide have established marine protected areas to reduce additional stressors such as overfishing and pollution. While no single solution can save every reef, a combination of global and local action may preserve these ecosystems long enough for recovery."
+];
+
+var state={
+  curPara:0,
+  input:'',
+  started:false,
+  finished:false,
+  startTime:null,
+  elapsed:0,
+  errors:0,
+  paraStats:[],
+  doneMask:[false,false,false,false]
+};
+
+var timerInterval=null;
+var advanceTimeout=null;
+var inp=document.getElementById('typingInput');
+
+function loadHistory(){
+  try{return JSON.parse(localStorage.getItem(HIST_KEY)||'[]');}
+  catch(e){return [];}
+}
+function saveHistory(h){localStorage.setItem(HIST_KEY,JSON.stringify(h));}
+
+function initPara(){
+  state.input='';
+  state.started=false;
+  state.finished=false;
+  state.startTime=null;
+  state.elapsed=0;
+  state.errors=0;
+  clearInterval(timerInterval);
+  clearTimeout(advanceTimeout);
+  inp.value='';
+  inp.readOnly=false;
+  document.getElementById('complete-banner').style.display='none';
+  renderPassage();
+  updateStats();
+  inp.focus();
+}
+
+function startTimer(){
+  state.started=true;
+  state.startTime=Date.now();
+  timerInterval=setInterval(function(){
+    if(!state.finished){
+      state.elapsed=Math.floor((Date.now()-state.startTime)/1000);
+      document.getElementById('stat-time').textContent=state.elapsed+'s';
+    }
+  },500);
+}
+
+function renderPassage(){
+  var target=paragraphs[state.curPara];
+  var typed=inp.value;
+  var html='';
+  for(var i=0;i<target.length;i++){
+    var ch=esc(target[i]);
+    if(i<typed.length){
+      if(typed[i]===target[i])html+='<span class="correct">'+ch+'</span>';
+      else html+='<span class="wrong">'+ch+'</span>';
+    } else if(i===typed.length){
+      html+='<span class="cursor">'+ch+'</span>';
+    } else {
+      html+='<span>'+ch+'</span>';
+    }
+  }
+  document.getElementById('passage-card').innerHTML=html;
+}
+
+function esc(c){
+  if(c==='&')return '&amp;';
+  if(c==='<')return '&lt;';
+  if(c==='>')return '&gt;';
+  if(c==='"')return '&quot;';
+  return c;
+}
+
+function updateStats(){
+  var target=paragraphs[state.curPara];
+  var typed=inp.value;
+  var errors=0;
+  for(var i=0;i<typed.length;i++){if(typed[i]!==target[i])errors++;}
+  state.errors=errors;
+  document.getElementById('stat-err').textContent=errors;
+  var pct=typed.length>0?Math.round((typed.length-errors)/typed.length*100):0;
+  document.getElementById('stat-acc').textContent=typed.length>0?pct+'%':'-';
+  if(state.started&&state.elapsed>0){
+    var words=typed.length/5;
+    var wpm=Math.round(words/(state.elapsed/60));
+    document.getElementById('stat-wpm').textContent=wpm;
+  }
+}
+
+function finishPara(){
+  state.finished=true;
+  inp.readOnly=true;
+  clearInterval(timerInterval);
+  state.elapsed=Math.floor((Date.now()-state.startTime)/1000);
+  var target=paragraphs[state.curPara];
+  var typed=inp.value;
+  var errors=0;
+  for(var i=0;i<typed.length;i++){if(typed[i]!==target[i])errors++;}
+  var acc=Math.round((typed.length-errors)/typed.length*100);
+  var wpm=state.elapsed>0?Math.round((typed.length/5)/(state.elapsed/60)):0;
+
+  var record={para:state.curPara+1,wpm:wpm,acc:acc,errors:errors,time:state.elapsed,date:new Date().toLocaleDateString()};
+  state.paraStats.push(record);
+  state.doneMask[state.curPara]=true;
+
+  document.getElementById('stat-wpm').textContent=wpm;
+  document.getElementById('stat-acc').textContent=acc+'%';
+  document.getElementById('stat-err').textContent=errors;
+  document.getElementById('stat-time').textContent=state.elapsed+'s';
+
+  var banner=document.getElementById('complete-banner');
+  document.getElementById('cb-title').textContent='Paragraph '+(state.curPara+1)+' Complete!';
+  document.getElementById('cb-stats').textContent=wpm+' WPM | '+acc+'% Accuracy | '+errors+' Errors';
+  banner.style.display='block';
+
+  var hist=loadHistory();
+  hist.push(record);
+  saveHistory(hist);
+  renderHistory();
+  renderTabs();
+}
+
+function autoResize(){
+  inp.style.height='auto';
+  inp.style.height=inp.scrollHeight+'px';
+}
+
+inp.addEventListener('input',function(){
+  var target=paragraphs[state.curPara];
+  if(state.finished){inp.value=inp.value.slice(0,target.length);return;}
+  if(inp.value.length>target.length)inp.value=inp.value.slice(0,target.length);
+  if(!state.started&&inp.value.length>0)startTimer();
+  autoResize();
+  renderPassage();
+  updateStats();
+  if(inp.value.length>=target.length)finishPara();
+});
+
+function renderTabs(){
+  var html='';
+  for(var i=0;i<4;i++){
+    var cls='para-tab';
+    if(state.doneMask[i])cls+=' done';
+    else if(i===state.curPara)cls+=' active';
+    html+='<button class="'+cls+'" onclick="goToPara('+i+')">Para '+(i+1)+'</button>';
+  }
+  document.getElementById('para-tabs').innerHTML=html;
+}
+
+function goToPara(i){
+  state.curPara=i;
+  initPara();
+  renderTabs();
+}
+
+function renderHistory(){
+  var hist=loadHistory();
+  if(hist.length===0){document.getElementById('history-area').innerHTML='';return;}
+  var html='<h3 style="font-size:0.95rem;color:#185FA5;margin:14px 0 8px;">Session History</h3>';
+  for(var i=hist.length-1;i>=Math.max(0,hist.length-10);i--){
+    var r=hist[i];
+    html+='<div class="history-card"><div class="history-title">Paragraph '+r.para+' — '+r.date+'</div>';
+    html+='<div class="history-row">'+r.wpm+' WPM | '+r.acc+'% Accuracy | '+r.errors+' Errors | '+r.time+'s</div></div>';
+  }
+  document.getElementById('history-area').innerHTML=html;
+}
+
+function retryPara(){
+  if(state.finished&&state.paraStats.length>0&&state.paraStats[state.paraStats.length-1].para===state.curPara+1){
+    state.paraStats.pop();
+  }
+  clearTimeout(advanceTimeout);
+  clearInterval(timerInterval);
+  state.doneMask[state.curPara]=false;
+  renderTabs();
+  initPara();
+}
+
+function nextPara(){
+  if(state.curPara<3){
+    state.curPara++;
+    initPara();
+    renderTabs();
+  }
+}
+
+function copyHistory(){
+  var hist=loadHistory();
+  if(hist.length===0){return;}
+  var lines=['[Grant] Typing History'];
+  for(var i=0;i<hist.length;i++){
+    var r=hist[i];
+    lines.push('Para '+r.para+' ('+r.date+'): '+r.wpm+' WPM, '+r.acc+'% acc, '+r.errors+' errors, '+r.time+'s');
+  }
+  var txt=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fallbackCopy(txt);});}
+  else fallbackCopy(txt);
+}
+
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+
+function openClearModal(){document.getElementById('clearModal').style.display='flex';}
+function closeClearModal(){document.getElementById('clearModal').style.display='none';}
+function confirmClear(){
+  closeClearModal();
+  localStorage.removeItem(HIST_KEY);
+  document.getElementById('history-area').innerHTML='';
+}
+
+window.retryPara=retryPara;
+window.nextPara=nextPara;
+window.copyHistory=copyHistory;
+window.openClearModal=openClearModal;
+window.closeClearModal=closeClearModal;
+window.confirmClear=confirmClear;
+window.goToPara=goToPara;
+
+renderTabs();
+initPara();
+renderHistory();
+})();
+</script>
+</body>
+</html>

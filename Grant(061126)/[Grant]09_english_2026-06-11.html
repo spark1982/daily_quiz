@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] English Reading</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh;padding:16px}
+.date-label{font-size:2rem;font-weight:800;text-align:center;color:#185FA5;background:#fff;padding:10px 0 2px}
+.title{text-align:center;font-size:1.4rem;font-weight:700;color:#185FA5;background:#fff;padding:2px 0 4px}
+.attempts{text-align:center;font-size:0.9rem;color:#555;background:#fff;padding:2px 0 10px}
+.container{max-width:700px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.1);overflow:hidden}
+.dot-nav{display:flex;flex-wrap:wrap;gap:5px;padding:12px 14px;background:#f7f9fc;border-bottom:1px solid #e0e6ef;justify-content:center}
+.dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;cursor:pointer;border:2px solid #c5d2e0;background:#e8edf4;color:#333}
+.dot.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.dot.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.dot.active{border-color:#185FA5;background:#d0e4f7;color:#185FA5}
+.results-pill{background:#185FA5;color:#fff;border-radius:20px;padding:4px 14px;font-size:0.8rem;font-weight:600}
+#quizArea{display:none;padding:20px 20px 10px}
+.tag-badge{display:inline-block;background:#185FA5;color:#fff;border-radius:20px;padding:3px 12px;font-size:0.75rem;font-weight:600;margin-bottom:10px}
+.q-counter{font-size:0.85rem;color:#666;margin-bottom:6px}
+.passage-toggle{background:#e8edf4;border:none;border-radius:6px;padding:8px 14px;font-size:0.85rem;font-weight:600;color:#185FA5;cursor:pointer;margin-bottom:12px;display:block;width:100%}
+.passage-box{display:none;background:#f7faff;border:1px solid #c5d5ee;border-radius:8px;padding:14px;margin-bottom:14px;font-size:0.9rem;line-height:1.7;color:#222}
+.passage-box.show{display:block}
+.passage-box p{margin-bottom:10px}
+.passage-box p:last-child{margin-bottom:0}
+.passage2-box{background:#fff8e6;border:1px solid #e0c070;border-radius:8px;padding:12px;margin-bottom:14px;font-size:0.9rem;line-height:1.6;color:#222}
+.passage2-label{font-size:0.75rem;font-weight:700;color:#8a6500;margin-bottom:6px;text-transform:uppercase}
+.q-text{font-size:1.05rem;line-height:1.7;color:#111;margin-bottom:16px}
+.options{display:grid;gap:10px}
+.opt-btn{width:100%;text-align:left;padding:12px 16px;border-radius:8px;border:2px solid transparent;background:#e8edf4;color:#111111;font-size:1rem;cursor:pointer;transition:.15s;line-height:1.6}
+.opt-btn:hover{border-color:#185FA5}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.opt-btn.reveal{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.explain{margin-top:14px;padding:12px;background:#f0f5ff;border-left:4px solid #185FA5;border-radius:4px;font-size:0.9rem;color:#222;line-height:1.5}
+.nav-btns{display:flex;gap:10px;margin-top:18px;padding-bottom:10px}
+.btn{padding:10px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer}
+.btn-blue{background:#185FA5;color:#fff}.btn-gray{background:#e8edf4;color:#333}
+#resultsArea{display:none;padding:20px}
+.res-header{font-size:1.2rem;font-weight:700;color:#185FA5;margin-bottom:14px;text-align:center}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:7px;margin-bottom:18px}
+.res-card{padding:8px;border-radius:8px;background:#f0f4f8;cursor:pointer;text-align:center;font-size:0.82rem;font-weight:600;border:2px solid transparent}
+.res-card.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.res-card.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.res-card.skipped{background:#fff3cd;border-color:#e6a817;color:#7a5500}
+.res-actions{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:12px;padding:28px;max-width:340px;width:90%;text-align:center}
+.modal h3{margin-bottom:10px;color:#185FA5}.modal p{margin-bottom:18px;color:#444;font-size:.95rem}
+.modal-btns{display:flex;gap:10px;justify-content:center}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="date-label">2026-06-11</div>
+<div class="title">[Grant] English Reading</div>
+<div class="attempts" id="attemptsLabel">Total Attempts: 0</div>
+<div class="dot-nav" id="dotNav"></div>
+<div id="quizArea"></div>
+<div id="resultsArea"></div>
+</div>
+<div class="modal-overlay" id="freshModal">
+<div class="modal"><h3>Start Fresh</h3><p>This will reset all progress.</p>
+<div class="modal-btns"><button class="btn btn-blue" onclick="doFresh()">Reset</button><button class="btn btn-gray" onclick="closeFreshModal()">Cancel</button></div></div>
+</div>
+<script>
+(function(){
+const KEY='quiz_grantenglish_25_v1';
+const ATT_KEY='quiz_grantenglish_attempts_v1';
+var passageOpen=false;
+var PASSAGE=[
+'In recent years, urban beekeeping has become increasingly popular across cities around the world. What was once considered a purely rural activity is now thriving on rooftops, in community gardens, and even on balconies in the middle of bustling metropolitan areas.',
+'Honeybees play a critical role in our food supply. As pollinators, they transfer pollen from flower to flower, allowing plants to produce fruits, vegetables, and seeds. Scientists estimate that bees are responsible for pollinating about one-third of all the food humans eat. Without bees, many crops including almonds, blueberries, and cucumbers would fail to produce adequate yields. Despite their importance, honeybee populations have been declining dramatically. Habitat loss, pesticide use, and a parasitic mite called Varroa destructor have all contributed to what researchers call "colony collapse disorder" — a mysterious phenomenon in which entire bee colonies disappear. Urban beekeeping helps address this problem by creating new, protected environments where bees can thrive away from agricultural pesticides.',
+'Cities may seem like unlikely homes for bees, but they can actually offer several advantages. Urban areas often contain diverse plantings of flowers, trees, and gardens throughout the year. This variety provides bees with consistent sources of nectar and pollen across multiple seasons. Additionally, city temperatures tend to be slightly warmer than surrounding rural areas, which can extend the active season for urban hives.',
+'Of course, urban beekeeping does come with challenges. Beekeepers must follow local regulations, secure the consent of neighbors, and ensure their hives are properly maintained to prevent swarming. Education and training are essential; a poorly managed hive can become a public safety concern. Still, many cities are embracing the trend. New York, London, Paris, and Tokyo all have thriving beekeeping communities. By supporting urban bees, city dwellers can play an important role in protecting a species that the entire world depends on.'
+];
+var P2_TEXT='A local community newsletter published this letter: "While the enthusiasm for urban beekeeping is understandable, residents near hive installations have raised serious concerns. Reports of increased bee activity near windows and outdoor dining areas have made some neighbors uneasy. City officials should require beekeepers to notify all residents within 200 feet of a new hive, and consider limiting installations in densely populated areas."';
+var qs=[
+{tag:'Main Idea',q:'What is the main idea of the passage?',
+ opts:['Bees can only survive in carefully managed rural environments','Urban beekeeping is growing in popularity and can help protect declining bee populations','City governments have banned rural beekeeping practices','Only professional beekeepers should attempt keeping bees in cities'],ci:1,
+ exp:'The passage opens by noting urban beekeeping\'s growth and ends by saying it helps protect bees — that is the central point of the whole text.'},
+{tag:'Supporting Detail',q:'According to the passage, which crops would specifically fail to produce adequate yields without bees?',
+ opts:['Corn, wheat, and rice','Tomatoes, potatoes, and onions','Almonds, blueberries, and cucumbers','Apples, peaches, and bananas'],ci:2,
+ exp:'Paragraph 2 lists "almonds, blueberries, and cucumbers" as crops that would fail without bees.'},
+{tag:'Inference',q:'Based on the passage, which of the following can most reasonably be inferred about city gardens?',
+ opts:['They are only useful as decoration for city residents','They are too small to have any positive effect on wildlife','They do not attract or support insect populations','They help urban bees by providing nectar and pollen sources throughout the year'],ci:3,
+ exp:'Paragraph 3 states that "diverse plantings... provide bees with consistent sources of nectar and pollen across multiple seasons," which implies city gardens play a supporting role for bees.'},
+{tag:'Vocabulary in Context',q:'As used in the passage, the word "pollinators" most nearly means:',
+ opts:['Organisms that carry pollen and help plants reproduce','Chemicals applied to crops to increase growth','Insects that damage plants by feeding on them','Scientists who study the behavior of flowering plants'],ci:0,
+ exp:'The passage explains that pollinators "transfer pollen from flower to flower, allowing plants to produce fruits, vegetables, and seeds" — that is the definition.'},
+{tag:'Author\'s Purpose',q:'The author\'s main purpose in writing this passage is to:',
+ opts:['Warn readers about the dangers of keeping bees near people','Explain the technical steps for building a beehive','Inform readers about urban beekeeping and its role in protecting bees','Argue that rural beekeeping is far superior to urban beekeeping'],ci:2,
+ exp:'The passage blends explanation (what urban beekeeping is, why bees matter) with encouragement, making "inform" the best purpose label.'},
+{tag:'Text Structure',q:'This passage is mainly organized by:',
+ opts:['Comparing beekeeping practices in specific world cities','Presenting a problem and then discussing solutions, benefits, and challenges','Telling the story of one beekeeper\'s journey from rural to urban life','Listing opposing arguments about whether beekeeping belongs in cities'],ci:1,
+ exp:'The passage introduces the trend, explains the problem (colony collapse), then offers urban beekeeping as a solution, then covers benefits and challenges — a classic problem-solution structure.'},
+{tag:'Cause and Effect',q:'According to the passage, which of the following is listed as a cause of honeybee population decline?',
+ opts:['Pesticide use in agriculture','Expansion of urban beekeeping','Overcrowding of bee hives in cities','Lack of commercial interest in honey'],ci:0,
+ exp:'Paragraph 2 states that "habitat loss, pesticide use, and a parasitic mite" have all contributed to colony collapse disorder.'},
+{tag:'Compare and Contrast',q:'According to the passage, what is one way urban environments differ from rural environments in terms of bee conditions?',
+ opts:['Rural areas have a more consistent variety of flowering plants year-round','Rural bees are always more productive than city bees','City governments provide more financial support for beekeepers','Urban areas are slightly warmer and have diverse plant variety, which can benefit hive activity'],ci:3,
+ exp:'Paragraph 3 highlights that urban areas offer "diverse plantings" and warmer temperatures — two differences from rural settings that favor urban bees.'},
+{tag:'Fact vs. Opinion',q:'Which of the following is a FACT stated in the passage, not an opinion?',
+ opts:['Urban beekeeping is too risky to allow in high-density neighborhoods','Bees are the most beautiful creatures in the natural world','Scientists estimate that bees are responsible for pollinating about one-third of all the food humans eat','City dwellers are more caring about the environment than rural residents'],ci:2,
+ exp:'The statement about one-third of food comes with the word "Scientists estimate," identifying it as a researched, verifiable claim — a fact, not an opinion.'},
+{tag:'Summarize',q:'Which sentence BEST summarizes the fourth paragraph?',
+ opts:['Bees cannot survive in areas with cold winter temperatures','Urban beekeeping has challenges, but cities worldwide are embracing it as a way to help bees','Local governments have banned most forms of urban beekeeping','Country bees are far healthier than bees raised in city environments'],ci:1,
+ exp:'Paragraph 4 acknowledges challenges (regulations, swarming, training) but ends on a positive note — major cities are embracing the trend to protect bees.'},
+{tag:'Drawing Conclusions',q:'Based on the passage, you can best conclude that:',
+ opts:['Honeybee populations will soon become extinct in rural farming areas','Urban beekeeping is only a hobby for wealthy people with large apartments','City bees are always less healthy than bees raised in open countryside','Supporting urban beekeeping may help stabilize honeybee populations that the world depends on'],ci:3,
+ exp:'The passage\'s main thrust is that urban beekeeping helps address colony collapse disorder and protects a species "that the entire world depends on."'},
+{tag:'Point of View',q:'What is the author\'s point of view toward urban beekeeping?',
+ opts:['Supportive — the author sees it as beneficial and worth encouraging','Critical — the author warns it creates too many problems for city residents','Strictly neutral — the author presents only statistics without any perspective','Doubtful — the author questions whether it can truly reverse bee decline'],ci:0,
+ exp:'The author acknowledges challenges but ends by saying "city dwellers can play an important role in protecting" bees — this signals a supportive point of view.'},
+{tag:'Context Clues',q:'Based on context clues in the passage, the phrase "colony collapse disorder" refers to:',
+ opts:['A disease that attacks individual bees within a hive','A government policy regulating the number of hives per city block','A mysterious phenomenon in which entire bee colonies disappear','The natural process by which older bees leave to form a new hive'],ci:2,
+ exp:'The passage itself defines it right after the term: "a mysterious phenomenon in which entire bee colonies disappear."'},
+{tag:'Sequence',q:'According to the passage, which event must happen FIRST in the process of plant reproduction involving bees?',
+ opts:['Fruits and vegetables grow from the plant','Bees transfer pollen from flower to flower','Seeds are scattered into the soil','Plants produce nectar to attract insects'],ci:1,
+ exp:'The passage describes the sequence: bees transfer pollen (first), which allows plants to produce fruits, vegetables, and seeds (next results).'},
+{tag:'Predictions',q:'Based on the passage\'s discussion of challenges, what would MOST LIKELY happen if an urban beekeeper ignored maintenance and local rules?',
+ opts:['The hive could swarm and become a public safety problem','The bees would naturally relocate to a safer rural location','The honey production would increase dramatically','The hive would gradually shrink until the bees disappeared quietly'],ci:0,
+ exp:'Paragraph 4 states directly: "a poorly managed hive can become a public safety concern," and mentions swarming as a risk of improper maintenance.'},
+{tag:'Figurative Language',q:'In the phrase "bustling metropolitan areas," the word "bustling" most likely means:',
+ opts:['Quiet, calm, and free of noise','Small and difficult to navigate','Gray, polluted, and industrial','Busy, lively, and full of activity'],ci:3,
+ exp:'"Bustling" is commonly used to describe a place that is busy, active, and full of movement — the opposite of a quiet rural setting.'},
+{tag:'Tone / Mood',q:'The overall tone of this passage can BEST be described as:',
+ opts:['Alarmed and desperate about the fate of bees','Humorous and lighthearted throughout','Informative and encouraging toward the subject','Skeptical and dismissive of urban beekeeping\'s impact'],ci:2,
+ exp:'The author presents facts calmly and ends by encouraging city dwellers to participate — this is an informative, encouraging tone.'},
+{tag:'Critical Thinking',q:'Why does the author mention that New York, London, Paris, and Tokyo all have beekeeping communities?',
+ opts:['To claim those cities have the worst bee problems in the world','To show that urban beekeeping is a widespread and globally accepted movement','To prove that European cities are better environments for bees than American ones','To list cities where beekeeping has been made illegal'],ci:1,
+ exp:'By naming four world capitals on different continents, the author shows that urban beekeeping is not a local trend — it is a global movement.'},
+{tag:'Problem / Solution',q:'Which of the following BEST describes the problem-solution relationship the author presents?',
+ opts:['Urban beekeeping helps solve the problem of declining honeybee populations','City regulations create the problem of overcrowded bee hives','Colony collapse disorder was completely solved by urban beekeeping alone','Varroa mites are the main solution beekeepers are now implementing'],ci:0,
+ exp:'The passage presents colony collapse disorder as the problem and urban beekeeping as a meaningful (if not complete) solution by providing safe habitats.'},
+{tag:'Author\'s Claim',q:'What is the author\'s central claim about urban beekeeping?',
+ opts:['It is too dangerous and should not be allowed in cities','It should completely replace all traditional rural beekeeping','It is a passing trend that will quickly fade from popularity','It can help protect bees while offering surprising advantages in city environments'],ci:3,
+ exp:'The passage argues that cities can be good for bees (advantages section) and that urban beekeeping helps address colony collapse — that is the central claim.'},
+{tag:'Evidence / Support',q:'Which detail from the passage BEST supports the claim that bees are essential to the global food supply?',
+ opts:['Bees can be kept on balconies and rooftops in large cities','Beekeepers must secure the consent of their neighbors before setting up a hive','Scientists estimate that bees are responsible for pollinating about one-third of all food humans eat','Cities like Tokyo and Paris have thriving local beekeeping communities'],ci:2,
+ exp:'The statistic about one-third of all human food directly supports the claim that bees are essential — it quantifies their contribution.'},
+{tag:'Real-Life Connection',q:'A student living in an apartment building wants to start an urban hive. Based on the passage, what should the student do FIRST?',
+ opts:['Order bees from a supplier and set up a hive as quickly as possible','Learn about local regulations and inform neighbors before starting','Wait for summer weather before making any plans','Move to a rural area since apartments are not suitable for bees'],ci:1,
+ exp:'Paragraph 4 states that beekeepers "must follow local regulations, secure the consent of neighbors" — these are the first steps the passage identifies.'},
+{tag:'Text Organization',q:'In which paragraph does the author FIRST introduce the idea that cities can actually be GOOD homes for bees?',
+ opts:['Paragraph 3','Paragraph 1','Paragraph 2','Paragraph 4'],ci:0,
+ exp:'Paragraph 3 begins: "Cities may seem like unlikely homes for bees, but they can actually offer several advantages." This is where the idea is first introduced.'},
+{tag:'Theme / Message',q:'What is the most important theme, or life lesson, of this passage?',
+ opts:['Only certified experts should attempt to intervene in environmental problems','Technology and science are the only real solutions to ecological crises','Small community actions, like urban beekeeping, can help protect species that all life depends on','Bees should not be kept near people because of the safety risks involved'],ci:2,
+ exp:'The passage\'s final sentence says city dwellers "can play an important role in protecting a species that the entire world depends on" — the theme is that small local actions matter globally.'},
+{tag:'Cross-text Comparison',q2nd:P2_TEXT,q:'Read the newsletter letter in the box above. How do the newsletter letter and the main passage DIFFER most significantly?',
+ opts:['They disagree about whether bees are important to the food supply','They describe different techniques for setting up a city hive','Their emphasis — the passage focuses on benefits to bees and the environment, while the letter focuses on risks and concerns for nearby residents','They both strongly oppose the expansion of urban beekeeping programs'],ci:2,
+ exp:'The passage highlights the environmental benefits of urban beekeeping; the letter highlights resident concerns and calls for stricter rules — they differ in emphasis and perspective.'}
+];
+
+var state={cur:0,answers:{},shuffles:{},showResults:false};
+function loadState(){try{var s=localStorage.getItem(KEY);if(!s)return;var p=JSON.parse(s);if(typeof p.cur!=='number'||typeof p.answers!=='object'||typeof p.shuffles!=='object')throw 0;if(p.cur<0||p.cur>=qs.length)p.cur=0;state=p;}catch(e){localStorage.removeItem(KEY);}}
+function saveState(){localStorage.setItem(KEY,JSON.stringify(state));}
+function getAttempts(){return parseInt(localStorage.getItem(ATT_KEY)||'0');}
+function incAttempts(){localStorage.setItem(ATT_KEY,String(getAttempts()+1));}
+function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function getShuffled(qi){if(!state.shuffles[qi]){state.shuffles[qi]=shuffle([0,1,2,3]);saveState();}return state.shuffles[qi];}
+function togglePassage(){passageOpen=!passageOpen;var b=document.getElementById('passageBox');if(b){b.className='passage-box'+(passageOpen?' show':'');var btn=document.getElementById('passageToggleBtn');if(btn)btn.textContent=passageOpen?'Hide Passage':'Show Passage';}}
+function render(){document.getElementById('attemptsLabel').textContent='Total Attempts: '+getAttempts();buildDots();if(state.showResults){showResults();return;}showQuestion();}
+function buildDots(){var nav=document.getElementById('dotNav');var html='';for(var i=0;i<qs.length;i++){var cls='dot';if(state.answers[i]===undefined){}else if(state.answers[i]===qs[i].ci)cls+=' correct';else cls+=' wrong';if(i===state.cur&&!state.showResults)cls+=' active';html+='<div class="'+cls+'" onclick="goToQ('+i+')">'+(i+1)+'</div>';}if(state.showResults)html+='<span class="results-pill">Results</span>';nav.innerHTML=html;}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showQuestion(){var qa=document.getElementById('quizArea');document.getElementById('resultsArea').style.display='none';qa.style.display='block';var i=state.cur,q=qs[i];var order=getShuffled(i);var ans=state.answers[i];var answered=(ans!==undefined);
+var passHtml='<button class="passage-toggle" id="passageToggleBtn" onclick="togglePassage()">'+(passageOpen?'Hide Passage':'Show Passage')+'</button><div class="passage-box'+(passageOpen?' show':'')+'" id="passageBox">';
+for(var pi=0;pi<PASSAGE.length;pi++)passHtml+='<p>'+escHtml(PASSAGE[pi])+'</p>';
+passHtml+='</div>';
+var secondPassHtml='';
+if(q.q2nd){secondPassHtml='<div class="passage2-box"><div class="passage2-label">Additional Text</div>'+escHtml(q.q2nd)+'</div>';}
+var html=passHtml+secondPassHtml+'<div class="tag-badge">'+q.tag+'</div><div class="q-counter">'+(i+1)+' / '+qs.length+'</div><div class="q-text">'+q.q+'</div><div class="options">';
+for(var k=0;k<4;k++){var oi=order[k];var cls='opt-btn';if(answered){if(oi===q.ci)cls+=' reveal';if(oi===ans&&ans!==q.ci)cls+=' wrong';}html+='<button class="'+cls+'" onclick="pick('+oi+')">'+q.opts[oi]+'</button>';}html+='</div>';
+if(answered&&ans!==q.ci)html+='<div class="explain"><strong>Explanation:</strong> '+q.exp+'</div>';
+html+='<div class="nav-btns">';if(i>0)html+='<button class="btn btn-gray" onclick="go(-1)">Prev</button>';if(i<qs.length-1)html+='<button class="btn btn-blue" onclick="go(1)">Next</button>';else html+='<button class="btn btn-blue" onclick="finishQuiz()">See Results &#8594;</button>';html+='</div>';
+qa.innerHTML=html;}
+function pick(oi){var i=state.cur;if(state.answers[i]!==undefined)return;state.answers[i]=oi;saveState();showQuestion();}
+function go(d){state.cur+=d;if(state.cur<0)state.cur=0;if(state.cur>=qs.length)state.cur=qs.length-1;saveState();showQuestion();}
+function goToQ(i){if(state.showResults){state.showResults=false;state.cur=i;saveState();render();return;}state.cur=i;saveState();showQuestion();buildDots();}
+function finishQuiz(){incAttempts();state.showResults=true;saveState();render();}
+function showResults(){var qa=document.getElementById('quizArea');var ra=document.getElementById('resultsArea');qa.style.display='none';ra.style.display='block';var c=0,w=0,s=0;for(var i=0;i<qs.length;i++){var a=state.answers[i];if(a===undefined)s++;else if(a===qs[i].ci)c++;else w++;}var html='<div class="res-header">Results: '+c+' / '+qs.length+'</div><div class="res-grid">';for(var i=0;i<qs.length;i++){var a=state.answers[i];var cls='res-card ';var lbl='';if(a===undefined){cls+='skipped';lbl='Skipped';}else if(a===qs[i].ci){cls+='correct';lbl='Correct';}else{cls+='wrong';lbl='Wrong';}html+='<div class="'+cls+'" onclick="goToQ('+i+')">Q'+(i+1)+': '+lbl+'</div>';}html+='</div><div class="res-actions"><button class="btn btn-blue" onclick="startRetry()">Retry Wrong Questions</button><button class="btn btn-gray" onclick="copyRes()">Copy All Results</button><button class="btn btn-gray" onclick="confirmFresh()">Start Fresh</button></div>';ra.innerHTML=html;buildDots();}
+var retryList=[],retryIdx=0,retryAnswers={};
+function startRetry(){retryList=[];for(var i=0;i<qs.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==qs[i].ci)retryList.push(i);}if(!retryList.length){alert('No wrong questions!');return;}retryIdx=0;retryAnswers={};showRetry();}
+function showRetry(){var el=document.getElementById('retryArea');if(!el){el=document.createElement('div');el.id='retryArea';el.style.cssText='padding:20px';document.querySelector('.container').appendChild(el);}document.getElementById('quizArea').style.display='none';document.getElementById('resultsArea').style.display='none';el.style.display='block';if(retryIdx>=retryList.length){var c=0;for(var x=0;x<retryList.length;x++){if(retryAnswers[x]===qs[retryList[x]].ci)c++;}el.innerHTML='<div style="font-weight:700;color:#185FA5;margin-bottom:14px">Retry Complete: '+c+'/'+retryList.length+' correct</div><button class="btn btn-blue" onclick="backToResults()">Back to Results</button>';return;}var qi=retryList[retryIdx],q=qs[qi];var order=getShuffled(qi);var ans=retryAnswers[retryIdx];var answered=(ans!==undefined);
+var html='<div style="font-weight:700;color:#185FA5;margin-bottom:10px">Retry '+(retryIdx+1)+'/'+retryList.length+'</div>';if(q.q2nd){html+='<div class="passage2-box"><div class="passage2-label">Additional Text</div>'+escHtml(q.q2nd)+'</div>';}
+html+='<div class="tag-badge">'+q.tag+'</div><div class="q-text">'+q.q+'</div><div class="options">';for(var k=0;k<4;k++){var oi=order[k];var cls='opt-btn';if(answered){if(oi===q.ci)cls+=' reveal';if(oi===ans&&ans!==q.ci)cls+=' wrong';}html+='<button class="'+cls+'" onclick="retryPick('+oi+')">'+q.opts[oi]+'</button>';}html+='</div>';if(answered&&ans!==q.ci)html+='<div class="explain">'+q.exp+'</div>';html+='<div class="nav-btns"><button class="btn btn-blue" onclick="retryNext()">'+(retryIdx<retryList.length-1?'Next':'Finish Retry')+'</button></div>';el.innerHTML=html;}
+function retryPick(oi){if(retryAnswers[retryIdx]!==undefined)return;retryAnswers[retryIdx]=oi;showRetry();}
+function retryNext(){retryIdx++;showRetry();}
+function backToResults(){var r=document.getElementById('retryArea');if(r)r.style.display='none';state.showResults=true;saveState();render();}
+function copyRes(){var lines=['[Grant] English Reading 2026-06-11'];var c=0;for(var i=0;i<qs.length;i++){var a=state.answers[i];if(a===undefined){lines.push('Q'+(i+1)+': Skipped');}else if(a===qs[i].ci){c++;lines.push('Q'+(i+1)+': Correct');}else{lines.push('Q'+(i+1)+': Wrong');}}lines.splice(1,0,'Score: '+c+'/'+qs.length);var txt=lines.join('\n');if(navigator.clipboard)navigator.clipboard.writeText(txt);else{var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}}
+function confirmFresh(){document.getElementById('freshModal').classList.add('show');}
+function closeFreshModal(){document.getElementById('freshModal').classList.remove('show');}
+function doFresh(){localStorage.removeItem(KEY);state={cur:0,answers:{},shuffles:{},showResults:false};closeFreshModal();render();}
+window.pick=pick;window.go=go;window.finishQuiz=finishQuiz;window.goToQ=goToQ;
+window.startRetry=startRetry;window.copyRes=copyRes;window.confirmFresh=confirmFresh;
+window.closeFreshModal=closeFreshModal;window.doFresh=doFresh;
+window.retryPick=retryPick;window.retryNext=retryNext;window.backToResults=backToResults;
+window.togglePassage=togglePassage;
+loadState();render();
+})();
+</script>
+</body>
+</html>

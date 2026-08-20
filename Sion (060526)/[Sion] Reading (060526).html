@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAT Reading Quiz 6 – Dual Passages</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Georgia, serif; background: #f5f7fa; color: #111; }
+  #due-date { text-align: center; font-size: 2rem; font-weight: 800; color: #185FA5; background: white; padding: 14px 0 10px; }
+  h1 { text-align: center; font-size: 1.35rem; font-weight: 700; color: #185FA5; background: white; padding: 0 16px 16px; }
+  #dot-nav { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 12px 16px; background: white; border-bottom: 2px solid #e0e8f4; position: sticky; top: 0; z-index: 100; }
+  .dot { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #aec4e0; background: #e8edf4; color: #333; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: Georgia, serif; transition: background 0.15s; }
+  .dot.correct { background: #1D9E75; border-color: #1D9E75; color: white; }
+  .dot.wrong   { background: #E24B4A; border-color: #E24B4A; color: white; }
+  .dot.current { outline: 3px solid #185FA5; outline-offset: 2px; }
+  #results-pill { display: none; background: #185FA5; color: white; font-size: 0.78rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; align-self: center; font-family: Georgia, serif; }
+  #passages { background: white; margin: 14px 12px 0; border-radius: 10px; padding: 18px 16px 14px; border: 1.5px solid #d0dff0; font-size: 0.97rem; line-height: 1.7; }
+  #passages h2 { font-size: 1rem; font-weight: 700; color: #185FA5; margin-bottom: 6px; }
+  #passages p  { margin-bottom: 10px; }
+  .line-num { display: inline-block; width: 22px; font-size: 0.75rem; color: #888; font-family: monospace; vertical-align: top; user-select: none; }
+  #quiz-area { display: none; padding: 14px 12px 80px; }
+  .type-tag { display: inline-block; background: #185FA5; color: white; font-size: 0.72rem; font-weight: 700; padding: 3px 11px; border-radius: 20px; margin-bottom: 8px; letter-spacing: 0.04em; font-family: Georgia, serif; }
+  .q-card { background: white; border-radius: 10px; border: 1.5px solid #d0dff0; padding: 16px 14px 14px; margin-bottom: 14px; }
+  .q-num  { font-size: 0.8rem; color: #888; margin-bottom: 4px; font-family: monospace; }
+  .q-text { font-size: 1rem; font-weight: 700; line-height: 1.5; margin-bottom: 14px; }
+  .opt-btn { display: block; width: 100%; text-align: left; padding: 11px 14px; margin-bottom: 8px; border-radius: 8px; border: 2px solid transparent; background: #e8edf4; color: #111111; font-size: 0.95rem; cursor: pointer; font-family: Georgia, serif; line-height: 1.4; transition: background 0.12s; }
+  .opt-btn.correct-ans { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .opt-btn.wrong-ans   { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+  .opt-btn.reveal-ans  { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .opt-btn:disabled { cursor: default; }
+  .explanation { display: none; background: #fff8e6; border-left: 4px solid #e6a817; padding: 10px 12px; border-radius: 0 6px 6px 0; font-size: 0.9rem; margin-top: 4px; line-height: 1.5; }
+  #nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 2px solid #d0dff0; display: none; padding: 10px 14px; justify-content: space-between; align-items: center; z-index: 200; }
+  .nav-btn { padding: 11px 24px; border-radius: 8px; border: none; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: Georgia, serif; }
+  #prev-btn { background: #e8edf4; color: #333; }
+  #next-btn { background: #185FA5; color: white; }
+  #q-counter { font-size: 0.9rem; color: #555; font-family: monospace; }
+  #results-screen { display: none; padding: 14px 12px 80px; }
+  #results-screen.show { display: block; }
+  .results-header { background: #185FA5; color: white; border-radius: 10px; padding: 20px 16px; text-align: center; margin-bottom: 14px; }
+  .results-header h2 { font-size: 1.5rem; font-weight: 800; }
+  .results-header p  { font-size: 1rem; margin-top: 6px; opacity: 0.9; }
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .result-card { background: white; border-radius: 8px; border: 1.5px solid #d0dff0; padding: 12px; cursor: pointer; }
+  .result-card .rq-num    { font-size: 0.75rem; color: #888; margin-bottom: 4px; font-family: monospace; }
+  .result-card .rq-status { font-size: 0.85rem; font-weight: 700; }
+  .result-card.correct { border-color: #1D9E75; }
+  .result-card.wrong   { border-color: #E24B4A; }
+  .result-card.skipped { border-color: #bbb; }
+  .result-card.correct .rq-status { color: #1D9E75; }
+  .result-card.wrong   .rq-status { color: #E24B4A; }
+  .result-card.skipped .rq-status { color: #888; }
+  .wrong-detail { background: white; border-radius: 10px; border: 1.5px solid #E24B4A; padding: 14px; margin-bottom: 10px; }
+  .wrong-detail .wd-q       { font-size: 0.93rem; font-weight: 700; margin-bottom: 6px; line-height: 1.4; }
+  .wrong-detail .wd-your    { font-size: 0.88rem; color: #E24B4A; margin-bottom: 4px; }
+  .wrong-detail .wd-correct { font-size: 0.88rem; color: #1D9E75; font-weight: 700; }
+  .skipped-detail { background: white; border-radius: 10px; border: 1.5px solid #bbb; padding: 14px; margin-bottom: 10px; }
+  .skipped-detail .sd-q       { font-size: 0.93rem; font-weight: 700; margin-bottom: 6px; line-height: 1.4; }
+  .skipped-detail .sd-correct { font-size: 0.88rem; color: #1D9E75; font-weight: 700; }
+  .results-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .res-btn { flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: Georgia, serif; }
+  #copy-btn    { background: #e8edf4; color: #185FA5; }
+  #restart-btn { background: #E24B4A; color: white; }
+  #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 999; align-items: center; justify-content: center; }
+  #modal-overlay.show { display: flex; }
+  #modal-box { background: white; border-radius: 12px; padding: 24px 20px; max-width: 320px; width: 90%; text-align: center; }
+  #modal-box h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 10px; color: #111; }
+  #modal-box p  { font-size: 0.93rem; color: #444; margin-bottom: 18px; line-height: 1.5; }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btns button { flex: 1; padding: 11px; border-radius: 8px; border: none; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: Georgia, serif; }
+  #modal-cancel  { background: #e8edf4; color: #333; }
+  #modal-confirm { background: #E24B4A; color: white; }
+</style>
+</head>
+<body>
+
+<div id="due-date">📅 Due: June 5</div>
+<h1>SAT Reading – Dual Passage Quiz 6</h1>
+
+<div id="dot-nav"><span id="results-pill">Results</span></div>
+
+<div id="passages">
+  <h2>Passage 1</h2>
+  <p>
+    <span class="line-num">1</span>The movement to remove statues of historical
+    <span class="line-num"> </span>figures from public spaces raises a question that
+    <span class="line-num">3</span>supporters rarely pause to answer: who decides
+    <span class="line-num"> </span>which figures deserve commemoration, and by what
+    <span class="line-num">5</span>standard? Applying contemporary moral frameworks
+    <span class="line-num"> </span>to people who lived centuries ago produces
+    <span class="line-num">7</span>absurd results — virtually every major historical
+    <span class="line-num"> </span>figure held views that modern society would
+    <span class="line-num">9</span>condemn. The appropriate response to a complicated
+    <span class="line-num"> </span>legacy is not erasure but context: plaques,
+    <span class="line-num">11</span>companion exhibits, and educational programs
+    <span class="line-num"> </span>that acknowledge harm without pretending the
+    <span class="line-num">13</span>person never existed. To remove a statue is not
+    <span class="line-num"> </span>to correct history; it is to impoverish the public
+    <span class="line-num">15</span>conversation we might otherwise have about it.
+  </p>
+  <h2>Passage 2</h2>
+  <p>
+    <span class="line-num">16</span>The argument that removing statues "erases
+    <span class="line-num"> </span>history" misunderstands what public monuments are.
+    <span class="line-num">18</span>Statues are not history textbooks; they are acts
+    <span class="line-num"> </span>of celebration. A city that erects a monument to
+    <span class="line-num">20</span>a person is not merely recording that the person
+    <span class="line-num"> </span>existed — it is declaring that person worthy of
+    <span class="line-num">22</span>honor. When the honoree's primary legacy is the
+    <span class="line-num"> </span>enslavement or violent conquest of other people,
+    <span class="line-num">24</span>that declaration becomes an insult to the
+    <span class="line-num"> </span>descendants of those harmed. Contextualizing a
+    <span class="line-num">26</span>statue with a plaque does not resolve this problem;
+    <span class="line-num"> </span>it simply adds an apology beneath a celebration.
+    <span class="line-num">28</span>Removal is not erasure — the historical record,
+    <span class="line-num"> </span>the archives, the textbooks all remain. It is
+    <span class="line-num">30</span>simply a community's decision about whom it
+    <span class="line-num"> </span>chooses to honor in shared public space.
+  </p>
+</div>
+
+<div id="quiz-area"></div>
+<div id="results-screen"></div>
+
+<div id="nav-bar">
+  <button class="nav-btn" id="prev-btn">← Prev</button>
+  <span id="q-counter"></span>
+  <button class="nav-btn" id="next-btn">Next →</button>
+</div>
+
+<div id="modal-overlay">
+  <div id="modal-box">
+    <h3>Start Fresh?</h3>
+    <p>Your progress will be cleared. This cannot be undone.</p>
+    <div class="modal-btns">
+      <button id="modal-cancel">Cancel</button>
+      <button id="modal-confirm">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'sat_statues_quiz_v1';
+
+const QUESTIONS = [
+  {
+    id: 1,
+    type: 'VOCABULARY IN CONTEXT',
+    text: 'As used in line 14, "impoverish" most nearly means',
+    options: ['financially ruin', 'enrich', 'diminish the quality of', 'misrepresent'],
+    ci: 2,
+    explanation: '"Impoverish" literally means to make poor, but here it is used figuratively. The author argues that removing statues would "impoverish the public conversation" — meaning it would make that conversation poorer or less rich. "Diminish the quality of" captures this figurative meaning. "Financially ruin" is the literal meaning but does not fit here. "Enrich" is the opposite. "Misrepresent" introduces a meaning the passage does not support.'
+  },
+  {
+    id: 2,
+    type: 'AUTHOR\'S CLAIM',
+    text: 'It can be most reasonably inferred that the author of Passage 1 believes that',
+    options: [
+      'all historical figures deserve to be celebrated regardless of the harm they caused.',
+      'the best way to address a controversial historical legacy is to add context rather than remove the monument.',
+      'contemporary society has no right to make moral judgments about people from the past.',
+      'statues should only be erected for figures whose entire lives were morally admirable.'
+    ],
+    ci: 1,
+    explanation: 'The author explicitly proposes "context: plaques, companion exhibits, and educational programs that acknowledge harm" as the appropriate response to complicated legacies. B captures this directly. A goes too far — the author acknowledges harm should be acknowledged. C overstates the author\'s point; the author criticizes applying modern standards as a basis for removal, not all moral judgment. D is not stated and contradicts the author\'s defense of keeping statues.'
+  },
+  {
+    id: 3,
+    type: 'TEXTUAL EVIDENCE',
+    text: 'Which choice provides the best evidence for the answer to the previous question?',
+    options: [
+      'Lines 5-9 ("Applying contemporary … condemn")',
+      'Lines 9-13 ("The appropriate … existed")',
+      'Lines 3-5 ("who decides … standard")',
+      'Lines 13-15 ("To remove … about it")'
+    ],
+    ci: 1,
+    explanation: 'Lines 9-13 directly state the author\'s preferred solution: "context: plaques, companion exhibits, and educational programs that acknowledge harm without pretending the person never existed." This is the clearest evidence for the answer. Lines 5-9 explain the author\'s objection to removal but do not propose the alternative. Lines 13-15 criticize removal but again do not describe what should be done instead.'
+  },
+  {
+    id: 4,
+    type: 'VOCABULARY IN CONTEXT',
+    text: 'As used in line 21, "declaring" most nearly means',
+    options: ['legally filing', 'publicly proclaiming', 'formally debating', 'secretly suggesting'],
+    ci: 1,
+    explanation: '"Declaring" here means making a public statement or announcement. The author of Passage 2 argues that erecting a monument is an act of publicly proclaiming someone worthy of honor — a visible, intentional message to the community. "Legally filing" and "formally debating" are too narrow and procedural. "Secretly suggesting" contradicts the very public nature of a monument.'
+  },
+  {
+    id: 5,
+    type: 'RELATIONSHIP BETWEEN PASSAGES',
+    text: 'Which of the following best describes the relationship between the two passages?',
+    options: [
+      'Passage 1 proposes adding context to statues as a solution, while Passage 2 argues that context is insufficient and redefines what statues fundamentally are.',
+      'Passage 1 supports removing statues of harmful figures, while Passage 2 argues for keeping them with added context.',
+      'Both passages agree that statues should be removed but disagree about where they should be relocated.',
+      'Passage 1 focuses on ancient historical figures while Passage 2 focuses on more recent ones.'
+    ],
+    ci: 0,
+    explanation: 'Passage 1 argues for keeping statues but adding contextual plaques and exhibits. Passage 2 challenges this by redefining statues as acts of celebration rather than historical records, and argues that a plaque beside a celebration is not a real resolution. A captures this precisely. B reverses the positions of the two authors. C is not supported — neither passage advocates relocation. D is not supported by the text.'
+  },
+  {
+    id: 6,
+    type: 'CROSS-PASSAGE PERSPECTIVE',
+    text: 'The author of Passage 2 would most likely respond to the solution proposed in lines 9-13 of Passage 1 — adding plaques and educational programs — by arguing that',
+    options: [
+      'plaques are too expensive for most cities to implement effectively.',
+      'adding a plaque beneath a monument does not resolve the fundamental problem because the statue remains a celebration of the person.',
+      'educational programs about historical figures are more effective than either statues or plaques.',
+      'plaques and exhibits are a reasonable compromise that both sides of the debate should accept.'
+    ],
+    ci: 1,
+    explanation: 'Passage 2 directly addresses the plaque solution in lines 25-27, stating that contextualizing a statue with a plaque "simply adds an apology beneath a celebration" — meaning it does not remove the statue\'s honorific function. B captures this response. A is not mentioned in either passage. C and D are not supported by Passage 2\'s argument.'
+  },
+  {
+    id: 7,
+    type: 'TEXTUAL EVIDENCE',
+    text: 'Which choice provides the best evidence for the answer to the previous question?',
+    options: [
+      'Lines 16-17 ("The argument … monuments are")',
+      'Lines 18-22 ("A city … honor")',
+      'Lines 25-27 ("Contextualizing … celebration")',
+      'Lines 28-31 ("Removal … space")'
+    ],
+    ci: 2,
+    explanation: 'Lines 25-27 contain the author\'s direct rebuttal to the plaque solution: it "simply adds an apology beneath a celebration" without changing the monument\'s fundamental character as an act of honor. This is the most direct evidence for the previous answer. Lines 16-17 introduce the broader rebuttal, and lines 28-31 make the case for removal, but neither specifically addresses why plaques are insufficient.'
+  },
+  {
+    id: 8,
+    type: 'SYNTHESIS: BOTH AUTHORS',
+    text: 'Based on both passages, the authors would most likely agree that',
+    options: [
+      'all monuments to historical figures should eventually be replaced with neutral informational markers.',
+      'the question of how communities remember and represent the past is a genuinely important public matter.',
+      'historical figures who owned slaves should never be commemorated in any form.',
+      'the debate over statues is primarily a distraction from more urgent social problems.'
+    ],
+    ci: 1,
+    explanation: 'Both authors treat the question of public monuments with great seriousness. Passage 1 argues that statues enable important public conversations about history. Passage 2 argues that what a community chooses to honor in public space is a meaningful moral and civic decision. Both agree the issue matters. A is supported by neither. C goes further than either author states. D is contradicted by both authors\' evident engagement with the topic.'
+  },
+  {
+    id: 9,
+    type: 'AUTHOR\'S PURPOSE',
+    text: 'The author of Passage 2 draws a distinction between "history textbooks" and statues (lines 18-19) in order to',
+    options: [
+      'argue that schools should take greater responsibility for teaching accurate history.',
+      'counter the claim that removing statues constitutes erasing history, by showing that statues serve a different function than historical records.',
+      'suggest that statues are more reliable sources of historical information than written texts.',
+      'demonstrate that public monuments have become more common than books in modern civic life.'
+    ],
+    ci: 1,
+    explanation: 'The textbook comparison directly addresses the "erasing history" objection raised by removal opponents (and echoed in Passage 1). The author argues that statues are not records but celebrations — so removing them does not erase any historical record. B captures this purpose precisely. A introduces a claim about schools not found in the passage. C and D are not supported and actually contradict the author\'s point.'
+  },
+  {
+    id: 10,
+    type: 'PRIMARY CONCERN COMPARISON',
+    text: 'Unlike the author of Passage 1, the author of Passage 2 is primarily concerned with',
+    options: [
+      'warning against the dangers of applying modern moral standards to historical figures.',
+      'arguing that public monuments are acts of honor rather than historical records, and that communities have the right to decide whom they celebrate.',
+      'proposing a compromise that preserves statues while acknowledging the harm caused by the figures they depict.',
+      'tracing the historical origins of the public monument tradition in Western cities.'
+    ],
+    ci: 1,
+    explanation: 'Passage 2\'s central argument rests on redefining what statues are — acts of celebration, not historical documentation — and concludes that removal is simply a community\'s right to choose who it honors. B captures this. A is the primary concern of Passage 1. C describes the position of Passage 1, not Passage 2. D is not found in either passage.'
+  }
+];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function loadState() {
+  try { const r = localStorage.getItem(STORAGE_KEY); if (r) return JSON.parse(r); } catch(e) {}
+  return null;
+}
+function initState() {
+  const shuffledOrders = QUESTIONS.map(q => shuffle(q.options.map((_,i)=>i)));
+  return { current: 0, answers: new Array(QUESTIONS.length).fill(null), shuffledOrders, showResults: false };
+}
+function saveState(st) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(st)); } catch(e) {} }
+
+let state = loadState() || initState();
+if (!state.shuffledOrders) state = initState();
+
+function buildDots() {
+  const nav = document.getElementById('dot-nav');
+  nav.innerHTML = '';
+  const pill = document.createElement('span');
+  pill.id = 'results-pill'; pill.textContent = 'Results';
+  pill.style.display = state.showResults ? 'inline-block' : 'none';
+  nav.appendChild(pill);
+  QUESTIONS.forEach((q, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot'; d.textContent = i + 1;
+    const ans = state.answers[i];
+    if (ans !== null) d.classList.add(ans === q.ci ? 'correct' : 'wrong');
+    if (!state.showResults && i === state.current) d.classList.add('current');
+    d.addEventListener('click', () => {
+      if (state.showResults) return;
+      state.current = i; saveState(state); render();
+    });
+    nav.appendChild(d);
+  });
+}
+
+function render() {
+  try {
+    buildDots();
+    const qa = document.getElementById('quiz-area');
+    const rs = document.getElementById('results-screen');
+    const nb = document.getElementById('nav-bar');
+    if (state.showResults) {
+      qa.style.display = 'none'; nb.style.display = 'none';
+      rs.classList.add('show'); renderResults(); return;
+    }
+    rs.classList.remove('show');
+    qa.style.display = 'block'; nb.style.display = 'flex';
+
+    const q = QUESTIONS[state.current];
+    const order = state.shuffledOrders[state.current];
+    const answered = state.answers[state.current];
+
+    qa.innerHTML = '';
+    const card = document.createElement('div'); card.className = 'q-card';
+    const tag = document.createElement('span'); tag.className = 'type-tag'; tag.textContent = q.type; card.appendChild(tag);
+    const qnum = document.createElement('div'); qnum.className = 'q-num'; qnum.textContent = `Question ${state.current + 1} of ${QUESTIONS.length}`; card.appendChild(qnum);
+    const qtext = document.createElement('div'); qtext.className = 'q-text'; qtext.textContent = q.text; card.appendChild(qtext);
+
+    order.forEach(origIdx => {
+      const btn = document.createElement('button'); btn.className = 'opt-btn';
+      const label = ['A','B','C','D'][order.indexOf(origIdx)];
+      btn.textContent = label + ')  ' + q.options[origIdx];
+      btn.dataset.orig = origIdx;
+      if (answered !== null) {
+        btn.disabled = true;
+        if (origIdx === q.ci) btn.classList.add('reveal-ans');
+        if (origIdx === answered && answered !== q.ci) btn.classList.add('wrong-ans');
+        if (origIdx === answered && answered === q.ci) btn.classList.add('correct-ans');
+      }
+      btn.addEventListener('click', () => {
+        if (answered !== null) return;
+        state.answers[state.current] = origIdx; saveState(state); render();
+        if (origIdx !== q.ci) { const exp = document.getElementById('exp-box'); if (exp) exp.style.display = 'block'; }
+      });
+      card.appendChild(btn);
+    });
+
+    const exp = document.createElement('div'); exp.className = 'explanation'; exp.id = 'exp-box';
+    exp.innerHTML = '<strong>Explanation:</strong> ' + q.explanation;
+    if (answered !== null && answered !== q.ci) exp.style.display = 'block';
+    card.appendChild(exp); qa.appendChild(card);
+
+    document.getElementById('prev-btn').disabled = state.current === 0;
+    document.getElementById('prev-btn').style.opacity = state.current === 0 ? '0.4' : '1';
+    const nextBtn = document.getElementById('next-btn');
+    if (state.current === QUESTIONS.length - 1) { nextBtn.textContent = 'See Results →'; nextBtn.style.background = '#1D9E75'; }
+    else { nextBtn.textContent = 'Next →'; nextBtn.style.background = '#185FA5'; }
+    document.getElementById('q-counter').textContent = `${state.current + 1} / ${QUESTIONS.length}`;
+  } catch(err) {
+    document.getElementById('quiz-area').innerHTML = '<div style="padding:20px;color:red;">Error rendering quiz. Please reload.</div>';
+  }
+}
+
+function renderResults() {
+  try {
+    const rs = document.getElementById('results-screen');
+    let correct = 0, wrong = 0, skipped = 0;
+    state.answers.forEach((a, i) => {
+      if (a === null) skipped++; else if (a === QUESTIONS[i].ci) correct++; else wrong++;
+    });
+    let html = `<div class="results-header"><h2>${correct} / ${QUESTIONS.length} Correct</h2><p>${correct} correct · ${wrong} wrong · ${skipped} skipped</p></div>
+    <div class="results-actions"><button class="res-btn" id="copy-btn">Copy All Results</button><button class="res-btn" id="restart-btn">Start Fresh</button></div>
+    <div class="result-grid">`;
+    QUESTIONS.forEach((q, i) => {
+      const a = state.answers[i];
+      let cls, label;
+      if (a === null) { cls = 'skipped'; label = 'Skipped'; }
+      else if (a === q.ci) { cls = 'correct'; label = 'Correct ✓'; }
+      else { cls = 'wrong'; label = 'Wrong ✗'; }
+      html += `<div class="result-card ${cls}" data-qi="${i}"><div class="rq-num">Q${i+1}</div><div class="rq-status">${label}</div></div>`;
+    });
+    html += '</div>';
+    let hasWrong = false;
+    QUESTIONS.forEach((q, i) => {
+      const a = state.answers[i];
+      if (a !== null && a !== q.ci) {
+        if (!hasWrong) { html += '<h3 style="margin-bottom:10px;color:#E24B4A;">Wrong Answers</h3>'; hasWrong = true; }
+        const yourLabel = ['A','B','C','D'][state.shuffledOrders[i].indexOf(a)];
+        const correctLabel = ['A','B','C','D'][state.shuffledOrders[i].indexOf(q.ci)];
+        html += `<div class="wrong-detail"><div class="wd-q">Q${i+1}: ${q.text}</div><div class="wd-your">Your answer: ${yourLabel}) ${q.options[a]}</div><div class="wd-correct">Correct: ${correctLabel}) ${q.options[q.ci]}</div></div>`;
+      }
+    });
+    let hasSkipped = false;
+    QUESTIONS.forEach((q, i) => {
+      if (state.answers[i] === null) {
+        if (!hasSkipped) { html += '<h3 style="margin-bottom:10px;color:#888;">Skipped</h3>'; hasSkipped = true; }
+        const correctLabel = ['A','B','C','D'][state.shuffledOrders[i].indexOf(q.ci)];
+        html += `<div class="skipped-detail"><div class="sd-q">Q${i+1}: ${q.text}</div><div class="sd-correct">Correct: ${correctLabel}) ${q.options[q.ci]}</div></div>`;
+      }
+    });
+    rs.innerHTML = html;
+    rs.querySelectorAll('.result-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const qi = parseInt(card.dataset.qi); state.current = qi; state.showResults = false; saveState(state); render();
+      });
+    });
+    document.getElementById('copy-btn').addEventListener('click', () => {
+      let text = `SAT Reading Quiz 6 Results: ${correct}/${QUESTIONS.length}\n`;
+      QUESTIONS.forEach((q, i) => {
+        const a = state.answers[i];
+        let status = a === null ? 'Skipped' : a === q.ci ? 'Correct' : 'Wrong';
+        text += `Q${i+1} (${q.type}): ${status}`;
+        if (a !== null && a !== q.ci) text += ` — Correct: ${q.options[q.ci]}`;
+        text += '\n';
+      });
+      if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
+    });
+    document.getElementById('restart-btn').addEventListener('click', () => { document.getElementById('modal-overlay').classList.add('show'); });
+  } catch(err) {
+    document.getElementById('results-screen').innerHTML = '<div style="padding:20px;color:red;">Error displaying results. Please reload.</div>';
+  }
+}
+
+document.getElementById('prev-btn').addEventListener('click', () => { if (state.current > 0) { state.current--; saveState(state); render(); } });
+document.getElementById('next-btn').addEventListener('click', () => {
+  if (state.current < QUESTIONS.length - 1) { state.current++; saveState(state); render(); }
+  else { state.showResults = true; saveState(state); render(); }
+});
+document.getElementById('modal-cancel').addEventListener('click', () => { document.getElementById('modal-overlay').classList.remove('show'); });
+document.getElementById('modal-confirm').addEventListener('click', () => {
+  document.getElementById('modal-overlay').classList.remove('show');
+  localStorage.removeItem(STORAGE_KEY); state = initState(); saveState(state); render();
+});
+
+render();
+</script>
+</body>
+</html>

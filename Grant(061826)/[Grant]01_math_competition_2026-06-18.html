@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Math Competition</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0 auto;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.tag-badge{display:inline-block;background:#1D9E75;color:#fff;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:8px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.q-text{font-size:1.02rem;font-weight:600;color:#111;margin-bottom:12px;line-height:1.7;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.95rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:0.86em;line-height:1.05;margin:0 2px;position:relative;top:0.18em;}
+.frac .fn{padding:0 4px 1px;border-bottom:1.6px solid currentColor;}
+.frac .fd{padding:1px 4px 0;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-18</div>
+<div class="title-hd">[Grant] Math Competition</div>
+<div class="instruction">Solve each problem and choose the correct answer.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 21</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="tag-badge" id="q-tag"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_mathcomp_21_20260617_v1';
+var ATT_KEY='quiz_mathcomp_att_20260617_v1';
+
+function fr(n,d){return '<span class="frac"><span class="fn">'+n+'</span><span class="fd">'+d+'</span></span>';}
+
+var qs=[
+ {tag:'Ch1 — Number Theory',q:'Which of the following numbers is divisible by both 3 and 4?',
+  opts:['132','124','130','150'],ci:0,
+  exp:'132 has a digit sum of 1+3+2=6, which is divisible by 3, and its last two digits (32) are divisible by 4. Each other choice fails at least one of these tests.'},
+ {tag:'Ch1 — Number Theory',q:'What is the smallest perfect square greater than 50?',
+  opts:['64','81','49','60'],ci:0,
+  exp:'7² = 49 is less than 50, and 8² = 64 is the next perfect square after that, so 64 is the smallest perfect square greater than 50.'},
+ {tag:'Ch1 — Number Theory',q:'How many positive factors does 360 have?',
+  opts:['24','18','30','20'],ci:0,
+  exp:'360 = 2³×3²×5¹. The number of factors is (3+1)×(2+1)×(1+1) = 4×3×2 = 24.'},
+ {tag:'Ch2 — Fractions',q:'Compute: '+fr(3,4)+' + '+fr(5,6)+' − '+fr(1,3)+' = ?',
+  opts:[fr(5,4),fr(7,4),fr(4,3),fr(11,12)],ci:0,
+  exp:'Common denominator 12: '+fr(9,12)+' + '+fr(10,12)+' − '+fr(4,12)+' = '+fr(15,12)+' = '+fr(5,4)+'.'},
+ {tag:'Ch2 — Fractions',q:'Compute: '+fr(2,5)+' × '+fr(3,7)+' = ?',
+  opts:[fr(6,35),fr(5,12),fr(6,12),fr(9,35)],ci:0,
+  exp:'Multiply numerators and denominators straight across: '+fr(2,5)+' × '+fr(3,7)+' = '+fr('2×3','5×7')+' = '+fr(6,35)+'.'},
+ {tag:'Ch2 — Decimals',q:'Compute: 4.85 + 3.092 − 1.6 = ?',
+  opts:['6.342','6.242','7.342','6.442'],ci:0,
+  exp:'4.85 + 3.092 = 7.942. Then 7.942 − 1.6 = 6.342.'},
+ {tag:'Ch3 — Ratios & Proportions',q:'The ratio of boys to girls in a class is 5:7. If there are 20 boys, how many girls are there?',
+  opts:['28','24','32','25'],ci:0,
+  exp:'20 boys ÷ 5 = 4 (the scale factor). Girls = 7 × 4 = 28.'},
+ {tag:'Ch3 — Ratios & Proportions',q:'If 8 workers can build a wall in 15 days, how many days would it take 12 workers, working at the same rate, to build the same wall?',
+  opts:['10','12','9','20'],ci:0,
+  exp:'Total work = 8 × 15 = 120 worker-days. With 12 workers: 120 ÷ 12 = 10 days. More workers means fewer days, since this is an inverse proportion.'},
+ {tag:'Ch3 — Ratios & Proportions',q:'A map has a scale of 1:50000. If two cities are 8 cm apart on the map, what is the actual distance between them, in kilometers?',
+  opts:['4 km','0.4 km','40 km','400 km'],ci:0,
+  exp:'8 cm × 50000 = 400000 cm. Converting: 400000 cm = 4000 m = 4 km.'},
+ {tag:'Ch4 — Percentages',q:'A shirt priced at $48 is discounted 25%, and then an additional 10% off the new price. What is the final price?',
+  opts:['$32.40','$31.20','$36.00','$33.60'],ci:0,
+  exp:'After 25% off: $48 × 0.75 = $36.00. After another 10% off that: $36.00 × 0.90 = $32.40. The two discounts apply one after another, not added together.'},
+ {tag:'Ch4 — Percentages',q:'A number is increased by 20% to become 96. What was the original number?',
+  opts:['80','76.8','115.2','84'],ci:0,
+  exp:'If the original number is x, then 1.2x = 96, so x = 96 ÷ 1.2 = 80.'},
+ {tag:'Ch4 — Percentages',q:'In a survey of 250 people, 38% prefer tea over coffee. How many people is that?',
+  opts:['95','88','100','76'],ci:0,
+  exp:'250 × 0.38 = 95 people.'},
+ {tag:'Ch5 — Geometry',q:'A rectangle has a length of 14 cm and a width of 9 cm. What is its perimeter, in centimeters?',
+  opts:['46','23','126','50'],ci:0,
+  exp:'Perimeter = 2 × (length + width) = 2 × (14 + 9) = 2 × 23 = 46 cm.'},
+ {tag:'Ch5 — Geometry',q:'A triangle has a base of 16 cm and a height of 9 cm. What is its area, in square centimeters?',
+  opts:['72','144','36','25'],ci:0,
+  exp:'Area of a triangle equals half the base times the height: (16 × 9) ÷ 2 = 144 ÷ 2 = 72 square centimeters.'},
+ {tag:'Ch5 — Geometry',q:'A circle has a radius of 7 cm. Using π ≈ '+fr(22,7)+', what is its circumference, in centimeters?',
+  opts:['44','22','154','88'],ci:0,
+  exp:'Circumference = 2πr = 2 × '+fr(22,7)+' × 7 = 44 cm. (154 would be the area, πr², not the circumference.)'},
+ {tag:'Ch6 — Sequences',q:'What is the next number in the sequence: 3, 7, 15, 31, 63, ___?',
+  opts:['127','126','125','128'],ci:0,
+  exp:'Each term follows the rule "double, then add 1": 3×2+1=7, 7×2+1=15, 15×2+1=31, 31×2+1=63, so 63×2+1=127.'},
+ {tag:'Ch6 — Sequences',q:'The first term of an arithmetic sequence is 6 and the common difference is 9. What is the 12th term?',
+  opts:['105','114','96','99'],ci:0,
+  exp:'The nth term formula is a₁ + (n−1)d = 6 + (11)(9) = 6 + 99 = 105.'},
+ {tag:'Ch6 — Sequences',q:'In a geometric sequence, the first term is 5 and the common ratio is 3. What is the sum of the first 4 terms?',
+  opts:['200','180','240','150'],ci:0,
+  exp:'The terms are 5, 15, 45, 135. Their sum is 5+15+45+135 = 200.'},
+ {tag:'Ch7 — Word Problems',q:'Sarah has 3 times as many stickers as Tom. Together they have 96 stickers. How many stickers does Sarah have?',
+  opts:['72','24','48','64'],ci:0,
+  exp:'Let Tom have x stickers, so Sarah has 3x. Together: x + 3x = 96, so 4x = 96, x = 24. Sarah has 3 × 24 = 72 stickers.'},
+ {tag:'Ch7 — Word Problems',q:'A train travels 240 km in 3 hours, then another 180 km in 2 hours. What is its average speed for the entire trip, in km/h?',
+  opts:['84','80','90','75'],ci:0,
+  exp:'Average speed = total distance ÷ total time = (240+180) ÷ (3+2) = 420 ÷ 5 = 84 km/h.'},
+ {tag:'Ch7 — Word Problems',q:'A tank is filled by Pipe A alone in 6 hours and by Pipe B alone in 9 hours. Working together, how many hours does it take to fill the tank?',
+  opts:['3.6 hours','3.75 hours','4.5 hours','3 hours'],ci:0,
+  exp:'Combined rate = '+fr(1,6)+' + '+fr(1,9)+' = '+fr(3,18)+' + '+fr(2,18)+' = '+fr(5,18)+' of the tank per hour. Time = 1 ÷ '+fr(5,18)+' = '+fr(18,5)+' = 3.6 hours.'}
+];
+
+var state={};
+function loadState(){
+  try{
+    var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');
+    if(s&&typeof s.cur==='number'&&s.cur>=0&&s.cur<qs.length&&s.answers&&s.shuffles){state=s;}
+    else resetState();
+  }catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}
+}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){
+  if(!state.shuffles[i]){
+    var a=[0,1,2,3];
+    for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}
+    state.shuffles[i]=a; saveState();
+  }
+  return state.shuffles[i];
+}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAtt(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+
+function updateNav(){
+  var ans=Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent=ans+' / '+qs.length;
+  document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';
+  var p=document.getElementById('dot-panel');
+  if(p.style.display!=='none')renderDots();
+}
+
+function toggleJump(){
+  var p=document.getElementById('dot-panel');
+  var b=document.getElementById('jump-btn');
+  if(p.style.display==='none'){p.style.display='block';b.innerHTML='Hide &#9652;';renderDots();}
+  else{p.style.display='none';b.innerHTML='Jump &#9662;';}
+}
+
+function renderDots(){
+  var p=document.getElementById('dot-panel');
+  var h='';
+  for(var i=0;i<qs.length;i++){
+    var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===getCSI(i)?'#185FA5':'#E24B4A');
+    h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';
+  }
+  if(Object.keys(state.answers).length===qs.length){
+    h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';
+  }
+  p.innerHTML=h;
+}
+
+function goToQ(i){
+  state.cur=i; state.showResults=false; saveState(); render();
+  document.getElementById('dot-panel').style.display='none';
+  document.getElementById('jump-btn').innerHTML='Jump &#9662;';
+}
+
+function showResults(){
+  state.showResults=true;
+  localStorage.setItem(ATT_KEY,loadAtt()+1);
+  saveState(); render();
+}
+
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAtt();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('resultsArea').style.display='none';
+  updateNav();
+  var i=state.cur; var q=qs[i];
+  document.getElementById('q-tag').textContent=q.tag;
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-text').innerHTML=q.q;
+  var sh=getShuffle(i); var ans=state.answers[i]; var csi=getCSI(i);
+  var html='';
+  for(var s=0;s<4;s++){
+    var oi=sh[s]; var cls='opt-btn'; var dis='';
+    if(ans!==undefined){dis='disabled ';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}
+    html+='<button class="'+cls+'" '+dis+'onclick="pick('+i+','+s+')">'+q.opts[oi]+'</button>';
+  }
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');
+  if(ans!==undefined){eb.style.display='block';eb.innerHTML=q.exp;}
+  else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  updateNav();
+  var c=0,w=0,sk=0;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]===undefined)sk++;
+    else if(state.answers[i]===getCSI(i))c++;
+    else w++;
+  }
+  document.getElementById('results-summary').innerHTML=
+    '<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;'+
+    '<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;'+
+    '<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i]; var label,bg,tc;
+    if(a===undefined){label='Skipped';bg='#d7dde6';tc='#555';}
+    else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}
+    else{label='Wrong';bg='#FCEBEB';tc='#501313';}
+    html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.9rem;color:#333;">Q'+(i+1)+': '+qs[i].tag+'</span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';
+  }
+  document.getElementById('results-cards').innerHTML=html;
+}
+
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){
+  if(dir===1&&state.cur===qs.length-1){showResults();return;}
+  state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));
+  saveState();render();
+}
+function retryWrong(){
+  var first=-1;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){
+      if(first===-1)first=i; delete state.answers[i];
+    }
+  }
+  if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}
+}
+function copyRes(){
+  var lines=['[Grant] Math Competition - Results (2026-06-18)'];
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    var label=a===undefined?'Skipped':(a===getCSI(i)?'Correct':'Wrong');
+    lines.push('Q'+(i+1)+' ('+qs[i].tag+'): '+label);
+  }
+  var txt=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fallbackCopy(txt);});}
+  else fallbackCopy(txt);
+}
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;window.openFreshModal=openFreshModal;
+window.confirmFresh=confirmFresh;window.showResults=showResults;
+
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

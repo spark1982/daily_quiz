@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Typing</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh;padding:16px;-webkit-tap-highlight-color:transparent}
+.date-label{font-size:2rem;font-weight:800;text-align:center;color:#185FA5;background:#fff;padding:10px 0 2px}
+.title{text-align:center;font-size:1.4rem;font-weight:700;color:#185FA5;background:#fff;padding:2px 0 4px}
+.container{max-width:700px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.1);overflow:hidden}
+.para-dots{display:flex;gap:10px;padding:12px 16px;background:#f7f9fc;border-bottom:1px solid #e0e6ef;justify-content:center}
+.pdot{width:36px;height:18px;border-radius:9px;background:#e0e6f0;transition:.3s}
+.pdot.done{background:#1D9E75}
+.pdot.active{background:#185FA5}
+.area{padding:20px}
+.para-label{font-size:0.85rem;color:#666;margin-bottom:8px}
+.stats-row{display:flex;gap:18px;margin-bottom:14px;align-items:center;flex-wrap:wrap}
+.stat{font-size:0.88rem;color:#555}
+.stat strong{color:#185FA5;font-size:1rem}
+.target{font-size:1rem;line-height:1.85;background:#f7faff;border:1.5px solid #c5d5ee;border-radius:8px;padding:14px;margin-bottom:12px;cursor:text;font-family:'Georgia',serif;position:relative;min-height:60px;user-select:none}
+.target .c-correct{color:#0a7a56;background:#d4f5e8}
+.target .c-wrong{color:#c0392b;background:#fde9e9;text-decoration:underline}
+.target .c-current{border-left:2px solid #185FA5;margin-left:-1px;background:#d0e4f7}
+.target .c-pending{color:#777}
+.input-row{display:flex;align-items:stretch;gap:10px;margin-bottom:14px}
+#typeInput{flex:1;padding:12px;border:2px solid #c5d5ee;border-radius:8px;font-size:1rem;font-family:'Georgia',serif;line-height:1.6;resize:none;outline:none;min-height:56px;transition:.15s;background:#fff;white-space:pre-wrap}
+#typeInput:focus{border-color:#185FA5}
+#typeInput.complete{border-color:#1D9E75;background:#e8faf3}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap}
+.btn{padding:10px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer}
+.btn-blue{background:#185FA5;color:#fff}
+.btn-gray{background:#e8edf4;color:#333}
+.btn-green{background:#1D9E75;color:#fff}
+.advance-msg{display:none;text-align:center;padding:10px;color:#0a7a56;font-weight:600;font-size:1rem;background:#d4f5e8;border-radius:6px;margin-bottom:10px}
+#resultsArea{display:none;padding:20px}
+.res-title{font-size:1.3rem;font-weight:700;color:#185FA5;margin-bottom:16px;text-align:center}
+.res-table{width:100%;border-collapse:collapse;margin-bottom:18px}
+.res-table th,.res-table td{padding:10px 14px;text-align:center;border:1px solid #e0e6ef;font-size:0.92rem}
+.res-table th{background:#185FA5;color:#fff}
+.res-table tr:nth-child(even){background:#f0f4f8}
+.final-stat{font-size:1.1rem;text-align:center;margin-bottom:18px;color:#185FA5;font-weight:700}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="date-label">2026-06-11</div>
+<div class="title">[Grant] Typing</div>
+<div class="para-dots" id="paraDots"></div>
+<div class="area" id="mainArea">
+<div class="para-label" id="paraLabel">Paragraph 1 / 4</div>
+<div class="stats-row">
+<div class="stat">WPM: <strong id="wpmVal">-</strong></div>
+<div class="stat">Accuracy: <strong id="accVal">-</strong></div>
+<div class="stat">Time: <strong id="timeVal">0:00</strong></div>
+</div>
+<div class="target" id="targetDisplay" onclick="focusInput()"></div>
+<div class="advance-msg" id="advanceMsg">Paragraph complete! Advancing...</div>
+<div class="input-row">
+<textarea id="typeInput" rows="3" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Click here and start typing..."></textarea>
+</div>
+<div class="btn-row">
+<button class="btn btn-gray" id="retryBtn" onclick="retryPara()">Retry</button>
+<button class="btn btn-blue" id="pauseBtn" onclick="togglePause()">Pause</button>
+</div>
+</div>
+<div id="resultsArea">
+<div class="res-title">Typing Complete!</div>
+<div class="final-stat" id="finalStat"></div>
+<table class="res-table" id="resTable"><thead><tr><th>Paragraph</th><th>WPM</th><th>Accuracy</th><th>Time</th></tr></thead><tbody id="resBody"></tbody></table>
+<div class="btn-row" style="justify-content:center">
+<button class="btn btn-blue" onclick="restartAll()">Start Over</button>
+</div>
+</div>
+</div>
+<script>
+(function(){
+var PARAS=[
+'In recent years, urban beekeeping has become increasingly popular across cities around the world. What was once considered a purely rural activity is now thriving on rooftops, in community gardens, and even on balconies in the middle of bustling metropolitan areas.',
+'Honeybees play a critical role in our food supply. As pollinators, they transfer pollen from flower to flower, allowing plants to produce fruits, vegetables, and seeds. Scientists estimate that bees are responsible for pollinating about one-third of all the food humans eat. Without bees, many crops including almonds, blueberries, and cucumbers would fail to produce adequate yields. Despite their importance, honeybee populations have been declining dramatically. Habitat loss, pesticide use, and a parasitic mite called Varroa destructor have all contributed to what researchers call "colony collapse disorder" - a mysterious phenomenon in which entire bee colonies disappear. Urban beekeeping helps address this problem by creating new, protected environments where bees can thrive away from agricultural pesticides.',
+'Cities may seem like unlikely homes for bees, but they can actually offer several advantages. Urban areas often contain diverse plantings of flowers, trees, and gardens throughout the year. This variety provides bees with consistent sources of nectar and pollen across multiple seasons. Additionally, city temperatures tend to be slightly warmer than surrounding rural areas, which can extend the active season for urban hives.',
+'Of course, urban beekeeping does come with challenges. Beekeepers must follow local regulations, secure the consent of neighbors, and ensure their hives are properly maintained to prevent swarming. Education and training are essential; a poorly managed hive can become a public safety concern. Still, many cities are embracing the trend. New York, London, Paris, and Tokyo all have thriving beekeeping communities. By supporting urban bees, city dwellers can play an important role in protecting a species that the entire world depends on.'
+];
+var curPara=0;
+var startTime=null;
+var timerInterval=null;
+var paused=false;
+var pauseStart=null;
+var totalPauseMs=0;
+var paraStats=[];
+var advanceTimeout=null;
+var done=false;
+var totalErrors=0;
+var totalTyped=0;
+
+function getElapsedMs(){
+  if(!startTime)return 0;
+  var now=paused?pauseStart:Date.now();
+  return now-startTime-totalPauseMs;
+}
+
+function buildDots(){
+  var d=document.getElementById('paraDots');
+  var h='';
+  for(var i=0;i<4;i++){
+    var cls='pdot';
+    if(i<curPara)cls+=' done';
+    else if(i===curPara)cls+=' active';
+    h+='<div class="'+cls+'"></div>';
+  }
+  d.innerHTML=h;
+}
+
+function renderTarget(){
+  var target=PARAS[curPara];
+  var inp=document.getElementById('typeInput');
+  var typed=inp.value;
+  var html='';
+  for(var i=0;i<target.length;i++){
+    var ch=target[i]==='<'?'&lt;':target[i]==='>'?'&gt;':target[i]==='&'?'&amp;':target[i];
+    if(i<typed.length){
+      if(typed[i]===target[i])html+='<span class="c-correct">'+ch+'</span>';
+      else html+='<span class="c-wrong">'+ch+'</span>';
+    } else if(i===typed.length){
+      html+='<span class="c-current">'+ch+'</span>';
+    } else {
+      html+='<span class="c-pending">'+ch+'</span>';
+    }
+  }
+  document.getElementById('targetDisplay').innerHTML=html;
+}
+
+function updateStats(){
+  var target=PARAS[curPara];
+  var inp=document.getElementById('typeInput');
+  var typed=inp.value;
+  var ms=getElapsedMs();
+  var secs=Math.floor(ms/1000);
+  var mins=Math.floor(secs/60);
+  var s=secs%60;
+  document.getElementById('timeVal').textContent=mins+':'+(s<10?'0':'')+s;
+  if(typed.length>0&&ms>0){
+    var wpm=Math.round((typed.length/5)/(ms/60000));
+    document.getElementById('wpmVal').textContent=wpm;
+  }
+  var correct=0;
+  for(var i=0;i<Math.min(typed.length,target.length);i++){
+    if(typed[i]===target[i])correct++;
+  }
+  var acc=typed.length>0?Math.round(correct/typed.length*100):100;
+  document.getElementById('accVal').textContent=acc+'%';
+}
+
+function handleInput(){
+  if(paused||done)return;
+  var inp=document.getElementById('typeInput');
+  var typed=inp.value;
+  var target=PARAS[curPara];
+  if(typed.length>0&&!startTime){
+    startTime=Date.now();
+    timerInterval=setInterval(updateStats,200);
+  }
+  totalTyped=Math.max(totalTyped,typed.length);
+  renderTarget();
+  updateStats();
+  if(typed===target){
+    paraComplete();
+  }
+}
+
+function paraComplete(){
+  done=true;
+  clearInterval(timerInterval);
+  var ms=getElapsedMs();
+  var inp=document.getElementById('typeInput');
+  var typed=inp.value;
+  var correct=0;
+  for(var i=0;i<typed.length;i++){if(typed[i]===PARAS[curPara][i])correct++;}
+  var acc=Math.round(correct/typed.length*100);
+  var wpm=Math.round((typed.length/5)/(ms/60000));
+  paraStats.push({wpm:wpm,acc:acc,ms:ms,para:curPara+1});
+  inp.classList.add('complete');
+  document.getElementById('pauseBtn').disabled=true;
+  var am=document.getElementById('advanceMsg');
+  am.style.display='block';
+  advanceTimeout=setTimeout(function(){
+    am.style.display='none';
+    curPara++;
+    if(curPara>=PARAS.length){showResults();}
+    else{initPara();}
+  },800);
+}
+
+function initPara(){
+  done=false;
+  startTime=null;
+  totalPauseMs=0;
+  pauseStart=null;
+  paused=false;
+  clearInterval(timerInterval);
+  clearTimeout(advanceTimeout);
+  var inp=document.getElementById('typeInput');
+  inp.value='';
+  inp.classList.remove('complete');
+  inp.disabled=false;
+  document.getElementById('paraLabel').textContent='Paragraph '+(curPara+1)+' / 4';
+  document.getElementById('wpmVal').textContent='-';
+  document.getElementById('accVal').textContent='-';
+  document.getElementById('timeVal').textContent='0:00';
+  document.getElementById('advanceMsg').style.display='none';
+  document.getElementById('pauseBtn').textContent='Pause';
+  document.getElementById('pauseBtn').disabled=false;
+  buildDots();
+  renderTarget();
+  focusInput();
+}
+
+function focusInput(){
+  if(!done&&!paused)document.getElementById('typeInput').focus();
+}
+
+function retryPara(){
+  if(done&&paraStats.length>0&&paraStats[paraStats.length-1].para===curPara+1){
+    paraStats.pop();
+  }
+  clearTimeout(advanceTimeout);
+  clearInterval(timerInterval);
+  initPara();
+}
+
+function togglePause(){
+  if(done)return;
+  var btn=document.getElementById('pauseBtn');
+  var inp=document.getElementById('typeInput');
+  if(!paused){
+    paused=true;
+    pauseStart=Date.now();
+    clearInterval(timerInterval);
+    inp.disabled=true;
+    btn.textContent='Resume';
+  } else {
+    totalPauseMs+=Date.now()-pauseStart;
+    pauseStart=null;
+    paused=false;
+    inp.disabled=false;
+    inp.focus();
+    if(startTime)timerInterval=setInterval(updateStats,200);
+    btn.textContent='Pause';
+  }
+}
+
+function showResults(){
+  document.getElementById('mainArea').style.display='none';
+  var ra=document.getElementById('resultsArea');
+  ra.style.display='block';
+  var totalMs=0,totalWpmSum=0,totalAccSum=0;
+  var rows='';
+  for(var i=0;i<paraStats.length;i++){
+    var ps=paraStats[i];
+    totalMs+=ps.ms;
+    totalWpmSum+=ps.wpm;
+    totalAccSum+=ps.acc;
+    var s=Math.floor(ps.ms/1000);
+    rows+='<tr><td>P'+ps.para+'</td><td>'+ps.wpm+'</td><td>'+ps.acc+'%</td><td>'+Math.floor(s/60)+':'+(s%60<10?'0':'')+(s%60)+'</td></tr>';
+  }
+  document.getElementById('resBody').innerHTML=rows;
+  var totalChars=PARAS.reduce(function(a,b){return a+b.length;},0);
+  var overallWpm=Math.round((totalChars/5)/(totalMs/60000));
+  var avgAcc=Math.round(totalAccSum/paraStats.length);
+  var totalSecs=Math.floor(totalMs/1000);
+  var totalTimeStr=Math.floor(totalSecs/60)+':'+(totalSecs%60<10?'0':'')+(totalSecs%60);
+  document.getElementById('finalStat').textContent='Total Time: '+totalTimeStr+' | Overall WPM: '+overallWpm+' | Avg Accuracy: '+avgAcc+'%';
+}
+
+function restartAll(){
+  curPara=0;
+  paraStats=[];
+  document.getElementById('resultsArea').style.display='none';
+  document.getElementById('mainArea').style.display='block';
+  initPara();
+}
+
+document.getElementById('typeInput').addEventListener('input',handleInput);
+document.getElementById('typeInput').addEventListener('keydown',function(e){
+  if(e.key==='Tab'){e.preventDefault();}
+});
+
+window.focusInput=focusInput;
+window.retryPara=retryPara;
+window.togglePause=togglePause;
+window.restartAll=restartAll;
+buildDots();
+renderTarget();
+})();
+</script>
+</body>
+</html>

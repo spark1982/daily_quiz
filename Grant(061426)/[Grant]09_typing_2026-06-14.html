@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Typing</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;margin:0 auto;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px 0;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;background:#fff;}
+.para-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.para-tab{padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-size:0.88rem;font-weight:600;}
+.para-tab.done{background:#1D9E75;color:#fff;}
+.para-tab.active{background:#185FA5;color:#fff;}
+.para-tab.pending{background:#e8edf4;color:#555;}
+.stats-row{display:flex;gap:14px;margin-bottom:10px;flex-wrap:wrap;}
+.stat-box{background:#f5f7fa;border-radius:8px;padding:8px 14px;font-size:0.88rem;color:#555;}
+.stat-box span{display:block;font-size:1.1rem;font-weight:700;color:#111;}
+.passage-card{background:#f5f7fa;border-radius:10px;padding:14px;margin-bottom:10px;line-height:2;font-size:0.97rem;word-break:break-all;}
+.input-card{background:#f5f7fa;border-radius:10px;padding:10px;}
+#typing-input{width:100%;border:2px solid #d7dde6;border-radius:8px;padding:10px;font-size:0.97rem;font-family:inherit;resize:none;min-height:80px;line-height:1.6;background:#fff;color:#111;}
+#typing-input:focus{outline:none;border-color:#185FA5;}
+.done-banner{background:#E1F5EE;border:2px solid #1D9E75;border-radius:10px;padding:14px;margin:10px 0;text-align:center;display:none;}
+.done-banner .wpm-big{font-size:1.6rem;font-weight:800;color:#1D9E75;}
+.done-banner .acc-big{font-size:1.1rem;color:#085041;margin-top:4px;}
+.btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.btn-row button{padding:10px 18px;border-radius:20px;border:none;cursor:pointer;font-size:0.9rem;font-weight:600;}
+.btn-retry{background:#e8edf4;color:#185FA5;}
+.btn-next{background:#185FA5;color:#fff;}
+.btn-copy{background:#1D9E75;color:#fff;}
+.btn-clear{background:#e8edf4;color:#E24B4A;}
+.history-card{background:#f5f7fa;border-radius:8px;padding:10px 14px;margin:6px 0;font-size:0.88rem;color:#444;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-14</div>
+<div class="title-hd">[Grant] Typing</div>
+<div class="instruction">Type each paragraph exactly as shown above.</div>
+
+<div class="para-tabs" id="para-tabs"></div>
+
+<div class="stats-row">
+  <div class="stat-box">WPM<span id="stat-wpm">0</span></div>
+  <div class="stat-box">Accuracy<span id="stat-acc">100%</span></div>
+  <div class="stat-box">Time<span id="stat-time">0s</span></div>
+  <div class="stat-box">Errors<span id="stat-err">0</span></div>
+</div>
+
+<div class="passage-card" id="passage-display"></div>
+<div class="input-card">
+  <textarea id="typing-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Click here and start typing..."></textarea>
+</div>
+
+<div class="done-banner" id="done-banner">
+  <div class="wpm-big" id="done-wpm"></div>
+  <div class="acc-big" id="done-acc"></div>
+  <div id="done-errors" style="font-size:0.88rem;color:#085041;margin-top:4px;"></div>
+</div>
+
+<div class="btn-row">
+  <button class="btn-retry" onclick="retryPara()">Retry</button>
+  <button class="btn-next" onclick="nextPara()">Next Paragraph</button>
+  <button class="btn-copy" onclick="copyHistory()">Copy Results</button>
+  <button class="btn-clear" onclick="openClearModal()">Clear History</button>
+</div>
+
+<div id="history-area" style="margin-top:16px;"></div>
+
+<div class="modal-overlay" id="clearModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Clear all history? This cannot be undone.</p>
+    <button onclick="confirmClear()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Clear</button>
+    <button onclick="closeClearModal()" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var HIST_KEY='quiz_granttyping_v2';
+
+var paragraphs=[
+  "Bioluminescence is the ability of living things to produce their own light, and it ranks among the most spectacular phenomena in the natural world. Deep in the ocean, where sunlight cannot reach, countless creatures glow in shades of blue, green, and red. On warm summer evenings, fireflies transform meadows into natural light shows. Even certain types of fungi cast a soft glow across dark forest floors. Far from being a mere curiosity, bioluminescence is a biological tool that organisms have evolved for specific purposes over millions of years.",
+  "At the chemical level, bioluminescence results from a reaction between a molecule called luciferin and an enzyme called luciferase. When these two compounds interact in the presence of oxygen, energy is released as visible light rather than heat. Unlike a light bulb, which wastes much of its energy as heat, a bioluminescent organism converts nearly all of its chemical energy directly into cold, bright light. Scientists call this kind of efficient light production 'cold light.' This high efficiency explains why bioluminescence has evolved independently in dozens of unrelated species, from deep-sea fish to land-dwelling insects.",
+  "Scientists have identified at least three main purposes that bioluminescence serves in nature. First, many deep-sea creatures use light to attract prey, dangling glowing lures near their mouths in the pitch-black depths. Second, some species use bioluminescence for communication. Fireflies, for example, flash distinctive patterns to attract mates of the same species. Third, several marine organisms produce sudden bright flashes to startle or confuse predators, buying precious seconds to escape. The same remarkable ability thus serves very different survival strategies depending on the organism.",
+  "Humans have learned to harness bioluminescence for remarkable scientific purposes. Researchers insert the luciferase gene into bacteria or cancer cells, causing those cells to glow so they can be tracked under a microscope. Medical scientists use bioluminescent markers to study how diseases spread through the body without invasive surgery. Environmental scientists have also used bioluminescent bacteria as pollution detectors, since these organisms dim or stop glowing when exposed to toxic chemicals. As scientists continue to unlock the secrets of nature's living light, new applications in medicine, environmental science, and engineering continue to emerge."
+];
+
+var state={
+  curPara:0,
+  started:false,
+  finished:false,
+  startTime:null,
+  elapsedMs:0,
+  errors:0,
+  errorPositions:{}
+};
+var timerInterval=null;
+var advanceTimeout=null;
+var paraStats=[];
+var inp=document.getElementById('typing-input');
+
+function loadHistory(){try{return JSON.parse(localStorage.getItem(HIST_KEY)||'[]');}catch(e){return[];}}
+function saveHistory(h){localStorage.setItem(HIST_KEY,JSON.stringify(h));}
+
+function initPara(){
+  state.started=false;state.finished=false;state.startTime=null;state.elapsedMs=0;state.errors=0;state.errorPositions={};
+  clearInterval(timerInterval);clearTimeout(advanceTimeout);
+  timerInterval=null;advanceTimeout=null;
+  inp.value='';inp.readOnly=false;
+  document.getElementById('done-banner').style.display='none';
+  renderPassage();updateStats();renderTabs();autoResize();
+}
+
+function startTimer(){state.started=true;state.startTime=Date.now();timerInterval=setInterval(updateStats,200);}
+
+function autoResize(){inp.style.height='auto';inp.style.height=Math.max(80,inp.scrollHeight)+'px';}
+
+function renderPassage(){
+  var target=paragraphs[state.curPara];
+  var typed=inp.value;
+  var html='';
+  for(var i=0;i<target.length;i++){
+    var ch=escHtml(target[i]);
+    if(i<typed.length){
+      if(typed[i]===target[i]){
+        html+='<span style="color:#1D9E75;">'+ch+'</span>';
+      } else {
+        html+='<span style="color:#E24B4A;">'+ch+'</span>';
+      }
+    } else if(i===typed.length){
+      html+='<span style="border-bottom:2px solid #185FA5;color:#bbb;">'+ch+'</span>';
+    } else {
+      html+='<span style="color:#bbb;">'+ch+'</span>';
+    }
+  }
+  document.getElementById('passage-display').innerHTML=html;
+}
+
+function updateStats(){
+  var target=paragraphs[state.curPara];
+  var typed=inp.value;
+  var elapsed=state.started?(state.finished?state.elapsedMs:Date.now()-state.startTime):0;
+  var secs=Math.floor(elapsed/1000);
+  var mins=elapsed/60000;
+  var wpm=mins>0?Math.round((typed.length/5)/mins):0;
+  var errCount=0;
+  for(var i=0;i<typed.length;i++){if(typed[i]!==target[i])errCount++;}
+  var acc=typed.length>0?Math.round(((typed.length-errCount)/typed.length)*100):100;
+  document.getElementById('stat-wpm').textContent=wpm;
+  document.getElementById('stat-acc').textContent=acc+'%';
+  document.getElementById('stat-time').textContent=secs+'s';
+  document.getElementById('stat-err').textContent=errCount;
+}
+
+function finishPara(){
+  clearInterval(timerInterval);
+  state.elapsedMs=Date.now()-state.startTime;
+  state.finished=true;
+  inp.readOnly=true;
+  var target=paragraphs[state.curPara];
+  var typed=inp.value;
+  var errCount=0;
+  for(var i=0;i<typed.length;i++){if(typed[i]!==target[i])errCount++;}
+  var mins=state.elapsedMs/60000;
+  var wpm=mins>0?Math.round((typed.length/5)/mins):0;
+  var acc=typed.length>0?Math.round(((typed.length-errCount)/typed.length)*100):100;
+  var record={para:state.curPara+1,wpm:wpm,acc:acc,errors:errCount,timeMs:state.elapsedMs,date:new Date().toLocaleTimeString()};
+  paraStats.push(record);
+  var banner=document.getElementById('done-banner');
+  document.getElementById('done-wpm').textContent=wpm+' WPM';
+  document.getElementById('done-acc').textContent='Accuracy: '+acc+'%';
+  document.getElementById('done-errors').textContent='Errors: '+errCount;
+  banner.style.display='block';
+  var h=loadHistory();h.push(record);saveHistory(h);
+  renderTabs();renderHistory();updateStats();
+}
+
+function renderTabs(){
+  var html='';
+  for(var i=0;i<paragraphs.length;i++){
+    var isDone=paraStats.some(function(r){return r.para===i+1;});
+    var cls=isDone?'done':i===state.curPara?'active':'pending';
+    html+='<button class="para-tab '+cls+'" onclick="jumpPara('+i+')">Para '+(i+1)+'</button>';
+  }
+  document.getElementById('para-tabs').innerHTML=html;
+}
+window.jumpPara=function(i){state.curPara=i;initPara();};
+
+function renderHistory(){
+  var h=loadHistory();
+  if(!h.length){document.getElementById('history-area').innerHTML='';return;}
+  var html='<div style="font-weight:700;color:#555;font-size:0.88rem;margin-bottom:6px;">Session History</div>';
+  for(var i=h.length-1;i>=0;i--){
+    var r=h[i];html+='<div class="history-card">Para '+r.para+' &mdash; '+r.wpm+' WPM &nbsp; '+r.acc+'% Accuracy &nbsp; '+r.errors+' errors &nbsp; <span style="color:#888;">'+r.date+'</span></div>';
+  }
+  document.getElementById('history-area').innerHTML=html;
+}
+
+function retryPara(){
+  if(state.finished&&paraStats.length>0&&paraStats[paraStats.length-1].para===state.curPara+1){
+    paraStats.pop();
+  }
+  clearTimeout(advanceTimeout);clearInterval(timerInterval);
+  initPara();
+}
+function nextPara(){
+  if(state.curPara<paragraphs.length-1){state.curPara++;initPara();}
+}
+function copyHistory(){
+  var h=loadHistory();
+  if(!h.length){return;}
+  var lines=['[Grant] Typing Results (2026-06-14)'];
+  var totalTime=0,totalWpm=0;
+  for(var i=0;i<h.length;i++){
+    lines.push('Para '+h[i].para+': '+h[i].wpm+' WPM, '+h[i].acc+'% accuracy, '+h[i].errors+' errors');
+    totalTime+=h[i].timeMs;totalWpm+=h[i].wpm;
+  }
+  if(h.length>0){lines.push('Avg WPM: '+Math.round(totalWpm/h.length)+' | Total Time: '+Math.floor(totalTime/1000)+'s');}
+  var txt=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fbCopy(txt);});}else{fbCopy(txt);}
+}
+function fbCopy(t){var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openClearModal(){document.getElementById('clearModal').style.display='flex';}
+function closeClearModal(){document.getElementById('clearModal').style.display='none';}
+function confirmClear(){closeClearModal();saveHistory([]);renderHistory();}
+function escHtml(s){var m={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'};return s.replace(/[&<>"]/g,function(c){return m[c]||c;});}
+
+inp.addEventListener('input',function(){
+  var target=paragraphs[state.curPara];
+  if(state.finished){inp.value=inp.value.slice(0,target.length);return;}
+  if(inp.value.length>target.length)inp.value=inp.value.slice(0,target.length);
+  if(!state.started&&inp.value.length>0)startTimer();
+  autoResize();renderPassage();updateStats();
+  if(inp.value.length>=target.length)finishPara();
+});
+
+window.retryPara=retryPara;
+window.nextPara=nextPara;
+window.copyHistory=copyHistory;
+window.openClearModal=openClearModal;
+window.closeClearModal=closeClearModal;
+window.confirmClear=confirmClear;
+
+renderHistory();
+initPara();
+})();
+</script>
+</body>
+</html>

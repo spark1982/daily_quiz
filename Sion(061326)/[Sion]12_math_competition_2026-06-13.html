@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Math Competition</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;margin:0 auto;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#7b61ff;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.tag-badge{display:inline-block;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:8px;color:#fff;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.q-text{font-size:0.97rem;font-weight:600;color:#111;margin-bottom:12px;line-height:1.9;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.7;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:14px 16px;margin-top:10px;font-size:0.9rem;color:#333;display:none;line-height:1.9;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#7b61ff;}
+.next-btn{background:#7b61ff;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#7b61ff;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+
+/* Math fraction */
+.fr{display:inline-block;vertical-align:middle;text-align:center;font-style:italic;}
+.fr .fn,.fr .fd{display:block;font-size:0.78em;line-height:1.25;padding:0 3px;}
+.fr .fb{display:block;border-top:1.5px solid currentColor;min-width:14px;}
+
+/* Display math block */
+.mblock{text-align:center;margin:10px 0;font-size:1.05em;font-style:italic;line-height:2;}
+
+/* Case labels in explanations */
+.case{font-weight:700;font-style:normal;color:#444;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-13</div>
+<div class="title-hd">[Sion] Math Competition</div>
+<div class="instruction">Choose the best answer. Explanations appear on wrong answers.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 10</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #7b61ff;border-radius:14px;background:#fff;color:#7b61ff;cursor:pointer;white-space:nowrap;">Jump ▾</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="tag-badge" id="q-tag"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#7b61ff;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#7b61ff;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_sionmathcomp_10_20260613_v3';
+var ATT_KEY='quiz_sionmathcomp_att_20260613_v3';
+var TAG_COLORS={'Ch. 1':'#7b61ff','Ch. 2':'#185FA5'};
+
+// fraction helper
+function fr(n,d){return '<span class="fr"><span class="fn">'+n+'</span><span class="fb"></span><span class="fd">'+d+'</span></span>';}
+
+var qs=[
+{tag:'Ch. 1',
+ q:'The sequence 1001, 1002, 1003, … is defined so that each term after the third equals the sum of the two terms before the previous term, minus the previous term. For example, the 4th term is 1001&nbsp;+&nbsp;1002&nbsp;&minus;&nbsp;1003&nbsp;=&nbsp;1000.<br><br>What is the 1000th term?',
+ opts:['0','2','4','8'],
+ ci:2,
+ exp:'Recurrence: <i>a<sub>n</sub> = a<sub>n&minus;3</sub> + a<sub>n&minus;2</sub> &minus; a<sub>n&minus;1</sub></i><br><br>Even-indexed terms: <i>a<sub>2</sub></i> = 1002,&ensp;<i>a<sub>4</sub></i> = 1000,&ensp;<i>a<sub>6</sub></i> = 998, &hellip;<br><br>Pattern: <i>a<sub>2k</sub> = 1004 &minus; 2k</i><br><br>For <i>k</i> = 500:&ensp;<i>a<sub>1000</sub></i> = 1004 &minus; 1000 = <strong>4</strong>'},
+
+{tag:'Ch. 1',
+ q:'A basket of fruit contains only apples, bananas, and oranges. What is the smallest number of pieces of fruit needed to guarantee at least 5 apples, at least 7 bananas, or at least 4 oranges?',
+ opts:['13','14','15','16'],
+ ci:1,
+ exp:'Worst case without satisfying any condition:<br>4 apples + 6 bananas + 3 oranges = <strong>13</strong> pieces<br><br>With 13 pieces, no condition need be met. One more piece (total <strong>14</strong>) forces at least one condition.'},
+
+{tag:'Ch. 1',
+ q:'Three piles contain 20, 7, and 9 stones. Each move: choose two piles and transfer one stone from each to the third pile.<br><br>Is it possible to reach 12, 12, 12?',
+ opts:['Yes, it is possible',
+       'No, it is impossible',
+       'Yes, but only after more than 20 moves',
+       'No, because no pile is a multiple of 4'],
+ ci:1,
+ exp:'Each move adds +2 to one pile and &minus;1 to the others. Since +2 &equiv; &minus;1 (mod 3), all three residues shift by &minus;1 each move.<br><br>Initial residues mod 3:&ensp;20 &equiv; 2,&ensp;7 &equiv; 1,&ensp;9 &equiv; 0<br>After <i>k</i> moves:&ensp;(2&minus;<i>k</i>,&ensp;1&minus;<i>k</i>,&ensp;&minus;<i>k</i>) mod 3<br><br>For all to be 0 mod 3 simultaneously: need <i>k</i> &equiv; 2, <i>k</i> &equiv; 1, and <i>k</i> &equiv; 0 &mdash; impossible.'},
+
+{tag:'Ch. 1',
+ q:'Two players alternate turns removing 1, 2, 3, or 4 chips from a pile of 30 chips. The player who takes the last chip wins.<br><br>With perfect play, who wins?',
+ opts:['First player always wins',
+       'Second player always wins',
+       'The player who moves second wins only with a large pile',
+       'It depends on the opening move'],
+ ci:2,
+ exp:'P-positions (positions where the current player loses with perfect play) are multiples of 5:<br><div class="mblock">0,&ensp;5,&ensp;10,&ensp;15,&ensp;20,&ensp;25,&ensp;30</div>From any multiple of 5, removing <i>k</i> chips leaves a non-multiple. Opponent removes 5&minus;<i>k</i> to restore it.<br><br>30 is a P-position &mdash; the <strong>second player always wins</strong>.'},
+
+{tag:'Ch. 1',
+ q:'A particle starts at (0,&nbsp;0). Each step it moves one unit up, down, left, or right. After exactly 201 steps, can it be at (100,&nbsp;100)?',
+ opts:['Yes, it is possible',
+       'No, it is impossible',
+       'Yes, but only using a specific route',
+       'No, because 201 steps is one too many'],
+ ci:1,
+ exp:'Parity invariant: each step changes <i>x</i>+<i>y</i> by &plusmn;1, so its parity alternates.<br><br>Start: <i>x</i>+<i>y</i> = 0 (even).<br>After 201 steps (odd count): <i>x</i>+<i>y</i> must be odd.<br><br>Target: 100+100 = 200 (even). Contradiction &mdash; <strong>impossible</strong>.'},
+
+{tag:'Ch. 2',
+ q:'Find the sum of all real values of <i>x</i> satisfying:<div class="mblock">('+fr('2','3')+'<i>x</i>&#x00B2; &minus; <i>x</i> &minus; '+fr('2','3')+')<sup style="font-size:0.72em;font-style:italic;">x&#x00B2;&minus;11x+28</sup> = 1</div>',
+ opts:[fr('23','2'), fr('25','2'), fr('27','2'), '14'],
+ ci:2,
+ exp:'<i>A<sup>B</sup></i> = 1 in three cases:<br><br><span class="case">Case 1 &mdash; B = 0 and A &ne; 0:</span><br><i>x</i>&#x00B2;&minus;11<i>x</i>+28 = (<i>x</i>&minus;4)(<i>x</i>&minus;7) = 0 &Rightarrow; <i>x</i> = 4, 7 (both have A &ne; 0) ✓<br><br><span class="case">Case 2 &mdash; A = 1:</span><br>'+fr('2','3')+'<i>x</i>&#x00B2;&minus;<i>x</i>&minus;'+fr('2','3')+' = 1 &Rightarrow; (2<i>x</i>&minus;5)(<i>x</i>+1) = 0 &Rightarrow; <i>x</i> = '+fr('5','2')+', &minus;1 (both have B &ne; 0) ✓<br><br><span class="case">Case 3 &mdash; A = &minus;1 and B even:</span><br>(2<i>x</i>&minus;1)(<i>x</i>&minus;1) = 0 &Rightarrow; <i>x</i> = '+fr('1','2')+' (B not integer) or <i>x</i> = 1 (B = 18, even) ✓<br><br>All solutions: 4,&ensp;7,&ensp;'+fr('5','2')+',&ensp;&minus;1,&ensp;1<div class="mblock">Sum = 4+7+'+fr('5','2')+'&minus;1+1 = <strong>'+fr('27','2')+'</strong></div>'},
+
+{tag:'Ch. 2',
+ q:'Positive integers <i>x</i> and <i>y</i> satisfy <i>x</i> &lt; <i>y</i> and<div class="mblock">'+fr('1','<i>x</i>')+' + '+fr('1','<i>y</i>')+' = '+fr('3','10')+'</div>What is the sum of all possible values of <i>x</i>?',
+ opts:['4','7','9','11'],
+ ci:2,
+ exp:'Rearranging: <i>y</i> = '+fr('10<i>x</i>','3<i>x</i>&minus;10')+'. Need 3<i>x</i>&minus;10 &gt; 0 &Rightarrow; <i>x</i> &ge; 4.<br><br><i>x</i> = 4: <i>y</i> = 20 &gt; 4 ✓<br><i>x</i> = 5: <i>y</i> = 10 &gt; 5 ✓<br><i>x</i> = 6: <i>y</i> = 7.5 (not integer) ✗<br><i>x</i> &ge; 10: <i>y</i> &le; <i>x</i> ✗<br><br>Sum of valid values = 4 + 5 = <strong>9</strong>'},
+
+{tag:'Ch. 2',
+ q:'How many ordered pairs (<i>x</i>,&nbsp;<i>y</i>) of positive integers satisfy <i>xy</i>&nbsp;+&nbsp;2<i>x</i>&nbsp;&minus;&nbsp;3<i>y</i>&nbsp;=&nbsp;15?',
+ opts:['1','2','3','4'],
+ ci:1,
+ exp:'Factor by grouping:<div class="mblock"><i>xy</i>+2<i>x</i>&minus;3<i>y</i>&minus;6 = 9 &nbsp;&Rightarrow;&nbsp; (<i>x</i>&minus;3)(<i>y</i>+2) = 9</div>Factor pairs with <i>y</i>+2 &ge; 3:<br>(<i>x</i>&minus;3, <i>y</i>+2) = (1, 9) &Rightarrow; (<i>x</i>, <i>y</i>) = (4, 7) ✓<br>(<i>x</i>&minus;3, <i>y</i>+2) = (3, 3) &Rightarrow; (<i>x</i>, <i>y</i>) = (6, 1) ✓<br>(<i>x</i>&minus;3, <i>y</i>+2) = (9, 1) &Rightarrow; <i>y</i> = &minus;1 ✗<br><br>Answer: <strong>2</strong> ordered pairs.'},
+
+{tag:'Ch. 2',
+ q:'Find the sum of all real numbers <i>x</i> satisfying:<div class="mblock">(<i>x</i>&#x00B2;&minus;7<i>x</i>+11)<sup style="font-size:0.72em;font-style:italic;">x&#x00B2;&minus;9x+20</sup> = 1</div>',
+ opts:['10','12','14','16'],
+ ci:2,
+ exp:'<i>A<sup>B</sup></i> = 1 in three cases:<br><br><span class="case">Case 1 &mdash; B = 0, A &ne; 0:</span><br>(<i>x</i>&minus;4)(<i>x</i>&minus;5) = 0 &Rightarrow; <i>x</i> = 4 or 5<br>A(4) = &minus;1 &ne; 0 ✓&ensp;&ensp;A(5) = 1 &ne; 0 ✓<br><br><span class="case">Case 2 &mdash; A = 1:</span><br>(<i>x</i>&minus;2)(<i>x</i>&minus;5) = 0 &Rightarrow; <i>x</i> = 2 or 5; &ensp;B(2) = 6 &ne; 0 ✓; &ensp;<i>x</i>=5 already counted<br><br><span class="case">Case 3 &mdash; A = &minus;1, B even:</span><br>(<i>x</i>&minus;3)(<i>x</i>&minus;4) = 0 &Rightarrow; <i>x</i> = 3 or 4; &ensp;B(3) = 2 (even) ✓; &ensp;<i>x</i>=4 already counted<br><br>Distinct solutions: 2, 3, 4, 5<div class="mblock">Sum = 2+3+4+5 = <strong>14</strong></div>'},
+
+{tag:'Ch. 2',
+ q:'Suppose <i>a</i>+<i>b</i>+<i>c</i> = '+fr('1','<i>a</i>')+'+'+fr('1','<i>b</i>')+'+'+fr('1','<i>c</i>')+' = 7 and <i>abc</i> = 1.<br><br>Compute <i>a</i>&#x00B3;+<i>b</i>&#x00B3;+<i>c</i>&#x00B3;.',
+ opts:['53','150','199','216'],
+ ci:2,
+ exp:'Since <i>abc</i> = 1:<div class="mblock">'+fr('1','<i>a</i>')+'+'+fr('1','<i>b</i>')+'+'+fr('1','<i>c</i>')+' = '+fr('<i>ab</i>+<i>bc</i>+<i>ca</i>','<i>abc</i>')+' = <i>ab</i>+<i>bc</i>+<i>ca</i> = 7</div><i>a</i>&#x00B2;+<i>b</i>&#x00B2;+<i>c</i>&#x00B2; = (<i>a</i>+<i>b</i>+<i>c</i>)&#x00B2;&minus;2(<i>ab</i>+<i>bc</i>+<i>ca</i>) = 49&minus;14 = 35<br><br>Identity: <i>a</i>&#x00B3;+<i>b</i>&#x00B3;+<i>c</i>&#x00B3;&minus;3<i>abc</i> = (<i>a</i>+<i>b</i>+<i>c</i>)(<i>a</i>&#x00B2;+<i>b</i>&#x00B2;+<i>c</i>&#x00B2;&minus;<i>ab</i>&minus;<i>bc</i>&minus;<i>ca</i>)<div class="mblock"><i>a</i>&#x00B3;+<i>b</i>&#x00B3;+<i>c</i>&#x00B3; = 3(1) + 7(35&minus;7) = 3+196 = <strong>199</strong></div>'}
+];
+
+var state={};
+function loadState(){try{var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');if(s&&typeof s.cur==='number'&&s.answers&&s.shuffles){state=s;}else{resetState();}}catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){if(!state.shuffles[i]){var a=[0,1,2,3];for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}state.shuffles[i]=a;}return state.shuffles[i];}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAttempts(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function updateNav(){var ans=Object.keys(state.answers).length;document.getElementById('nav-count').textContent=ans+' / '+qs.length;document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';renderDots();}
+function toggleJump(){var p=document.getElementById('dot-panel');var b=document.getElementById('jump-btn');if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}else{p.style.display='none';b.textContent='Jump ▾';}}
+function renderDots(){var p=document.getElementById('dot-panel');if(p.style.display==='none')return;var h='';for(var i=0;i<qs.length;i++){var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===getCSI(i)?'#7b61ff':'#E24B4A');h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';}if(Object.keys(state.answers).length===qs.length){h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#7b61ff;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';}p.innerHTML=h;}
+function goToQ(i){state.cur=i;state.showResults=false;saveState();render();document.getElementById('dot-panel').style.display='none';document.getElementById('jump-btn').textContent='Jump ▾';}
+function showResults(){state.showResults=true;localStorage.setItem(ATT_KEY,loadAttempts()+1);saveState();render();}
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAttempts();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';document.getElementById('resultsArea').style.display='none';updateNav();
+  var i=state.cur;var q=qs[i];
+  var tb=document.getElementById('q-tag');tb.textContent=q.tag;tb.style.background=TAG_COLORS[q.tag]||'#555';
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-text').innerHTML=q.q;
+  var sh=getShuffle(i);var ans=state.answers[i];var csi=getCSI(i);
+  var html='';
+  for(var s=0;s<4;s++){var oi=sh[s];var cls='opt-btn';var dis='';if(ans!==undefined){dis='disabled';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}html+='<button class="'+cls+'" '+dis+' onclick="pick('+i+','+s+')">'+ q.opts[oi] +'</button>';}
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');
+  if(ans!==undefined&&ans!==csi){eb.innerHTML=q.exp;eb.style.display='block';}else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';document.getElementById('resultsArea').style.display='block';updateNav();
+  var c=0,w=0,sk=0;for(var i=0;i<qs.length;i++){if(state.answers[i]===undefined)sk++;else if(state.answers[i]===getCSI(i))c++;else w++;}
+  document.getElementById('results-summary').innerHTML='<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';for(var i=0;i<qs.length;i++){var a=state.answers[i];var label,bg,tc;if(a===undefined){label='Skipped';bg='#d7dde6';tc='#555';}else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}else{label='Wrong';bg='#FCEBEB';tc='#501313';}html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.88rem;font-weight:600;color:#333;">Q'+(i+1)+' &mdash; '+escHtml(qs[i].tag)+'</span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';}
+  document.getElementById('results-cards').innerHTML=html;
+}
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){if(dir===1&&state.cur===qs.length-1){showResults();return;}state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));saveState();render();}
+function retryWrong(){var first=-1;for(var i=0;i<qs.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){if(first===-1)first=i;delete state.answers[i];}}if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}}
+function copyRes(){var lines=['[Sion] Math Competition 2026-06-13'];for(var i=0;i<qs.length;i++){var a=state.answers[i];lines.push('Q'+(i+1)+' ('+qs[i].tag+'): '+(a===undefined?'Skipped':a===getCSI(i)?'Correct':'Wrong'));}var txt=lines.join('\n');if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fb(txt);});}else{fb(txt);}}
+function fb(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;window.showResults=showResults;
+window.retryWrong=retryWrong;window.copyRes=copyRes;window.openFreshModal=openFreshModal;window.confirmFresh=confirmFresh;
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

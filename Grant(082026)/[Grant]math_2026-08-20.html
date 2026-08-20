@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Math</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+html{margin:0 auto;}
+.title-hd{text-align:center;font-size:1.5rem;font-weight:800;color:#1D9E75;padding:10px 0 2px;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:2px 12px 8px;background:#fff;}
+#attbar{text-align:center;font-size:0.8rem;color:#888;margin-bottom:6px;}
+
+.timer-bar{background:#fff;border-bottom:1px solid #d0dce8;padding:8px 12px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+.timer-setup{display:flex;align-items:center;gap:8px;font-size:0.85rem;color:#444;}
+.timer-setup label{font-weight:700;}
+.timer-setup input[type="number"]{width:56px;padding:5px 6px;border:1.5px solid #d0dce8;border-radius:6px;font-size:0.9rem;text-align:center;}
+.timer-start-btn{background:#185FA5;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;}
+.timer-running{display:flex;align-items:center;gap:8px;}
+.timer-label{font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.02em;}
+.timer-display{font-size:1.1rem;font-weight:900;color:#185FA5;font-family:'Courier New',monospace;letter-spacing:0.02em;}
+.timer-display.warn{color:#f5a623;}
+.timer-display.danger{color:#E24B4A;}
+
+#nav-bar{display:flex;align-items:center;gap:8px;margin:10px 0;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#1D9E75;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+
+.q-tag{display:inline-block;color:#fff;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:8px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:6px;}
+.box-ctx{background:#f0f4ff;border-left:4px solid #185FA5;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.92rem;color:#222;line-height:1.6;}
+.q-stem{font-size:1.05rem;font-weight:700;color:#111;margin-bottom:14px;line-height:1.5;}
+.ul{text-decoration:underline;font-style:normal;}
+
+.opt-btn{display:block;width:100%;padding:12px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.4;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.5;}
+
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#1D9E75;}
+.next-btn{background:#1D9E75;color:#fff;}
+.prev-btn:disabled{opacity:0.4;cursor:default;}
+
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:10px;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:340px;margin:20px;text-align:center;}
+
+.fr{display:inline-block;vertical-align:middle;text-align:center;font-style:italic;}
+.fr .fn,.fr .fd{display:block;font-size:0.78em;line-height:1.25;padding:0 3px;}
+.fr .fb{display:block;border-top:1.5px solid currentColor;min-width:14px;}
+.radical{display:inline-flex;align-items:center;vertical-align:middle;}
+.radical-index{font-size:0.65em;align-self:flex-start;margin-right:1px;line-height:1;}
+.radical-symbol{display:inline-flex;align-items:stretch;}
+.radical-symbol::before{content:"\221A";font-size:1.15em;line-height:1;position:relative;top:2px;}
+.radical-content{border-top:2.5px solid currentColor;padding:1px 4px 1px 2px;display:inline-block;line-height:1.3;}
+.mblock{text-align:center;margin:10px 0;font-size:1.05em;font-style:italic;line-height:2;}
+svg.qsvg{display:block;margin:8px auto;max-width:100%;}
+</style>
+</head>
+<body>
+
+<div class="title-hd">[Grant] Math</div>
+<div class="instruction">Choose the correct answer for each problem.</div>
+<div id="attbar"></div>
+
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="30"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">30:00</span>
+  </div>
+</div>
+
+<div id="nav-bar">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / N</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #1D9E75;border-radius:14px;background:#fff;color:#1D9E75;cursor:pointer;white-space:nowrap;">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div id="tagWrap"><span class="q-tag" id="q-tag-label"></span></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="box-ctx" id="box-ctx" style="display:none;"></div>
+  <div class="q-stem" id="q-stem"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" id="prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#1D9E75;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModalOriginal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:12px;">Start Fresh (Original Order)</button>
+  <button onclick="openFreshModalRandom()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh (Random Order)</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <h3 id="freshModalTitle" style="margin:0 0 10px;color:#185FA5;font-size:1.05rem;">Start Fresh?</h3>
+    <p id="freshModalText" style="font-size:0.95rem;color:#444;margin:0 0 16px;">All progress will be cleared.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="closeFreshModal()" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="clearAttModal">
+</div>
+
+<script>
+(function(){
+
+var QUIZ_KEY = "quiz_grantmath_20260820_v1";
+var ATT_KEY  = "quiz_grantmath_att_20260820_v1";
+var ORDER_KEY = "quiz_grantmath_20260820_v1_order_v1";
+var QUIZ_LABEL = "[Grant] Math - Results";
+var TAG_COLORS = {"Fractions": "#185FA5", "Decimals": "#7b61ff", "Integers": "#1D9E75", "Unit Conversion": "#f5a623", "Exponent Laws": "#E24B4A", "Linear Equations": "#0d9488"};
+
+function fr(n,d){ return '<span class="fr"><span class="fn">'+n+'</span><span class="fb"></span><span class="fd">'+d+'</span></span>'; }
+function mx(w,n,d){ return w+'&thinsp;'+fr(n,d); }
+function R(idx, inner){
+  var i = idx ? '<span class="radical-index">'+idx+'</span>' : '';
+  return '<span class="radical">'+i+'<span class="radical-symbol"><span class="radical-content">'+inner+'</span></span></span>';
+}
+
+var RAW_QUESTIONS = [{"tag": "Unit Conversion", "box": null, "stem": "A movie runs for 2 hours 48 minutes. How many minutes is that in total? (1 hour = 60 minutes)", "opts": ["168 minutes", "148 minutes", "128 minutes", "188 minutes"], "ci": 0, "exp": "Convert the hours to minutes first: 2 &times; 60 = 120 minutes. Then add the extra 48 minutes: 120 + 48 = 168 minutes."}, {"tag": "Integers", "box": null, "stem": "Evaluate: &minus;8 + 5 &times; (&minus;3) &minus; (&minus;12) = ?", "opts": ["&minus;11", "&minus;35", "1", "&minus;23"], "ci": 0, "exp": "Multiply first: 5 &times; (&minus;3) = &minus;15. Then &minus;8 + (&minus;15) = &minus;23. Subtracting a negative flips the sign: &minus;23 &minus; (&minus;12) = &minus;23 + 12 = &minus;11."}, {"tag": "Decimals", "box": null, "stem": "Evaluate: 7.25 &times; 2 &minus; 3.6 &divide; 0.9 = ?", "opts": ["10.5", "14.5", "7.25", "12.9"], "ci": 0, "exp": "Multiply and divide before subtracting: 7.25 &times; 2 = 14.5, and 3.6 &divide; 0.9 = 4. Then 14.5 &minus; 4 = 10.5."}, {"tag": "Unit Conversion", "box": null, "stem": "A recipe calls for 2.25 liters of water. How many milliliters is that? (1 liter = 1,000 milliliters)", "opts": ["2,250 mL", "225 mL", "22,500 mL", "2,025 mL"], "ci": 0, "exp": "Multiply by 1,000 to convert liters to milliliters: 2.25 &times; 1,000 = 2,250 mL."}, {"tag": "Fractions", "box": null, "stem": "Evaluate: 1&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">2</span></span> &times; <span class=\"fr\"><span class=\"fn\">7</span><span class=\"fb\"></span><span class=\"fd\">3</span></span> + 3&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">4</span></span> &minus; <span class=\"fr\"><span class=\"fn\">5</span><span class=\"fb\"></span><span class=\"fd\">8</span></span> = ?", "opts": ["6&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">8</span></span>", "5&thinsp;<span class=\"fr\"><span class=\"fn\">7</span><span class=\"fb\"></span><span class=\"fd\">8</span></span>", "6&thinsp;<span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">8</span></span>", "7&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">8</span></span>"], "ci": 0, "exp": "First multiply 1&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">2</span></span> &times; <span class=\"fr\"><span class=\"fn\">7</span><span class=\"fb\"></span><span class=\"fd\">3</span></span> = <span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">2</span></span> &times; <span class=\"fr\"><span class=\"fn\">7</span><span class=\"fb\"></span><span class=\"fd\">3</span></span> = <span class=\"fr\"><span class=\"fn\">21</span><span class=\"fb\"></span><span class=\"fd\">6</span></span> = 3&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">2</span></span>. Then 3&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">2</span></span> + 3&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">4</span></span> = 6&thinsp;<span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">4</span></span>, and 6&thinsp;<span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">4</span></span> &minus; <span class=\"fr\"><span class=\"fn\">5</span><span class=\"fb\"></span><span class=\"fd\">8</span></span> = 6&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">8</span></span>."}, {"tag": "Linear Equations", "box": null, "stem": "Solve for <i>x</i>: 2(3<i>x</i> + 1) = 4<i>x</i> + 18", "opts": ["<i>x</i> = 8", "<i>x</i> = 3.2", "<i>x</i> = 16", "<i>x</i> = 10"], "ci": 0, "exp": "Distribute the 2: 6<i>x</i> + 2 = 4<i>x</i> + 18. Subtract 4<i>x</i> from both sides: 2<i>x</i> + 2 = 18. Subtract 2: 2<i>x</i> = 16. Divide by 2: <i>x</i> = 8."}, {"tag": "Fractions", "box": null, "stem": "Evaluate: 3&thinsp;<span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">5</span></span> &times; <span class=\"fr\"><span class=\"fn\">5</span><span class=\"fb\"></span><span class=\"fd\">9</span></span> &divide; <span class=\"fr\"><span class=\"fn\">4</span><span class=\"fb\"></span><span class=\"fd\">3</span></span> + <span class=\"fr\"><span class=\"fn\">7</span><span class=\"fb\"></span><span class=\"fd\">8</span></span> = ?", "opts": ["2&thinsp;<span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">8</span></span>", "2&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">2</span></span>", "1&thinsp;<span class=\"fr\"><span class=\"fn\">7</span><span class=\"fb\"></span><span class=\"fd\">8</span></span>", "3&thinsp;<span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">8</span></span>"], "ci": 0, "exp": "First 3&thinsp;<span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">5</span></span> &times; <span class=\"fr\"><span class=\"fn\">5</span><span class=\"fb\"></span><span class=\"fd\">9</span></span> = <span class=\"fr\"><span class=\"fn\">18</span><span class=\"fb\"></span><span class=\"fd\">5</span></span> &times; <span class=\"fr\"><span class=\"fn\">5</span><span class=\"fb\"></span><span class=\"fd\">9</span></span> = <span class=\"fr\"><span class=\"fn\">90</span><span class=\"fb\"></span><span class=\"fd\">45</span></span> = 2. Then 2 &divide; <span class=\"fr\"><span class=\"fn\">4</span><span class=\"fb\"></span><span class=\"fd\">3</span></span> = 2 &times; <span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">4</span></span> = <span class=\"fr\"><span class=\"fn\">6</span><span class=\"fb\"></span><span class=\"fd\">4</span></span> = 1&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">2</span></span>. Finally 1&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">2</span></span> + <span class=\"fr\"><span class=\"fn\">7</span><span class=\"fb\"></span><span class=\"fd\">8</span></span> = 2&thinsp;<span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">8</span></span>."}, {"tag": "Exponent Laws", "box": null, "stem": "Simplify: <i>x</i><sup>9</sup> &divide; <i>x</i><sup>4</sup> &divide; <i>x</i><sup>2</sup> = ?", "opts": ["<i>x</i><sup>3</sup>", "<i>x</i><sup>15</sup>", "<i>x</i><sup>7</sup>", "<i>x</i><sup>5</sup>"], "ci": 0, "exp": "Each division subtracts the exponent: 9 &minus; 4 = 5, then 5 &minus; 2 = 3, so the result is <i>x</i><sup>3</sup>."}, {"tag": "Exponent Laws", "box": null, "stem": "Simplify: (<i>x</i><sup>3</sup>)<sup>2</sup> &divide; <i>x</i><sup>2</sup> &times; <i>x</i><sup>5</sup> = ?", "opts": ["<i>x</i><sup>9</sup>", "<i>x</i><sup>11</sup>", "<i>x</i><sup>13</sup>", "<i>x</i><sup>4</sup>"], "ci": 0, "exp": "First apply the power of a power rule: (<i>x</i><sup>3</sup>)<sup>2</sup> = <i>x</i><sup>6</sup>. Then combine exponents: 6 &minus; 2 + 5 = 9, so the result is <i>x</i><sup>9</sup>."}, {"tag": "Decimals", "box": null, "stem": "Evaluate: 4.5 + 3.2 &times; 1.5 &minus; 2.75 = ?", "opts": ["6.55", "8.4", "5.15", "7.3"], "ci": 0, "exp": "Multiply first: 3.2 &times; 1.5 = 4.8. Then 4.5 + 4.8 = 9.3, and 9.3 &minus; 2.75 = 6.55."}, {"tag": "Exponent Laws", "box": null, "stem": "Simplify: (<i>x</i><sup>2</sup>)<sup>3</sup> &times; <i>x</i><sup>4</sup> &divide; <i>x</i><sup>5</sup> = ?", "opts": ["<i>x</i><sup>5</sup>", "<i>x</i><sup>9</sup>", "<i>x</i><sup>15</sup>", "<i>x</i><sup>7</sup>"], "ci": 0, "exp": "First apply the power of a power rule: (<i>x</i><sup>2</sup>)<sup>3</sup> = <i>x</i><sup>6</sup>. Then combine exponents by adding for multiplication and subtracting for division: 6 + 4 &minus; 5 = 5, so the result is <i>x</i><sup>5</sup>."}, {"tag": "Integers", "box": null, "stem": "Evaluate: (&minus;18) &divide; (&minus;6) &minus; 5 &times; (&minus;2) = ?", "opts": ["13", "&minus;7", "7", "&minus;13"], "ci": 0, "exp": "Divide and multiply first: (&minus;18) &divide; (&minus;6) = 3, and 5 &times; (&minus;2) = &minus;10. Then 3 &minus; (&minus;10) = 3 + 10 = 13."}, {"tag": "Linear Equations", "box": null, "stem": "Solve for <i>x</i>: 7<i>x</i> &minus; 5 = 3<i>x</i> + 19", "opts": ["<i>x</i> = 6", "<i>x</i> = 3.5", "<i>x</i> = 24", "<i>x</i> = 4"], "ci": 0, "exp": "Subtract 3<i>x</i> from both sides: 4<i>x</i> &minus; 5 = 19. Add 5 to both sides: 4<i>x</i> = 24. Divide by 4: <i>x</i> = 6."}, {"tag": "Linear Equations", "box": null, "stem": "Solve for <i>x</i>: 3<i>x</i> + 8 = 29", "opts": ["<i>x</i> = 7", "<i>x</i> = 12.33", "<i>x</i> = 9", "<i>x</i> = 6"], "ci": 0, "exp": "Subtract 8 from both sides: 3<i>x</i> = 21. Divide both sides by 3: <i>x</i> = 7."}, {"tag": "Fractions", "box": null, "stem": "Evaluate: 5&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">8</span></span> &minus; 2&thinsp;<span class=\"fr\"><span class=\"fn\">2</span><span class=\"fb\"></span><span class=\"fd\">3</span></span> &times; <span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">4</span></span> + <span class=\"fr\"><span class=\"fn\">9</span><span class=\"fb\"></span><span class=\"fd\">4</span></span> = ?", "opts": ["5&thinsp;<span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">8</span></span>", "4&thinsp;<span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">8</span></span>", "5&thinsp;<span class=\"fr\"><span class=\"fn\">5</span><span class=\"fb\"></span><span class=\"fd\">8</span></span>", "6&thinsp;<span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">8</span></span>"], "ci": 0, "exp": "By order of operations, multiply first: 2&thinsp;<span class=\"fr\"><span class=\"fn\">2</span><span class=\"fb\"></span><span class=\"fd\">3</span></span> &times; <span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">4</span></span> = <span class=\"fr\"><span class=\"fn\">8</span><span class=\"fb\"></span><span class=\"fd\">3</span></span> &times; <span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">4</span></span> = <span class=\"fr\"><span class=\"fn\">24</span><span class=\"fb\"></span><span class=\"fd\">12</span></span> = 2. Then 5&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">8</span></span> &minus; 2 = 3&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">8</span></span>, and 3&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">8</span></span> + <span class=\"fr\"><span class=\"fn\">9</span><span class=\"fb\"></span><span class=\"fd\">4</span></span> = 5&thinsp;<span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">8</span></span>."}, {"tag": "Decimals", "box": null, "stem": "Evaluate: 9.8 &minus; 4.4 + 2.5 &times; 1.2 = ?", "opts": ["8.4", "5.4", "9.0", "7.65"], "ci": 0, "exp": "Multiply first: 2.5 &times; 1.2 = 3. Then 9.8 &minus; 4.4 = 5.4, and 5.4 + 3 = 8.4."}, {"tag": "Integers", "box": null, "stem": "Evaluate: (&minus;6) &times; (&minus;4) &divide; 3 + (&minus;7) = ?", "opts": ["1", "&minus;15", "15", "&minus;1"], "ci": 0, "exp": "Multiply first: (&minus;6) &times; (&minus;4) = 24. Then 24 &divide; 3 = 8, and 8 + (&minus;7) = 1."}, {"tag": "Decimals", "box": null, "stem": "Evaluate: 12.6 &divide; 2.1 + 5.4 &minus; 1.35 = ?", "opts": ["10.05", "9.75", "11.4", "8.65"], "ci": 0, "exp": "Divide first: 12.6 &divide; 2.1 = 6. Then 6 + 5.4 = 11.4, and 11.4 &minus; 1.35 = 10.05."}, {"tag": "Unit Conversion", "box": null, "stem": "A container holds 3 gallons 2 quarts of paint. How many quarts is that in total? (1 gallon = 4 quarts)", "opts": ["14 quarts", "12 quarts", "9 quarts", "20 quarts"], "ci": 0, "exp": "Convert the gallons to quarts first: 3 &times; 4 = 12 quarts. Then add the extra 2 quarts: 12 + 2 = 14 quarts."}, {"tag": "Integers", "box": null, "stem": "Evaluate: 15 &minus; (&minus;9) + (&minus;4) &times; 2 = ?", "opts": ["16", "8", "32", "10"], "ci": 0, "exp": "Multiply first: (&minus;4) &times; 2 = &minus;8. Then 15 &minus; (&minus;9) = 15 + 9 = 24, and 24 + (&minus;8) = 16."}, {"tag": "Exponent Laws", "box": null, "stem": "Simplify: <i>x</i><sup>5</sup> &times; <i>x</i><sup>3</sup> &divide; <i>x</i><sup>2</sup> = ?", "opts": ["<i>x</i><sup>6</sup>", "<i>x</i><sup>10</sup>", "<i>x</i><sup>4</sup>", "<i>x</i><sup>30</sup>"], "ci": 0, "exp": "When multiplying powers of the same base, add the exponents; when dividing, subtract them: 5 + 3 &minus; 2 = 6, so the result is <i>x</i><sup>6</sup>."}, {"tag": "Linear Equations", "box": null, "stem": "Solve for <i>x</i>: 5(<i>x</i> &minus; 4) = 40", "opts": ["<i>x</i> = 12", "<i>x</i> = 8", "<i>x</i> = 6.4", "<i>x</i> = 16"], "ci": 0, "exp": "Divide both sides by 5: <i>x</i> &minus; 4 = 8. Add 4 to both sides: <i>x</i> = 12."}, {"tag": "Fractions", "box": null, "stem": "Evaluate: 2&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">3</span></span> &divide; <span class=\"fr\"><span class=\"fn\">7</span><span class=\"fb\"></span><span class=\"fd\">6</span></span> + 1&thinsp;<span class=\"fr\"><span class=\"fn\">4</span><span class=\"fb\"></span><span class=\"fd\">5</span></span> &minus; <span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">10</span></span> = ?", "opts": ["3&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">2</span></span>", "3&thinsp;<span class=\"fr\"><span class=\"fn\">7</span><span class=\"fb\"></span><span class=\"fd\">10</span></span>", "2&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">2</span></span>", "4&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">2</span></span>"], "ci": 0, "exp": "First divide 2&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">3</span></span> &divide; <span class=\"fr\"><span class=\"fn\">7</span><span class=\"fb\"></span><span class=\"fd\">6</span></span> = <span class=\"fr\"><span class=\"fn\">7</span><span class=\"fb\"></span><span class=\"fd\">3</span></span> &times; <span class=\"fr\"><span class=\"fn\">6</span><span class=\"fb\"></span><span class=\"fd\">7</span></span> = <span class=\"fr\"><span class=\"fn\">42</span><span class=\"fb\"></span><span class=\"fd\">21</span></span> = 2. Then 2 + 1&thinsp;<span class=\"fr\"><span class=\"fn\">4</span><span class=\"fb\"></span><span class=\"fd\">5</span></span> = 3&thinsp;<span class=\"fr\"><span class=\"fn\">4</span><span class=\"fb\"></span><span class=\"fd\">5</span></span>, and 3&thinsp;<span class=\"fr\"><span class=\"fn\">4</span><span class=\"fb\"></span><span class=\"fd\">5</span></span> &minus; <span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">10</span></span> = 3&thinsp;<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">2</span></span>."}, {"tag": "Unit Conversion", "box": null, "stem": "A courier's package weighs 4,200 grams. How many kilograms is that? (1 kilogram = 1,000 grams)", "opts": ["4.2 kg", "42 kg", "0.42 kg", "420 kg"], "ci": 0, "exp": "Divide by 1,000 to convert grams to kilograms: 4,200 &divide; 1,000 = 4.2 kg."}];
+
+function shuffle(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var tmp=a[i]; a[i]=a[j]; a[j]=tmp;
+  }
+  return a;
+}
+function identityOrder(){ var o=[]; for(var i=0;i<RAW_QUESTIONS.length;i++) o.push(i); return o; }
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length!==RAW_QUESTIONS.length) return false;
+  var sorted = arr.slice().sort(function(a,b){return a-b;});
+  for(var i=0;i<sorted.length;i++) if(sorted[i]!==i) return false;
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad order');
+    return arr;
+  }catch(e){ try{localStorage.removeItem(ORDER_KEY);}catch(e2){} return null; }
+}
+function saveOrder(order){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(order)); }catch(e){} }
+function buildQuestions(raw, order){
+  var out=[];
+  for(var i=0;i<order.length;i++) out.push(raw[order[i]]);
+  return out;
+}
+var currentOrder = loadOrder() || identityOrder();
+var qs = buildQuestions(RAW_QUESTIONS, currentOrder);
+var pendingFreshMode = 'original';
+
+var state = {};
+function defaultState(){
+  return { cur:0, answers:{}, shuffles:{}, showResults:false, timerTotalSec:null, timerStartedAt:null };
+}
+function loadState(){
+  try{
+    var s = JSON.parse(localStorage.getItem(QUIZ_KEY) || 'null');
+    if (s && typeof s.cur === 'number' && s.answers && s.shuffles) { state = s; }
+    else { state = defaultState(); }
+  }catch(e){ try{localStorage.removeItem(QUIZ_KEY);}catch(e2){} state = defaultState(); }
+}
+function saveState(){ try{ localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); }catch(e){} }
+function loadAttempts(){ try{ return parseInt(localStorage.getItem(ATT_KEY)||'0',10) || 0; }catch(e){ return 0; } }
+
+var timerInterval = null;
+function formatTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function renderTimer(){
+  var setupEl = document.getElementById('timerSetup');
+  var runningEl = document.getElementById('timerRunning');
+  var displayEl = document.getElementById('timerDisplay');
+  if (!state.timerStartedAt) { setupEl.style.display='flex'; runningEl.style.display='none'; return; }
+  setupEl.style.display='none'; runningEl.style.display='flex';
+  var elapsed = (Date.now() - state.timerStartedAt)/1000;
+  var remaining = state.timerTotalSec - elapsed;
+  displayEl.classList.remove('warn','danger');
+  if (remaining <= 0){ displayEl.textContent = "Time's Up"; displayEl.classList.add('danger'); stopTimerInterval(); return; }
+  displayEl.textContent = formatTime(remaining);
+  if (remaining <= state.timerTotalSec*0.1) displayEl.classList.add('danger');
+  else if (remaining <= state.timerTotalSec*0.25) displayEl.classList.add('warn');
+}
+function startTimer(){
+  var input = document.getElementById('timerMinutesInput');
+  var minutes = parseFloat(input.value);
+  if (!minutes || minutes<=0) minutes = 30;
+  state.timerTotalSec = Math.round(minutes*60);
+  state.timerStartedAt = Date.now();
+  saveState(); renderTimer(); startTimerInterval();
+}
+function startTimerInterval(){ stopTimerInterval(); timerInterval = setInterval(renderTimer, 1000); }
+function stopTimerInterval(){ if(timerInterval){ clearInterval(timerInterval); timerInterval=null; } }
+function resetTimer(){ state.timerTotalSec=null; state.timerStartedAt=null; saveState(); stopTimerInterval(); renderTimer(); }
+
+function getShuffle(i){
+  if (!state.shuffles[i]){
+    var a=[0,1,2,3];
+    for(var k=3;k>0;k--){ var j=Math.floor(Math.random()*(k+1)); var t=a[k]; a[k]=a[j]; a[j]=t; }
+    state.shuffles[i]=a;
+  }
+  return state.shuffles[i];
+}
+function getCSI(i){ return getShuffle(i).indexOf(qs[i].ci); }
+
+function updateNav(){
+  var ans = Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent = ans + ' / ' + qs.length;
+  document.getElementById('prog-fill').style.width = (ans/qs.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function toggleJump(){
+  var p=document.getElementById('dot-panel'); var b=document.getElementById('jump-btn');
+  if (p.style.display==='none' || !p.style.display){ p.style.display='block'; b.textContent='Hide \u25B4'; renderDots(); }
+  else { p.style.display='none'; b.textContent='Jump \u25BE'; }
+}
+function renderDots(){
+  var p=document.getElementById('dot-panel');
+  if (p.style.display!=='block') return;
+  var h='';
+  for (var i=0;i<qs.length;i++){
+    var bg = state.answers[i]===undefined ? '#d7dde6' : (state.answers[i]===getCSI(i) ? '#1D9E75' : '#E24B4A');
+    h += '<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';
+  }
+  if (Object.keys(state.answers).length === qs.length){
+    h += '<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';
+  }
+  p.innerHTML = h;
+}
+function goToQ(i){
+  state.cur=i; state.showResults=false; saveState(); render();
+  document.getElementById('dot-panel').style.display='none';
+  document.getElementById('jump-btn').textContent='Jump \u25BE';
+}
+
+function showResults(){
+  state.showResults = true;
+  try{ localStorage.setItem(ATT_KEY, loadAttempts()+1); }catch(e){}
+  saveState(); render();
+}
+
+function render(){
+  document.getElementById('attbar').textContent = 'Total Attempts: ' + loadAttempts();
+  if (state.showResults){ renderResults(); return; }
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('resultsArea').style.display='none';
+  updateNav();
+  renderTimer();
+
+  var i = state.cur;
+  var q = qs[i];
+  document.getElementById('q-num').textContent = 'Question ' + (i+1) + ' of ' + qs.length;
+
+  var tagWrap = document.getElementById('tagWrap');
+  var tagEl = document.getElementById('q-tag-label');
+  if (q.tag){
+    tagWrap.style.display='block';
+    tagEl.textContent = q.tag;
+    tagEl.style.background = TAG_COLORS[q.tag] || '#1D9E75';
+  } else {
+    tagWrap.style.display='none';
+  }
+
+  var bc = document.getElementById('box-ctx');
+  if (q.box){ bc.style.display='block'; bc.innerHTML = q.box; }
+  else { bc.style.display='none'; bc.innerHTML=''; }
+
+  document.getElementById('q-stem').innerHTML = q.stem;
+
+  var sh = getShuffle(i);
+  var ans = state.answers[i];
+  var csi = getCSI(i);
+  var html='';
+  for (var s=0;s<4;s++){
+    var oi = sh[s];
+    var cls='opt-btn'; var dis='';
+    if (ans !== undefined){
+      dis='disabled';
+      if (s===csi) cls+=' correct';
+      else if (s===ans) cls+=' wrong';
+    }
+    html += '<button class="'+cls+'" '+dis+' onclick="pick('+i+','+s+')">'+q.opts[oi]+'</button>';
+  }
+  document.getElementById('opts-area').innerHTML = html;
+
+  var eb = document.getElementById('exp-box');
+  if (ans !== undefined && ans !== csi){ eb.style.display='block'; eb.innerHTML = q.exp; }
+  else { eb.style.display='none'; }
+
+  document.getElementById('next-btn').textContent = (i===qs.length-1) ? 'See Results \u2192' : 'Next';
+  document.getElementById('prev-btn').disabled = (i===0);
+}
+
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  updateNav();
+  var c=0,w=0,sk=0;
+  for (var i=0;i<qs.length;i++){
+    if (state.answers[i]===undefined) sk++;
+    else if (state.answers[i]===getCSI(i)) c++;
+    else w++;
+  }
+  document.getElementById('results-summary').innerHTML =
+    '<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;'+
+    '<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;'+
+    '<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';
+  for (var i=0;i<qs.length;i++){
+    var a = state.answers[i];
+    var label,bg,tc;
+    if (a===undefined){ label='Skipped'; bg='#d7dde6'; tc='#555'; }
+    else if (a===getCSI(i)){ label='Correct'; bg='#E1F5EE'; tc='#085041'; }
+    else { label='Wrong'; bg='#FCEBEB'; tc='#501313'; }
+    html += '<div class="results-card" onclick="goToQ('+i+')">'+
+            '<span style="font-size:0.92rem;font-weight:600;color:#333;">Question '+(i+1)+'</span>'+
+            '<span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span>'+
+            '</div>';
+  }
+  document.getElementById('results-cards').innerHTML = html;
+}
+
+function pick(qi, si){
+  if (state.answers[qi] !== undefined) return;
+  state.answers[qi] = si;
+  saveState(); render();
+}
+function go(dir){
+  if (dir===1 && state.cur===qs.length-1){ showResults(); return; }
+  state.cur = Math.max(0, Math.min(qs.length-1, state.cur+dir));
+  saveState(); render();
+}
+function retryWrong(){
+  var first=-1;
+  for (var i=0;i<qs.length;i++){
+    if (state.answers[i] !== undefined && state.answers[i] !== getCSI(i)){
+      if (first===-1) first=i;
+      delete state.answers[i];
+    }
+  }
+  if (first !== -1){ state.cur=first; state.showResults=false; saveState(); render(); }
+}
+function copyRes(){
+  var lines=[QUIZ_LABEL];
+  for (var i=0;i<qs.length;i++){
+    var a = state.answers[i];
+    lines.push('Q'+(i+1)+': '+(a===undefined?'Skipped':a===getCSI(i)?'Correct':'Wrong'));
+  }
+  var txt = lines.join('\n');
+  if (navigator.clipboard){ navigator.clipboard.writeText(txt).catch(function(){ fallbackCopy(txt); }); }
+  else { fallbackCopy(txt); }
+}
+function fallbackCopy(txt){
+  var ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta);
+  ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+}
+
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var titleEl = document.getElementById('freshModalTitle');
+  var textEl = document.getElementById('freshModalText');
+  if (mode==='random'){
+    titleEl.textContent = 'Start Fresh (Random Order)?';
+    textEl.textContent = 'Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    titleEl.textContent = 'Start Fresh (Original Order)?';
+    textEl.textContent = 'Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  currentOrder = (pendingFreshMode==='random') ? shuffle(identityOrder()) : identityOrder();
+  saveOrder(currentOrder);
+  qs = buildQuestions(RAW_QUESTIONS, currentOrder);
+  state = defaultState();
+  saveState();
+  stopTimerInterval();
+  closeFreshModal();
+  render();
+}
+
+window.pick=pick; window.go=go; window.goToQ=goToQ; window.toggleJump=toggleJump;
+window.retryWrong=retryWrong; window.copyRes=copyRes; window.showResults=showResults;
+window.openFreshModalOriginal=openFreshModalOriginal; window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal; window.confirmFresh=confirmFresh;
+window.startTimer=startTimer;
+
+var _origAddListener = document.addEventListener.bind(document);
+var qzRetryRe = /retry|restart|reset|start\s*fresh|try\s*again/i;
+document.addEventListener('click', function(ev){
+  var el = ev.target, depth=0;
+  while (el && depth<4){
+    var isClickable = el.tagName==='BUTTON' || el.tagName==='A';
+    if (isClickable){
+      var txt = (el.textContent||'').trim();
+      if (txt.length>0 && txt.length<40 && qzRetryRe.test(txt)){ resetTimer(); return; }
+    }
+    el = el.parentElement; depth++;
+  }
+}, true);
+
+loadState(); saveState();
+render();
+if (state.timerStartedAt) startTimerInterval();
+
+})();
+</script>
+</body>
+</html>

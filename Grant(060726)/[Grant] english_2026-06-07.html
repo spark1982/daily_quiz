@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] English</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, 'Segoe UI', Arial, sans-serif; background:#ffffff; color:#111111; }
+  .dateBar { font-size:2rem; font-weight:800; text-align:center; color:#185FA5; background:#ffffff; padding:14px 10px 0 10px; }
+  .titleBar { font-size:1.4rem; font-weight:800; text-align:center; color:#185FA5; padding:6px 10px; }
+  .attemptsBar { text-align:center; font-size:0.95rem; color:#185FA5; padding-bottom:8px; }
+  .dots { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:8px; max-width:760px; margin:0 auto; }
+  .dot { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.78rem; font-weight:700; cursor:pointer; color:#ffffff; background:#9aa4af; border:2px solid transparent; }
+  .dot.correct { background:#185FA5; }
+  .dot.wrong { background:#E24B4A; }
+  .dot.results { background:#185FA5; border-radius:14px; width:auto; padding:0 12px; }
+  .container { max-width:760px; margin:0 auto; padding:14px; }
+  .tag { display:inline-block; background:#185FA5; color:#ffffff; border-radius:999px; padding:4px 14px; font-size:0.8rem; font-weight:700; margin-bottom:10px; }
+  .passages { background:#f4f7fb; border-radius:14px; padding:16px; max-height:260px; overflow-y:auto; font-size:0.92rem; line-height:1.55; margin-bottom:14px; }
+  .pTitle { font-weight:800; color:#185FA5; margin:0 0 6px 0; }
+  .pPara { margin:0 0 10px 0; }
+  .qBox { background:#f4f7fb; border-radius:14px; padding:22px; font-size:1.05rem; font-weight:700; line-height:1.6; min-height:60px; display:flex; align-items:center; justify-content:center; text-align:center; }
+  .options { display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+  .opt { background:#e8edf4; color:#111111; border:2px solid transparent; border-radius:12px; padding:14px 16px; font-size:1rem; text-align:left; cursor:pointer; }
+  .opt.correctOpt { background:#E1F5EE; border-color:#1D9E75; color:#085041; }
+  .opt.wrongOpt { background:#FCEBEB; border-color:#E24B4A; color:#501313; }
+  .explain { margin-top:14px; background:#FCEBEB; border:2px solid #E24B4A; color:#501313; border-radius:12px; padding:14px 16px; font-size:0.95rem; line-height:1.5; display:none; }
+  .navRow { display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .navBtn { flex:1; background:#185FA5; color:#ffffff; border:none; border-radius:12px; padding:14px; font-size:1rem; font-weight:700; cursor:pointer; }
+  .navBtn:disabled { background:#b7c6d8; cursor:default; }
+  .counter { text-align:center; margin-top:10px; font-size:0.95rem; color:#185FA5; font-weight:700; }
+  .summaryGrid { display:grid; grid-template-columns: repeat(auto-fill, minmax(48px,1fr)); gap:8px; margin:14px 0; }
+  .sumCard { border-radius:10px; padding:10px 4px; text-align:center; font-weight:700; cursor:pointer; font-size:0.78rem; color:#ffffff; }
+  .sumCard.c { background:#1D9E75; }
+  .sumCard.w { background:#E24B4A; }
+  .sumCard.s { background:#9aa4af; }
+  .resultBtns { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .resultBtn { background:#185FA5; color:#ffffff; border:none; border-radius:12px; padding:14px; font-size:1rem; font-weight:700; cursor:pointer; }
+  .resultBtn.secondary { background:#e8edf4; color:#111111; }
+  .modalOverlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; z-index:50; }
+  .modalBox { background:#ffffff; border-radius:14px; padding:22px; max-width:340px; width:88%; text-align:center; }
+  .modalBtns { display:flex; gap:10px; margin-top:16px; }
+  .modalBtns button { flex:1; border:none; border-radius:10px; padding:12px; font-size:0.95rem; font-weight:700; cursor:pointer; }
+  .mCancel { background:#e8edf4; color:#111111; }
+  .mConfirm { background:#E24B4A; color:#ffffff; }
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#185FA5; color:#ffffff; padding:10px 20px; border-radius:10px; font-size:0.9rem; display:none; }
+  @media (max-width:480px){ .dateBar{font-size:1.5rem;} .titleBar{font-size:1.15rem;} .qBox{font-size:0.98rem;} }
+</style>
+</head>
+<body>
+  <div class="dateBar">June 7, 2026</div>
+  <div class="titleBar">[Grant] English</div>
+  <div class="attemptsBar" id="attemptsBar">Total Attempts: 0</div>
+  <div class="dots" id="dots"></div>
+  <div class="container">
+    <div id="quizArea" style="display:none;">
+      <span class="tag" id="typeTag">Skill</span>
+      <div class="passages" id="passages"></div>
+      <div class="qBox" id="qPrompt"></div>
+      <div class="options" id="options"></div>
+      <div class="explain" id="explain"></div>
+      <div class="navRow">
+        <button class="navBtn" id="prevBtn">Prev</button>
+        <button class="navBtn" id="nextBtn">Next</button>
+      </div>
+      <div class="counter" id="counter"></div>
+    </div>
+    <div id="resultsArea" style="display:none;">
+      <h2 style="color:#185FA5;">Results</h2>
+      <div class="counter" id="resultSummary"></div>
+      <div class="summaryGrid" id="summaryGrid"></div>
+      <div class="resultBtns">
+        <button class="resultBtn" id="copyBtn">Copy All Results</button>
+        <button class="resultBtn" id="retryBtn">Retry Wrong Questions</button>
+        <button class="resultBtn secondary" id="freshBtn">Start Fresh</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modalOverlay" id="modalOverlay">
+    <div class="modalBox">
+      <p style="font-size:1.05rem; font-weight:700; color:#111111;">Start over and clear all saved progress?</p>
+      <div class="modalBtns">
+        <button class="mCancel" id="modalCancel">Cancel</button>
+        <button class="mConfirm" id="modalConfirm">Start Fresh</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+(function(){
+  var TOPIC = 'english';
+  var QCOUNT = 25;
+  var STATE_KEY = 'quiz_' + TOPIC + '_' + QCOUNT + '_v1';
+  var ATTEMPTS_KEY = 'quiz_' + TOPIC + '_attempts_v1';
+
+  var PASSAGE_1_TITLE = 'Passage 1: The Science Fair';
+  var PASSAGE_1 = [
+    'Maya stared at the blank poster board on her kitchen table, her stomach twisting into knots. The county science fair was only four days away, and she still hadn’t started her project. Other students in her class had been working on theirs for weeks—building volcanoes, growing crystals, testing magnets. Maya had chosen to study how different liquids affected the growth of bean plants, but every time she sat down to organize her notes, she froze.',
+    '“You’re overthinking it,” said her older brother, Eli, dropping his backpack by the door. “Just write down what you already know, one step at a time.”',
+    'Maya sighed. “But what if my project isn’t good enough? What if everyone laughs?”',
+    'Eli pulled out a chair and sat across from her. “When I did my robotics project last year, I was terrified too. But I realized that judges don’t expect perfection—they want to see that you tried something and learned from it, even if it didn’t go exactly as planned.”',
+    'Slowly, Maya picked up a marker and began sketching a chart of her plant measurements. As she worked, her hands stopped shaking. She wrote about the week she forgot to water one plant and it wilted, and how that mistake actually taught her more about the importance of consistency than her successful trials had.',
+    'By the time she finished, the poster was covered in neat charts, photos, and handwritten notes explaining what she had discovered—including her mistakes. Maya smiled, surprised at how proud she felt.',
+    'On the day of the fair, as she stood beside her display explaining her results to a judge, she realized Eli had been right all along. The judge nodded thoughtfully at her honesty about the wilted plant and said it showed real scientific thinking.',
+    'Maya walked away from the fair that afternoon feeling lighter than she had in weeks, already imagining what she might investigate next year.'
+  ];
+
+  var PASSAGE_2_TITLE = 'Passage 2: Trying Out';
+  var PASSAGE_2 = [
+    'Jordan’s hands were sweaty as he laced up his cleats before soccer tryouts. He had never played on a team before, and most of the other kids had been playing since they were little. His coach from last year’s gym class had told him, “You don’t have to be the best on day one—you just have to show up and keep trying.” Jordan repeated those words to himself as he jogged onto the field.',
+    'He missed his first pass and felt his face turn red, but he kept playing. By the end of practice, he had scored a goal and made two new friends. Walking home, Jordan realized that showing up, even when he felt nervous, had been the hardest and most important part.'
+  ];
+
+  function buildPassageHTML(title, paras){
+    var html = '<p class="pTitle">' + title + '</p>';
+    for(var i=0;i<paras.length;i++){ html += '<p class="pPara">' + paras[i] + '</p>'; }
+    return html;
+  }
+  var PASSAGE1_HTML = buildPassageHTML(PASSAGE_1_TITLE, PASSAGE_1);
+  var BOTH_PASSAGES_HTML = PASSAGE1_HTML + buildPassageHTML(PASSAGE_2_TITLE, PASSAGE_2);
+
+  var QUESTIONS = [
+    { tag:'Inference', q:'Based on the passage, what can you infer about how Maya felt before she talked to Eli?',
+      correct:'She felt overwhelmed and unsure she could finish her project in time.',
+      distractors:['She felt confident that her project would win first place.','She felt bored because the science fair seemed unimportant to her.','She felt angry at her teacher for assigning the project.'],
+      explain:'The passage says Maya’s "stomach twisted into knots," that the fair was close, and that she "froze" each time she tried to work. These details suggest she felt overwhelmed and unsure of herself, not confident, bored, or angry.' },
+    { tag:'Main Idea', q:'What is the main idea of the passage?',
+      correct:'With encouragement and effort, Maya overcame her fear and completed a project she felt proud of.',
+      distractors:['Maya’s bean plant experiment proved that water helps plants grow.','Eli’s robotics project was more impressive than Maya’s plant project.','Science fairs are stressful events that students should try to avoid.'],
+      explain:'The passage focuses on Maya’s emotional journey — from feeling stuck and afraid to finishing her project and feeling proud — with help from her brother’s encouragement. The other choices focus on small details, not the passage as a whole.' },
+    { tag:'Theme', q:'Which statement best expresses the theme, or lesson, of this story?',
+      correct:'Mistakes can become valuable learning experiences if you are willing to share and reflect on them.',
+      distractors:['Older siblings always know the right thing to say.','Winning a science fair is the most important goal of any project.','It is best to avoid difficult tasks until the last possible moment.',],
+      explain:'The story repeatedly highlights how Maya’s "mistake" — the wilted plant — became one of the most valuable parts of her project, and the judge praised her honesty about it. This points to a theme about learning from mistakes.' },
+    { tag:'Predict', q:'Based on the ending of the passage, what will Maya most likely do next year?',
+      correct:'She will look forward to choosing and starting a new science fair project earlier.',
+      distractors:['She will refuse to take part in the science fair again.','She will ask Eli to complete the entire project for her.','She will avoid telling anyone about any mistakes she makes.',],
+      explain:'The last line says Maya was "already imagining what she might investigate next year," and she walked away "feeling lighter." This suggests she will likely look forward to trying again, not avoid the fair or hide her mistakes.' },
+    { tag:'Summary', q:'Which sentence best summarizes the passage?',
+      correct:'A nervous student finishes her science project with her brother’s encouragement and feels proud of what she learned, including from her mistakes.',
+      distractors:['A girl builds a volcano for the science fair and wins an award from the judges.','Two siblings argue about whose science project idea is better.','A student decides science fairs are too stressful and quits the project halfway through.',],
+      explain:'A good summary captures the whole passage briefly: Maya was nervous, Eli encouraged her, she finished her project (mistakes included), and she felt proud. The other options describe events that did not happen in the passage.' },
+    { tag:'Tone', q:'What is the overall tone of the passage?',
+      correct:'Encouraging and hopeful',
+      distractors:['Mysterious and frightening','Sarcastic and mocking','Angry and bitter',],
+      explain:'The passage moves from worry to confidence, with supportive dialogue from Eli and a positive ending where Maya feels proud and hopeful. This creates an encouraging, hopeful tone, not a frightening, sarcastic, or angry one.' },
+    { tag:'Point of View', q:'From whose point of view is this passage told?',
+      correct:'A narrator outside the story who focuses mainly on Maya’s thoughts and feelings (third-person limited)',
+      distractors:['Maya, telling her own story using "I" (first-person)','Eli, telling the story from his own perspective (first-person)','A judge at the science fair describing what they saw (first-person)',],
+      explain:'The passage uses "she" and "her" to describe Maya and shares her thoughts and feelings closely, while never using "I" for Maya. This is third-person limited point of view, focused on Maya.' },
+    { tag:'Author’s Purpose', q:'What was the author’s main purpose in writing this passage?',
+      correct:'To entertain readers with a story that shows how facing fear and trying anyway can lead to growth',
+      distractors:['To teach readers the exact steps of a bean plant science experiment','To persuade readers that robotics projects are better than plant projects','To inform readers about the rules of the county science fair',],
+      explain:'The passage is a short narrative with characters, dialogue, and an emotional arc — features of a story meant to entertain while sharing a message about courage and growth, not to give instructions, persuade, or inform about rules.' },
+    { tag:'Cause & Effect', q:'Why did Maya’s hands stop shaking as she worked on her poster?',
+      correct:'Because she started writing down what she already knew, one small step at a time, as Eli suggested.',
+      distractors:['Because the judge arrived early and told her to relax.','Because she decided to switch to an entirely new project topic.','Because Eli finished the poster for her while she watched.',],
+      explain:'The passage shows that after Eli told her to "write down what you already know, one step at a time," Maya began sketching her chart, and "as she worked, her hands stopped shaking." Her own steady effort caused her nervousness to fade.' },
+    { tag:'Compare & Contrast', q:'How are Maya and Eli most alike, based on the passage?',
+      correct:'Both of them felt nervous or scared before presenting a project to judges.',
+      distractors:['Both of them studied how liquids affect plant growth.','Both of them built a robot for their projects.','Both of them refused to ask anyone else for help.',],
+      explain:'Eli tells Maya, "When I did my robotics project last year, I was terrified too." This shows that both siblings experienced similar fear before a big presentation, even though their projects were different.' },
+    { tag:'Text Structure', q:'How is this passage mostly organized?',
+      correct:'As a sequence of events told in the order they happened, from Maya’s worry to the science fair itself',
+      distractors:['As a list of steps for completing a science project','As a comparison between two different science fair topics','As a description of a single place without any events',],
+      explain:'The passage follows Maya through time: first she is stuck, then Eli encourages her, then she works on her poster, and finally she presents at the fair. This step-by-step time order is a sequence (chronological) structure.' },
+    { tag:'Character Traits/Motivation', q:'What motivated Maya to keep working on her poster instead of giving up?',
+      correct:'Eli’s encouragement helped her see that effort and honesty mattered more than being perfect.',
+      distractors:['She was afraid her parents would punish her if she did not finish.','She wanted to prove to her classmates that she was the smartest student.','A judge promised her a prize if she finished the project that night.',],
+      explain:'Eli’s words — that judges "want to see that you tried something and learned from it" — changed how Maya thought about the project. This realization, not fear of punishment or a desire to show off, motivated her to keep going.' },
+    { tag:'Supporting Details', q:'According to the passage, what mistake did Maya make during her experiment?',
+      correct:'She forgot to water one of her bean plants, and it wilted.',
+      distractors:['She mixed up the labels on all of her plant containers.','She used the wrong type of soil for every plant.','She lost her notebook with all of her measurements.',],
+      explain:'The passage states directly that Maya "wrote about the week she forgot to water one plant and it wilted." This specific detail supports the larger idea about learning from mistakes.' },
+    { tag:'Situation', q:'What is the situation at the beginning of the passage?',
+      correct:'Maya is running out of time to finish her science fair project and feels stuck on how to start.',
+      distractors:['Maya has just won an award at the science fair and is celebrating.','Maya is helping Eli finish his robotics project before a deadline.','Maya is choosing which science fair to attend with her family.',],
+      explain:'The opening lines describe Maya staring at a "blank poster board," noting the fair is only "four days away," and that she "froze" whenever she tried to work — showing she is stuck and short on time.' },
+    { tag:'Setting', q:'Where does most of the action in the passage take place?',
+      correct:'Mainly at Maya’s home, and then at the science fair itself',
+      distractors:['Mainly at Eli’s school during his robotics class','Mainly inside a greenhouse where the bean plants grew','Mainly on a bus on the way to a museum',],
+      explain:'The passage opens at "her kitchen table" at home, where Maya works on her poster with Eli, and later moves to the science fair where she presents her project to a judge.' },
+    { tag:'Figurative Language', q:'What does the phrase "her stomach twisting into knots" suggest about Maya?',
+      correct:'She felt very nervous and uneasy.',
+      distractors:['She was physically ill from something she ate.','She was excited and could not wait to begin.','She felt completely calm and relaxed.',],
+      explain:'"Stomach twisting into knots" is a figurative expression that describes the physical feeling people sometimes get when they are anxious or nervous — not literal knots in her stomach, illness, excitement, or calm.' },
+    { tag:'Analogy', q:'Complete the analogy based on the passage: Eli is to his robotics project as Maya is to ___.',
+      correct:'her bean plant experiment',
+      distractors:['the county science fair building','the judge who reviewed her poster','her brother’s backpack',],
+      explain:'The analogy compares each character to the project that caused them to feel nervous. Eli felt "terrified" about his robotics project, just as Maya felt anxious about her bean plant experiment — the two projects play matching roles in the analogy.' },
+    { tag:'Synonym & Antonym', q:'Which word is closest in meaning to "terrified," as Eli uses it in the passage?',
+      correct:'frightened',
+      distractors:['delighted','confused','exhausted',],
+      explain:'"Terrified" means extremely afraid. "Frightened" carries the closest meaning, while "delighted" (happy), "confused" (unsure), and "exhausted" (tired) describe different feelings entirely — they would be closer to antonyms or unrelated terms.' },
+    { tag:'Guess the Meaning', q:'Based on how it is used in the passage, what does the word "consistency" most likely mean?',
+      correct:'Doing something the same dependable way on a regular basis',
+      distractors:['Making something look more attractive or colorful','Finishing a task as quickly as possible','Keeping a secret from other people',],
+      explain:'The passage explains that forgetting to water one plant taught Maya about "the importance of consistency," linking the word to the idea of caring for the plants in the same steady way each day — meaning regular, dependable action.' },
+    { tag:'Preposition', q:'In the sentence "Maya stared at the blank poster board on her kitchen table," which word is a preposition?',
+      correct:'on',
+      distractors:['Maya','stared','blank',],
+      explain:'A preposition shows the relationship between a noun and another word in the sentence, often relating to location. "On" connects "poster board" to "her kitchen table," showing where the board was located.' },
+    { tag:'Genre', q:'What genre best describes this passage?',
+      correct:'Realistic fiction',
+      distractors:['Poetry','Persuasive essay','Biography',],
+      explain:'The passage tells an invented story about characters and events that could plausibly happen in real life — a student preparing for a science fair — which is the definition of realistic fiction. It is not written in verse, does not argue a position, and is not about a real person’s life.' },
+    { tag:'Kind of Fiction', q:'What kind of fiction is this passage?',
+      correct:'Contemporary realistic fiction about everyday school life',
+      distractors:['Science fiction involving futuristic technology','Fantasy involving magical creatures or powers','Historical fiction set hundreds of years in the past',],
+      explain:'The story is set in the present day, in an ordinary home and school setting, with no magic, futuristic technology, or historical setting — making it contemporary realistic fiction about everyday life.' },
+    { tag:'Fact vs Opinion', q:'Which of the following is an opinion rather than a fact, based on the passage?',
+      correct:'"Just write down what you already know, one step at a time" is the best advice anyone could give.',
+      distractors:['Maya chose to study how different liquids affected the growth of bean plants.','The county science fair was four days away when the story began.','Maya forgot to water one of her plants, and it wilted.',],
+      explain:'An opinion expresses a belief or judgment that cannot be proven true, such as calling a piece of advice "the best advice anyone could give." The other choices state details that are presented as facts within the story — events that happened, as written by the author.' },
+    { tag:'Title', q:'Which title best fits the passage as a whole?',
+      correct:'"Learning From the Wilted Plant"',
+      distractors:['"How to Win Every Science Fair"','"Eli’s Amazing Robotics Adventure"','"The History of County Science Fairs"',],
+      explain:'A good title reflects the passage’s central idea — that Maya’s mistake with the plant became a meaningful part of her learning and growth. The other titles describe topics that are not the focus of the passage.' },
+    { tag:'Text-to-Text Connection', q:'Read Passage 2 above. What is the most important connection between Passage 1 and Passage 2?',
+      correct:'In both passages, a young person feels nervous about a new challenge but grows by facing it instead of giving up.',
+      distractors:['Both passages describe characters who study plants for a science project.','Both passages take place during the same week at the same school.','Both passages end with the main character deciding never to try the activity again.',],
+      explain:'Maya feels nervous about her science project but pushes through and feels proud, while Jordan feels nervous about soccer tryouts but keeps playing and grows from the experience. Both passages share the idea that facing a fear, rather than avoiding it, leads to growth — unlike the other choices, which describe details that do not match both texts.' }
+  ];
+  QUESTIONS.forEach(function(item, idx){
+    item.options = [item.correct].concat(item.distractors);
+    item.passageHTML = (idx === QUESTIONS.length - 1) ? BOTH_PASSAGES_HTML : PASSAGE1_HTML;
+  });
+
+  var state = null;
+  function defaultState(){ return { cur: 0, answers: {}, shuffles: {}, showResults: false }; }
+
+  function loadState(){
+    try {
+      var raw = localStorage.getItem(STATE_KEY);
+      if(!raw) return defaultState();
+      var s = JSON.parse(raw);
+      if(typeof s !== 'object' || s === null) throw new Error('bad');
+      if(typeof s.cur !== 'number' || s.cur < 0 || s.cur >= QUESTIONS.length) throw new Error('bad cur');
+      if(typeof s.answers !== 'object' || s.answers === null) throw new Error('bad answers');
+      if(typeof s.shuffles !== 'object' || s.shuffles === null) throw new Error('bad shuffles');
+      if(typeof s.showResults !== 'boolean') s.showResults = false;
+      return s;
+    } catch(e){
+      try { localStorage.removeItem(STATE_KEY); } catch(e2){}
+      return defaultState();
+    }
+  }
+  function saveState(){ try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch(e){} }
+
+  function getAttempts(){ try { return parseInt(localStorage.getItem(ATTEMPTS_KEY) || '0', 10) || 0; } catch(e){ return 0; } }
+  function incAttempts(){
+    var n = getAttempts() + 1;
+    try { localStorage.setItem(ATTEMPTS_KEY, String(n)); } catch(e){}
+    document.getElementById('attemptsBar').textContent = 'Total Attempts: ' + n;
+  }
+
+  function shuffleIndices(n){
+    var arr = [];
+    for(var i=0;i<n;i++) arr.push(i);
+    for(var i=arr.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=arr[i]; arr[i]=arr[j]; arr[j]=t; }
+    return arr;
+  }
+  function getShuffleFor(qIndex){
+    var key = String(qIndex);
+    if(!state.shuffles[key]){ state.shuffles[key] = shuffleIndices(QUESTIONS[qIndex].options.length); saveState(); }
+    return state.shuffles[key];
+  }
+
+  var dotsEl, quizArea, resultsArea, passagesEl, qPrompt, optionsEl, explainEl, typeTag, counterEl, prevBtn, nextBtn;
+
+  function buildDots(){
+    dotsEl.innerHTML = '';
+    for(var i=0;i<QUESTIONS.length;i++){
+      var d = document.createElement('div');
+      d.className = 'dot';
+      d.textContent = String(i+1);
+      d.addEventListener('click', (function(idx){ return function(){ goTo(idx); }; })(i));
+      dotsEl.appendChild(d);
+    }
+    var rd = document.createElement('div');
+    rd.className = 'dot results';
+    rd.id = 'resultsDot';
+    rd.textContent = 'Results';
+    rd.addEventListener('click', function(){ if(state.showResults){ showResultsScreen(); } });
+    dotsEl.appendChild(rd);
+  }
+  function refreshDots(){
+    for(var i=0;i<QUESTIONS.length;i++){
+      var d = dotsEl.children[i];
+      d.classList.remove('correct','wrong');
+      var rec = state.answers[i];
+      if(rec){
+        if(QUESTIONS[i].options[rec.choiceIndex] === QUESTIONS[i].correct) d.classList.add('correct');
+        else d.classList.add('wrong');
+      }
+    }
+    document.getElementById('resultsDot').style.display = state.showResults ? 'flex' : 'none';
+  }
+
+  function render(){
+    try {
+      if(state.showResults){ showResultsScreen(); return; }
+      quizArea.style.display = 'block';
+      resultsArea.style.display = 'none';
+      var idx = state.cur;
+      var question = QUESTIONS[idx];
+      typeTag.textContent = question.tag;
+      passagesEl.innerHTML = question.passageHTML;
+      qPrompt.textContent = question.q;
+      optionsEl.innerHTML = '';
+      explainEl.style.display = 'none';
+      explainEl.textContent = '';
+
+      var order = getShuffleFor(idx);
+      var rec = state.answers[idx];
+      for(var k=0;k<order.length;k++){
+        var optIdx = order[k];
+        var btn = document.createElement('button');
+        btn.className = 'opt';
+        btn.textContent = question.options[optIdx];
+        (function(optIdx){ btn.addEventListener('click', function(){ selectAnswer(idx, optIdx); }); })(optIdx);
+        optionsEl.appendChild(btn);
+      }
+      if(rec) applyAnswerStyles(idx);
+
+      prevBtn.disabled = (idx === 0);
+      nextBtn.textContent = (idx === QUESTIONS.length - 1) ? 'See Results →' : 'Next';
+      counterEl.textContent = (idx+1) + ' / ' + QUESTIONS.length;
+      refreshDots();
+      saveState();
+    } catch(e){
+      quizArea.innerHTML = '<p style="color:#E24B4A;">Something went wrong loading this question. Please use the dots above to navigate.</p>';
+      quizArea.style.display = 'block';
+    }
+  }
+
+  function applyAnswerStyles(qIdx){
+    var question = QUESTIONS[qIdx];
+    var rec = state.answers[qIdx];
+    var order = getShuffleFor(qIdx);
+    var correctIndex = -1;
+    for(var i=0;i<question.options.length;i++){ if(question.options[i] === question.correct){ correctIndex = i; break; } }
+    var btns = optionsEl.children;
+    for(var k=0;k<order.length;k++){
+      var optIdx = order[k];
+      btns[k].classList.remove('correctOpt','wrongOpt');
+      if(optIdx === correctIndex) btns[k].classList.add('correctOpt');
+      else if(optIdx === rec.choiceIndex && optIdx !== correctIndex) btns[k].classList.add('wrongOpt');
+      btns[k].disabled = true;
+    }
+    if(rec.choiceIndex !== correctIndex){
+      explainEl.textContent = question.explain;
+      explainEl.style.display = 'block';
+    }
+  }
+
+  function selectAnswer(qIdx, optIdx){
+    if(state.answers[qIdx]) return;
+    state.answers[qIdx] = { choiceIndex: optIdx };
+    saveState();
+    render();
+  }
+  function goTo(idx){ state.cur = idx; state.showResults = false; saveState(); render(); }
+  function next(){
+    if(state.cur === QUESTIONS.length - 1){
+      state.showResults = true;
+      incAttempts();
+      saveState();
+      render();
+    } else { state.cur += 1; saveState(); render(); }
+  }
+  function prev(){ if(state.cur > 0){ state.cur -= 1; saveState(); render(); } }
+
+  function showResultsScreen(){
+    quizArea.style.display = 'none';
+    resultsArea.style.display = 'block';
+    var correct=0, wrong=0, skipped=0;
+    var grid = document.getElementById('summaryGrid');
+    grid.innerHTML = '';
+    for(var i=0;i<QUESTIONS.length;i++){
+      var rec = state.answers[i];
+      var card = document.createElement('div');
+      card.textContent = String(i+1);
+      if(!rec){ card.className='sumCard s'; skipped++; }
+      else if(QUESTIONS[i].options[rec.choiceIndex] === QUESTIONS[i].correct){ card.className='sumCard c'; correct++; }
+      else { card.className='sumCard w'; wrong++; }
+      card.addEventListener('click', (function(idx){ return function(){ state.showResults=false; state.cur=idx; saveState(); render(); }; })(i));
+      grid.appendChild(card);
+    }
+    document.getElementById('resultSummary').textContent =
+      'Correct: ' + correct + '   Wrong: ' + wrong + '   Skipped: ' + skipped + '   (' + correct + ' / ' + QUESTIONS.length + ')';
+    refreshDots();
+  }
+
+  function copyResults(){
+    var correct=0, wrong=0, skipped=0;
+    for(var i=0;i<QUESTIONS.length;i++){
+      var rec = state.answers[i];
+      if(!rec) skipped++;
+      else if(QUESTIONS[i].options[rec.choiceIndex] === QUESTIONS[i].correct) correct++;
+      else wrong++;
+    }
+    var text = '[Grant] English — June 7, 2026\nScore: ' + correct + ' / ' + QUESTIONS.length +
+      '\nCorrect: ' + correct + '   Wrong: ' + wrong + '   Skipped: ' + skipped;
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try {
+      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text);
+      else document.execCommand('copy');
+    } catch(e){ try { document.execCommand('copy'); } catch(e2){} }
+    document.body.removeChild(ta);
+    var toast = document.getElementById('toast');
+    toast.style.display = 'block';
+    setTimeout(function(){ toast.style.display = 'none'; }, 1800);
+  }
+
+  var retrySession = null;
+  function startRetry(){
+    var wrongIdx = [];
+    for(var i=0;i<QUESTIONS.length;i++){
+      var rec = state.answers[i];
+      if(!rec || QUESTIONS[i].options[rec.choiceIndex] !== QUESTIONS[i].correct) wrongIdx.push(i);
+    }
+    if(wrongIdx.length === 0){ alertModalText('No wrong or skipped questions to retry.'); return; }
+    retrySession = { indices: wrongIdx, cur: 0, answers: {}, shuffles: {} };
+    renderRetry();
+  }
+  function renderRetry(){
+    quizArea.style.display = 'block';
+    resultsArea.style.display = 'none';
+    dotsEl.style.display = 'none';
+    var pos = retrySession.cur;
+    var qIdx = retrySession.indices[pos];
+    var question = QUESTIONS[qIdx];
+    typeTag.textContent = question.tag + ' (Retry)';
+    passagesEl.innerHTML = question.passageHTML;
+    qPrompt.textContent = question.q;
+    optionsEl.innerHTML = '';
+    explainEl.style.display = 'none';
+    explainEl.textContent = '';
+
+    if(!retrySession.shuffles[pos]) retrySession.shuffles[pos] = shuffleIndices(question.options.length);
+    var order = retrySession.shuffles[pos];
+    var rec = retrySession.answers[pos];
+    var correctIndex = -1;
+    for(var i=0;i<question.options.length;i++){ if(question.options[i] === question.correct){ correctIndex = i; break; } }
+
+    for(var k=0;k<order.length;k++){
+      var optIdx = order[k];
+      var btn = document.createElement('button');
+      btn.className = 'opt';
+      btn.textContent = question.options[optIdx];
+      if(rec){
+        btn.disabled = true;
+        if(optIdx === correctIndex) btn.classList.add('correctOpt');
+        else if(optIdx === rec.choiceIndex) btn.classList.add('wrongOpt');
+      } else {
+        (function(optIdx){ btn.addEventListener('click', function(){ retrySession.answers[pos] = { choiceIndex: optIdx }; renderRetry(); }); })(optIdx);
+      }
+      optionsEl.appendChild(btn);
+    }
+    if(rec && rec.choiceIndex !== correctIndex){ explainEl.textContent = question.explain; explainEl.style.display = 'block'; }
+    prevBtn.disabled = (pos === 0);
+    nextBtn.textContent = (pos === retrySession.indices.length - 1) ? 'See Results →' : 'Next';
+    counterEl.textContent = 'Retry ' + (pos+1) + ' / ' + retrySession.indices.length;
+    nextBtn.onclick = function(){
+      if(pos === retrySession.indices.length - 1) showRetryMiniResults();
+      else { retrySession.cur += 1; renderRetry(); }
+    };
+    prevBtn.onclick = function(){ if(pos > 0){ retrySession.cur -= 1; renderRetry(); } };
+  }
+  function showRetryMiniResults(){
+    var c=0, w=0;
+    for(var i=0;i<retrySession.indices.length;i++){
+      var rec = retrySession.answers[i];
+      var qIdx = retrySession.indices[i];
+      if(rec && QUESTIONS[qIdx].options[rec.choiceIndex] === QUESTIONS[qIdx].correct) c++; else w++;
+    }
+    quizArea.style.display = 'none';
+    resultsArea.style.display = 'block';
+    document.getElementById('summaryGrid').innerHTML = '';
+    document.getElementById('resultSummary').textContent =
+      'Retry session finished — Correct: ' + c + '   Still wrong: ' + w + '   (' + c + ' / ' + retrySession.indices.length + ')';
+    var backBtn = document.createElement('button');
+    backBtn.className = 'resultBtn';
+    backBtn.textContent = 'Back to Full Results';
+    backBtn.addEventListener('click', function(){
+      retrySession = null;
+      dotsEl.style.display = 'flex';
+      restoreMainNav();
+      showResultsScreen();
+    });
+    document.querySelector('.resultBtns').insertBefore(backBtn, document.querySelector('.resultBtns').firstChild);
+  }
+  function restoreMainNav(){ nextBtn.onclick = next; prevBtn.onclick = prev; }
+
+  function alertModalText(msg){
+    var overlay = document.getElementById('modalOverlay');
+    var box = overlay.querySelector('.modalBox');
+    box.innerHTML = '<p style="font-size:1.05rem; font-weight:700; color:#111111;">' + msg + '</p><div class="modalBtns"><button class="mConfirm" id="modalOk" style="flex:1;">OK</button></div>';
+    overlay.style.display = 'flex';
+    document.getElementById('modalOk').addEventListener('click', function(){ overlay.style.display = 'none'; });
+  }
+
+  function startFresh(){
+    try { localStorage.removeItem(STATE_KEY); } catch(e){}
+    state = defaultState();
+    retrySession = null;
+    dotsEl.style.display = 'flex';
+    restoreMainNav();
+    saveState();
+    render();
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    dotsEl = document.getElementById('dots');
+    quizArea = document.getElementById('quizArea');
+    resultsArea = document.getElementById('resultsArea');
+    passagesEl = document.getElementById('passages');
+    qPrompt = document.getElementById('qPrompt');
+    optionsEl = document.getElementById('options');
+    explainEl = document.getElementById('explain');
+    typeTag = document.getElementById('typeTag');
+    counterEl = document.getElementById('counter');
+    prevBtn = document.getElementById('prevBtn');
+    nextBtn = document.getElementById('nextBtn');
+
+    document.getElementById('attemptsBar').textContent = 'Total Attempts: ' + getAttempts();
+
+    buildDots();
+    state = loadState();
+    restoreMainNav();
+
+    document.getElementById('copyBtn').addEventListener('click', copyResults);
+    document.getElementById('retryBtn').addEventListener('click', startRetry);
+    document.getElementById('freshBtn').addEventListener('click', function(){ document.getElementById('modalOverlay').style.display = 'flex'; });
+    document.getElementById('modalCancel').addEventListener('click', function(){ document.getElementById('modalOverlay').style.display = 'none'; });
+    document.getElementById('modalConfirm').addEventListener('click', function(){ document.getElementById('modalOverlay').style.display = 'none'; startFresh(); });
+
+    render();
+  });
+})();
+</script>
+</body>
+</html>

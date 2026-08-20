@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT Vocabulary</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;margin:0 auto;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px 0;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;background:#fff;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.q-word{font-size:2rem;font-weight:800;color:#185FA5;text-align:center;margin:10px 0 4px;}
+.speak-wrap{text-align:center;margin-bottom:6px;}
+.speak-btn{background:#e8edf4;border:none;border-radius:20px;padding:6px 18px;font-size:0.88rem;cursor:pointer;color:#185FA5;font-weight:600;}
+.tag-new{display:inline-block;background:#185FA5;color:#fff;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:6px;}
+.tag-review{display:inline-block;background:#f5a623;color:#fff;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:6px;}
+.q-context{font-size:0.93rem;color:#444;background:#f5f7fa;border-radius:8px;padding:10px 14px;margin-bottom:10px;font-style:italic;line-height:1.5;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.93rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-14</div>
+<div class="title-hd">[Sion] SAT Vocabulary</div>
+<div class="instruction">Choose the best meaning for the word shown.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 15</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump ▾</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div id="q-tag-wrap" style="text-align:center;margin-bottom:4px;"></div>
+  <div class="q-num" id="q-num" style="text-align:center;"></div>
+  <div class="q-word" id="q-word"></div>
+  <div class="speak-wrap"><button class="speak-btn" onclick="speak()">Listen</button></div>
+  <div class="q-context" id="q-context"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_satvocab_15_20260613_v1';
+var ATT_KEY='quiz_satvocab_att_20260613_v1';
+var qs=[
+ {w:'abase',tag:'New',ctx:'After losing the championship, the coach was careful not to abase the players by criticizing them publicly.',
+  opts:['to promote or elevate in rank','to humiliate or lower in dignity','to praise with great enthusiasm','to challenge or oppose directly'],ci:1,
+  exp:'"Abase" means to humiliate or lower someone in dignity or status. The coach avoids abasing the players by not publicly criticizing them.'},
+ {w:'abate',tag:'New',ctx:'The doctor assured her that the fever would abate within a few hours.',
+  opts:['to intensify rapidly','to diminish or reduce in strength','to spread throughout the body','to become more complicated'],ci:1,
+  exp:'"Abate" means to become less intense or to decrease. The fever was expected to abate — to lessen — within hours.'},
+ {w:'abdicate',tag:'New',ctx:'The king decided to abdicate the throne after ruling for forty years.',
+  opts:['to formally give up power or a throne','to seize control of a position by force','to defend one\'s right to rule','to celebrate the anniversary of a reign'],ci:0,
+  exp:'"Abdicate" means to formally renounce or give up a high office, such as a throne or position of power.'},
+ {w:'abduct',tag:'New',ctx:'The plot of the film centers on a detective trying to rescue a child who has been abducted.',
+  opts:['to protect someone from harm','to adopt and care for a child legally','to take someone away illegally by force','to question someone under official authority'],ci:2,
+  exp:'"Abduct" means to take someone away illegally by force — essentially to kidnap them.'},
+ {w:'aberration',tag:'New',ctx:'The scientist dismissed the unusual measurement as an aberration, likely caused by a faulty instrument.',
+  opts:['a standard method of scientific measurement','a departure from what is normal or expected','a repeated and consistent pattern of behavior','a proven scientific conclusion'],ci:1,
+  exp:'"Aberration" means a departure from what is normal, expected, or typical. The unusual measurement was an aberration — not the standard result.'},
+ {w:'abet',tag:'New',ctx:'He was convicted not only for committing the crime but also for abetting his accomplice.',
+  opts:['to report a criminal to authorities','to actively prevent or oppose a crime','to assist or encourage someone in wrongdoing','to serve as a witness during a trial'],ci:2,
+  exp:'"Abet" means to assist or encourage someone to do something illegal or wrong. Abetting a crime can make a person legally responsible alongside the main offender.'},
+ {w:'abhor',tag:'New',ctx:'She abhorred violence of any kind and refused to watch action films.',
+  opts:['to regard with deep hatred or disgust','to enjoy or appreciate with enthusiasm','to study or analyze very carefully','to tolerate something despite strong disagreement'],ci:0,
+  exp:'"Abhor" means to regard something with intense hatred or deep disgust. It is a stronger and more formal word than "dislike."'},
+ {w:'abide',tag:'New',ctx:'The referee insisted that all players abide by the rules of the game.',
+  opts:['to violate or ignore deliberately','to accept, comply with, or endure','to change or rewrite entirely','to compete aggressively against each other'],ci:1,
+  exp:'"Abide" has two main meanings: (1) to comply with or accept ("abide by the rules"), and (2) to tolerate or endure ("I can\'t abide rudeness").'},
+ {w:'abject',tag:'New',ctx:'The refugees were living in abject poverty, with no food, shelter, or medical care.',
+  opts:['comfortable and well-supported by others','experienced in an extreme or utterly hopeless degree','recent and completely unexpected','slowly improving despite hardship'],ci:1,
+  exp:'"Abject" describes something in an extreme, utterly hopeless state. "Abject poverty" means the most severe, crushing form of poverty, with no hope of easy relief.'},
+ {w:'abjure',tag:'New',ctx:'Under pressure from the church, the scientist was forced to abjure his scientific theories.',
+  opts:['to adopt or embrace a belief strongly','to formally renounce or swear to give up','to publish or announce something publicly','to defend or argue in favor of an idea'],ci:1,
+  exp:'"Abjure" means to formally and solemnly renounce or give up a belief, claim, or practice — often under pressure or oath.'},
+ {w:'abnegation',tag:'New',ctx:'The monk\'s life of abnegation meant giving up personal comfort, wealth, and pleasure.',
+  opts:['personal luxury and self-indulgence','self-denial and the renunciation of one\'s own desires','intense academic study and devotion','public celebration and high recognition'],ci:1,
+  exp:'"Abnegation" refers to self-denial — the practice of giving up personal desires, comforts, or pleasures, often for a higher or spiritual purpose.'},
+ {w:'abort',tag:'New',ctx:'Due to bad weather, the space agency decided to abort the rocket launch.',
+  opts:['to complete successfully despite all obstacles','to stop or abandon something before completion','to postpone indefinitely until a later date','to redesign a plan from the very beginning'],ci:1,
+  exp:'"Abort" means to stop something before it is completed, typically because of problems or safety concerns. The launch was aborted — terminated early — due to weather.'},
+ {w:'abridge',tag:'New',ctx:'The publisher asked the author to abridge the lengthy novel for its paperback release.',
+  opts:['to expand a book with additional chapters','to translate a work into another language','to shorten a text by condensing or removing parts','to correct errors found throughout a text'],ci:2,
+  exp:'"Abridge" means to shorten a text by condensing or removing parts while keeping the essential content. An abridged version is a shorter form of the original.'},
+ {w:'abrogate',tag:'New',ctx:'The new government moved quickly to abrogate the unfair trade agreements signed by the previous administration.',
+  opts:['to formally repeal or put an end to an agreement','to strengthen or reinforce through new legislation','to reinterpret a law in a new way','to extend the duration of an existing agreement'],ci:0,
+  exp:'"Abrogate" means to formally and officially repeal, cancel, or abolish a law, right, or formal agreement. It carries a sense of deliberate and authoritative cancellation.'},
+ {w:'abscond',tag:'New',ctx:'The treasurer absconded with the organization\'s funds before anyone discovered the theft.',
+  opts:['to return money after a long absence','to leave hurriedly and secretly after wrongdoing','to apologize publicly for a serious mistake','to invest funds in a high-risk venture'],ci:1,
+  exp:'"Abscond" means to leave suddenly and secretly, typically to escape from custody or after committing a wrongdoing — often while taking something that does not belong to you.'}
+];
+
+var state={};
+function loadState(){try{var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');if(s&&typeof s.cur==='number'&&s.cur>=0&&s.cur<qs.length&&s.answers&&typeof s.answers==='object'&&s.shuffles&&typeof s.shuffles==='object'){state=s;}else{resetState();}}catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){if(!state.shuffles[i]){var a=[0,1,2,3];for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}state.shuffles[i]=a;}return state.shuffles[i];}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAttempts(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function speak(){var w=qs[state.cur].w;if(!window.speechSynthesis)return;var u=new SpeechSynthesisUtterance(w);u.lang='en-US';u.rate=0.85;speechSynthesis.cancel();speechSynthesis.speak(u);}
+function updateNav(){var ans=Object.keys(state.answers).length;document.getElementById('nav-count').textContent=ans+' / '+qs.length;document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';renderDots();}
+function toggleJump(){var p=document.getElementById('dot-panel');var b=document.getElementById('jump-btn');if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}else{p.style.display='none';b.textContent='Jump ▾';}}
+function renderDots(){var p=document.getElementById('dot-panel');if(p.style.display==='none')return;var h='';for(var i=0;i<qs.length;i++){var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===getCSI(i)?'#185FA5':'#E24B4A');h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';}if(Object.keys(state.answers).length===qs.length){h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';}p.innerHTML=h;}
+function goToQ(i){state.cur=i;state.showResults=false;saveState();render();document.getElementById('dot-panel').style.display='none';document.getElementById('jump-btn').textContent='Jump ▾';}
+function showResults(){state.showResults=true;localStorage.setItem(ATT_KEY,loadAttempts()+1);saveState();render();}
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAttempts();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';document.getElementById('resultsArea').style.display='none';updateNav();
+  var i=state.cur;var q=qs[i];
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-word').textContent=q.w;
+  document.getElementById('q-tag-wrap').innerHTML='<span class="tag-'+(q.tag==='Review'?'review':'new')+'">'+q.tag+'</span>';
+  document.getElementById('q-context').textContent=q.ctx;
+  var sh=getShuffle(i);var ans=state.answers[i];var csi=getCSI(i);
+  var html='';for(var s=0;s<4;s++){var oi=sh[s];var cls='opt-btn';var dis='';if(ans!==undefined){dis='disabled';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}html+='<button class="'+cls+'" '+dis+' onclick="pick('+i+','+s+')">'+escHtml(q.opts[oi])+'</button>';}
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');if(ans!==undefined&&ans!==csi){eb.style.display='block';eb.textContent=q.exp;}else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';document.getElementById('resultsArea').style.display='block';updateNav();
+  var c=0,w=0,sk=0;for(var i=0;i<qs.length;i++){if(state.answers[i]===undefined)sk++;else if(state.answers[i]===getCSI(i))c++;else w++;}
+  document.getElementById('results-summary').innerHTML='<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';for(var i=0;i<qs.length;i++){var a=state.answers[i];var label,bg,tc;if(a===undefined){label='Skipped';bg='#d7dde6';tc='#555';}else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}else{label='Wrong';bg='#FCEBEB';tc='#501313';}html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.9rem;color:#333;font-weight:600;">'+escHtml(qs[i].w)+'</span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';}
+  document.getElementById('results-cards').innerHTML=html;
+}
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){if(dir===1&&state.cur===qs.length-1){showResults();return;}state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));saveState();render();}
+function retryWrong(){var first=-1;for(var i=0;i<qs.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){if(first===-1)first=i;delete state.answers[i];}}if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}}
+function copyRes(){var lines=['[Sion] SAT Vocabulary - Results (2026-06-14)'];for(var i=0;i<qs.length;i++){var a=state.answers[i];var label=a===undefined?'Skipped':a===getCSI(i)?'Correct':'Wrong';lines.push('Q'+(i+1)+' ('+qs[i].w+'): '+label);}var txt=lines.join('\n');if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fbCopy(txt);});}else{fbCopy(txt);}}
+function fbCopy(t){var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;window.openFreshModal=openFreshModal;
+window.confirmFresh=confirmFresh;window.showResults=showResults;window.speak=speak;
+
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

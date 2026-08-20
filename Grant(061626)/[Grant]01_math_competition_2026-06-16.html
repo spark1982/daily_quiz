@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Math Competition</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0 auto;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.tag-badge{display:inline-block;background:#1D9E75;color:#fff;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:8px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.q-text{font-size:0.97rem;font-weight:600;color:#111;margin-bottom:10px;line-height:1.6;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.93rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;white-space:pre-line;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-16</div>
+<div class="title-hd">[Grant] Math Competition</div>
+<div class="instruction">Choose the correct answer for each problem.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 21</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump ▾</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="tag-badge" id="q-tag"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_mathcomp_21_20260615_v1';
+var ATT_KEY='quiz_mathcomp_att_20260615_v1';
+
+var qs=[
+ // Chapter 1: Number Theory
+ {tag:'Ch1 — Number Theory',
+  q:'How many factors does 84 have?',
+  opts:['10','12','8','14'],ci:1,
+  exp:'The factors of 84 are: 1, 2, 3, 4, 6, 7, 12, 14, 21, 28, 42, 84 — a total of 12 factors.\n84 = 2² × 3 × 7, so the number of factors = (2+1)(1+1)(1+1) = 12.'},
+ {tag:'Ch1 — Number Theory',
+  q:'What is the least common multiple (LCM) of 12, 18, and 24?',
+  opts:['36','48','72','144'],ci:2,
+  exp:'Prime factorizations: 12 = 2²×3, 18 = 2×3², 24 = 2³×3.\nLCM = 2³ × 3² = 8 × 9 = 72.'},
+ {tag:'Ch1 — Number Theory',
+  q:'The GCF of two numbers is 8 and their LCM is 96. If one of the numbers is 24, what is the other number?',
+  opts:['16','32','48','64'],ci:1,
+  exp:'For any two numbers a and b: GCF(a,b) × LCM(a,b) = a × b.\n8 × 96 = 24 × b → 768 = 24b → b = 32.'},
+ // Chapter 2: Fractions & Decimals
+ {tag:'Ch2 — Fractions',
+  q:'Compute: ⅔ + ¾ − ⅙. Express as a fraction in lowest terms.',
+  opts:['5/4','7/12','11/12','3/2'],ci:0,
+  exp:'LCD = 12: ⅔ = 8/12, ¾ = 9/12, ⅙ = 2/12.\n8/12 + 9/12 − 2/12 = 15/12 = 5/4.'},
+ {tag:'Ch2 — Fractions',
+  q:'A recipe calls for 1¾ cups of flour, 2⅓ cups of sugar, and 5/6 cup of cocoa. How many cups total?',
+  opts:['4 11/12','5 1/12','4 5/6','5 5/12'],ci:0,
+  exp:'Convert to improper fractions: 7/4 + 7/3 + 5/6.\nLCD = 12: 21/12 + 28/12 + 10/12 = 59/12 = 4 11/12 cups.'},
+ {tag:'Ch2 — Decimals',
+  q:'Calculate: 0.375 × 2.4 ÷ 0.15',
+  opts:['6','4','8','5.6'],ci:0,
+  exp:'0.375 × 2.4 = 0.9\n0.9 ÷ 0.15 = 6'},
+ // Chapter 3: Ratios & Proportions
+ {tag:'Ch3 — Ratios',
+  q:'In a school, the ratio of boys to girls is 5:7. If there are 420 students total, how many are boys?',
+  opts:['175','210','185','245'],ci:0,
+  exp:'Total ratio parts = 5 + 7 = 12.\nBoys = (5/12) × 420 = 175.'},
+ {tag:'Ch3 — Proportions',
+  q:'A car travels 180 miles in 3 hours. At the same speed, how far will it travel in 5 hours?',
+  opts:['240','270','300','320'],ci:2,
+  exp:'Speed = 180 ÷ 3 = 60 mph.\nDistance in 5 hours = 60 × 5 = 300 miles.'},
+ {tag:'Ch3 — Proportions',
+  q:'If 4 workers can complete a job in 9 days, how many days would 6 workers take to complete the same job?',
+  opts:['8','7','6','5'],ci:2,
+  exp:'Total work = 4 workers × 9 days = 36 worker-days.\n6 workers: 36 ÷ 6 = 6 days.'},
+ // Chapter 4: Percentages
+ {tag:'Ch4 — Percentages',
+  q:'A store sells a jacket for $84, which is 30% off the original price. What was the original price?',
+  opts:['$110','$112','$120','$108'],ci:2,
+  exp:'$84 is 70% of the original price (100% − 30% = 70%).\nOriginal = 84 ÷ 0.70 = $120.'},
+ {tag:'Ch4 — Percentages',
+  q:'A bacteria population increases by 20% each hour. Starting with 500 bacteria at noon, how many are there at 3:00 PM?',
+  opts:['800','860','864','900'],ci:2,
+  exp:'After 1 hour: 500 × 1.2 = 600\nAfter 2 hours: 600 × 1.2 = 720\nAfter 3 hours: 720 × 1.2 = 864'},
+ {tag:'Ch4 — Percentages',
+  q:'75% of a number plus 24 equals 99. What is the number?',
+  opts:['80','90','100','110'],ci:2,
+  exp:'0.75n + 24 = 99\n0.75n = 75\nn = 75 ÷ 0.75 = 100'},
+ // Chapter 5: Geometry
+ {tag:'Ch5 — Geometry',
+  q:'A rectangle has a perimeter of 54 cm. Its length is twice its width. What is its area?',
+  opts:['136 cm²','144 cm²','162 cm²','180 cm²'],ci:2,
+  exp:'Let width = w, length = 2w.\nPerimeter: 2(2w) + 2w = 6w = 54 → w = 9 cm, l = 18 cm.\nArea = 18 × 9 = 162 cm².'},
+ {tag:'Ch5 — Geometry',
+  q:'A circle has a circumference of 36π cm. What is the area of the circle?',
+  opts:['324π cm²','36π cm²','18π cm²','162π cm²'],ci:0,
+  exp:'Circumference = 2πr = 36π → r = 18 cm.\nArea = πr² = π(18)² = 324π cm².'},
+ {tag:'Ch5 — Geometry',
+  q:'A rectangular prism has dimensions 4 cm × 6 cm × 9 cm. What is its total surface area?',
+  opts:['216 cm²','228 cm²','240 cm²','252 cm²'],ci:1,
+  exp:'SA = 2(lw + lh + wh) = 2(4×6 + 4×9 + 6×9)\n= 2(24 + 36 + 54) = 2(114) = 228 cm².'},
+ // Chapter 6: Patterns & Sequences
+ {tag:'Ch6 — Sequences',
+  q:'The sequence begins: 3, 7, 13, 21, … (the differences increase by 2 each time). What is the 7th term?',
+  opts:['45','51','57','63'],ci:2,
+  exp:'Differences: +4, +6, +8, +10, +12, +14\nTerms: 3, 7, 13, 21, 31, 43, 57\nThe 7th term is 57.'},
+ {tag:'Ch6 — Sequences',
+  q:'The sequence 2, 6, 18, 54, … is geometric with ratio 3. What is the sum of the first 6 terms?',
+  opts:['728','486','720','700'],ci:0,
+  exp:'Terms: 2, 6, 18, 54, 162, 486\nSum = 2(3⁶ − 1)/(3 − 1) = 2(728)/2 = 728.'},
+ {tag:'Ch6 — Sequences',
+  q:'In a sequence, each term equals the sum of the two previous terms. The first two terms are 2 and 5. What is the 7th term?',
+  opts:['44','50','55','62'],ci:1,
+  exp:'2, 5, 7, 12, 19, 31, 50\nThe 7th term is 50.'},
+ // Chapter 7: Word Problems
+ {tag:'Ch7 — Word Problems',
+  q:'Anna has three times as many stickers as Ben. If Anna gives Ben 15 stickers, they will each have the same number. How many stickers does Anna have originally?',
+  opts:['36','40','45','60'],ci:2,
+  exp:'Let Ben = b. Anna = 3b.\nAfter trade: 3b − 15 = b + 15 → 2b = 30 → b = 15.\nAnna originally has 3 × 15 = 45 stickers.'},
+ {tag:'Ch7 — Word Problems',
+  q:'Train A leaves City A at 8:00 AM at 60 mph. Train B leaves City B (360 miles away) at 9:00 AM heading toward City A at 90 mph. At what time do they meet?',
+  opts:['10:00 AM','10:30 AM','11:00 AM','11:30 AM'],ci:2,
+  exp:'At 9:00 AM, Train A has traveled 60 miles; gap remaining = 300 miles.\nCombined speed = 60 + 90 = 150 mph.\nTime to meet = 300 ÷ 150 = 2 hours after 9:00 AM = 11:00 AM.'},
+ {tag:'Ch7 — Word Problems',
+  q:'A store has 250 items. On Monday, 1/5 are sold. On Tuesday, 30% of the remaining items are sold. On Wednesday, 40 more are sold. How many items remain?',
+  opts:['90','95','100','105'],ci:2,
+  exp:'After Monday: 250 × (4/5) = 200 items\nAfter Tuesday: 200 × 0.70 = 140 items\nAfter Wednesday: 140 − 40 = 100 items'}
+];
+
+var state={};
+function loadState(){
+  try{var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');
+    if(s&&typeof s.cur==='number'&&s.cur>=0&&s.cur<qs.length&&s.answers&&s.shuffles)state=s;
+    else resetState();
+  }catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}
+}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){if(!state.shuffles[i]){var a=[0,1,2,3];for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}state.shuffles[i]=a;saveState();}return state.shuffles[i];}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAtt(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function updateNav(){var ans=Object.keys(state.answers).length;document.getElementById('nav-count').textContent=ans+' / '+qs.length;document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';var p=document.getElementById('dot-panel');if(p.style.display!=='none')renderDots();}
+function toggleJump(){var p=document.getElementById('dot-panel');var b=document.getElementById('jump-btn');if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}else{p.style.display='none';b.textContent='Jump ▾';}}
+function renderDots(){var p=document.getElementById('dot-panel');var h='';for(var i=0;i<qs.length;i++){var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===getCSI(i)?'#185FA5':'#E24B4A');h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';}if(Object.keys(state.answers).length===qs.length){h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';}p.innerHTML=h;}
+function goToQ(i){state.cur=i;state.showResults=false;saveState();render();document.getElementById('dot-panel').style.display='none';document.getElementById('jump-btn').textContent='Jump ▾';}
+function showResults(){state.showResults=true;localStorage.setItem(ATT_KEY,loadAtt()+1);saveState();render();}
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAtt();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';document.getElementById('resultsArea').style.display='none';
+  updateNav();
+  var i=state.cur;var q=qs[i];
+  document.getElementById('q-tag').textContent=q.tag;
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-text').textContent=q.q;
+  var sh=getShuffle(i);var ans=state.answers[i];var csi=getCSI(i);
+  var html='';
+  for(var s=0;s<4;s++){var oi=sh[s];var cls='opt-btn';var dis='';if(ans!==undefined){dis='disabled ';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}html+='<button class="'+cls+'" '+dis+'onclick="pick('+i+','+s+')">'+esc(q.opts[oi])+'</button>';}
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');
+  if(ans!==undefined){eb.style.display='block';eb.textContent=q.exp;}else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';document.getElementById('resultsArea').style.display='block';updateNav();
+  var c=0,w=0,sk=0;for(var i=0;i<qs.length;i++){if(state.answers[i]===undefined)sk++;else if(state.answers[i]===getCSI(i))c++;else w++;}
+  document.getElementById('results-summary').innerHTML='<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';for(var i=0;i<qs.length;i++){var a=state.answers[i];var label,bg,tc;if(a===undefined){label='Skipped';bg='#d7dde6';tc='#555';}else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}else{label='Wrong';bg='#FCEBEB';tc='#501313';}html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.9rem;color:#333;">Q'+(i+1)+': '+esc(qs[i].tag)+'</span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';}
+  document.getElementById('results-cards').innerHTML=html;
+}
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){if(dir===1&&state.cur===qs.length-1){showResults();return;}state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));saveState();render();}
+function retryWrong(){var first=-1;for(var i=0;i<qs.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){if(first===-1)first=i;delete state.answers[i];}}if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}}
+function copyRes(){var lines=['[Grant] Math Competition - Results (2026-06-16)'];for(var i=0;i<qs.length;i++){var a=state.answers[i];var label=a===undefined?'Skipped':(a===getCSI(i)?'Correct':'Wrong');lines.push('Q'+(i+1)+' ('+qs[i].tag+'): '+label);}var txt=lines.join('\n');if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fallbackCopy(txt);});}else fallbackCopy(txt);}
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;window.openFreshModal=openFreshModal;
+window.confirmFresh=confirmFresh;window.showResults=showResults;
+
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

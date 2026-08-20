@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Typing</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0 auto;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.para-row{display:flex;justify-content:center;gap:8px;margin-bottom:14px;}
+.para-pill{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:700;cursor:pointer;border:2px solid transparent;color:#fff;background:#c7d2dd;}
+.para-pill.active{border-color:#185FA5;}
+.para-pill.done{background:#1D9E75;}
+.passage-display{background:#f5f7fa;border-left:4px solid #185FA5;border-radius:8px;padding:14px 16px;margin-bottom:10px;font-size:0.95rem;line-height:1.8;height:200px;overflow-y:auto;font-family:'Courier New',monospace;}
+.char-pending{color:#9aa3ad;}
+.char-correct{color:#0d6b4f;background:#E1F5EE;}
+.char-wrong{color:#fff;background:#E24B4A;}
+.char-current{color:#111;background:#FFE08A;text-decoration:underline;}
+textarea#typeInput{display:block;width:100%;height:130px;overflow-y:auto;resize:none;border:2px solid #c7d2dd;border-radius:8px;padding:10px 12px;font-size:0.95rem;font-family:'Courier New',monospace;margin-bottom:10px;}
+textarea#typeInput:focus{outline:none;border-color:#185FA5;}
+textarea#typeInput:disabled{background:#f0f2f5;color:#888;}
+.stat-row{display:flex;justify-content:space-around;background:#eef6f1;border-radius:8px;padding:10px;margin-bottom:10px;display:none;}
+.stat-box{text-align:center;}
+.stat-num{font-size:1.2rem;font-weight:800;color:#1D9E75;}
+.stat-lbl{font-size:0.74rem;color:#666;}
+.action-row{display:flex;gap:10px;margin-bottom:10px;}
+.nav-btn{flex:1;padding:11px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.retry-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.next-btn:disabled{background:#a9c3da;cursor:default;}
+.clear-link{display:block;text-align:center;font-size:0.82rem;color:#999;margin-top:6px;cursor:pointer;text-decoration:underline;}
+#summaryArea{display:none;}
+.summary-card{background:#eef6f1;border-radius:12px;padding:18px;margin-bottom:14px;}
+.summary-grid{display:flex;justify-content:space-around;margin:14px 0;}
+.summary-num{font-size:1.5rem;font-weight:800;color:#1D9E75;}
+.summary-lbl{font-size:0.78rem;color:#555;margin-top:2px;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-18</div>
+<div class="title-hd">[Grant] Typing</div>
+<div class="instruction">Type the passage exactly as shown. Your time and accuracy are measured per paragraph.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div class="para-row" id="para-row"></div>
+
+<div id="practiceArea">
+  <div class="passage-display" id="passage-display"></div>
+  <textarea id="typeInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Start typing here..."></textarea>
+  <div class="stat-row" id="stat-row">
+    <div class="stat-box"><div class="stat-num" id="stat-time">0s</div><div class="stat-lbl">Time</div></div>
+    <div class="stat-box"><div class="stat-num" id="stat-wpm">0</div><div class="stat-lbl">WPM</div></div>
+    <div class="stat-box"><div class="stat-num" id="stat-acc">0%</div><div class="stat-lbl">Accuracy</div></div>
+  </div>
+  <div class="action-row">
+    <button class="nav-btn retry-btn" onclick="retryPara()">Retry Paragraph</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="nextPara()" disabled>Next Paragraph</button>
+  </div>
+  <span class="clear-link" onclick="openClearModal()">Clear All Progress</span>
+</div>
+
+<div id="summaryArea">
+  <div class="summary-card">
+    <h2 style="text-align:center;color:#1D9E75;margin:0 0 6px;">All 4 Paragraphs Complete</h2>
+    <div class="summary-grid">
+      <div><div class="summary-num" id="sum-time">0s</div><div class="summary-lbl">Total Time</div></div>
+      <div><div class="summary-num" id="sum-wpm">0</div><div class="summary-lbl">Overall WPM</div></div>
+      <div><div class="summary-num" id="sum-acc">0%</div><div class="summary-lbl">Avg Accuracy</div></div>
+    </div>
+  </div>
+  <button onclick="copyHistory()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy History</button>
+  <button onclick="goToPara(0)" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:12px;">Review Paragraphs</button>
+  <span class="clear-link" onclick="openClearModal()">Clear All Progress</span>
+</div>
+
+<div class="modal-overlay" id="clearModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Clear all typing progress? This cannot be undone.</p>
+    <button onclick="confirmClear()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Clear All</button>
+    <button onclick="closeClearModal()" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_granttyping_v2';
+
+var P1="Inside a single beehive, thousands of worker bees cooperate with remarkable precision, despite none of them having a brain larger than a grain of rice. A honeybee colony typically consists of one queen, who lays nearly all the eggs, several hundred drones, and tens of thousands of female workers that forage, build honeycomb, and care for developing larvae. For decades, scientists wondered how foragers could reliably guide their hivemates to flowers that might be located more than a mile away.";
+var P2="The answer, discovered by Austrian zoologist Karl von Frisch in the early twentieth century, turned out to be a coded dance. When a forager returns from a productive flower patch, she performs a figure-eight movement called the waggle dance on the vertical surface of the honeycomb. The angle of the dance relative to straight up indicates the direction of the food source compared to the sun's position, while the duration of the waggling portion conveys distance: longer waggles signal farther destinations. Other bees press close, sensing the vibrations to decode the message.";
+var P3="Dancing is not the only way bees communicate. Colonies also rely heavily on pheromones, chemical signals that can announce a new queen, mark a hive under threat, or guide swarming bees toward a new nesting site. Von Frisch's careful experiments, which involved marking individual bees and tracking their movements, eventually earned him the Nobel Prize in 1973, shared with two other pioneering researchers in animal behavior.";
+var P4="Understanding bee communication has taken on new urgency in recent years. Honeybees pollinate roughly a third of the food crops humans consume, yet many colonies have suffered from colony collapse disorder, a phenomenon in which worker bees vanish, leaving the queen and brood unattended. Some researchers suspect that pesticides, habitat loss, and parasites disrupt the very signals that keep a colony functioning. Protecting these tiny dancers, scientists argue, may matter just as much for agriculture as it does for the bees themselves.";
+
+var PARAS=[P1,P2,P3,P4];
+
+var state={};
+var typed='';
+var startTime=null;
+
+function loadState(){
+  try{
+    var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');
+    if(s&&typeof s.curPara==='number'&&Array.isArray(s.results)&&s.results.length===4){state=s;}
+    else resetState();
+  }catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}
+}
+function resetState(){state={curPara:0,results:[null,null,null,null],attempts:0,showSummary:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtTime(sec){
+  var m=Math.floor(sec/60); var s=Math.round(sec-m*60);
+  if(s===60){m++;s=0;}
+  return m>0?(m+'m '+(s<10?'0':'')+s+'s'):(s+'s');
+}
+function wordCount(t){return t.trim().split(/\s+/).length;}
+
+function renderParaRow(){
+  var h='';
+  for(var i=0;i<4;i++){
+    var cls='para-pill';
+    if(state.results[i]!==null)cls+=' done';
+    if(i===state.curPara&&!state.showSummary)cls+=' active';
+    h+='<span class="'+cls+'" onclick="goToPara('+i+')">'+(i+1)+'</span>';
+  }
+  document.getElementById('para-row').innerHTML=h;
+}
+
+function renderPassage(){
+  var target=PARAS[state.curPara];
+  var html='';
+  for(var i=0;i<target.length;i++){
+    var ch=target[i];
+    var disp=(ch===' ')?'&nbsp;':esc(ch);
+    var cls;
+    if(i<typed.length){cls=(typed[i]===ch)?'char-correct':'char-wrong';}
+    else if(i===typed.length){cls='char-current';}
+    else{cls='char-pending';}
+    html+='<span class="'+cls+'">'+disp+'</span>';
+  }
+  document.getElementById('passage-display').innerHTML=html;
+}
+
+function computeStats(target,typedText,elapsedMs){
+  var sec=elapsedMs/1000;
+  var minutes=sec/60;
+  var words=wordCount(target);
+  var wpm=minutes>0?Math.round(words/minutes):words;
+  var correct=0;
+  for(var i=0;i<typedText.length;i++){if(typedText[i]===target[i])correct++;}
+  var acc=typedText.length>0?(correct/typedText.length*100):100;
+  return {time:sec,wpm:wpm,accuracy:Math.round(acc*10)/10};
+}
+
+function handleInput(){
+  var ta=document.getElementById('typeInput');
+  if(typed.length===0&&ta.value.length>0){startTime=Date.now();}
+  typed=ta.value;
+  var target=PARAS[state.curPara];
+  renderPassage();
+  if(typed.length>=target.length){
+    ta.disabled=true;
+    var res=computeStats(target,typed,Date.now()-startTime);
+    state.results[state.curPara]=res;
+    saveState();
+    showStats(res);
+    document.getElementById('next-btn').disabled=false;
+    renderParaRow();
+  }
+}
+
+function showStats(res){
+  document.getElementById('stat-row').style.display='flex';
+  document.getElementById('stat-time').textContent=fmtTime(res.time);
+  document.getElementById('stat-wpm').textContent=res.wpm;
+  document.getElementById('stat-acc').textContent=res.accuracy+'%';
+}
+
+function renderPractice(){
+  document.getElementById('practiceArea').style.display='block';
+  document.getElementById('summaryArea').style.display='none';
+  renderParaRow();
+  var target=PARAS[state.curPara];
+  var existing=state.results[state.curPara];
+  var ta=document.getElementById('typeInput');
+  ta.maxLength=target.length;
+  if(existing){
+    typed=target;
+    ta.value=target;
+    ta.disabled=true;
+    renderPassage();
+    showStats(existing);
+    document.getElementById('next-btn').disabled=false;
+  } else {
+    typed='';
+    startTime=null;
+    ta.value='';
+    ta.disabled=false;
+    renderPassage();
+    document.getElementById('stat-row').style.display='none';
+    document.getElementById('next-btn').disabled=true;
+  }
+  document.getElementById('next-btn').textContent=(state.curPara===3)?'Finish':'Next Paragraph';
+}
+
+function renderSummary(){
+  document.getElementById('practiceArea').style.display='none';
+  document.getElementById('summaryArea').style.display='block';
+  renderParaRow();
+  var totalTime=0,totalWords=0,totalAcc=0;
+  for(var i=0;i<4;i++){
+    totalTime+=state.results[i].time;
+    totalWords+=wordCount(PARAS[i]);
+    totalAcc+=state.results[i].accuracy;
+  }
+  var minutes=totalTime/60;
+  var overallWpm=minutes>0?Math.round(totalWords/minutes):totalWords;
+  var avgAcc=Math.round((totalAcc/4)*10)/10;
+  document.getElementById('sum-time').textContent=fmtTime(totalTime);
+  document.getElementById('sum-wpm').textContent=overallWpm;
+  document.getElementById('sum-acc').textContent=avgAcc+'%';
+}
+
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+state.attempts;
+  if(state.showSummary){renderSummary();}
+  else{renderPractice();}
+}
+
+function retryPara(){
+  state.results[state.curPara]=null;
+  saveState();
+  render();
+  document.getElementById('typeInput').focus();
+}
+
+function nextPara(){
+  if(state.results[state.curPara]===null)return;
+  if(state.curPara<3){
+    state.curPara++;
+    saveState();
+    render();
+    document.getElementById('typeInput').focus();
+  } else {
+    state.attempts++;
+    state.showSummary=true;
+    saveState();
+    render();
+  }
+}
+
+function goToPara(i){
+  state.curPara=i;
+  state.showSummary=false;
+  saveState();
+  render();
+}
+
+function copyHistory(){
+  var lines=['[Grant] Typing - History (2026-06-18)'];
+  for(var i=0;i<4;i++){
+    var r=state.results[i];
+    if(r){lines.push('Paragraph '+(i+1)+': '+fmtTime(r.time)+', '+r.wpm+' WPM, '+r.accuracy+'% accuracy');}
+    else{lines.push('Paragraph '+(i+1)+': Not completed');}
+  }
+  if(state.results.every(function(r){return r!==null;})){
+    var totalTime=0,totalWords=0,totalAcc=0;
+    for(var i=0;i<4;i++){totalTime+=state.results[i].time;totalWords+=wordCount(PARAS[i]);totalAcc+=state.results[i].accuracy;}
+    var minutes=totalTime/60;
+    var overallWpm=minutes>0?Math.round(totalWords/minutes):totalWords;
+    var avgAcc=Math.round((totalAcc/4)*10)/10;
+    lines.push('Total Time: '+fmtTime(totalTime));
+    lines.push('Overall WPM: '+overallWpm);
+    lines.push('Avg Accuracy: '+avgAcc+'%');
+  }
+  var txt=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fallbackCopy(txt);});}
+  else fallbackCopy(txt);
+}
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+
+function openClearModal(){document.getElementById('clearModal').style.display='flex';}
+function closeClearModal(){document.getElementById('clearModal').style.display='none';}
+function confirmClear(){
+  localStorage.removeItem(QUIZ_KEY);
+  resetState();
+  closeClearModal();
+  saveState();
+  render();
+}
+
+window.retryPara=retryPara;
+window.nextPara=nextPara;
+window.copyHistory=copyHistory;
+window.openClearModal=openClearModal;
+window.closeClearModal=closeClearModal;
+window.confirmClear=confirmClear;
+window.goToPara=goToPara;
+
+loadState();saveState();
+document.getElementById('typeInput').oninput=handleInput;
+render();
+})();
+</script>
+</body>
+</html>

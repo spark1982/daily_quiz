@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Both] Korean words</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh;padding:16px}
+.date-label{font-size:2rem;font-weight:800;text-align:center;color:#185FA5;background:#fff;padding:10px 0 2px}
+.title{text-align:center;font-size:1.4rem;font-weight:700;color:#185FA5;background:#fff;padding:2px 0 4px}
+.attempts{text-align:center;font-size:0.9rem;color:#555;background:#fff;padding:2px 0 10px}
+.container{max-width:680px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.1);overflow:hidden}
+.dot-nav{display:flex;flex-wrap:wrap;gap:5px;padding:12px 14px;background:#f7f9fc;border-bottom:1px solid #e0e6ef;justify-content:center}
+.dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;cursor:pointer;border:2px solid #c5d2e0;background:#e8edf4;color:#333;transition:.15s}
+.dot.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.dot.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.dot.active{border-color:#185FA5;background:#d0e4f7;color:#185FA5}
+.results-pill{background:#185FA5;color:#fff;border-radius:20px;padding:4px 14px;font-size:0.8rem;font-weight:600}
+#quizArea{display:none;padding:20px 20px 10px}
+.tag-badge{display:inline-block;background:#185FA5;color:#fff;border-radius:20px;padding:3px 12px;font-size:0.75rem;font-weight:600;margin-bottom:10px}
+.q-counter{font-size:0.85rem;color:#666;margin-bottom:6px}
+.stem-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.q-text{font-size:2rem;font-weight:800;color:#111}
+.speak-btn{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:0.9rem;cursor:pointer;flex-shrink:0}
+.options{display:grid;gap:10px}
+.opt-btn{width:100%;text-align:left;padding:12px 16px;border-radius:8px;border:2px solid transparent;background:#e8edf4;color:#111111;font-size:0.97rem;cursor:pointer;transition:.15s}
+.opt-btn:hover{border-color:#185FA5}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.opt-btn.reveal{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.explain{margin-top:14px;padding:12px;background:#f0f5ff;border-left:4px solid #185FA5;border-radius:4px;font-size:0.9rem;color:#222}
+.nav-btns{display:flex;gap:10px;margin-top:18px;padding-bottom:10px}
+.btn{padding:10px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer;transition:.15s}
+.btn-blue{background:#185FA5;color:#fff}.btn-blue:hover{background:#1251a3}
+.btn-gray{background:#e8edf4;color:#333}.btn-gray:hover{background:#d0dae8}
+#resultsArea{display:none;padding:20px}
+.res-header{font-size:1.2rem;font-weight:700;color:#185FA5;margin-bottom:14px;text-align:center}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:7px;margin-bottom:18px}
+.res-card{padding:8px;border-radius:8px;background:#f0f4f8;cursor:pointer;text-align:center;font-size:0.8rem;font-weight:600;border:2px solid transparent}
+.res-card.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.res-card.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.res-card.skipped{background:#fff3cd;border-color:#e6a817;color:#7a5500}
+.res-actions{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:12px;padding:28px;max-width:340px;width:90%;text-align:center}
+.modal h3{margin-bottom:10px;color:#185FA5}.modal p{margin-bottom:18px;color:#444;font-size:0.95rem}
+.modal-btns{display:flex;gap:10px;justify-content:center}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="date-label">2026-06-11</div>
+<div class="title">[Both] Korean words</div>
+<div class="attempts" id="attemptsLabel">Total Attempts: 0</div>
+<div class="dot-nav" id="dotNav"></div>
+<div id="quizArea"></div>
+<div id="resultsArea"></div>
+</div>
+<div class="modal-overlay" id="freshModal">
+<div class="modal"><h3>Start Fresh</h3><p>This will reset all progress.</p>
+<div class="modal-btns"><button class="btn btn-blue" onclick="doFresh()">Reset</button><button class="btn btn-gray" onclick="closeFreshModal()">Cancel</button></div></div>
+</div>
+<script>
+(function(){
+const KEY='quiz_korwords_30_v1';
+const ATT_KEY='quiz_korwords_attempts_v1';
+var qs=[
+{tag:'Noun',stem:'입',opts:['mouth','nose','eye','tongue'],ci:0,exp:'"입" means "mouth."'},
+{tag:'Verb',stem:'가다',opts:['to come','to go','to stand','to run'],ci:1,exp:'"가다" means "to go."'},
+{tag:'Noun',stem:'하늘',opts:['cloud','rain','sky','sea'],ci:2,exp:'"하늘" means "sky."'},
+{tag:'Verb',stem:'먹다',opts:['to drink','to sleep','to walk','to eat'],ci:3,exp:'"먹다" means "to eat."'},
+{tag:'Noun',stem:'코',opts:['nose','ear','head','tongue'],ci:0,exp:'"코" means "nose."'},
+{tag:'Verb',stem:'뛰다',opts:['to walk','to run','to fly','to climb'],ci:1,exp:'"뛰다" means "to run."'},
+{tag:'Noun',stem:'비',opts:['snow','star','rain','cloud'],ci:2,exp:'"비" means "rain."'},
+{tag:'Verb',stem:'씻다',opts:['to clean','to cook','to wear','to wash'],ci:3,exp:'"씻다" means "to wash" (one\'s body).'},
+{tag:'Noun',stem:'꽃',opts:['flower','tree','grass','cloud'],ci:0,exp:'"꽃" means "flower."'},
+{tag:'Verb',stem:'웃다',opts:['to cry','to laugh','to be sad','to be surprised'],ci:1,exp:'"웃다" means "to laugh" or "to smile."'},
+{tag:'Noun',stem:'포도',opts:['pear','orange','grape','cucumber'],ci:2,exp:'"포도" means "grape."'},
+{tag:'Verb',stem:'화내다',opts:['to be surprised','to be scared','to be happy','to get angry'],ci:3,exp:'"화내다" means "to get angry."'},
+{tag:'Noun',stem:'바다',opts:['sea','lake','mountain','river'],ci:0,exp:'"바다" means "sea" or "ocean."'},
+{tag:'Verb',stem:'자다',opts:['to rest','to sleep','to sit','to lie down'],ci:1,exp:'"자다" means "to sleep."'},
+{tag:'Noun',stem:'다리',opts:['foot','knee','leg','arm'],ci:2,exp:'"다리" means "leg."'},
+{tag:'Verb',stem:'말하다',opts:['to listen','to ask','to answer','to speak'],ci:3,exp:'"말하다" means "to speak" or "to talk."'},
+{tag:'Noun',stem:'발',opts:['foot','knee','shoulder','waist'],ci:0,exp:'"발" means "foot."'},
+{tag:'Verb',stem:'놓다',opts:['to grab','to put down','to carry','to throw away'],ci:1,exp:'"놓다" means "to put down" or "to place."'},
+{tag:'Noun',stem:'기차',opts:['car','bus','train','bicycle'],ci:2,exp:'"기차" means "train."'},
+{tag:'Verb',stem:'놀다',opts:['to work','to study','to rest','to play'],ci:3,exp:'"놀다" means "to play."'},
+{tag:'Noun',stem:'눈',opts:['eye','ear','nose','mouth'],ci:0,exp:'"눈" means "eye." (It can also mean "snow," but here it refers to "eye.")'},
+{tag:'Verb',stem:'버리다',opts:['to collect','to throw away','to choose','to share'],ci:1,exp:'"버리다" means "to throw away" or "to discard."'},
+{tag:'Noun',stem:'밥',opts:['bread','soup','rice','snack'],ci:2,exp:'"밥" means "cooked rice" or "a meal."'},
+{tag:'Verb',stem:'읽다',opts:['to write','to draw','to learn','to read'],ci:3,exp:'"읽다" means "to read."'},
+{tag:'Noun',stem:'오이',opts:['cucumber','tofu','seaweed','pepper'],ci:0,exp:'"오이" means "cucumber."'},
+{tag:'Verb',stem:'기뻐하다',opts:['to be sad','to be glad','to feel lonely','to miss someone'],ci:1,exp:'"기뻐하다" means "to be glad" or "to rejoice."'},
+{tag:'Noun',stem:'개',opts:['duck','fox','dog','rabbit'],ci:2,exp:'"개" means "dog."'},
+{tag:'Verb',stem:'고치다',opts:['to decorate','to change','to mix','to fix'],ci:3,exp:'"고치다" means "to fix" or "to repair."'},
+{tag:'Noun',stem:'노래',opts:['song','dance','music','piano'],ci:0,exp:'"노래" means "song."'},
+{tag:'Verb',stem:'자르다',opts:['to attach','to cut','to mix','to throw'],ci:1,exp:'"자르다" means "to cut."'}
+];
+
+var state={cur:0,answers:{},shuffles:{},showResults:false};
+function loadState(){try{var s=localStorage.getItem(KEY);if(!s)return;var p=JSON.parse(s);if(typeof p.cur!=='number'||typeof p.answers!=='object'||typeof p.shuffles!=='object')throw 0;if(p.cur<0||p.cur>=qs.length)p.cur=0;state=p;}catch(e){localStorage.removeItem(KEY);}}
+function saveState(){localStorage.setItem(KEY,JSON.stringify(state));}
+function getAttempts(){return parseInt(localStorage.getItem(ATT_KEY)||'0');}
+function incAttempts(){localStorage.setItem(ATT_KEY,String(getAttempts()+1));}
+function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function getShuffled(qi){if(!state.shuffles[qi]){state.shuffles[qi]=shuffle([0,1,2,3]);saveState();}return state.shuffles[qi];}
+function speak(t){if(!window.speechSynthesis)return;var u=new SpeechSynthesisUtterance(t);u.lang='ko-KR';u.rate=0.9;speechSynthesis.cancel();speechSynthesis.speak(u);}
+function render(){document.getElementById('attemptsLabel').textContent='Total Attempts: '+getAttempts();buildDots();if(state.showResults){showResults();return;}showQuestion();}
+function buildDots(){var nav=document.getElementById('dotNav');var html='';for(var i=0;i<qs.length;i++){var cls='dot';if(state.answers[i]===undefined){}else if(state.answers[i]===qs[i].ci)cls+=' correct';else cls+=' wrong';if(i===state.cur&&!state.showResults)cls+=' active';html+='<div class="'+cls+'" onclick="goToQ('+i+')">'+(i+1)+'</div>';}if(state.showResults)html+='<span class="results-pill">Results</span>';nav.innerHTML=html;}
+function showQuestion(){var qa=document.getElementById('quizArea');document.getElementById('resultsArea').style.display='none';qa.style.display='block';var i=state.cur,q=qs[i];var order=getShuffled(i);var ans=state.answers[i];var answered=(ans!==undefined);var html='<div class="tag-badge">'+q.tag+'</div><div class="q-counter">'+(i+1)+' / '+qs.length+'</div>';html+='<div class="stem-row"><div class="q-text">'+q.stem+'</div><button class="speak-btn" onclick="speak(\''+q.stem+'\')">Listen</button></div>';html+='<div class="options">';for(var k=0;k<4;k++){var oi=order[k];var cls='opt-btn';if(answered){if(oi===q.ci)cls+=' reveal';if(oi===ans&&ans!==q.ci)cls+=' wrong';}html+='<button class="'+cls+'" onclick="pick('+oi+')">'+q.opts[oi]+'</button>';}html+='</div>';if(answered&&ans!==q.ci)html+='<div class="explain"><strong>Explanation:</strong> '+q.exp+'</div>';html+='<div class="nav-btns">';if(i>0)html+='<button class="btn btn-gray" onclick="go(-1)">Prev</button>';if(i<qs.length-1)html+='<button class="btn btn-blue" onclick="go(1)">Next</button>';else html+='<button class="btn btn-blue" onclick="finishQuiz()">See Results &#8594;</button>';html+='</div>';qa.innerHTML=html;}
+function pick(oi){var i=state.cur;if(state.answers[i]!==undefined)return;state.answers[i]=oi;saveState();showQuestion();}
+function go(d){state.cur+=d;if(state.cur<0)state.cur=0;if(state.cur>=qs.length)state.cur=qs.length-1;saveState();showQuestion();}
+function goToQ(i){if(state.showResults){state.showResults=false;state.cur=i;saveState();render();return;}state.cur=i;saveState();showQuestion();buildDots();}
+function finishQuiz(){incAttempts();state.showResults=true;saveState();render();}
+function showResults(){var qa=document.getElementById('quizArea');var ra=document.getElementById('resultsArea');qa.style.display='none';ra.style.display='block';var c=0,w=0,s=0;for(var i=0;i<qs.length;i++){var a=state.answers[i];if(a===undefined)s++;else if(a===qs[i].ci)c++;else w++;}var html='<div class="res-header">Results: '+c+' / '+qs.length+'</div><div class="res-grid">';for(var i=0;i<qs.length;i++){var a=state.answers[i];var cls='res-card ',lbl='';if(a===undefined){cls+='skipped';lbl='Skipped';}else if(a===qs[i].ci){cls+='correct';lbl='Correct';}else{cls+='wrong';lbl='Wrong';}html+='<div class="'+cls+'" onclick="goToQ('+i+')">Q'+(i+1)+': '+lbl+'</div>';}html+='</div><div class="res-actions"><button class="btn btn-blue" onclick="startRetry()">Retry Wrong Questions</button><button class="btn btn-gray" onclick="copyRes()">Copy All Results</button><button class="btn btn-gray" onclick="confirmFresh()">Start Fresh</button></div>';ra.innerHTML=html;buildDots();}
+var retryList=[],retryIdx=0,retryAnswers={};
+function startRetry(){retryList=[];for(var i=0;i<qs.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==qs[i].ci)retryList.push(i);}if(!retryList.length){alert('No wrong questions!');return;}retryIdx=0;retryAnswers={};showRetry();}
+function showRetry(){var el=document.getElementById('retryArea');if(!el){el=document.createElement('div');el.id='retryArea';el.style.cssText='padding:20px';document.querySelector('.container').appendChild(el);}document.getElementById('quizArea').style.display='none';document.getElementById('resultsArea').style.display='none';el.style.display='block';if(retryIdx>=retryList.length){var c=0;for(var x=0;x<retryList.length;x++){if(retryAnswers[x]===qs[retryList[x]].ci)c++;}el.innerHTML='<div style="font-weight:700;color:#185FA5;margin-bottom:14px">Retry Complete: '+c+'/'+retryList.length+' correct</div><button class="btn btn-blue" onclick="backToResults()">Back to Results</button>';return;}var qi=retryList[retryIdx],q=qs[qi];var order=getShuffled(qi);var ans=retryAnswers[retryIdx];var answered=(ans!==undefined);var html='<div style="font-weight:700;color:#185FA5;margin-bottom:10px">Retry '+(retryIdx+1)+'/'+retryList.length+'</div><div class="stem-row"><div class="q-text">'+q.stem+'</div><button class="speak-btn" onclick="speak(\''+q.stem+'\')">Listen</button></div><div class="options">';for(var k=0;k<4;k++){var oi=order[k];var cls='opt-btn';if(answered){if(oi===q.ci)cls+=' reveal';if(oi===ans&&ans!==q.ci)cls+=' wrong';}html+='<button class="'+cls+'" onclick="retryPick('+oi+')">'+q.opts[oi]+'</button>';}html+='</div>';if(answered&&ans!==q.ci)html+='<div class="explain">'+q.exp+'</div>';html+='<div class="nav-btns"><button class="btn btn-blue" onclick="retryNext()">'+(retryIdx<retryList.length-1?'Next':'Finish Retry')+'</button></div>';el.innerHTML=html;}
+function retryPick(oi){if(retryAnswers[retryIdx]!==undefined)return;retryAnswers[retryIdx]=oi;showRetry();}
+function retryNext(){retryIdx++;showRetry();}
+function backToResults(){var r=document.getElementById('retryArea');if(r)r.style.display='none';state.showResults=true;saveState();render();}
+function copyRes(){var lines=['[Both] Korean words 2026-06-11'];var c=0,w=0,s=0;for(var i=0;i<qs.length;i++){var a=state.answers[i];if(a===undefined){s++;lines.push('Q'+(i+1)+': Skipped');}else if(a===qs[i].ci){c++;lines.push('Q'+(i+1)+': Correct');}else{w++;lines.push('Q'+(i+1)+': Wrong');}}lines.splice(1,0,'Score: '+c+'/'+qs.length);var txt=lines.join('\n');if(navigator.clipboard)navigator.clipboard.writeText(txt);else{var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}}
+function confirmFresh(){document.getElementById('freshModal').classList.add('show');}
+function closeFreshModal(){document.getElementById('freshModal').classList.remove('show');}
+function doFresh(){localStorage.removeItem(KEY);state={cur:0,answers:{},shuffles:{},showResults:false};closeFreshModal();render();}
+window.pick=pick;window.go=go;window.finishQuiz=finishQuiz;window.goToQ=goToQ;
+window.startRetry=startRetry;window.copyRes=copyRes;window.confirmFresh=confirmFresh;
+window.closeFreshModal=closeFreshModal;window.doFresh=doFresh;
+window.retryPick=retryPick;window.retryNext=retryNext;window.backToResults=backToResults;window.speak=speak;
+loadState();render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT Grammar</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0 auto;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#6B3FA0;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.tag-badge{display:inline-block;background:#6B3FA0;color:#fff;font-size:0.74rem;font-weight:700;padding:3px 10px;border-radius:12px;margin-bottom:10px;}
+.sentence-box{background:#f5f0fa;border-left:4px solid #6B3FA0;border-radius:8px;padding:14px 16px;margin-bottom:14px;font-size:1rem;color:#222;line-height:1.7;}
+.sentence-box u{text-decoration:underline;color:#6B3FA0;font-weight:700;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.q-text{font-size:0.93rem;font-weight:600;color:#444;margin-bottom:10px;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#f3eef9;color:#111;font-size:0.93rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#f3eef9;color:#6B3FA0;}
+.next-btn{background:#6B3FA0;color:#fff;}
+.prog-track{background:#e2d8ef;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#6B3FA0;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f0fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f0fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-19</div>
+<div class="title-hd">[Sion] SAT Grammar</div>
+<div class="instruction">Choose the best replacement for the underlined portion, or keep it as is if no change is needed.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 20</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #6B3FA0;border-radius:14px;background:#fff;color:#6B3FA0;cursor:pointer;white-space:nowrap;">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="tag-badge" id="tag-badge"></div>
+  <div class="sentence-box" id="sentence-main"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#6B3FA0;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#6B3FA0;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#f3eef9;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#f3eef9;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_satgrammar_20_20260618_v1';
+var ATT_KEY='quiz_satgrammar_att_20260618_v1';
+
+var qs=[
+ {tag:'Ambiguous Pronoun Reference',
+  sentence:"The manager reviewed the intern's proposal carefully. Because the intern had voiced concerns about feasibility, after the manager spoke with the new intern about the tight deadline, <u>he</u> agreed to revise the project timeline to avoid burnout.",
+  opts:['NO CHANGE: he','the manager','the intern','they'],
+  ci:2,exp:"The pronoun \"he\" could refer to either \"the manager\" or \"the intern.\" Since the earlier sentence states the intern had voiced the burnout concern, replacing \"he\" with \"the intern\" removes the ambiguity and clarifies who agreed to revise the timeline."},
+ {tag:'Subjunctive Mood',
+  sentence:"The coach insisted that every player <u>was</u> on time for practice, regardless of the weather.",
+  opts:['NO CHANGE: was','were','is','be'],
+  ci:3,exp:"Because the clause follows a verb of demand (\"insisted that\"), it requires the subjunctive mood, which uses the base form \"be\" for every subject, not a conjugated form like \"was,\" \"were,\" or \"is.\""},
+ {tag:'Subject-Verb Agreement with Intervening Phrases',
+  sentence:"The head chef, along with her two assistants, <u>are preparing</u> the appetizers for tonight's gala.",
+  opts:['NO CHANGE: are preparing','were preparing','have prepared','is preparing'],
+  ci:3,exp:"The phrase \"along with her two assistants\" is a parenthetical addition, not part of the subject. The singular subject \"the head chef\" requires the singular verb \"is preparing,\" not the plural \"are preparing.\""},
+ {tag:'Parallel Structure with Correlative Conjunctions',
+  sentence:"The new policy not only <u>reduced costs but also it has improved</u> morale across every department.",
+  opts:['NO CHANGE: reduced costs but also it has improved','reduced costs but also improving','reduced costs but also improved','reducing costs but also improved'],
+  ci:2,exp:"With the correlative pair \"not only ... but also,\" the two joined elements must match grammatically. Since \"reduced\" is a simple past-tense verb, the second element should be the parallel past-tense verb \"improved,\" not the clause \"it has improved.\""},
+ {tag:'Modifier Placement (Squinting Modifier)',
+  sentence:"Because many students struggled with the same material every semester, the tutor explained <u>frequently confusing concepts</u> to students after class.",
+  opts:['NO CHANGE: frequently confusing concepts','concepts frequently confusing','concepts that were frequently confusing','frequently, confusing concepts'],
+  ci:2,exp:"In the original, \"frequently\" squints between \"explained\" and \"confusing,\" leaving it unclear whether it describes how often the tutor explained or how often the concepts were confusing. Rewording to \"concepts that were frequently confusing\" makes clear that \"frequently\" describes the concepts."},
+ {tag:'Essential vs. Nonessential Clauses (Which vs. That)',
+  sentence:"The laptop, <u>that</u> she bought last week, has already started having battery problems.",
+  opts:['NO CHANGE: that','which','who','whom'],
+  ci:1,exp:"Because the clause \"she bought last week\" is set off by commas as nonessential information, it must be introduced by \"which,\" not the restrictive relative pronoun \"that.\""},
+ {tag:'Pronoun Case in Comparisons',
+  sentence:"Jake has been taking piano lessons since he was six, and now he spends more time practicing piano than <u>her</u>.",
+  opts:['NO CHANGE: her','she','hers','herself'],
+  ci:1,exp:"The comparison is shorthand for \"than she spends time practicing piano,\" so the subject pronoun \"she\" is required, not the object pronoun \"her.\""},
+ {tag:'Tone / Register Shift',
+  sentence:"This report evaluates emerging investment trends in renewable infrastructure. According to recent projections, researchers have determined that solar adoption rates will <u>totally blow up</u> over the next decade.",
+  opts:['NO CHANGE: totally blow up','increase dramatically','go through the roof','blow up big time'],
+  ci:1,exp:"The surrounding passage uses formal, academic language such as \"evaluates emerging investment trends\" and \"recent projections,\" so the underlined phrase should match that register. \"Increase dramatically\" fits the formal tone, while the other choices remain too casual."},
+ {tag:'Faulty Comparison',
+  sentence:"The architecture of modern skyscrapers is far more efficient than <u>older buildings</u>.",
+  opts:['NO CHANGE: older buildings','that of older buildings','older buildings’ design plans','buildings built long ago'],
+  ci:1,exp:"The sentence illogically compares \"the architecture of modern skyscrapers\" to \"older buildings\" themselves. Using \"that of older buildings\" correctly compares architecture to architecture."},
+ {tag:'Diction / Idiom Overlapping with Parallelism',
+  sentence:"The new employee is both <u>interested and skilled at</u> graphic design, which impressed the entire creative team.",
+  opts:['NO CHANGE: interested and skilled at','interested in and skilled at','interested with and skilled in','interested by and skilled with'],
+  ci:1,exp:"Each adjective requires its own correct preposition: \"interested in\" and \"skilled at.\" The original drops \"in\" after \"interested,\" so both prepositions must be restored as \"interested in and skilled at.\""},
+ {tag:'Transitions (Logical Relationship)',
+  sentence:"Researchers initially believed deep-sea vents supported only extremophile bacteria. <u>For example</u>, they have since discovered diverse communities of tube worms, crabs, and shrimp thriving at the same sites.",
+  opts:['NO CHANGE: For example','However','Therefore','Similarly'],
+  ci:1,exp:"The second sentence contradicts the initial belief rather than illustrating it, so the underlined transition must signal contrast. \"However\" supplies that contrast; \"for example\" introduces an illustration, \"therefore\" a conclusion, and \"similarly\" a comparison, none of which fit the contradiction being expressed."},
+ {tag:'Comma Splice / Participial Phrase',
+  sentence:"The committee reviewed dozens of applications, <u>they ultimately selected</u> only three finalists for the final round of interviews.",
+  opts:['NO CHANGE: they ultimately selected','ultimately selecting','and ultimately they had selected','therefore they ultimately selected'],
+  ci:1,exp:"As written, two independent clauses are joined by only a comma, creating a comma splice. Turning the second clause into the participial phrase \"ultimately selecting\" (modifying \"the committee\") fixes the splice. Adding \"and\" still works structurally but shifts to the illogical past perfect \"had selected,\" wrongly implying the selecting happened before the reviewing; inserting \"therefore\" after only a comma still leaves a comma splice, since conjunctive adverbs require a semicolon."},
+ {tag:'Apostrophes (Joint vs. Separate Possession)',
+  sentence:"<u>Maria and Ben's</u> findings, published in separate journals under each of their own names, challenged the long-standing theory independently.",
+  opts:["NO CHANGE: Maria and Ben's","Maria's and Ben's","Maria's and Bens'","Marias' and Ben's"],
+  ci:1,exp:"Because the findings were published separately under each person's own name, the sentence describes separate, not joint, possession. Separate possession requires an apostrophe on each name (\"Maria's and Ben's\"), not the joint form (\"Maria and Ben's\"), which would imply one shared set of findings."},
+ {tag:'Concision / Redundancy',
+  sentence:"The final report, which was the <u>final culmination of six months of painstaking research and careful analysis</u>, exceeded the client's expectations.",
+  opts:['NO CHANGE: final culmination of six months of painstaking research and careful analysis','culmination of six months of painstaking research and careful analysis','final result and culmination of six months of painstaking research and careful analysis','final culminating result of six months of painstaking research and careful analysis'],
+  ci:1,exp:"\"Culmination\" already means the final result of a process, so pairing it with \"final\" is redundant. Removing \"final\" eliminates the redundancy while keeping the meaning intact; the other choices add still more redundant words (\"result,\" \"culminating\")."},
+ {tag:'Verb Tense Sequencing',
+  sentence:"By the time the museum announced its renovation plans last spring, conservators <u>have already spent</u> three years restoring the damaged mural.",
+  opts:['NO CHANGE: have already spent','had already spent','were already spending','will have already spent'],
+  ci:1,exp:"Both the restoring and the announcing happened in the past, and the restoring was completed before the announcement, so the earlier action needs the past perfect \"had already spent.\" The present perfect, past progressive, and future perfect all fail to mark that the restoration was finished before the announcement occurred."},
+ {tag:'Modifier Placement (Dangling Modifier)',
+  sentence:"<u>Having finally repaired the leaking pipe after three failed attempts</u>, the kitchen flooded once more before the plumber even packed up his tools.",
+  opts:['NO CHANGE: Having finally repaired the leaking pipe after three failed attempts','After finally repairing the leaking pipe following three failed attempts','After the plumber had finally repaired the leaking pipe following three failed attempts','Finally having repaired the leaking pipe, after three failed attempts'],
+  ci:2,exp:"The introductory phrase has no stated subject of its own, so it illogically attaches to \"the kitchen,\" which did not repair the pipe. Only the choice that adds an explicit subject within the clause itself (\"the plumber had finally repaired\") resolves the dangling modifier; the other revisions are still subjectless phrases that dangle in the same way."},
+ {tag:'Subject-Verb Agreement (Inverted Sentence)',
+  sentence:"Scattered across the abandoned warehouse <u>was</u> hundreds of forgotten files, each one detailing a different unsolved case.",
+  opts:['NO CHANGE: was','were','has been','is'],
+  ci:1,exp:"Although the verb precedes the subject in this inverted sentence, the true subject is the plural noun phrase \"hundreds of forgotten files,\" which requires the plural verb \"were,\" not the singular \"was,\" \"has been,\" or \"is.\""},
+ {tag:'Pronoun Case (Who vs. Whom in Subordinate Clause)',
+  sentence:"The award will be given to <u>whoever</u> the committee determines has contributed the most to community service this year.",
+  opts:['NO CHANGE: whoever','whomever','who','whom'],
+  ci:0,exp:"Although the pronoun follows the preposition \"to,\" that preposition governs the entire noun clause \"whoever the committee determines has contributed the most,\" not the pronoun alone. Within that clause, the pronoun is the subject of \"has contributed\" (with \"the committee determines\" inserted parenthetically), so the subjective \"whoever\" is correct, not the objective \"whomever.\""},
+ {tag:'Diction (Commonly Confused Words)',
+  sentence:"The new advertising campaign had an immediate <u>affect</u> on quarterly sales, exceeding even the most optimistic forecasts.",
+  opts:['NO CHANGE: affect','effect','effecting','affection'],
+  ci:1,exp:"The underlined word is a noun here, the object of \"had.\" The noun meaning \"a result\" is \"effect,\" not \"affect,\" which functions mainly as a verb meaning \"to influence.\" \"Effecting\" and \"affection\" are also grammatically wrong in this noun slot."},
+ {tag:'Comparative Logic / Idiom',
+  sentence:"Critics argue that the sequel's visual effects are <u>as impressive, if not more impressive, than</u> the original film's groundbreaking effects.",
+  opts:['NO CHANGE: as impressive, if not more impressive, than','as impressive as, if not more impressive than,','as impressive as, if not more, impressive than','so impressive, if not more impressive, as'],
+  ci:1,exp:"The construction \"as X, if not more X, than Y\" is illogical: \"as impressive\" needs its own \"as\" to complete the comparison (\"as impressive as\"), while \"more impressive\" pairs with \"than.\" Only the choice that supplies both halves correctly (\"as impressive as, if not more impressive than,\") fixes the comparison."}
+];
+
+var state={};
+function loadState(){
+  try{
+    var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');
+    if(s&&typeof s.cur==='number'&&s.cur>=0&&s.cur<qs.length&&s.answers){state=s;}
+    else resetState();
+  }catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}
+}
+function resetState(){state={cur:0,answers:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){return [0,1,2,3];}
+function getCSI(i){return qs[i].ci;}
+function loadAtt(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function updateNav(){
+  var ans=Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent=ans+' / '+qs.length;
+  document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';
+  renderDots();
+}
+
+function toggleJump(){
+  var p=document.getElementById('dot-panel');
+  var b=document.getElementById('jump-btn');
+  if(p.style.display==='block'){p.style.display='none';b.textContent='Jump ▾';}
+  else{p.style.display='block';b.textContent='Hide ▴';renderDots();}
+}
+
+function renderDots(){
+  var p=document.getElementById('dot-panel');
+  if(p.style.display!=='block')return;
+  var h='';
+  for(var i=0;i<qs.length;i++){
+    var bg=state.answers[i]===undefined?'#e2d8ef':(state.answers[i]===getCSI(i)?'#6B3FA0':'#E24B4A');
+    h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';
+  }
+  if(Object.keys(state.answers).length===qs.length){
+    h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#6B3FA0;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';
+  }
+  p.innerHTML=h;
+}
+
+function goToQ(i){
+  state.cur=i; state.showResults=false; saveState(); render();
+  document.getElementById('dot-panel').style.display='none';
+  document.getElementById('jump-btn').textContent='Jump ▾';
+}
+
+function showResults(){
+  state.showResults=true;
+  localStorage.setItem(ATT_KEY,loadAtt()+1);
+  saveState(); render();
+}
+
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAtt();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('resultsArea').style.display='none';
+  updateNav();
+  var i=state.cur; var q=qs[i];
+  document.getElementById('tag-badge').textContent=q.tag;
+  document.getElementById('sentence-main').innerHTML=q.sentence;
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-text').textContent='Which choice best fixes the underlined portion?';
+  var ans=state.answers[i]; var csi=getCSI(i);
+  var html='';
+  for(var s=0;s<4;s++){
+    var cls='opt-btn'; var dis='';
+    if(ans!==undefined){dis='disabled ';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}
+    html+='<button class="'+cls+'" '+dis+'onclick="pick('+i+','+s+')">'+escHtml(q.opts[s])+'</button>';
+  }
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');
+  if(ans!==undefined){eb.style.display='block';eb.textContent=q.exp;}
+  else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  updateNav();
+  var c=0,w=0,sk=0;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]===undefined)sk++;
+    else if(state.answers[i]===getCSI(i))c++;
+    else w++;
+  }
+  document.getElementById('results-summary').innerHTML=
+    '<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;'+
+    '<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;'+
+    '<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i]; var label,bg,tc;
+    if(a===undefined){label='Skipped';bg='#e2d8ef';tc='#555';}
+    else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}
+    else{label='Wrong';bg='#FCEBEB';tc='#501313';}
+    html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.9rem;color:#333;">Q'+(i+1)+': '+escHtml(qs[i].tag)+'</span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';
+  }
+  document.getElementById('results-cards').innerHTML=html;
+}
+
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){
+  if(dir===1&&state.cur===qs.length-1){showResults();return;}
+  state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));
+  saveState();render();
+}
+function retryWrong(){
+  var first=-1;
+  for(var i=0;i<qs.length;i++){
+    if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){
+      if(first===-1)first=i; delete state.answers[i];
+    }
+  }
+  if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}
+}
+function copyRes(){
+  var lines=['[Sion] SAT Grammar - Results (2026-06-19)'];
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    var label=a===undefined?'Skipped':(a===getCSI(i)?'Correct':'Wrong');
+    lines.push('Q'+(i+1)+' ('+qs[i].tag+'): '+label);
+  }
+  var txt=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fallbackCopy(txt);});}
+  else fallbackCopy(txt);
+}
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;window.openFreshModal=openFreshModal;
+window.confirmFresh=confirmFresh;window.showResults=showResults;
+
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Math</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0 auto;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.cat-tag{display:inline-block;font-size:0.78rem;font-weight:700;padding:2px 10px;border-radius:10px;margin-bottom:8px;color:#fff;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:6px;}
+.q-text{font-size:0.97rem;color:#111;font-weight:600;line-height:1.6;margin-bottom:10px;background:#f5f7fa;border-radius:10px;padding:12px 14px;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.95rem;text-align:left;cursor:pointer;font-family:inherit;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.7;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-16</div>
+<div class="title-hd">[Grant] Math</div>
+<div class="instruction">Solve each problem and choose the correct answer.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 20</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump ▾</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="cat-tag" id="cat-tag"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_math_20_20260615_v1';
+var ATT_KEY='quiz_math_att_20260615_v1';
+
+var qs=[
+ // ── FRACTIONS ──
+ {cat:'Fractions',color:'#6B3FA0',
+  q:'Compute: 1/2 + 3/4 − 1/8 + 5/8',
+  opts:['3/2','7/4','2','9/8'],ci:1,
+  exp:'Convert to eighths: 4/8 + 6/8 − 1/8 + 5/8 = 14/8 = 7/4'},
+ {cat:'Fractions',color:'#6B3FA0',
+  q:'Compute: (3/5 × 10/9) − (2/3 ÷ 4) + 1/6',
+  opts:['1/2','7/12','2/3','5/6'],ci:2,
+  exp:'Step 1: 3/5 × 10/9 = 30/45 = 2/3\nStep 2: 2/3 ÷ 4 = 2/12 = 1/6\nStep 3: 2/3 − 1/6 + 1/6 = 2/3'},
+ {cat:'Fractions',color:'#6B3FA0',
+  q:'Compute: 2⅓ + 1¾ − (5/6 × 3/5)',
+  opts:['3 5/12','3 7/12','4 1/12','4 5/12'],ci:1,
+  exp:'Convert: 2⅓ = 7/3, 1¾ = 7/4\n5/6 × 3/5 = 15/30 = 1/2\n7/3 + 7/4 − 1/2 = 28/12 + 21/12 − 6/12 = 43/12 = 3 7/12'},
+ {cat:'Fractions',color:'#6B3FA0',
+  q:'Compute: (4/5 + 3/10) ÷ (7/4 − 3/8) × 5/8',
+  opts:['1/4','3/8','1/2','2/3'],ci:2,
+  exp:'4/5 + 3/10 = 8/10 + 3/10 = 11/10\n7/4 − 3/8 = 14/8 − 3/8 = 11/8\n(11/10) ÷ (11/8) = (11/10) × (8/11) = 8/10 = 4/5\n4/5 × 5/8 = 20/40 = 1/2'},
+ // ── DECIMALS ──
+ {cat:'Decimals',color:'#185FA5',
+  q:'Compute: 3.6 + 2.45 − 1.875 + 0.625',
+  opts:['4.6','4.8','5.0','5.2'],ci:1,
+  exp:'3.6 + 2.45 = 6.05\n6.05 − 1.875 = 4.175\n4.175 + 0.625 = 4.8'},
+ {cat:'Decimals',color:'#185FA5',
+  q:'Compute: 4.8 × 2.5 − 3.6 ÷ 1.2 + 0.75',
+  opts:['9.25','9.5','9.75','10'],ci:2,
+  exp:'4.8 × 2.5 = 12\n3.6 ÷ 1.2 = 3\n12 − 3 + 0.75 = 9.75'},
+ {cat:'Decimals',color:'#185FA5',
+  q:'Compute: 1.5² + 2.5² − 3.5 × 1.2 + 0.8',
+  opts:['4.9','5.0','5.1','5.3'],ci:2,
+  exp:'1.5² = 2.25\n2.5² = 6.25\n3.5 × 1.2 = 4.2\n2.25 + 6.25 − 4.2 + 0.8 = 5.1'},
+ {cat:'Decimals',color:'#185FA5',
+  q:'Compute: (0.4 + 0.35) × (2.5 − 1.25) ÷ 0.375',
+  opts:['2.0','2.25','2.5','3.0'],ci:2,
+  exp:'0.4 + 0.35 = 0.75\n2.5 − 1.25 = 1.25\n0.75 × 1.25 = 0.9375\n0.9375 ÷ 0.375 = 2.5'},
+ // ── INTEGERS ──
+ {cat:'Integers',color:'#1D7A4A',
+  q:'Compute: (−8) + 15 − (−6) + (−3) − 4',
+  opts:['4','5','6','8'],ci:2,
+  exp:'− 8 + 15 + 6 − 3 − 4\n= 7 + 6 − 3 − 4\n= 13 − 7 = 6'},
+ {cat:'Integers',color:'#1D7A4A',
+  q:'Compute: (−4) × 3 − (−6) × 2 + 5 × (−1)',
+  opts:['−7','−5','0','5'],ci:1,
+  exp:'−4 × 3 = −12\n−6 × 2 = −12, so −(−12) = +12\n5 × (−1) = −5\n−12 + 12 − 5 = −5'},
+ {cat:'Integers',color:'#1D7A4A',
+  q:'Compute: |(−12) − 5| + |8 − (−3)| − |−9 + 4|',
+  opts:['19','21','23','25'],ci:2,
+  exp:'|−17| = 17\n|11| = 11\n|−5| = 5\n17 + 11 − 5 = 23'},
+ {cat:'Integers',color:'#1D7A4A',
+  q:'Compute: (−3)³ + 4² − (−2)⁴ − 5 + 18',
+  opts:['−16','−14','−12','−10'],ci:1,
+  exp:'(−3)³ = −27\n4² = 16\n(−2)⁴ = +16\n−27 + 16 − 16 − 5 + 18 = −14'},
+ // ── UNIT CONVERSIONS ──
+ {cat:'Unit Conversions',color:'#C05600',
+  q:'Convert 90 km/h to meters per second.',
+  opts:['20 m/s','22.5 m/s','25 m/s','30 m/s'],ci:2,
+  exp:'90 km/h × 1000 m/km ÷ 3600 s/h\n= 90,000 ÷ 3,600 = 25 m/s'},
+ {cat:'Unit Conversions',color:'#C05600',
+  q:'How many seconds are in 2 days, 3 hours, and 45 minutes?',
+  opts:['185,400 s','186,300 s','187,200 s','186,600 s'],ci:1,
+  exp:'2 days = 2 × 86,400 = 172,800 s\n3 hours = 3 × 3,600 = 10,800 s\n45 min = 45 × 60 = 2,700 s\nTotal = 186,300 s'},
+ {cat:'Unit Conversions',color:'#C05600',
+  q:'Convert 45,000 liters to cubic meters. (1 m³ = 1,000 L)',
+  opts:['4.5 m³','45 m³','450 m³','4,500 m³'],ci:1,
+  exp:'45,000 L ÷ 1,000 L/m³ = 45 m³'},
+ {cat:'Unit Conversions',color:'#C05600',
+  q:'Convert 8 yards, 2 feet, 6 inches to inches. (1 yd = 3 ft; 1 ft = 12 in)',
+  opts:['312 in','315 in','318 in','324 in'],ci:2,
+  exp:'8 yd = 8 × 36 = 288 in\n2 ft = 2 × 12 = 24 in\n6 in = 6 in\nTotal = 288 + 24 + 6 = 318 in'},
+ // ── EXPONENT RULES ──
+ {cat:'Exponent Rules',color:'#8B1A1A',
+  q:'Simplify: 2³ × 2⁵ ÷ 2⁴',
+  opts:['8','12','16','32'],ci:2,
+  exp:'Add exponents for ×, subtract for ÷:\n2^(3+5−4) = 2⁴ = 16'},
+ {cat:'Exponent Rules',color:'#8B1A1A',
+  q:'Simplify: (3²)³ ÷ 3⁴',
+  opts:['3','6','9','27'],ci:2,
+  exp:'Power of a power: (3²)³ = 3^(2×3) = 3⁶\n3⁶ ÷ 3⁴ = 3^(6−4) = 3² = 9'},
+ {cat:'Exponent Rules',color:'#8B1A1A',
+  q:'Simplify: (4x²y³)² ÷ (2xy)²',
+  opts:['4x²y⁴','2xy²','8x²y⁶','4xy²'],ci:0,
+  exp:'(4x²y³)² = 16x⁴y⁶\n(2xy)² = 4x²y²\n16x⁴y⁶ ÷ 4x²y² = 4x²y⁴'},
+ {cat:'Exponent Rules',color:'#8B1A1A',
+  q:'Compute: 5⁰ × 3² × 2³ − (2⁴ ÷ 2²) + 7¹ − 4⁰',
+  opts:['68','70','74','76'],ci:2,
+  exp:'5⁰ = 1; 3² = 9; 2³ = 8 → 1×9×8 = 72\n2⁴ ÷ 2² = 2² = 4\n7¹ = 7; 4⁰ = 1\n72 − 4 + 7 − 1 = 74'}
+];
+
+var state={};
+function loadState(){try{var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');if(s&&typeof s.cur==='number'&&s.cur>=0&&s.cur<qs.length&&s.answers&&s.shuffles)state=s;else resetState();}catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){if(!state.shuffles[i]){var a=[0,1,2,3];for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}state.shuffles[i]=a;saveState();}return state.shuffles[i];}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAtt(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function updateNav(){var ans=Object.keys(state.answers).length;document.getElementById('nav-count').textContent=ans+' / '+qs.length;document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';var p=document.getElementById('dot-panel');if(p.style.display!=='none')renderDots();}
+function toggleJump(){var p=document.getElementById('dot-panel');var b=document.getElementById('jump-btn');if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}else{p.style.display='none';b.textContent='Jump ▾';}}
+function renderDots(){var p=document.getElementById('dot-panel');var h='';for(var i=0;i<qs.length;i++){var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===getCSI(i)?'#185FA5':'#E24B4A');h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';}if(Object.keys(state.answers).length===qs.length){h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';}p.innerHTML=h;}
+function goToQ(i){state.cur=i;state.showResults=false;saveState();render();document.getElementById('dot-panel').style.display='none';document.getElementById('jump-btn').textContent='Jump ▾';}
+function showResults(){state.showResults=true;localStorage.setItem(ATT_KEY,loadAtt()+1);saveState();render();}
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAtt();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';document.getElementById('resultsArea').style.display='none';
+  updateNav();
+  var i=state.cur;var q=qs[i];
+  var tag=document.getElementById('cat-tag');tag.textContent=q.cat;tag.style.background=q.color;
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-text').textContent=q.q;
+  var sh=getShuffle(i);var ans=state.answers[i];var csi=getCSI(i);
+  var html='';
+  for(var s=0;s<4;s++){var oi=sh[s];var cls='opt-btn';var dis='';if(ans!==undefined){dis='disabled ';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}html+='<button class="'+cls+'" '+dis+'onclick="pick('+i+','+s+')">'+esc(q.opts[oi])+'</button>';}
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');
+  if(ans!==undefined){eb.style.display='block';eb.textContent=q.exp;}else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';document.getElementById('resultsArea').style.display='block';updateNav();
+  var c=0,w=0,sk=0;for(var i=0;i<qs.length;i++){if(state.answers[i]===undefined)sk++;else if(state.answers[i]===getCSI(i))c++;else w++;}
+  document.getElementById('results-summary').innerHTML='<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var cats=['Fractions','Decimals','Integers','Unit Conversions','Exponent Rules'];
+  var catColors={'Fractions':'#6B3FA0','Decimals':'#185FA5','Integers':'#1D7A4A','Unit Conversions':'#C05600','Exponent Rules':'#8B1A1A'};
+  var html='';for(var i=0;i<qs.length;i++){var a=state.answers[i];var label,bg,tc;if(a===undefined){label='Skipped';bg='#d7dde6';tc='#555';}else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}else{label='Wrong';bg='#FCEBEB';tc='#501313';}html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.9rem;color:#333;">Q'+(i+1)+' <span style="font-size:0.78rem;padding:1px 8px;border-radius:8px;color:#fff;background:'+catColors[qs[i].cat]+';">'+esc(qs[i].cat)+'</span></span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';}
+  document.getElementById('results-cards').innerHTML=html;
+}
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){if(dir===1&&state.cur===qs.length-1){showResults();return;}state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));saveState();render();}
+function retryWrong(){var first=-1;for(var i=0;i<qs.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){if(first===-1)first=i;delete state.answers[i];}}if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}}
+function copyRes(){var lines=['[Grant] Math - Results (2026-06-16)'];for(var i=0;i<qs.length;i++){var a=state.answers[i];var label=a===undefined?'Skipped':(a===getCSI(i)?'Correct':'Wrong');lines.push('Q'+(i+1)+' ('+qs[i].cat+'): '+label);}var txt=lines.join('\n');if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fallbackCopy(txt);});}else fallbackCopy(txt);}
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;
+window.openFreshModal=openFreshModal;window.confirmFresh=confirmFresh;window.showResults=showResults;
+
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

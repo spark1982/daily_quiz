@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT Vocabulary</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; background:#f0f3f7; margin:0; padding:0; color:#222; }
+  .wrap { max-width:640px; margin:0 auto; padding:18px 14px 60px; }
+  h1 { font-size:1.25rem; text-align:center; color:#185FA5; margin:6px 0 2px; }
+  .date { text-align:center; font-size:0.82rem; color:#888; margin-bottom:6px; }
+  .instruction { text-align:center; font-size:0.88rem; color:#555; padding:6px 12px 10px; background:#f0f3f7; }
+  #nav-bar { display:flex; align-items:center; gap:8px; margin:12px 0; }
+  #nav-count { font-size:13px; white-space:nowrap; color:#555; }
+  .prog-track { background:#d7dde6; border-radius:3px; height:6px; flex:1; margin:0 10px; }
+  .prog-fill { background:#185FA5; border-radius:3px; height:6px; width:0%; transition:width 0.2s; }
+  #jump-btn { font-size:12px; padding:4px 10px; border:1px solid #185FA5; border-radius:14px; background:#fff; color:#185FA5; cursor:pointer; white-space:nowrap; }
+  #dot-panel { display:none; max-height:170px; overflow-y:auto; padding:8px; background:#fff; border-radius:8px; margin-bottom:8px; }
+  .card { background:#fff; border-radius:14px; padding:18px 16px; box-shadow:0 1px 4px rgba(0,0,0,0.08); margin-bottom:14px; }
+  .word-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .word-text { font-size:1.5rem; font-weight:700; color:#185FA5; }
+  .tag-badge { display:inline-block; font-size:0.7rem; font-weight:700; color:#fff; padding:3px 10px; border-radius:12px; margin-left:6px; vertical-align:middle; }
+  .speak-btn { border:none; background:#eaf1f8; color:#185FA5; width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:0.95rem; }
+  .q-context { font-style:italic; background:#f5f8fc; border-left:3px solid #185FA5; padding:10px 12px; border-radius:6px; margin-bottom:14px; font-size:0.95rem; color:#333; }
+  .q-prompt { font-size:0.92rem; color:#555; margin-bottom:10px; }
+  .opt-btn { display:block; width:100%; text-align:left; padding:12px 14px; margin-bottom:9px; border:1.5px solid #d7dde6; border-radius:9px; background:#fff; font-size:0.95rem; cursor:pointer; }
+  .opt-btn.correct { background:#E1F5EE; border-color:#1D9E75; color:#0c5132; font-weight:600; }
+  .opt-btn.wrong { background:#FBE9E7; border-color:#E24B4A; color:#7a1d1c; font-weight:600; }
+  .opt-btn.disabledbtn { cursor:default; }
+  .exp-box { margin-top:6px; padding:11px 13px; background:#fff7e6; border-left:3px solid #f5a623; border-radius:6px; font-size:0.88rem; color:#5a4310; line-height:1.5; }
+  .nav-btns { display:flex; gap:10px; margin-top:14px; }
+  .nav-btns button { flex:1; padding:11px; border:none; border-radius:9px; background:#185FA5; color:#fff; font-size:0.95rem; cursor:pointer; }
+  .nav-btns button:disabled { background:#b9c6d4; cursor:default; }
+  .results-card { text-align:center; }
+  .score-big { font-size:2.4rem; font-weight:800; color:#185FA5; margin:8px 0; }
+  #retryWrongBtn { display:block; width:100%; padding:13px; background:#1D9E75; color:#fff; border:none; border-radius:10px; font-size:1rem; font-weight:700; cursor:pointer; margin-bottom:12px; }
+  .res-btn-copy { display:block; width:100%; padding:13px; background:#7b61ff; color:#fff; border:none; border-radius:10px; font-size:1rem; font-weight:700; cursor:pointer; margin-bottom:12px; }
+  .res-btn-fresh { display:block; width:100%; padding:13px; background:#888; color:#fff; border:none; border-radius:10px; font-size:1rem; font-weight:700; cursor:pointer; }
+  .modal-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.45); align-items:center; justify-content:center; z-index:50; }
+  .modal-box { background:#fff; border-radius:14px; padding:22px; max-width:300px; text-align:center; }
+  .modal-box p { font-size:0.95rem; color:#333; margin-bottom:18px; }
+  .modal-btns { display:flex; gap:10px; }
+  .modal-btns button { flex:1; padding:10px; border:none; border-radius:8px; font-size:0.9rem; cursor:pointer; }
+  .modal-btn-cancel { background:#e5e8ec; color:#333; }
+  .modal-btn-confirm { background:#E24B4A; color:#fff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>[Sion] SAT Vocabulary</h1>
+  <div class="date">2026-06-23</div>
+  <div class="instruction">Choose the best meaning of each word based on its context.</div>
+
+  <div id="nav-bar">
+    <span id="nav-count">0 / 20</span>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+    <button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button>
+  </div>
+  <div id="dot-panel"></div>
+
+  <div id="quiz-area"></div>
+  <div id="results-area" style="display:none;"></div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box">
+    <p>Are you sure you want to clear all progress and start fresh?</p>
+    <div class="modal-btns">
+      <button class="modal-btn-cancel" onclick="closeFreshModal()">Cancel</button>
+      <button class="modal-btn-confirm" onclick="confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var DATE_GEN = '20260622';
+  var QUIZ_KEY = 'quiz_satvocab_20_' + DATE_GEN + '_v1';
+  var ATT_KEY  = 'quiz_satvocab_att_' + DATE_GEN + '_v1';
+
+  var qs = [
+    { tag:'Review', stem:'abase', sent:"Proud to a fault, he would not abase himself by apologizing first, even though he knew he was wrong.",
+      opts:['to promote someone to a higher rank','to forgive someone completely for a mistake','to lower in dignity or self-respect; to humiliate','to argue persuasively in favor of a position'], ci:2,
+      exp:"To abase means to lower oneself or another in dignity or self-respect. He refused to humiliate himself by apologizing first." },
+    { tag:'New', stem:'cultivate', sent:"She spent years cultivating relationships with local farmers before launching her organic food business.",
+      opts:['to develop or nurture something over time','to abandon something considered no longer useful','to copy the methods of a well-known rival','to criticize something in a formal, public setting'], ci:0,
+      exp:"To cultivate means to nurture or develop something over time, matching the years she spent building relationships with farmers." },
+    { tag:'New', stem:'emulate', sent:"The young violinist tried to emulate her teacher's effortless technique.",
+      opts:['to ignore someone’s advice entirely','to imitate someone in an effort to match or surpass them','to compete against someone using unfair methods','to publicly criticize a rival’s performance'], ci:1,
+      exp:"To emulate means to imitate someone admiringly in hopes of matching or exceeding them, matching the violinist's attempt to copy her teacher's technique." },
+    { tag:'New', stem:'auspicious', sent:"Investors viewed the company's record profits as an auspicious sign for the coming year.",
+      opts:['suggesting that a serious problem has been hidden','indicating a need for a major financial change','suggesting that future success is likely','indicating that growth has come to a complete stop'], ci:2,
+      exp:"Auspicious means promising or favorable for future success, matching investors reading record profits as a good sign." },
+    { tag:'New', stem:'perfidious', sent:"The perfidious advisor secretly leaked the king's plans to a rival kingdom.",
+      opts:['deceitful and disloyal; betraying trust','extremely cautious and slow to act','highly skilled at solving complex problems','openly hostile and quick to start arguments'], ci:0,
+      exp:"Perfidious means deceitful and disloyal, matching the advisor who betrayed the king's trust by leaking his plans." },
+    { tag:'New', stem:'lucid', sent:"Even in her nineties, my grandmother remained remarkably lucid, recalling details from decades earlier with ease.",
+      opts:['easily confused by simple questions','clear-minded and able to think with full clarity','reluctant to share personal opinions','prone to exaggerating small details'], ci:1,
+      exp:"Lucid means clear-minded and able to think with full clarity, matching the grandmother's sharp memory in old age." },
+    { tag:'New', stem:'affluent', sent:"The affluent neighborhood was known for its large houses and private gardens.",
+      opts:['located far from any major city','known for strict, unwritten social rules','having a great deal of wealth','recently built using outdated methods'], ci:2,
+      exp:"Affluent means having a great deal of wealth, matching the large houses and private gardens of the neighborhood." },
+    { tag:'Review', stem:'abdicate', sent:"After the scandal, the chairman chose to abdicate his position rather than face a vote of no confidence.",
+      opts:['to formally give up a position of power or responsibility','to seize a position of power by force','to share a position of power with a rival','to delay a difficult decision indefinitely'], ci:0,
+      exp:"To abdicate means to formally give up a position of power, matching the chairman stepping down rather than facing a vote." },
+    { tag:'Review', stem:'abate', sent:"The fever finally began to abate after three days of rest and medicine.",
+      opts:['to increase suddenly without warning','to become less severe or intense','to spread to new areas rapidly','to return after disappearing completely'], ci:1,
+      exp:"To abate means to become less severe or intense, matching the fever weakening after rest and medicine." },
+    { tag:'New', stem:'languid', sent:"On hot summer afternoons, the cat stretched out in a languid pose on the porch.",
+      opts:['alert and ready to react instantly','anxious and unable to stay still','slow-moving and lacking energy; relaxed','loud and demanding attention'], ci:2,
+      exp:"Languid means slow-moving and lacking energy, matching the cat's relaxed pose in the summer heat." },
+    { tag:'New', stem:'ephemeral', sent:"The cherry blossoms are ephemeral, lasting barely a week before falling to the ground.",
+      opts:['lasting only a very short time','appearing in the same place every year without fail','growing larger and stronger over time','difficult to detect without special equipment'], ci:0,
+      exp:"Ephemeral means lasting only a very short time, matching the cherry blossoms that fall after just a week." },
+    { tag:'New', stem:'accede', sent:"After weeks of protest, the company finally acceded to the workers' demand for higher wages.",
+      opts:['to formally reject a proposal without discussion','to agree to a request or demand','to delay a response until more evidence appears','to publicly criticize an opposing plan'], ci:1,
+      exp:"To accede means to agree to a request or demand, matching the company finally giving in to the workers' demand." },
+    { tag:'New', stem:'consonant', sent:"Her calm response was consonant with the professional image she always tried to project.",
+      opts:['being in direct conflict with something','being unrelated to the topic at hand','being in agreement or harmony with something','being far more dramatic than expected'], ci:2,
+      exp:"Consonant means being in agreement or harmony with something, matching her calm response fitting her professional image." },
+    { tag:'New', stem:'appease', sent:"The manager offered a refund to appease the frustrated customer.",
+      opts:['to calm or satisfy someone by giving in to their demands','to ignore someone’s complaint entirely','to delay a response until tempers cool','to argue against a customer’s complaint'], ci:0,
+      exp:"To appease means to calm or satisfy someone by giving in to their demands, matching the manager offering a refund." },
+    { tag:'New', stem:'hubris', sent:"It was pure hubris that led the captain to ignore the storm warnings.",
+      opts:['a sudden loss of confidence','excessive pride or self-confidence','a deep sense of loyalty to one’s crew','a careful, methodical approach to risk'], ci:1,
+      exp:"Hubris means excessive pride or self-confidence, matching the captain's overconfident choice to ignore the warnings." },
+    { tag:'Review', stem:'abet', sent:"The lookout was charged with abetting the theft, even though he never entered the store.",
+      opts:['to report a crime to the police immediately','to help or encourage someone to do something wrong','to prevent a crime from being committed','to investigate a crime after it has occurred'], ci:1,
+      exp:"To abet means to help or encourage a wrongful act, matching the lookout's role in the theft even without entering the store." },
+    { tag:'New', stem:'arbitrary', sent:"The coach's arbitrary decision to bench the star player surprised everyone, since no reason was given.",
+      opts:['based on random choice or personal whim rather than reason','based on careful statistical analysis','agreed upon by the entire team in advance','required by an official rule book'], ci:0,
+      exp:"Arbitrary means based on random choice or whim rather than reason, matching the coach's unexplained decision." },
+    { tag:'New', stem:'poignant', sent:"The retiring teacher's poignant farewell speech brought several students to tears.",
+      opts:['intentionally humorous and lighthearted','deeply moving; evoking strong feelings of sadness','overly long and difficult to follow','written entirely without preparation'], ci:1,
+      exp:"Poignant means deeply moving and evoking strong feelings of sadness, matching the speech that brought students to tears." },
+    { tag:'Review', stem:'abrogate', sent:"The court moved to abrogate the outdated regulation after years of complaints.",
+      opts:['to enforce a regulation more strictly','to rewrite a regulation in simpler language','to formally repeal or do away with','to delay the enforcement of a regulation'], ci:2,
+      exp:"To abrogate means to formally repeal or do away with, matching the court canceling the outdated regulation." },
+    { tag:'New', stem:'accolade', sent:"The young chef received numerous accolades for her inventive use of local ingredients.",
+      opts:['a formal complaint filed against a business','a strict rule enforced by a government agency','an award or expression of praise for an achievement','a brief pause taken during a long performance'], ci:2,
+      exp:"An accolade is an award or expression of praise for an achievement, matching the recognition the chef received." }
+  ];
+
+  var state = { idx:0, answers:{} };
+  function loadState(){
+    try {
+      var raw = localStorage.getItem(QUIZ_KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        state.idx = parsed.idx || 0;
+        state.answers = parsed.answers || {};
+      }
+    } catch(e){}
+  }
+  function saveState(){
+    try { localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); } catch(e){}
+  }
+  function bumpAttempt(){
+    try {
+      var n = parseInt(localStorage.getItem(ATT_KEY) || '0', 10);
+      localStorage.setItem(ATT_KEY, String(n+1));
+    } catch(e){}
+  }
+
+  function speak(word){
+    try {
+      if ('speechSynthesis' in window) {
+        var u = new SpeechSynthesisUtterance(word);
+        window.speechSynthesis.speak(u);
+      }
+    } catch(e){}
+  }
+
+  function answered(){ return Object.keys(state.answers).length; }
+
+  function updateNav(){
+    var a = answered();
+    document.getElementById('nav-count').textContent = a + ' / ' + qs.length;
+    document.getElementById('prog-fill').style.width = (a/qs.length*100).toFixed(1)+'%';
+    renderDots();
+  }
+
+  function renderDots(){
+    var panel = document.getElementById('dot-panel');
+    var html = '';
+    qs.forEach(function(q,i){
+      var picked = state.answers[i];
+      var bg = picked===undefined ? '#d7dde6' : (picked===q.ci ? '#185FA5' : '#E24B4A');
+      html += '<span onclick="goToQ('+i+')" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:'+bg+';color:#fff;font-size:11px;cursor:pointer;margin:2px;">'+(i+1)+'</span>';
+    });
+    panel.innerHTML = html;
+  }
+
+  function toggleJump(){
+    var panel = document.getElementById('dot-panel');
+    var btn = document.getElementById('jump-btn');
+    if (panel.style.display === 'none' || !panel.style.display) {
+      panel.style.display = 'block'; btn.textContent = 'Hide ▴'; renderDots();
+    } else {
+      panel.style.display = 'none'; btn.textContent = 'Jump ▾';
+    }
+  }
+
+  function escHtml(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function render(){
+    if (answered() >= qs.length && state.showResults) { renderResults(); return; }
+    document.getElementById('quiz-area').style.display = 'block';
+    document.getElementById('results-area').style.display = 'none';
+    var i = state.idx;
+    var q = qs[i];
+    var picked = state.answers[i];
+    var tagColor = q.tag === 'Review' ? '#f5a623' : '#185FA5';
+    var html = '<div class="card">';
+    html += '<div class="word-row"><span class="word-text">'+escHtml(q.stem)+'</span>';
+    html += '<button class="speak-btn" onclick="speak(\''+q.stem.replace(/'/g,"\\'")+'\')">&#128266;</button>';
+    html += '<span class="tag-badge" style="background:'+tagColor+'">'+q.tag+'</span></div>';
+    html += '<div class="q-prompt">Question '+(i+1)+' of '+qs.length+'. What does this word mean in context?</div>';
+    html += '<div class="q-context">'+escHtml(q.sent)+'</div>';
+    q.opts.forEach(function(opt, oi){
+      var cls = 'opt-btn';
+      if (picked !== undefined) {
+        cls += ' disabledbtn';
+        if (oi === q.ci) cls += ' correct';
+        else if (oi === picked) cls += ' wrong';
+      }
+      html += '<button class="'+cls+'" onclick="pick('+oi+')" '+(picked!==undefined?'disabled':'')+'>'+escHtml(opt)+'</button>';
+    });
+    if (picked !== undefined && picked !== q.ci) {
+      html += '<div class="exp-box">'+escHtml(q.exp)+'</div>';
+    }
+    html += '</div>';
+    html += '<div class="nav-btns">';
+    html += '<button onclick="go(-1)" '+(i===0?'disabled':'')+'>Prev</button>';
+    if (i === qs.length-1) {
+      html += '<button onclick="finishQuiz()">See Results &rarr;</button>';
+    } else {
+      html += '<button onclick="go(1)">Next</button>';
+    }
+    html += '</div>';
+    document.getElementById('quiz-area').innerHTML = html;
+    updateNav();
+  }
+
+  function pick(oi){
+    var i = state.idx;
+    if (state.answers[i] !== undefined) return;
+    state.answers[i] = oi;
+    saveState();
+    render();
+  }
+  function go(dir){
+    var ni = state.idx + dir;
+    if (ni < 0 || ni > qs.length-1) return;
+    state.idx = ni;
+    saveState();
+    render();
+  }
+  function goToQ(i){
+    state.idx = i;
+    state.showResults = false;
+    saveState();
+    render();
+  }
+  function finishQuiz(){
+    state.showResults = true;
+    saveState();
+    bumpAttempt();
+    renderResults();
+  }
+
+  function renderResults(){
+    document.getElementById('quiz-area').style.display = 'none';
+    var area = document.getElementById('results-area');
+    area.style.display = 'block';
+    var correct = 0;
+    qs.forEach(function(q,i){ if (state.answers[i] === q.ci) correct++; });
+    var html = '<div class="card results-card">';
+    html += '<div>Your Score</div>';
+    html += '<div class="score-big">'+correct+' / '+qs.length+'</div>';
+    html += '<div style="margin-bottom:16px;color:#888;font-size:0.85rem;">SAT Vocabulary &middot; 2026-06-23</div>';
+    html += '<button id="retryWrongBtn" onclick="retryWrong()">Retry Wrong Ones</button>';
+    html += '<button class="res-btn-copy" onclick="copyRes()">Copy All Results</button>';
+    html += '<button class="res-btn-fresh" onclick="openFreshModal()">Start Fresh</button>';
+    html += '</div>';
+    area.innerHTML = html;
+    updateNav();
+  }
+
+  function retryWrong(){
+    var wrong = [];
+    qs.forEach(function(q,i){
+      if (state.answers[i] !== undefined && state.answers[i] !== q.ci) wrong.push(i);
+    });
+    wrong.forEach(function(i){ delete state.answers[i]; });
+    if (wrong.length > 0) {
+      state.idx = wrong[0];
+      state.showResults = false;
+      saveState();
+      render();
+    }
+  }
+
+  function copyRes(){
+    var lines = ['[Sion] SAT Vocabulary - 2026-06-23'];
+    var correct = 0;
+    qs.forEach(function(q,i){
+      var ok = state.answers[i] === q.ci;
+      if (ok) correct++;
+      lines.push((i+1)+'. '+q.stem+' ['+q.tag+'] - '+(ok?'Correct':'Incorrect'));
+    });
+    lines.push('Score: '+correct+' / '+qs.length);
+    var text = lines.join('\n');
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).catch(function(){ fallbackCopy(text); });
+    } else {
+      fallbackCopy(text);
+    }
+  }
+  function fallbackCopy(txt){
+    var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    document.body.removeChild(ta);
+  }
+
+  function openFreshModal(){
+    document.getElementById('modal-overlay').style.display = 'flex';
+  }
+  function closeFreshModal(){
+    document.getElementById('modal-overlay').style.display = 'none';
+  }
+  function confirmFresh(){
+    state = { idx:0, answers:{}, showResults:false };
+    saveState();
+    closeFreshModal();
+    render();
+  }
+
+  window.pick = pick;
+  window.go = go;
+  window.goToQ = goToQ;
+  window.finishQuiz = finishQuiz;
+  window.retryWrong = retryWrong;
+  window.copyRes = copyRes;
+  window.openFreshModal = openFreshModal;
+  window.closeFreshModal = closeFreshModal;
+  window.confirmFresh = confirmFresh;
+  window.toggleJump = toggleJump;
+  window.speak = speak;
+
+  loadState();
+  render();
+})();
+</script>
+</body>
+</html>

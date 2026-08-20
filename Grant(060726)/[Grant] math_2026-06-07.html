@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Math</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, 'Segoe UI', Arial, sans-serif; background:#ffffff; color:#111111; }
+  .dateBar { font-size:2rem; font-weight:800; text-align:center; color:#185FA5; background:#ffffff; padding:14px 10px 0 10px; }
+  .titleBar { font-size:1.4rem; font-weight:800; text-align:center; color:#185FA5; padding:6px 10px; }
+  .attemptsBar { text-align:center; font-size:0.95rem; color:#185FA5; padding-bottom:8px; }
+  .dots { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:8px; max-width:760px; margin:0 auto; }
+  .dot { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.78rem; font-weight:700; cursor:pointer; color:#ffffff; background:#9aa4af; border:2px solid transparent; }
+  .dot.correct { background:#185FA5; }
+  .dot.wrong { background:#E24B4A; }
+  .dot.results { background:#185FA5; border-radius:14px; width:auto; padding:0 12px; }
+  .container { max-width:760px; margin:0 auto; padding:14px; }
+  .tag { display:inline-block; background:#185FA5; color:#ffffff; border-radius:999px; padding:4px 14px; font-size:0.8rem; font-weight:700; margin-bottom:10px; }
+  .qBox { background:#f4f7fb; border-radius:14px; padding:22px; font-size:1.2rem; font-weight:700; line-height:1.6; min-height:60px; display:flex; align-items:center; justify-content:center; text-align:center; }
+  .options { display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+  .opt { background:#e8edf4; color:#111111; border:2px solid transparent; border-radius:12px; padding:14px 16px; font-size:1.05rem; text-align:center; cursor:pointer; }
+  .opt.correctOpt { background:#E1F5EE; border-color:#1D9E75; color:#085041; }
+  .opt.wrongOpt { background:#FCEBEB; border-color:#E24B4A; color:#501313; }
+  .explain { margin-top:14px; background:#FCEBEB; border:2px solid #E24B4A; color:#501313; border-radius:12px; padding:14px 16px; font-size:0.95rem; line-height:1.5; display:none; }
+  .navRow { display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .navBtn { flex:1; background:#185FA5; color:#ffffff; border:none; border-radius:12px; padding:14px; font-size:1rem; font-weight:700; cursor:pointer; }
+  .navBtn:disabled { background:#b7c6d8; cursor:default; }
+  .counter { text-align:center; margin-top:10px; font-size:0.95rem; color:#185FA5; font-weight:700; }
+  .summaryGrid { display:grid; grid-template-columns: repeat(auto-fill, minmax(54px,1fr)); gap:8px; margin:14px 0; }
+  .sumCard { border-radius:10px; padding:10px 4px; text-align:center; font-weight:700; cursor:pointer; font-size:0.82rem; color:#ffffff; }
+  .sumCard.c { background:#1D9E75; }
+  .sumCard.w { background:#E24B4A; }
+  .sumCard.s { background:#9aa4af; }
+  .resultBtns { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .resultBtn { background:#185FA5; color:#ffffff; border:none; border-radius:12px; padding:14px; font-size:1rem; font-weight:700; cursor:pointer; }
+  .resultBtn.secondary { background:#e8edf4; color:#111111; }
+  .modalOverlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; z-index:50; }
+  .modalBox { background:#ffffff; border-radius:14px; padding:22px; max-width:340px; width:88%; text-align:center; }
+  .modalBtns { display:flex; gap:10px; margin-top:16px; }
+  .modalBtns button { flex:1; border:none; border-radius:10px; padding:12px; font-size:0.95rem; font-weight:700; cursor:pointer; }
+  .mCancel { background:#e8edf4; color:#111111; }
+  .mConfirm { background:#E24B4A; color:#ffffff; }
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#185FA5; color:#ffffff; padding:10px 20px; border-radius:10px; font-size:0.9rem; display:none; }
+  sup { font-size:0.7em; }
+  @media (max-width:480px){ .dateBar{font-size:1.5rem;} .titleBar{font-size:1.15rem;} .qBox{font-size:1.05rem;} }
+</style>
+</head>
+<body>
+  <div class="dateBar">June 7, 2026</div>
+  <div class="titleBar">[Grant] Math</div>
+  <div class="attemptsBar" id="attemptsBar">Total Attempts: 0</div>
+  <div class="dots" id="dots"></div>
+  <div class="container">
+    <div id="quizArea" style="display:none;">
+      <span class="tag" id="typeTag">Category</span>
+      <div class="qBox" id="qPrompt"></div>
+      <div class="options" id="options"></div>
+      <div class="explain" id="explain"></div>
+      <div class="navRow">
+        <button class="navBtn" id="prevBtn">Prev</button>
+        <button class="navBtn" id="nextBtn">Next</button>
+      </div>
+      <div class="counter" id="counter"></div>
+    </div>
+    <div id="resultsArea" style="display:none;">
+      <h2 style="color:#185FA5;">Results</h2>
+      <div class="counter" id="resultSummary"></div>
+      <div class="summaryGrid" id="summaryGrid"></div>
+      <div class="resultBtns">
+        <button class="resultBtn" id="copyBtn">Copy All Results</button>
+        <button class="resultBtn" id="retryBtn">Retry Wrong Questions</button>
+        <button class="resultBtn secondary" id="freshBtn">Start Fresh</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modalOverlay" id="modalOverlay">
+    <div class="modalBox">
+      <p style="font-size:1.05rem; font-weight:700; color:#111111;">Start over and clear all saved progress?</p>
+      <div class="modalBtns">
+        <button class="mCancel" id="modalCancel">Cancel</button>
+        <button class="mConfirm" id="modalConfirm">Start Fresh</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+(function(){
+  var TOPIC = 'math';
+  var QCOUNT = 20;
+  var STATE_KEY = 'quiz_' + TOPIC + '_' + QCOUNT + '_v1';
+  var ATTEMPTS_KEY = 'quiz_' + TOPIC + '_attempts_v1';
+
+  var QUESTIONS = [
+    // Fractions (denominators 6-19, up to 4 terms, multiplication includes a mixed number)
+    { tag:'Fractions', q:'1/6 + 5/12 − 1/4 = ?', correct:'1/3', distractors:['4/12 (unsimplified is fine, but not equal)','7/12','5/24'],
+      explain:'Use the common denominator 12: 1/6 = 2/12, 1/4 = 3/12. So 2/12 + 5/12 − 3/12 = 4/12, which simplifies to 1/3.' },
+    { tag:'Fractions', q:'7/15 + 2/9 = ?', correct:'31/45', distractors:['9/24','29/45','13/45'],
+      explain:'The least common denominator of 15 and 9 is 45: 7/15 = 21/45 and 2/9 = 10/45. Adding gives 21/45 + 10/45 = 31/45.' },
+    { tag:'Fractions', q:'2 1/3 × 3/8 = ?', correct:'7/8', distractors:['6/24','7/11','3 3/8'],
+      explain:'Change the mixed number to an improper fraction: 2 1/3 = 7/3. Then multiply: 7/3 × 3/8 = 21/24, which simplifies to 7/8.' },
+    { tag:'Fractions', q:'5/6 ÷ 2/9 = ?', correct:'3 3/4', distractors:['10/54','2 1/4','5/27'],
+      explain:'Dividing by a fraction means multiplying by its reciprocal: 5/6 × 9/2 = 45/12 = 15/4 = 3 3/4.' },
+    // Decimals (up to 3 terms, up to 3 decimal places)
+    { tag:'Decimals', q:'1.25 + 3.6 − 0.875 = ?', correct:'3.975', distractors:['4.475','3.025','4.85'],
+      explain:'Add first: 1.25 + 3.6 = 4.85. Then subtract: 4.85 − 0.875 = 3.975. Lining up decimal points keeps the place values correct.' },
+    { tag:'Decimals', q:'4.2 × 0.05 = ?', correct:'0.21', distractors:['2.1','0.021','21'],
+      explain:'Multiply as whole numbers (42 × 5 = 210), then count the total decimal places in the factors (1 + 2 = 3): 0.210 = 0.21.' },
+    { tag:'Decimals', q:'7.5 ÷ 0.25 = ?', correct:'30', distractors:['3','300','0.3'],
+      explain:'Multiply both numbers by 100 to clear the decimals: 750 ÷ 25 = 30.' },
+    { tag:'Decimals', q:'2.4 + 1.36 + 0.125 = ?', correct:'3.885', distractors:['3.985','3.785','4.885'],
+      explain:'Line up the decimal points and add: 2.400 + 1.360 + 0.125 = 3.885.' },
+    // Integer order of operations with parentheses and squares (up to 6 terms)
+    { tag:'Integer Operations', q:'(−4)<sup>2</sup> × 3 + 60 ÷ (−5) − (−15) = ?', correct:'51', distractors:['33','21','69'],
+      explain:'Follow order of operations: (−4)<sup>2</sup> = 16, so 16 × 3 = 48. Next, 60 ÷ (−5) = −12. Then 48 + (−12) − (−15) = 48 − 12 + 15 = 51.' },
+    { tag:'Integer Operations', q:'−3 × (−3)<sup>2</sup> + 12 ÷ (−4) − 5 = ?', correct:'−35', distractors:['22','−13','40'],
+      explain:'Square first: (−3)<sup>2</sup> = 9, so −3 × 9 = −27. Next, 12 ÷ (−4) = −3. Then −27 + (−3) − 5 = −35.' },
+    { tag:'Integer Operations', q:'(8 − 12) × (−2)<sup>2</sup> + 14 ÷ (−7) = ?', correct:'−18', distractors:['−14','2','18'],
+      explain:'Work inside parentheses first: 8 − 12 = −4, and (−2)<sup>2</sup> = 4, so −4 × 4 = −16. Then 14 ÷ (−7) = −2. Adding: −16 + (−2) = −18.' },
+    { tag:'Integer Operations', q:'(−6 + 2) × (−5) − (−3)<sup>2</sup> + 9 ÷ (−3) = ?', correct:'8', distractors:['−16','38','−2'],
+      explain:'Inside parentheses: −6 + 2 = −4, so −4 × (−5) = 20. Next, (−3)<sup>2</sup> = 9. Also, 9 ÷ (−3) = −3. Combine: 20 − 9 + (−3) = 8.' },
+    // Unit conversion (pound/ounce, hour/minute, feet/inch — using fractions and decimals)
+    { tag:'Unit Conversion', q:'0.4 pound = how many ounces? (1 pound = 16 ounces)', correct:'6.4 ounces', distractors:['0.025 ounces','40 ounces','64 ounces'],
+      explain:'To convert pounds to ounces, multiply by 16: 0.4 × 16 = 6.4 ounces.' },
+    { tag:'Unit Conversion', q:'5 1/2 hours = how many minutes? (1 hour = 60 minutes)', correct:'330 minutes', distractors:['300 minutes','350 minutes','310 minutes'],
+      explain:'Change 5 1/2 to 5.5, then multiply by 60: 5.5 × 60 = 330 minutes.' },
+    { tag:'Unit Conversion', q:'3 feet 8 inches = how many inches? (1 foot = 12 inches)', correct:'44 inches', distractors:['36 inches','48 inches','38 inches'],
+      explain:'Convert the feet to inches first: 3 × 12 = 36 inches. Then add the extra 8 inches: 36 + 8 = 44 inches.' },
+    { tag:'Unit Conversion', q:'2.25 pounds = how many ounces? (1 pound = 16 ounces)', correct:'36 ounces', distractors:['32 ounces','22.5 ounces','18 ounces'],
+      explain:'To convert pounds to ounces, multiply by 16: 2.25 × 16 = 36 ounces.' },
+    // Exponent rules (single-digit numbers, mixing numbers and letters)
+    { tag:'Exponent Rules', q:'x<sup>3</sup> × x<sup>4</sup> = ?', correct:'x<sup>7</sup>', distractors:['x<sup>12</sup>','x<sup>7</sup><sup>n</sup> (not valid)','2x<sup>7</sup>'],
+      explain:'When multiplying powers with the same base, add the exponents: 3 + 4 = 7, so the result is x<sup>7</sup>.' },
+    { tag:'Exponent Rules', q:'(2<sup>2</sup>)<sup>3</sup> = ?', correct:'2<sup>6</sup>', distractors:['2<sup>5</sup>','4<sup>6</sup>','2<sup>9</sup>'],
+      explain:'When raising a power to another power, multiply the exponents: 2 × 3 = 6, so the result is 2<sup>6</sup> (which equals 64).' },
+    { tag:'Exponent Rules', q:'y<sup>8</sup> ÷ y<sup>5</sup> = ?', correct:'y<sup>3</sup>', distractors:['y<sup>13</sup>','y<sup>40</sup>','y<sup>8</sup>/<sup>5</sup> (not valid)'],
+      explain:'When dividing powers with the same base, subtract the exponents: 8 − 5 = 3, so the result is y<sup>3</sup>.' },
+    { tag:'Exponent Rules', q:'4<sup>0</sup> × n<sup>3</sup> = ?', correct:'n<sup>3</sup>', distractors:['4n<sup>3</sup>','0','4n<sup>0</sup>'],
+      explain:'Any nonzero number raised to the power of 0 equals 1, so 4<sup>0</sup> = 1. Then 1 × n<sup>3</sup> = n<sup>3</sup>.' }
+  ];
+  QUESTIONS.forEach(function(item){
+    item.options = [item.correct].concat(item.distractors);
+  });
+
+  var state = null;
+  function defaultState(){ return { cur: 0, answers: {}, shuffles: {}, showResults: false }; }
+
+  function loadState(){
+    try {
+      var raw = localStorage.getItem(STATE_KEY);
+      if(!raw) return defaultState();
+      var s = JSON.parse(raw);
+      if(typeof s !== 'object' || s === null) throw new Error('bad');
+      if(typeof s.cur !== 'number' || s.cur < 0 || s.cur >= QUESTIONS.length) throw new Error('bad cur');
+      if(typeof s.answers !== 'object' || s.answers === null) throw new Error('bad answers');
+      if(typeof s.shuffles !== 'object' || s.shuffles === null) throw new Error('bad shuffles');
+      if(typeof s.showResults !== 'boolean') s.showResults = false;
+      return s;
+    } catch(e){
+      try { localStorage.removeItem(STATE_KEY); } catch(e2){}
+      return defaultState();
+    }
+  }
+  function saveState(){ try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch(e){} }
+
+  function getAttempts(){ try { return parseInt(localStorage.getItem(ATTEMPTS_KEY) || '0', 10) || 0; } catch(e){ return 0; } }
+  function incAttempts(){
+    var n = getAttempts() + 1;
+    try { localStorage.setItem(ATTEMPTS_KEY, String(n)); } catch(e){}
+    document.getElementById('attemptsBar').textContent = 'Total Attempts: ' + n;
+  }
+
+  function shuffleIndices(n){
+    var arr = [];
+    for(var i=0;i<n;i++) arr.push(i);
+    for(var i=arr.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=arr[i]; arr[i]=arr[j]; arr[j]=t; }
+    return arr;
+  }
+  function getShuffleFor(qIndex){
+    var key = String(qIndex);
+    if(!state.shuffles[key]){ state.shuffles[key] = shuffleIndices(QUESTIONS[qIndex].options.length); saveState(); }
+    return state.shuffles[key];
+  }
+
+  var dotsEl, quizArea, resultsArea, qPrompt, optionsEl, explainEl, typeTag, counterEl, prevBtn, nextBtn;
+
+  function buildDots(){
+    dotsEl.innerHTML = '';
+    for(var i=0;i<QUESTIONS.length;i++){
+      var d = document.createElement('div');
+      d.className = 'dot';
+      d.textContent = String(i+1);
+      d.addEventListener('click', (function(idx){ return function(){ goTo(idx); }; })(i));
+      dotsEl.appendChild(d);
+    }
+    var rd = document.createElement('div');
+    rd.className = 'dot results';
+    rd.id = 'resultsDot';
+    rd.textContent = 'Results';
+    rd.addEventListener('click', function(){ if(state.showResults){ showResultsScreen(); } });
+    dotsEl.appendChild(rd);
+  }
+  function refreshDots(){
+    for(var i=0;i<QUESTIONS.length;i++){
+      var d = dotsEl.children[i];
+      d.classList.remove('correct','wrong');
+      var rec = state.answers[i];
+      if(rec){
+        if(QUESTIONS[i].options[rec.choiceIndex] === QUESTIONS[i].correct) d.classList.add('correct');
+        else d.classList.add('wrong');
+      }
+    }
+    document.getElementById('resultsDot').style.display = state.showResults ? 'flex' : 'none';
+  }
+
+  function render(){
+    try {
+      if(state.showResults){ showResultsScreen(); return; }
+      quizArea.style.display = 'block';
+      resultsArea.style.display = 'none';
+      var idx = state.cur;
+      var question = QUESTIONS[idx];
+      typeTag.textContent = question.tag;
+      qPrompt.innerHTML = question.q;
+      optionsEl.innerHTML = '';
+      explainEl.style.display = 'none';
+      explainEl.textContent = '';
+
+      var order = getShuffleFor(idx);
+      var rec = state.answers[idx];
+      for(var k=0;k<order.length;k++){
+        var optIdx = order[k];
+        var btn = document.createElement('button');
+        btn.className = 'opt';
+        btn.innerHTML = question.options[optIdx];
+        (function(optIdx){ btn.addEventListener('click', function(){ selectAnswer(idx, optIdx); }); })(optIdx);
+        optionsEl.appendChild(btn);
+      }
+      if(rec) applyAnswerStyles(idx);
+
+      prevBtn.disabled = (idx === 0);
+      nextBtn.textContent = (idx === QUESTIONS.length - 1) ? 'See Results →' : 'Next';
+      counterEl.textContent = (idx+1) + ' / ' + QUESTIONS.length;
+      refreshDots();
+      saveState();
+    } catch(e){
+      quizArea.innerHTML = '<p style="color:#E24B4A;">Something went wrong loading this question. Please use the dots above to navigate.</p>';
+      quizArea.style.display = 'block';
+    }
+  }
+
+  function applyAnswerStyles(qIdx){
+    var question = QUESTIONS[qIdx];
+    var rec = state.answers[qIdx];
+    var order = getShuffleFor(qIdx);
+    var correctIndex = -1;
+    for(var i=0;i<question.options.length;i++){ if(question.options[i] === question.correct){ correctIndex = i; break; } }
+    var btns = optionsEl.children;
+    for(var k=0;k<order.length;k++){
+      var optIdx = order[k];
+      btns[k].classList.remove('correctOpt','wrongOpt');
+      if(optIdx === correctIndex) btns[k].classList.add('correctOpt');
+      else if(optIdx === rec.choiceIndex && optIdx !== correctIndex) btns[k].classList.add('wrongOpt');
+      btns[k].disabled = true;
+    }
+    if(rec.choiceIndex !== correctIndex){
+      explainEl.innerHTML = question.explain;
+      explainEl.style.display = 'block';
+    }
+  }
+
+  function selectAnswer(qIdx, optIdx){
+    if(state.answers[qIdx]) return;
+    state.answers[qIdx] = { choiceIndex: optIdx };
+    saveState();
+    render();
+  }
+  function goTo(idx){ state.cur = idx; state.showResults = false; saveState(); render(); }
+  function next(){
+    if(state.cur === QUESTIONS.length - 1){
+      state.showResults = true;
+      incAttempts();
+      saveState();
+      render();
+    } else { state.cur += 1; saveState(); render(); }
+  }
+  function prev(){ if(state.cur > 0){ state.cur -= 1; saveState(); render(); } }
+
+  function showResultsScreen(){
+    quizArea.style.display = 'none';
+    resultsArea.style.display = 'block';
+    var correct=0, wrong=0, skipped=0;
+    var grid = document.getElementById('summaryGrid');
+    grid.innerHTML = '';
+    for(var i=0;i<QUESTIONS.length;i++){
+      var rec = state.answers[i];
+      var card = document.createElement('div');
+      card.textContent = String(i+1);
+      if(!rec){ card.className='sumCard s'; skipped++; }
+      else if(QUESTIONS[i].options[rec.choiceIndex] === QUESTIONS[i].correct){ card.className='sumCard c'; correct++; }
+      else { card.className='sumCard w'; wrong++; }
+      card.addEventListener('click', (function(idx){ return function(){ state.showResults=false; state.cur=idx; saveState(); render(); }; })(i));
+      grid.appendChild(card);
+    }
+    document.getElementById('resultSummary').textContent =
+      'Correct: ' + correct + '   Wrong: ' + wrong + '   Skipped: ' + skipped + '   (' + correct + ' / ' + QUESTIONS.length + ')';
+    refreshDots();
+  }
+
+  function copyResults(){
+    var correct=0, wrong=0, skipped=0;
+    for(var i=0;i<QUESTIONS.length;i++){
+      var rec = state.answers[i];
+      if(!rec) skipped++;
+      else if(QUESTIONS[i].options[rec.choiceIndex] === QUESTIONS[i].correct) correct++;
+      else wrong++;
+    }
+    var text = '[Grant] Math — June 7, 2026\nScore: ' + correct + ' / ' + QUESTIONS.length +
+      '\nCorrect: ' + correct + '   Wrong: ' + wrong + '   Skipped: ' + skipped;
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try {
+      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text);
+      else document.execCommand('copy');
+    } catch(e){ try { document.execCommand('copy'); } catch(e2){} }
+    document.body.removeChild(ta);
+    var toast = document.getElementById('toast');
+    toast.style.display = 'block';
+    setTimeout(function(){ toast.style.display = 'none'; }, 1800);
+  }
+
+  var retrySession = null;
+  function startRetry(){
+    var wrongIdx = [];
+    for(var i=0;i<QUESTIONS.length;i++){
+      var rec = state.answers[i];
+      if(!rec || QUESTIONS[i].options[rec.choiceIndex] !== QUESTIONS[i].correct) wrongIdx.push(i);
+    }
+    if(wrongIdx.length === 0){ alertModalText('No wrong or skipped questions to retry.'); return; }
+    retrySession = { indices: wrongIdx, cur: 0, answers: {}, shuffles: {} };
+    renderRetry();
+  }
+  function renderRetry(){
+    quizArea.style.display = 'block';
+    resultsArea.style.display = 'none';
+    dotsEl.style.display = 'none';
+    var pos = retrySession.cur;
+    var qIdx = retrySession.indices[pos];
+    var question = QUESTIONS[qIdx];
+    typeTag.textContent = question.tag + ' (Retry)';
+    qPrompt.innerHTML = question.q;
+    optionsEl.innerHTML = '';
+    explainEl.style.display = 'none';
+    explainEl.textContent = '';
+
+    if(!retrySession.shuffles[pos]) retrySession.shuffles[pos] = shuffleIndices(question.options.length);
+    var order = retrySession.shuffles[pos];
+    var rec = retrySession.answers[pos];
+    var correctIndex = -1;
+    for(var i=0;i<question.options.length;i++){ if(question.options[i] === question.correct){ correctIndex = i; break; } }
+
+    for(var k=0;k<order.length;k++){
+      var optIdx = order[k];
+      var btn = document.createElement('button');
+      btn.className = 'opt';
+      btn.innerHTML = question.options[optIdx];
+      if(rec){
+        btn.disabled = true;
+        if(optIdx === correctIndex) btn.classList.add('correctOpt');
+        else if(optIdx === rec.choiceIndex) btn.classList.add('wrongOpt');
+      } else {
+        (function(optIdx){ btn.addEventListener('click', function(){ retrySession.answers[pos] = { choiceIndex: optIdx }; renderRetry(); }); })(optIdx);
+      }
+      optionsEl.appendChild(btn);
+    }
+    if(rec && rec.choiceIndex !== correctIndex){ explainEl.innerHTML = question.explain; explainEl.style.display = 'block'; }
+    prevBtn.disabled = (pos === 0);
+    nextBtn.textContent = (pos === retrySession.indices.length - 1) ? 'See Results →' : 'Next';
+    counterEl.textContent = 'Retry ' + (pos+1) + ' / ' + retrySession.indices.length;
+    nextBtn.onclick = function(){
+      if(pos === retrySession.indices.length - 1) showRetryMiniResults();
+      else { retrySession.cur += 1; renderRetry(); }
+    };
+    prevBtn.onclick = function(){ if(pos > 0){ retrySession.cur -= 1; renderRetry(); } };
+  }
+  function showRetryMiniResults(){
+    var c=0, w=0;
+    for(var i=0;i<retrySession.indices.length;i++){
+      var rec = retrySession.answers[i];
+      var qIdx = retrySession.indices[i];
+      if(rec && QUESTIONS[qIdx].options[rec.choiceIndex] === QUESTIONS[qIdx].correct) c++; else w++;
+    }
+    quizArea.style.display = 'none';
+    resultsArea.style.display = 'block';
+    document.getElementById('summaryGrid').innerHTML = '';
+    document.getElementById('resultSummary').textContent =
+      'Retry session finished — Correct: ' + c + '   Still wrong: ' + w + '   (' + c + ' / ' + retrySession.indices.length + ')';
+    var backBtn = document.createElement('button');
+    backBtn.className = 'resultBtn';
+    backBtn.textContent = 'Back to Full Results';
+    backBtn.addEventListener('click', function(){
+      retrySession = null;
+      dotsEl.style.display = 'flex';
+      restoreMainNav();
+      showResultsScreen();
+    });
+    document.querySelector('.resultBtns').insertBefore(backBtn, document.querySelector('.resultBtns').firstChild);
+  }
+  function restoreMainNav(){ nextBtn.onclick = next; prevBtn.onclick = prev; }
+
+  function alertModalText(msg){
+    var overlay = document.getElementById('modalOverlay');
+    var box = overlay.querySelector('.modalBox');
+    box.innerHTML = '<p style="font-size:1.05rem; font-weight:700; color:#111111;">' + msg + '</p><div class="modalBtns"><button class="mConfirm" id="modalOk" style="flex:1;">OK</button></div>';
+    overlay.style.display = 'flex';
+    document.getElementById('modalOk').addEventListener('click', function(){ overlay.style.display = 'none'; });
+  }
+
+  function startFresh(){
+    try { localStorage.removeItem(STATE_KEY); } catch(e){}
+    state = defaultState();
+    retrySession = null;
+    dotsEl.style.display = 'flex';
+    restoreMainNav();
+    saveState();
+    render();
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    dotsEl = document.getElementById('dots');
+    quizArea = document.getElementById('quizArea');
+    resultsArea = document.getElementById('resultsArea');
+    qPrompt = document.getElementById('qPrompt');
+    optionsEl = document.getElementById('options');
+    explainEl = document.getElementById('explain');
+    typeTag = document.getElementById('typeTag');
+    counterEl = document.getElementById('counter');
+    prevBtn = document.getElementById('prevBtn');
+    nextBtn = document.getElementById('nextBtn');
+
+    document.getElementById('attemptsBar').textContent = 'Total Attempts: ' + getAttempts();
+
+    buildDots();
+    state = loadState();
+    restoreMainNav();
+
+    document.getElementById('copyBtn').addEventListener('click', copyResults);
+    document.getElementById('retryBtn').addEventListener('click', startRetry);
+    document.getElementById('freshBtn').addEventListener('click', function(){ document.getElementById('modalOverlay').style.display = 'flex'; });
+    document.getElementById('modalCancel').addEventListener('click', function(){ document.getElementById('modalOverlay').style.display = 'none'; });
+    document.getElementById('modalConfirm').addEventListener('click', function(){ document.getElementById('modalOverlay').style.display = 'none'; startFresh(); });
+
+    render();
+  });
+})();
+</script>
+</body>
+</html>

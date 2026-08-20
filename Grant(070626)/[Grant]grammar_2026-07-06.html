@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Grammar</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;color:#222;min-height:100vh;}
+#app{max-width:700px;margin:0 auto;padding:16px;}
+h1{text-align:center;font-size:1.35rem;font-weight:800;color:#185FA5;padding:14px 0 4px;}
+.instr{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0 4px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;min-width:52px;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:6px;}
+.timer-bar{background:white;border:1px solid #d0dce8;border-radius:8px;padding:8px 12px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.timer-setup{display:flex;align-items:center;gap:8px;font-size:0.85rem;color:#444;}
+.timer-setup label{font-weight:700;}
+.timer-setup input[type="number"]{width:56px;padding:5px 6px;border:1.5px solid #d0dce8;border-radius:6px;font-size:0.9rem;text-align:center;}
+.timer-start-btn{background:#185FA5;color:white;border:none;border-radius:6px;padding:6px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;}
+.timer-running{display:flex;align-items:center;gap:8px;}
+.timer-label{font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;}
+.timer-display{font-size:1.1rem;font-weight:900;color:#185FA5;font-family:'Courier New',monospace;}
+.timer-display.warn{color:#f5a623;}
+.timer-display.danger{color:#E24B4A;}
+#att-bar{text-align:center;font-size:0.8rem;color:#888;margin-bottom:8px;}
+#att-bar span{font-weight:700;color:#185FA5;}
+.card{background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:20px 18px;margin-bottom:12px;}
+.q-num{font-size:0.78rem;color:#888;margin-bottom:8px;}
+.topic-tag{display:inline-block;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:10px;background:#e3f0ff;color:#185FA5;margin-bottom:10px;}
+.ctx-box{background:#f5f9ff;border-left:3px solid #185FA5;padding:10px 14px;border-radius:4px;font-style:italic;font-size:0.95rem;line-height:1.7;color:#222;margin-bottom:12px;}
+.q-text{font-size:0.95rem;line-height:1.5;margin-bottom:14px;color:#333;font-weight:600;}
+.ul{text-decoration:underline;font-style:normal;}
+.opts{display:grid;gap:8px;}
+.opt{padding:11px 14px;border:2px solid #d7dde6;border-radius:8px;cursor:pointer;font-size:0.92rem;background:white;text-align:left;line-height:1.45;transition:border-color 0.15s,background 0.15s;}
+.opt:hover:not(:disabled){border-color:#185FA5;background:#f0f6ff;}
+.opt.correct{border-color:#1D9E75;background:#e6f7f1;color:#0d6b50;font-weight:700;}
+.opt.wrong{border-color:#E24B4A;background:#fdf0f0;color:#b03030;}
+.opt:disabled{cursor:default;}
+.exp{margin-top:12px;padding:11px;background:#f5f9ff;border-left:3px solid #185FA5;border-radius:4px;font-size:0.86rem;line-height:1.55;color:#333;display:none;}
+.nav-btns{display:flex;gap:8px;margin-top:8px;}
+.nav-btns button{flex:1;padding:10px;border:1.5px solid #d7dde6;border-radius:8px;background:white;cursor:pointer;font-size:0.9rem;color:#444;}
+.nav-btns button:hover:not(:disabled){border-color:#185FA5;color:#185FA5;}
+.nav-btns button:disabled{opacity:0.4;cursor:not-allowed;}
+.results{background:white;border-radius:12px;padding:28px 20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.score-big{font-size:3rem;font-weight:900;color:#185FA5;}
+.score-lbl{color:#888;font-size:0.9rem;margin-bottom:16px;}
+.stats-row{display:flex;justify-content:center;gap:28px;margin-bottom:22px;}
+.stat-n{font-size:1.5rem;font-weight:800;}
+.stat-lbl{font-size:0.75rem;color:#888;}
+.res-btn{display:block;width:100%;padding:13px;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:10px;}
+.btn-copy{background:#7b61ff;color:white;}
+.btn-retry{background:#1D9E75;color:white;}
+.btn-fresh{background:#e8ecf0;color:#444;}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-ov.show{display:flex;}
+.modal-box{background:white;border-radius:14px;padding:24px;max-width:360px;width:90%;text-align:center;}
+.modal-box h3{color:#185FA5;margin-bottom:10px;font-size:1.05rem;}
+.modal-box p{font-size:0.88rem;color:#555;margin-bottom:18px;line-height:1.5;}
+.modal-acts{display:flex;gap:10px;}
+.modal-acts button{flex:1;padding:10px;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;cursor:pointer;}
+.modal-acts .cancel{background:#e8ecf0;color:#444;}
+.modal-acts .confirm{background:#E24B4A;color:white;}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>[Grant] Grammar</h1>
+  <div class="instr">Choose the best answer for each grammar question.</div>
+  <div id="nav-bar">
+    <span id="nav-count">0 / 20</span>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+    <button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button>
+  </div>
+  <div id="dot-panel"></div>
+  <div class="timer-bar">
+    <div class="timer-setup" id="timerSetup">
+      <label for="timerMin">Set Time Limit:</label>
+      <input type="number" id="timerMin" min="1" max="180" value="20"> min
+      <button class="timer-start-btn" onclick="startTimer()">Start</button>
+    </div>
+    <div class="timer-running" id="timerRunning" style="display:none;">
+      <span class="timer-label">Time Left</span>
+      <span class="timer-display" id="timerDisplay">20:00</span>
+    </div>
+  </div>
+  <div id="att-bar">Total Attempts: <span id="attCount">0</span></div>
+  <div id="qcard"></div>
+  <div id="freshModal" class="modal-ov">
+    <div class="modal-box">
+      <h3 id="freshTitle">Start Fresh?</h3>
+      <p id="freshText">All progress will be cleared. This cannot be undone.</p>
+      <div class="modal-acts">
+        <button class="cancel" onclick="closeFreshModal()">Cancel</button>
+        <button class="confirm" onclick="confirmFresh()">Start Fresh</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+var DATE='20260705';
+var QUIZ_KEY='quiz_grantgrammar_20_'+DATE+'_v1';
+var ATT_KEY='quiz_grantgrammar_att_'+DATE+'_v1';
+var ORDER_KEY=QUIZ_KEY+'_order_v1';
+
+var RAW_QUESTIONS=[
+  {topic:'Possessive Nouns',
+   ctx:'',
+   q:'Which sentence uses the plural possessive form correctly?',
+   opts:['The two teacher\'s lounge was recently repainted.','The two teachers\'s lounge was recently repainted.','The two teachers\' lounge was recently repainted.','The two teacher\'s\' lounge was recently repainted.'],ci:2,
+   exp:'Since the lounge belongs to more than one teacher, the plural noun "teachers" needs only an apostrophe after the final s to show possession, giving "teachers\' lounge." Adding \'s to a plural that already ends in s, or placing the apostrophe before the s, does not follow the plural possessive rule.'},
+  {topic:'Homophones',
+   ctx:'_____ going to the museum after lunch to see the new dinosaur exhibit.',
+   q:'Which homophone correctly completes the sentence?',
+   opts:['There','Their','They\'re','Ther\'e'],ci:2,
+   exp:'"They\'re" is the contraction of "they are," which fits the meaning of the sentence. "There" refers to a place, "their" shows possession, and "ther\'e" is not a real word.'},
+  {topic:'Quotation Marks in Dialogue',
+   ctx:'',
+   q:'Which sentence punctuates the dialogue correctly?',
+   opts:['Maria said, "The bus leaves at eight o\'clock."','Maria said "The bus leaves at eight o\'clock."','Maria said, The bus leaves at eight o\'clock.','Maria said, "The bus leaves at eight o\'clock".'],ci:0,
+   exp:'A comma follows "said," the quoted words are enclosed in quotation marks, and the period that ends the sentence goes inside the closing quotation mark, exactly as shown in "Maria said, \'The bus leaves at eight o\'clock.\'" The other choices are missing the comma, missing quotation marks, or place the period outside the quotation mark.'},
+  {topic:'Plural Noun Formation',
+   ctx:'',
+   q:'Which sentence uses the correct plural form of the irregular noun "child"?',
+   opts:['The childs played in the yard all afternoon.','The childes played in the yard all afternoon.','The children played in the yard all afternoon.','The childrens played in the yard all afternoon.'],ci:2,
+   exp:'"Child" is an irregular noun that changes form completely in the plural, becoming "children," not "childs" or "childes." "Childrens" incorrectly adds an extra plural ending to a word that is already plural.'},
+  {topic:'Run-on Sentences',
+   ctx:'',
+   q:'Which choice correctly fixes the run-on sentence "I finished my homework I went outside to play"?',
+   opts:['I finished my homework, I went outside to play.','I finished my homework I went, outside to play.','I finished my homework, and then I went outside to play.','I finished my homework and, then I went outside to play.'],ci:2,
+   exp:'Adding a comma before the coordinating conjunction "and" properly joins the two complete thoughts, as in "I finished my homework, and then I went outside to play." Simply inserting a comma without a conjunction still leaves a run-on (a comma splice), and placing the comma after "and" is incorrect.'},
+  {topic:'Irregular Verbs',
+   ctx:'',
+   q:'Which sentence uses the correct form of the irregular verb "go"?',
+   opts:['She has gone to the store already.','She has went to the store already.','She has go to the store already.','She has goed to the store already.'],ci:0,
+   exp:'"Gone" is the past participle form of "go" and is the correct choice to pair with the helping verb "has." "Went" is the simple past-tense form and cannot follow "has," while "go" and "goed" are not correct participle forms at all.'},
+  {topic:'Subject-Verb Agreement',
+   ctx:'Everyone in the classroom _____ ready for the field trip.',
+   q:'Which verb correctly completes the sentence?',
+   opts:['is','are','were','have'],ci:0,
+   exp:'"Everyone" is an indefinite pronoun that is always treated as singular, so it needs the singular verb "is." "Are," "were," and "have" are all plural or non-matching verb forms that do not agree with a singular subject.'},
+  {topic:'Sentence Types',
+   ctx:'Close the door quietly so you do not wake the baby',
+   q:'What type of sentence is shown, and what end punctuation should it have?',
+   opts:['Imperative, with a period','Declarative, with a period','Interrogative, with a question mark','Exclamatory, with an exclamation point'],ci:0,
+   exp:'The sentence gives a command, which makes it imperative, and imperative sentences typically end with a period. It does not simply state a fact (declarative), ask a question (interrogative), or express strong emotion (exclamatory).'},
+  {topic:'Comma Usage in Compound Sentences',
+   ctx:'',
+   q:'Which sentence correctly uses a comma to join two independent clauses?',
+   opts:['The power went out, so we lit some candles.','The power went out so, we lit some candles.','The power, went out so we lit some candles.','The power went out so we, lit some candles.'],ci:0,
+   exp:'When two independent clauses are joined by the coordinating conjunction "so," the comma belongs directly before "so," as in "The power went out, so we lit some candles." The other choices place the comma in the middle of a clause instead of between the two clauses.'},
+  {topic:'Linking Verbs',
+   ctx:'After running the race, Devon seemed tired but proud of his time.',
+   q:'Which word in the sentence is a linking verb?',
+   opts:['running','seemed','race','proud'],ci:1,
+   exp:'"Seemed" connects the subject "Devon" to the descriptive words "tired" and "proud," which makes it a linking verb rather than an action verb. "Running" and "race" relate to the earlier event, and "proud" is an adjective describing Devon.'},
+  {topic:'Comparative Adjectives',
+   ctx:'This recipe tastes _____ than the one we tried last week.',
+   q:'Which comparative adjective correctly completes the sentence?',
+   opts:['good','better','best','more better'],ci:1,
+   exp:'"Better" is the irregular comparative form of "good," used correctly here because only two recipes are being compared. "Best" is the superlative form for three or more, "good" makes no comparison, and "more better" incorrectly doubles the comparative.'},
+  {topic:'Prepositions',
+   ctx:'The squirrel scurried under the fence and through the garden gate.',
+   q:'Which words in the sentence are prepositions?',
+   opts:['squirrel and scurried','under and through','fence and garden','scurried and gate'],ci:1,
+   exp:'"Under" and "through" each begin a phrase that shows where the squirrel moved, making them prepositions. "Squirrel," "fence," "garden," and "gate" are nouns, and "scurried" is the main verb.'},
+  {topic:'Abstract Nouns',
+   ctx:'Her honesty about the broken vase strengthened their friendship.',
+   q:'Which word in the sentence is an abstract noun?',
+   opts:['honesty','vase','broken','strengthened'],ci:0,
+   exp:'"Honesty" names a quality that cannot be touched or seen, which makes it an abstract noun. "Vase" is a concrete noun you can see and touch, "broken" is an adjective, and "strengthened" is a verb.'},
+  {topic:'Helping Verbs',
+   ctx:'Marcus should have finished his chores before dinner started.',
+   q:'Which words in the sentence are helping verbs?',
+   opts:['should and have','have and finished','finished and dinner','started and chores'],ci:0,
+   exp:'"Should" and "have" work together with the main verb "finished" to form the verb phrase "should have finished," making them helping verbs. "Finished" is the main verb itself, not a helper.'},
+  {topic:'Sentence Fragments',
+   ctx:'',
+   q:'Which choice is a complete sentence rather than a fragment?',
+   opts:['Whenever the fire alarm rings during class.','Walking slowly toward the bus stop in the rain.','The librarian organized the returned books.','Even though the test was harder than expected.'],ci:2,
+   exp:'"The librarian organized the returned books" has a subject ("librarian") and a complete verb ("organized") and expresses a full thought, making it a complete sentence. The other choices begin with a subordinating word or a participle and never complete the thought.'},
+  {topic:'Coordinating Conjunctions',
+   ctx:'We could watch a movie tonight, _____ we could play board games instead.',
+   q:'Which coordinating conjunction correctly completes the sentence?',
+   opts:['so','but','or','for'],ci:2,
+   exp:'"Or" correctly signals that the movie and the board games are two separate choices being offered. "So" would show a result, "but" would show contrast, and "for" would show a reason, none of which match the idea of choosing between two options.'},
+  {topic:'Homophones',
+   ctx:'_____ going to need an umbrella if it keeps raining like this.',
+   q:'Which homophone correctly completes the sentence?',
+   opts:['Your','You\'re','Yore','Youre'],ci:1,
+   exp:'"You\'re" is the contraction of "you are," which fits the meaning of the sentence. "Your" shows possession, "yore" refers to time long past, and "youre" is missing its apostrophe.'},
+  {topic:'Pronoun Case',
+   ctx:'The coach saved the last two tickets for Marcus and _____.',
+   q:'Which pronoun correctly completes the sentence?',
+   opts:['I','he','me','they'],ci:2,
+   exp:'"Me" is the object pronoun needed because it receives the action of the tickets being saved for someone, alongside "Marcus." "I," "he," and "they" are all subject pronouns and cannot serve as the object of the sentence.'},
+  {topic:'Adjective vs Adverb',
+   ctx:'The goalie played <span style="text-decoration:underline">bad</span> during the first half of the game.',
+   q:'The underlined word is used incorrectly in the sentence above. Which word should replace it?',
+   opts:['badly','worse','baddest','more bad'],ci:0,
+   exp:'"Badly" is the adverb form needed to describe how the goalie played. "Bad" is an adjective and cannot describe a verb like "played." "Worse," "baddest," and "more bad" do not fit the sentence\'s meaning or grammar either.'},
+  {topic:'Proper Noun Capitalization',
+   ctx:'',
+   q:'Which sentence capitalizes proper nouns correctly?',
+   opts:['President lincoln gave a famous speech in gettysburg.','President Lincoln gave a famous speech in Gettysburg.','president Lincoln gave a famous speech in Gettysburg.','President Lincoln gave a famous speech in gettysburg.'],ci:1,
+   exp:'"President Lincoln" is a specific title paired with a name, and "Gettysburg" is a specific place, so both words must be capitalized in each. The other choices leave at least one part of a proper noun in lowercase.'}
+];
+
+function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function identityOrder(){var o=[];for(var i=0;i<RAW_QUESTIONS.length;i++)o.push(i);return o;}
+function isValidOrder(arr){if(!Array.isArray(arr)||arr.length!==RAW_QUESTIONS.length)return false;var s=arr.slice().sort(function(a,b){return a-b;});for(var i=0;i<s.length;i++)if(s[i]!==i)return false;return true;}
+function loadOrder(){try{var r=localStorage.getItem(ORDER_KEY);if(!r)return null;var a=JSON.parse(r);if(!isValidOrder(a))throw new Error();return a;}catch(e){localStorage.removeItem(ORDER_KEY);return null;}}
+function saveOrder(o){try{localStorage.setItem(ORDER_KEY,JSON.stringify(o));}catch(e){}}
+function buildQuestions(raw,order){var out=[];for(var i=0;i<order.length;i++)out.push(raw[order[i]]);return out;}
+var currentOrder=loadOrder()||identityOrder();
+var QUESTIONS=buildQuestions(RAW_QUESTIONS,currentOrder);
+
+function defaultState(){return{cur:0,answers:{},showResults:false,timerStartedAt:null,timerTotalSec:null};}
+function saveState(s){try{localStorage.setItem(QUIZ_KEY,JSON.stringify(s));}catch(e){}}
+function loadState(){try{var r=localStorage.getItem(QUIZ_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
+var state=loadState()||defaultState();
+
+function loadAtt(){try{return parseInt(localStorage.getItem(ATT_KEY)||'0',10)||0;}catch(e){return 0;}}
+function saveAtt(n){try{localStorage.setItem(ATT_KEY,String(n));}catch(e){}}
+function renderAtt(){var el=document.getElementById('attCount');if(el)el.textContent=loadAtt();}
+
+var timerInterval=null;
+function formatTime(sec){sec=Math.max(0,Math.round(sec));var m=Math.floor(sec/60),s=sec%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+function renderTimer(){
+  var setup=document.getElementById('timerSetup'),run=document.getElementById('timerRunning'),disp=document.getElementById('timerDisplay');
+  if(!setup)return;
+  if(!state.timerStartedAt){setup.style.display='flex';run.style.display='none';return;}
+  setup.style.display='none';run.style.display='flex';
+  var elapsed=(Date.now()-state.timerStartedAt)/1000,rem=state.timerTotalSec-elapsed;
+  disp.classList.remove('warn','danger');
+  if(rem<=0){disp.textContent="Time's Up";disp.classList.add('danger');stopTimerInterval();return;}
+  disp.textContent=formatTime(rem);
+  if(rem<=state.timerTotalSec*0.1)disp.classList.add('danger');
+  else if(rem<=state.timerTotalSec*0.25)disp.classList.add('warn');
+}
+function startTimer(){var inp=document.getElementById('timerMin');var m=parseFloat(inp.value)||20;state.timerTotalSec=Math.round(m*60);state.timerStartedAt=Date.now();saveState(state);renderTimer();startTimerInterval();}
+function startTimerInterval(){stopTimerInterval();timerInterval=setInterval(renderTimer,1000);}
+function stopTimerInterval(){if(timerInterval){clearInterval(timerInterval);timerInterval=null;}}
+
+function updateNav(){
+  var ans=Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent=ans+' / '+QUESTIONS.length;
+  document.getElementById('prog-fill').style.width=(ans/QUESTIONS.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel=document.getElementById('dot-panel');if(panel.style.display==='none')return;
+  var h='';
+  for(var i=0;i<QUESTIONS.length;i++){
+    var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===QUESTIONS[i].ci?'#185FA5':'#E24B4A');
+    h+='<span onclick="goToQ('+i+')" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:'+bg+';color:#fff;font-size:11px;cursor:pointer;margin:2px;">'+(i+1)+'</span>';
+  }
+  panel.innerHTML=h;
+}
+function toggleJump(){
+  var p=document.getElementById('dot-panel'),b=document.getElementById('jump-btn');
+  if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}
+  else{p.style.display='none';b.textContent='Jump ▾';}
+}
+function goToQ(i){state.cur=i;state.showResults=false;saveState(state);document.getElementById('dot-panel').style.display='none';document.getElementById('jump-btn').textContent='Jump ▾';render();}
+function pick(optIdx){if(state.answers[state.cur]!==undefined)return;state.answers[state.cur]=optIdx;saveState(state);render();}
+function goPrev(){if(state.cur>0){state.cur--;saveState(state);render();}}
+function goNext(){
+  if(state.cur<QUESTIONS.length-1){state.cur++;saveState(state);render();}
+  else{if(!state.showResults){var a=loadAtt()+1;saveAtt(a);renderAtt();}state.showResults=true;saveState(state);render();}
+}
+function render(){
+  var c=document.getElementById('qcard');
+  if(state.showResults){renderResults();return;}
+  var q=QUESTIONS[state.cur],ans=state.answers[state.cur],done=ans!==undefined;
+  var isLast=state.cur===QUESTIONS.length-1;
+  var ctxH=q.ctx?'<div class="ctx-box">'+q.ctx+'</div>':'';
+  var optsH='';
+  for(var i=0;i<q.opts.length;i++){
+    var cls='opt';
+    if(done){if(i===q.ci)cls+=' correct';else if(i===ans)cls+=' wrong';}
+    optsH+='<button class="'+cls+'"'+(done?' disabled':'')+' onclick="pick('+i+')">'+q.opts[i]+'</button>';
+  }
+  var expH=done&&ans!==q.ci?'<div class="exp" style="display:block">'+q.exp+'</div>':'';
+  var nextLbl=isLast?'See Results &#8594;':'Next &#8594;';
+  c.innerHTML='<div class="card"><div class="q-num">Q'+(state.cur+1)+' of '+QUESTIONS.length+'</div><span class="topic-tag">'+q.topic+'</span>'+ctxH+'<div class="q-text">'+q.q+'</div><div class="opts">'+optsH+'</div>'+expH+'</div><div class="nav-btns"><button '+(state.cur===0?'disabled':'')+' onclick="goPrev()">← Prev</button><button onclick="goNext()">'+nextLbl+'</button></div>';
+  updateNav();
+}
+function renderResults(){
+  var correct=0,wrong=0,skip=0;
+  for(var i=0;i<QUESTIONS.length;i++){if(state.answers[i]===undefined)skip++;else if(state.answers[i]===QUESTIONS[i].ci)correct++;else wrong++;}
+  var pct=Math.round(correct/QUESTIONS.length*100);
+  document.getElementById('qcard').innerHTML='<div class="results"><div class="score-big">'+correct+'/'+QUESTIONS.length+'</div><div class="score-lbl">'+pct+'% correct</div><div class="stats-row"><div><div class="stat-n" style="color:#1D9E75">'+correct+'</div><div class="stat-lbl">Correct</div></div><div><div class="stat-n" style="color:#E24B4A">'+wrong+'</div><div class="stat-lbl">Wrong</div></div><div><div class="stat-n" style="color:#888">'+skip+'</div><div class="stat-lbl">Skipped</div></div></div><button class="res-btn btn-copy" onclick="copyRes()">Copy All Results</button><button class="res-btn btn-retry" onclick="retryWrong()">Retry Wrong Ones</button><button class="res-btn btn-fresh" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button><button class="res-btn btn-fresh" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button></div>';
+  updateNav();
+}
+function copyRes(){
+  var correct=0,lines=['[Grant] Grammar Results'];
+  for(var i=0;i<QUESTIONS.length;i++){var q=QUESTIONS[i],a=state.answers[i],ok=a===q.ci;if(ok)correct++;lines.push('Q'+(i+1)+' ['+q.topic+'] '+(a===undefined?'SKIP':ok?'OK':'WRONG'));}
+  lines.push('Score: '+correct+'/'+QUESTIONS.length);
+  try{navigator.clipboard.writeText(lines.join('\n'));}catch(e){alert(lines.join('\n'));}
+}
+function retryWrong(){
+  var wrong=[];
+  for(var i=0;i<QUESTIONS.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==QUESTIONS[i].ci){wrong.push(i);delete state.answers[i];}}
+  if(wrong.length>0){state.cur=wrong[0];state.showResults=false;saveState(state);render();}
+}
+var pendingFreshMode='original';
+function openFreshModalOriginal(){pendingFreshMode='original';document.getElementById('freshTitle').textContent='Start Fresh (Original Order)?';document.getElementById('freshText').textContent='Questions return to their original order and all progress is cleared.';document.getElementById('freshModal').classList.add('show');}
+function openFreshModalRandom(){pendingFreshMode='random';document.getElementById('freshTitle').textContent='Start Fresh (Random Order)?';document.getElementById('freshText').textContent='Questions will be reshuffled and all progress is cleared.';document.getElementById('freshModal').classList.add('show');}
+function closeFreshModal(){document.getElementById('freshModal').classList.remove('show');}
+function confirmFresh(){currentOrder=(pendingFreshMode==='random')?shuffle(identityOrder()):identityOrder();saveOrder(currentOrder);QUESTIONS=buildQuestions(RAW_QUESTIONS,currentOrder);state=defaultState();saveState(state);stopTimerInterval();closeFreshModal();render();renderTimer();}
+window.toggleJump=toggleJump;window.goToQ=goToQ;window.pick=pick;window.goPrev=goPrev;window.goNext=goNext;
+window.startTimer=startTimer;window.copyRes=copyRes;window.retryWrong=retryWrong;
+window.openFreshModalOriginal=openFreshModalOriginal;window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;window.confirmFresh=confirmFresh;
+render();renderTimer();if(state.timerStartedAt)startTimerInterval();renderAtt();
+</script>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>[Both] Korean Words</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f7fb;min-height:100vh;padding:16px}
+.date-header{font-size:2rem;font-weight:800;text-align:center;color:#185FA5;background:#fff;padding:12px;border-radius:10px;margin-bottom:6px}
+.quiz-title{font-size:1.4rem;font-weight:700;text-align:center;color:#185FA5;margin-bottom:4px}
+.attempts{text-align:center;font-size:0.95rem;color:#555;margin-bottom:10px}
+.nav-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-bottom:14px;padding:8px}
+.dot{width:28px;height:28px;border-radius:50%;border:2px solid #185FA5;background:#fff;color:#185FA5;font-size:0.65rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.dot.correct{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.dot.wrong{background:#E24B4A;border-color:#E24B4A;color:#fff}
+.dot.current{box-shadow:0 0 0 3px #185FA5}
+.dot.results-pill{width:auto;padding:0 12px;border-radius:15px;font-size:0.8rem}
+.card{background:#fff;border-radius:14px;padding:20px;max-width:680px;margin:0 auto 14px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.q-meta{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.tag{background:#185FA5;color:#fff;border-radius:12px;padding:3px 10px;font-size:0.75rem;font-weight:600}
+.counter{font-size:0.85rem;color:#888}
+.q-text{font-size:2rem;color:#111;margin-bottom:16px;font-weight:700;display:flex;align-items:center;gap:12px}
+.speak-btn{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:0.85rem;font-size:0.85rem}
+.speak-btn:hover{background:#1050a0}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{background:#e8edf4;color:#111111;border:2px solid transparent;border-radius:10px;padding:12px 16px;cursor:pointer;font-size:0.98rem;text-align:left;transition:all .15s}
+.opt:hover{border-color:#185FA5}
+.opt.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.explain{margin-top:12px;background:#f0f6ff;border-left:4px solid #185FA5;padding:10px 14px;border-radius:6px;font-size:0.92rem;color:#1a3a6b}
+.nav-btns{display:flex;justify-content:space-between;margin-top:16px}
+.btn{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:0.95rem;cursor:pointer;font-weight:600}
+.btn:hover{background:#1050a0}
+.btn-outline{background:#fff;color:#185FA5;border:2px solid #185FA5}
+.btn-outline:hover{background:#e8edf4}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px;margin:16px 0}
+.res-card{border-radius:10px;padding:8px;cursor:pointer;text-align:center;font-size:0.8rem;font-weight:600}
+.res-card.c{background:#E1F5EE;color:#085041;border:2px solid #1D9E75}
+.res-card.w{background:#FCEBEB;color:#501313;border:2px solid #E24B4A}
+.res-card.s{background:#f0f0f0;color:#555;border:2px solid #999}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:14px;padding:28px;max-width:340px;width:90%;text-align:center}
+.modal h3{color:#185FA5;margin-bottom:12px}
+.modal-btns{display:flex;gap:10px;justify-content:center;margin-top:18px}
+</style>
+</head>
+<body>
+<div class="date-header">2026-06-10</div>
+<div class="quiz-title">[Both] Korean Words</div>
+<div class="attempts" id="attDisp">Total Attempts: 0</div>
+<div class="nav-dots" id="navDots"></div>
+<div id="quizArea" style="display:none"></div>
+<div id="resultsArea" style="display:none"></div>
+<div class="modal-overlay" id="freshModal">
+  <div class="modal">
+    <h3>Start Fresh?</h3>
+    <p>All progress will be reset.</p>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeFresh()">Cancel</button>
+      <button class="btn" onclick="doFresh()">Reset</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+const SK='quiz_korwords_30_v1',ATK='quiz_korwords_attempts_v1';
+const QS=[
+{w:'코',tag:'Noun',opts:['nose','mouth','tongue','chin'],ci:0,ex:'"코" means "nose."'},
+{w:'가다',tag:'Verb',opts:['to come','to go','to run','to walk'],ci:1,ex:'"가다" means "to go."'},
+{w:'귀',tag:'Noun',opts:['eye','tooth','ear','nose'],ci:2,ex:'"귀" means "ear."'},
+{w:'서다',tag:'Verb',opts:['to sit','to lie down','to bend','to stand'],ci:3,ex:'"서다" means "to stand."'},
+{w:'눈',tag:'Noun',opts:['eye','nose','ear','mouth'],ci:0,ex:'"눈" means "eye." (It can also mean "snow" depending on context.)'},
+{w:'뛰다',tag:'Verb',opts:['to walk','to run','to jump over','to stop'],ci:1,ex:'"뛰다" means "to run."'},
+{w:'혀',tag:'Noun',opts:['lip','tooth','tongue','chin'],ci:2,ex:'"혀" means "tongue."'},
+{w:'걷다',tag:'Verb',opts:['to run','to jump','to swim','to walk'],ci:3,ex:'"걷다" means "to walk."'},
+{w:'바다',tag:'Noun',opts:['sea / ocean','river','lake','sky'],ci:0,ex:'"바다" means "sea / ocean."'},
+{w:'요리하다',tag:'Verb',opts:['to clean','to cook','to eat','to buy'],ci:1,ex:'"요리하다" means "to cook."'},
+{w:'나무',tag:'Noun',opts:['flower','grass','tree','leaf'],ci:2,ex:'"나무" means "tree."'},
+{w:'청소하다',tag:'Verb',opts:['to wash','to organize','to repair','to clean'],ci:3,ex:'"청소하다" means "to clean."'},
+{w:'꽃',tag:'Noun',opts:['flower','tree','grass','leaf'],ci:0,ex:'"꽃" means "flower."'},
+{w:'놀다',tag:'Verb',opts:['to work','to play','to study','to rest'],ci:1,ex:'"놀다" means "to play."'},
+{w:'달',tag:'Noun',opts:['sun','star','moon','cloud'],ci:2,ex:'"달" means "moon."'},
+{w:'공부하다',tag:'Verb',opts:['to read','to teach','to practice','to study'],ci:3,ex:'"공부하다" means "to study."'},
+{w:'별',tag:'Noun',opts:['star','moon','cloud','sun'],ci:0,ex:'"별" means "star."'},
+{w:'주다',tag:'Verb',opts:['to take','to give','to receive','to buy'],ci:1,ex:'"주다" means "to give."'},
+{w:'사탕',tag:'Noun',opts:['cookie','bread','candy','juice'],ci:2,ex:'"사탕" means "candy."'},
+{w:'받다',tag:'Verb',opts:['to give','to buy','to take','to receive'],ci:3,ex:'"받다" means "to receive."'},
+{w:'침대',tag:'Noun',opts:['bed','chair','sofa','table'],ci:0,ex:'"침대" means "bed."'},
+{w:'날다',tag:'Verb',opts:['to climb','to fly','to run','to swim'],ci:1,ex:'"날다" means "to fly."'},
+{w:'토끼',tag:'Noun',opts:['fox','deer','rabbit','bear'],ci:2,ex:'"토끼" means "rabbit."'},
+{w:'만들다',tag:'Verb',opts:['to draw','to buy','to break','to make / create'],ci:3,ex:'"만들다" means "to make / to create."'},
+{w:'피부',tag:'Noun',opts:['skin','bone','muscle','hair'],ci:0,ex:'"피부" means "skin."'},
+{w:'자다',tag:'Verb',opts:['to rest','to sleep','to lie down','to sit'],ci:1,ex:'"자다" means "to sleep."'},
+{w:'거울',tag:'Noun',opts:['window','door','mirror','clock'],ci:2,ex:'"거울" means "mirror."'},
+{w:'열다',tag:'Verb',opts:['to close','to lock','to push','to open'],ci:3,ex:'"열다" means "to open."'},
+{w:'무릎',tag:'Noun',opts:['knee','shoulder','elbow','ankle'],ci:0,ex:'"무릎" means "knee."'},
+{w:'배우다',tag:'Verb',opts:['to teach','to learn','to read','to study'],ci:1,ex:'"배우다" means "to learn."'}
+];
+let state={cur:0,answers:{},shuffles:{},showResults:false};
+function loadState(){try{const s=localStorage.getItem(SK);if(s){const p=JSON.parse(s);if(typeof p.cur==='number'&&typeof p.answers==='object'&&!Array.isArray(p.answers)&&typeof p.shuffles==='object'&&!Array.isArray(p.shuffles)){state=p;}else{localStorage.removeItem(SK);}}}catch(e){localStorage.removeItem(SK);}}
+function saveState(){localStorage.setItem(SK,JSON.stringify(state));}
+function getAttempts(){return parseInt(localStorage.getItem(ATK)||'0');}
+function incAttempts(){localStorage.setItem(ATK,getAttempts()+1);}
+function updAttDisp(){document.getElementById('attDisp').textContent='Total Attempts: '+getAttempts();}
+function getShuffle(i){if(!state.shuffles[i]){const arr=[0,1,2,3];for(let k=3;k>0;k--){const r=Math.floor(Math.random()*(k+1));[arr[k],arr[r]]=[arr[r],arr[k]];}state.shuffles[i]=arr;saveState();}return state.shuffles[i];}
+function renderDots(forResults){
+  const nd=document.getElementById('navDots');nd.innerHTML='';
+  if(forResults){const pill=document.createElement('button');pill.className='dot results-pill correct';pill.textContent='Results';nd.appendChild(pill);return;}
+  QS.forEach((_,i)=>{
+    const d=document.createElement('button');d.className='dot';d.textContent=i+1;
+    if(state.answers[i]!==undefined){const sh=getShuffle(i);const cs=sh.indexOf(QS[i].ci);if(state.answers[i]===cs)d.classList.add('correct');else d.classList.add('wrong');}
+    if(i===state.cur)d.classList.add('current');
+    d.onclick=()=>{state.cur=i;saveState();render();};
+    nd.appendChild(d);
+  });
+}
+function speak(text){if(!window.speechSynthesis)return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='ko-KR';u.rate=0.9;window.speechSynthesis.speak(u);}
+function render(){
+  try{
+    if(state.showResults){renderResults();return;}
+    document.getElementById('quizArea').style.display='block';
+    document.getElementById('resultsArea').style.display='none';
+    renderDots(false);
+    const i=state.cur,q=QS[i],sh=getShuffle(i);
+    const answered=state.answers[i]!==undefined;
+    const cs=sh.indexOf(q.ci);
+    let html=`<div class="card">
+      <div class="q-meta"><span class="tag">${q.tag}</span><span class="counter">${i+1} / ${QS.length}</span></div>
+      <div class="q-text"><span>${q.w}</span><button class="speak-btn" onclick="speak('${q.w}')">Listen</button></div>
+      <div class="opts">`;
+    sh.forEach((origIdx,dispIdx)=>{
+      let cls='opt';
+      if(answered){if(dispIdx===cs)cls+=' correct';else if(dispIdx===state.answers[i])cls+=' wrong';}
+      html+=`<button class="${cls}" onclick="pick(${dispIdx})">${q.opts[origIdx]}</button>`;
+    });
+    html+='</div>';
+    if(answered&&state.answers[i]!==cs){html+=`<div class="explain">${q.ex}</div>`;}
+    html+=`<div class="nav-btns">
+      <button class="btn btn-outline" onclick="go(-1)"${i===0?' disabled':''}>Prev</button>
+      <button class="btn" onclick="${i===QS.length-1?'finishQuiz()':'go(1)'}">${i===QS.length-1?'See Results →':'Next'}</button>
+    </div></div>`;
+    document.getElementById('quizArea').innerHTML=html;
+  }catch(e){document.getElementById('quizArea').innerHTML='<div class="card">Error rendering. Please refresh.</div>';}
+}
+function renderResults(){
+  incAttempts();updAttDisp();
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  renderDots(true);
+  let correct=0,wrong=0,skipped=0,gridHTML='';
+  QS.forEach((q,i)=>{
+    const sh=getShuffle(i);const cs=sh.indexOf(q.ci);
+    if(state.answers[i]===undefined){skipped++;gridHTML+=`<div class="res-card s" onclick="goToQ(${i})">Q${i+1}<br>Skipped</div>`;}
+    else if(state.answers[i]===cs){correct++;gridHTML+=`<div class="res-card c" onclick="goToQ(${i})">Q${i+1}<br>Correct</div>`;}
+    else{wrong++;gridHTML+=`<div class="res-card w" onclick="goToQ(${i})">Q${i+1}<br>Wrong</div>`;}
+  });
+  document.getElementById('resultsArea').innerHTML=`<div class="card">
+    <h2 style="color:#185FA5;text-align:center;margin-bottom:8px">Results</h2>
+    <p style="text-align:center;font-size:1.1rem;margin-bottom:12px">${correct} / ${QS.length} Correct &nbsp;|&nbsp; ${wrong} Wrong &nbsp;|&nbsp; ${skipped} Skipped</p>
+    <div class="results-grid">${gridHTML}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px">
+      <button class="btn" onclick="startRetry()">Retry Wrong Questions</button>
+      <button class="btn btn-outline" onclick="copyRes()">Copy All Results</button>
+      <button class="btn btn-outline" onclick="confirmFresh()">Start Fresh</button>
+    </div></div>`;
+}
+function pick(dispIdx){if(state.answers[state.cur]!==undefined)return;state.answers[state.cur]=dispIdx;saveState();render();}
+function go(dir){state.cur=Math.max(0,Math.min(QS.length-1,state.cur+dir));saveState();render();}
+function finishQuiz(){state.showResults=true;saveState();render();}
+function goToQ(i){state.showResults=false;state.cur=i;saveState();render();}
+function startRetry(){
+  const wrongIdx=[];
+  QS.forEach((q,i)=>{const sh=getShuffle(i);if(state.answers[i]!==undefined&&state.answers[i]!==sh.indexOf(q.ci))wrongIdx.push(i);});
+  if(!wrongIdx.length){alert('No wrong questions!');return;}
+  wrongIdx.forEach(i=>{delete state.answers[i];delete state.shuffles[i];});
+  state.showResults=false;state.cur=wrongIdx[0];saveState();render();
+}
+function copyRes(){
+  let txt='[Both] Korean Words — 2026-06-10\n';
+  QS.forEach((q,i)=>{const sh=getShuffle(i);const cs=sh.indexOf(q.ci);const st=state.answers[i]===undefined?'Skipped':state.answers[i]===cs?'Correct':'Wrong';txt+=`Q${i+1} (${q.w}): ${st}\n`;});
+  navigator.clipboard.writeText(txt).catch(()=>{});
+}
+function confirmFresh(){document.getElementById('freshModal').classList.add('show');}
+function closeFresh(){document.getElementById('freshModal').classList.remove('show');}
+function doFresh(){localStorage.removeItem(SK);state={cur:0,answers:{},shuffles:{},showResults:false};closeFresh();render();}
+window.pick=pick;window.go=go;window.finishQuiz=finishQuiz;window.goToQ=goToQ;
+window.startRetry=startRetry;window.copyRes=copyRes;window.confirmFresh=confirmFresh;
+window.closeFresh=closeFresh;window.doFresh=doFresh;window.speak=speak;
+loadState();updAttDisp();render();
+})();
+</script>
+</body>
+</html>

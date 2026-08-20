@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Naver Dictionary</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; min-height: 100vh; }
+
+/* TOP NAV */
+#top-nav {
+  background: #fff;
+  border-bottom: 2px solid #d7dde6;
+  padding: 8px 14px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+#nav-row1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#progress-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  min-width: 62px;
+}
+#progress-bar-wrap {
+  flex: 1;
+  background: #d7dde6;
+  border-radius: 6px;
+  height: 8px;
+  overflow: hidden;
+}
+#progress-bar-fill {
+  height: 100%;
+  background: #4A90C4;
+  border-radius: 6px;
+  width: 0%;
+  transition: width 0.3s;
+}
+#jump-toggle {
+  background: #4A90C4;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#jump-panel {
+  display: none;
+  margin-top: 8px;
+  max-height: 170px;
+  overflow-y: auto;
+  padding: 6px 2px;
+}
+#jump-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #d7dde6;
+  color: #333;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s;
+}
+.dot.correct { background: #1D9E75; color: #fff; }
+.dot.wrong   { background: #E24B4A; color: #fff; }
+#results-pill {
+  display: none;
+  margin-top: 8px;
+  text-align: center;
+}
+#results-pill button {
+  background: #1D9E75;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 7px 28px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* MAIN */
+#quiz-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+#question-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  padding: 28px 24px 22px;
+}
+#q-number {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+#word-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+#q-word {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1a2a3a;
+}
+#speaker-btn {
+  background: none;
+  border: 2px solid #4A90C4;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4A90C4;
+  font-size: 16px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+#speaker-btn:hover { background: #e8f0fb; }
+#q-prompt {
+  font-size: 15px;
+  color: #555;
+  margin-bottom: 20px;
+}
+.choice-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: #f7f9fb;
+  border: 2px solid #d7dde6;
+  border-radius: 10px;
+  padding: 13px 16px;
+  margin-bottom: 10px;
+  font-size: 15px;
+  color: #222;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  line-height: 1.4;
+}
+.choice-btn:hover:not(:disabled) { border-color: #4A90C4; background: #eef4fc; }
+.choice-btn.correct-ans { background: #e6f8f1; border-color: #1D9E75; color: #145c3e; }
+.choice-btn.wrong-ans   { background: #fde8e8; border-color: #E24B4A; color: #7a1212; }
+.choice-btn:disabled { cursor: default; }
+
+/* EXPLANATION */
+#explanation {
+  display: none;
+  margin-top: 14px;
+  background: #fffbe6;
+  border: 1.5px solid #f0c040;
+  border-radius: 10px;
+  padding: 13px 16px;
+  font-size: 14px;
+  color: #5a4200;
+  line-height: 1.6;
+}
+
+/* BOTTOM NAV */
+#bottom-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 22px;
+  gap: 10px;
+}
+.nav-btn {
+  flex: 1;
+  padding: 13px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+#prev-btn {
+  background: #e2e8f0;
+  color: #555;
+}
+#prev-btn:disabled { opacity: 0.35; cursor: default; }
+#next-btn {
+  background: #4A90C4;
+  color: #fff;
+}
+
+/* RESULTS */
+#results-screen {
+  display: none;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  padding: 32px 24px;
+  text-align: center;
+}
+#results-screen h2 { font-size: 24px; color: #1a2a3a; margin-bottom: 8px; }
+#score-display { font-size: 52px; font-weight: 800; color: #4A90C4; margin: 16px 0 4px; }
+#score-sub { font-size: 15px; color: #777; margin-bottom: 24px; }
+#retry-btn {
+  background: #4A90C4;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 13px 40px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+#wrong-list { text-align: left; margin-top: 24px; }
+#wrong-list h3 { font-size: 16px; color: #E24B4A; margin-bottom: 12px; }
+.wrong-item {
+  background: #fde8e8;
+  border-radius: 8px;
+  padding: 11px 14px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.wrong-item strong { color: #1a2a3a; font-size: 16px; }
+
+/* MODAL */
+#modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 999;
+  align-items: center;
+  justify-content: center;
+}
+#modal-overlay.show { display: flex; }
+#modal-box {
+  background: #fff;
+  border-radius: 14px;
+  padding: 28px 24px;
+  max-width: 340px;
+  width: 90%;
+  text-align: center;
+}
+#modal-box p { font-size: 16px; color: #333; margin-bottom: 20px; line-height: 1.5; }
+#modal-box .modal-btns { display: flex; gap: 10px; justify-content: center; }
+#modal-box .modal-btns button {
+  flex: 1; padding: 11px; border: none; border-radius: 8px;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+}
+#modal-confirm { background: #4A90C4; color: #fff; }
+#modal-cancel  { background: #e2e8f0; color: #555; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header-bar" style="background:#fff; border-bottom:1px solid #e0e6ee; padding:10px 16px 8px; text-align:center;">
+  <div id="header-date" style="font-size:12px; color:#4A90C4; font-weight:600; letter-spacing:0.04em;"></div>
+  <div style="font-size:18px; font-weight:800; color:#4A90C4; letter-spacing:0.01em;">Sion Naver Dictionary</div>
+</div>
+
+<!-- TOP NAV -->
+<div id="top-nav">
+  <div id="nav-row1">
+    <span id="progress-label">0 / 50</span>
+    <div id="progress-bar-wrap"><div id="progress-bar-fill"></div></div>
+    <button id="jump-toggle" onclick="window.toggleJump()">Jump</button>
+  </div>
+  <div id="jump-panel">
+    <div id="jump-dots"></div>
+    <div id="results-pill"><button onclick="window.goResults()">&#127942; See Results</button></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="quiz-wrap">
+  <!-- Question card -->
+  <div id="question-card">
+    <div id="q-number"></div>
+    <div id="word-row">
+      <span id="q-word"></span>
+      <button id="speaker-btn" onclick="window.speakWord()" title="Listen">&#128266;</button>
+    </div>
+    <div id="q-prompt">Choose the correct meaning of the word above.</div>
+    <div id="choices"></div>
+    <div id="explanation"></div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div id="bottom-nav">
+    <button class="nav-btn" id="prev-btn" onclick="window.goPrev()">&#8592; Prev</button>
+    <button class="nav-btn" id="next-btn" onclick="window.goNext()">Next &#8594;</button>
+  </div>
+
+  <!-- Results screen -->
+  <div id="results-screen">
+    <h2>Quiz Complete!</h2>
+    <div id="score-display"></div>
+    <div id="score-sub"></div>
+    <button id="retry-btn" onclick="window.retryQuiz()">&#128257; Retry</button>
+    <div id="wrong-list"></div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="modal-overlay">
+  <div id="modal-box">
+    <p id="modal-msg"></p>
+    <div class="modal-btns">
+      <button id="modal-confirm">Yes</button>
+      <button id="modal-cancel" onclick="window.closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // Set header date
+  (function() {
+    var d = new Date();
+    var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var str = days[d.getDay()] + ', ' + months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+    document.getElementById('header-date').textContent = str;
+  })();
+
+  var QUESTIONS = [{"word": "defer", "meaning": "to delay or postpone something", "choices": ["showing a superior attitude toward others", "to delay or postpone something", "having a strong wish or desire for something", "to emphasize or highlight something"], "correct": 1}, {"word": "shilling", "meaning": "a former British coin worth one twentieth of a pound", "choices": ["a former British coin worth one twentieth of a pound", "a decisive defeat; severe criticism", "a great difference or inequality", "threats or force used to make someone do something"], "correct": 0}, {"word": "underscore", "meaning": "to emphasize or highlight something", "choices": ["to emphasize or highlight something", "the quality of being appropriate or suitable", "seeming contradictory but possibly true", "a former British coin worth one twentieth of a pound"], "correct": 0}, {"word": "paradoxical", "meaning": "seeming contradictory but possibly true", "choices": ["familiar with or knowledgeable about something", "to struggle or compete; to assert strongly", "dignity and seriousness of manner", "seeming contradictory but possibly true"], "correct": 3}, {"word": "peter", "meaning": "to gradually diminish and come to an end", "choices": ["very attentive to accuracy and detail; difficult to please", "to gradually diminish and come to an end", "to delay or postpone something", "a humble and earnest prayer or request"], "correct": 1}, {"word": "foible", "meaning": "a minor weakness or character flaw", "choices": ["a question asked for effect, not expecting an answer", "the process of bringing someone into a position or group", "a minor weakness or character flaw", "a humble and earnest prayer or request"], "correct": 2}, {"word": "aptness", "meaning": "the quality of being appropriate or suitable", "choices": ["a minor weakness or character flaw", "the quality of being appropriate or suitable", "a prediction or forecast about the future", "a great difference or inequality"], "correct": 1}, {"word": "disparity", "meaning": "a great difference or inequality", "choices": ["a rigid ornamental bracelet or anklet", "a great difference or inequality", "a wrongful or wicked act", "to emphasize or highlight something"], "correct": 1}, {"word": "condescending", "meaning": "showing a superior attitude toward others", "choices": ["the act of bringing under control or dominance", "dignity and seriousness of manner", "showing a superior attitude toward others", "having a strong wish or desire for something"], "correct": 2}, {"word": "duress", "meaning": "threats or force used to make someone do something", "choices": ["to emphasize or highlight something", "familiar with or knowledgeable about something", "threats or force used to make someone do something", "to gradually diminish and come to an end"], "correct": 2}, {"word": "rhetorical question", "meaning": "a question asked for effect, not expecting an answer", "choices": ["to beg someone earnestly and desperately", "a question asked for effect, not expecting an answer", "the quality of being appropriate or suitable", "a prediction or forecast about the future"], "correct": 1}, {"word": "idealist", "meaning": "a person who believes in high principles and perfection", "choices": ["a question asked for effect, not expecting an answer", "a person who believes in high principles and perfection", "a trace or remnant of something that once existed", "to put forward as fact or assumption"], "correct": 1}, {"word": "supine", "meaning": "lying face upward; passive and inactive", "choices": ["showing excessive pride in one's achievements", "lying face upward; passive and inactive", "to strongly urge or encourage someone to do something", "feeling or expressing regret or sorrow"], "correct": 1}, {"word": "contend", "meaning": "to struggle or compete; to assert strongly", "choices": ["splendor and impressiveness of appearance", "lying stretched out on the ground face downward", "to struggle or compete; to assert strongly", "a wrongful or wicked act"], "correct": 2}, {"word": "interposition", "meaning": "placing something between two things; intervention", "choices": ["a humble and earnest prayer or request", "placing something between two things; intervention", "feeling or expressing regret or sorrow", "having a strong wish or desire for something"], "correct": 1}, {"word": "implore", "meaning": "to beg someone earnestly and desperately", "choices": ["seeming contradictory but possibly true", "to beg someone earnestly and desperately", "placing something between two things; intervention", "to emphasize or highlight something"], "correct": 1}, {"word": "prostrate", "meaning": "lying stretched out on the ground face downward", "choices": ["lying stretched out on the ground face downward", "to struggle or compete; to assert strongly", "to gradually diminish and come to an end", "excessively particular about details; hard to please"], "correct": 0}, {"word": "remonstrate", "meaning": "to protest or object firmly", "choices": ["a rigid ornamental bracelet or anklet", "suffering from a condition or problem", "to protest or object firmly", "to strongly urge or encourage someone to do something"], "correct": 2}, {"word": "supplication", "meaning": "a humble and earnest prayer or request", "choices": ["to beg someone earnestly and desperately", "a decisive defeat; severe criticism", "a humble and earnest prayer or request", "dignity and seriousness of manner"], "correct": 2}, {"word": "subjugation", "meaning": "the act of bringing under control or dominance", "choices": ["to put forward as fact or assumption", "the act of bringing under control or dominance", "very attentive to accuracy and detail; difficult to please", "suffering from a condition or problem"], "correct": 1}, {"word": "comport", "meaning": "to conduct or behave oneself in a certain way", "choices": ["lacking skill or ability; incompetent", "seeming contradictory but possibly true", "to conduct or behave oneself in a certain way", "a minor weakness or character flaw"], "correct": 2}, {"word": "insidious", "meaning": "proceeding harmfully in a subtle and gradual way", "choices": ["proceeding harmfully in a subtle and gradual way", "to involve someone in a difficult situation or conflict", "showing smug self-satisfaction; uncritically content", "showing excessive pride in one's achievements"], "correct": 0}, {"word": "induction", "meaning": "the process of bringing someone into a position or group", "choices": ["a rigid ornamental bracelet or anklet", "to involve someone in a difficult situation or conflict", "the process of bringing someone into a position or group", "a young or female shark; informal term"], "correct": 2}, {"word": "vestige", "meaning": "a trace or remnant of something that once existed", "choices": ["showing excessive pride in one's achievements", "a wrongful or wicked act", "a trace or remnant of something that once existed", "a great difference or inequality"], "correct": 2}, {"word": "posit", "meaning": "to put forward as fact or assumption", "choices": ["showing smug self-satisfaction; uncritically content", "a great difference or inequality", "to put forward as fact or assumption", "a humble and earnest prayer or request"], "correct": 2}, {"word": "prognostication", "meaning": "a prediction or forecast about the future", "choices": ["a prediction or forecast about the future", "a wrongful or wicked act", "a lively Brazilian dance of African origin", "lying stretched out on the ground face downward"], "correct": 0}, {"word": "afflicted", "meaning": "suffering from a condition or problem", "choices": ["a lively Brazilian dance of African origin", "suffering from a condition or problem", "having a strong wish or desire for something", "the act of bringing under control or dominance"], "correct": 1}, {"word": "insinuate", "meaning": "to suggest something unpleasant in an indirect way", "choices": ["to suggest something unpleasant in an indirect way", "a question asked for effect, not expecting an answer", "splendor and impressiveness of appearance", "lacking skill or ability; incompetent"], "correct": 0}, {"word": "complacent", "meaning": "showing smug self-satisfaction; uncritically content", "choices": ["showing smug self-satisfaction; uncritically content", "a member of a particular church parish", "a former British coin worth one twentieth of a pound", "a great difference or inequality"], "correct": 0}, {"word": "maternal", "meaning": "relating to or characteristic of a mother", "choices": ["excessively particular about details; hard to please", "to beg someone earnestly and desperately", "relating to or characteristic of a mother", "seeming contradictory but possibly true"], "correct": 2}, {"word": "bangle", "meaning": "a rigid ornamental bracelet or anklet", "choices": ["splendor and impressiveness of appearance", "a rigid ornamental bracelet or anklet", "to gradually diminish and come to an end", "lacking skill or ability; incompetent"], "correct": 1}, {"word": "tithe", "meaning": "a tenth part of income given as a contribution", "choices": ["a question asked for effect, not expecting an answer", "lying stretched out on the ground face downward", "dignity and seriousness of manner", "a tenth part of income given as a contribution"], "correct": 3}, {"word": "parishioner", "meaning": "a member of a particular church parish", "choices": ["familiar with or knowledgeable about something", "a member of a particular church parish", "the act of bringing under control or dominance", "a prediction or forecast about the future"], "correct": 1}, {"word": "samba", "meaning": "a lively Brazilian dance of African origin", "choices": ["placing something between two things; intervention", "a lively Brazilian dance of African origin", "to beg someone earnestly and desperately", "a great difference or inequality"], "correct": 1}, {"word": "sharkette", "meaning": "a young or female shark; informal term", "choices": ["a young or female shark; informal term", "placing something between two things; intervention", "very attentive to accuracy and detail; difficult to please", "dignity and seriousness of manner"], "correct": 0}, {"word": "grandeur", "meaning": "splendor and impressiveness of appearance", "choices": ["splendor and impressiveness of appearance", "seeming contradictory but possibly true", "familiar with or knowledgeable about something", "having a strong wish or desire for something"], "correct": 0}, {"word": "gravitas", "meaning": "dignity and seriousness of manner", "choices": ["proceeding harmfully in a subtle and gradual way", "a member of a particular church parish", "dignity and seriousness of manner", "to gradually diminish and come to an end"], "correct": 2}, {"word": "finicky", "meaning": "excessively particular about details; hard to please", "choices": ["showing a superior attitude toward others", "a young or female shark; informal term", "to struggle or compete; to assert strongly", "excessively particular about details; hard to please"], "correct": 3}, {"word": "fastidious", "meaning": "very attentive to accuracy and detail; difficult to please", "choices": ["very attentive to accuracy and detail; difficult to please", "lying face upward; passive and inactive", "the quality of being appropriate or suitable", "suffering from a condition or problem"], "correct": 0}, {"word": "embroil", "meaning": "to involve someone in a difficult situation or conflict", "choices": ["to suggest something unpleasant in an indirect way", "the process of bringing someone into a position or group", "suffering from a condition or problem", "to involve someone in a difficult situation or conflict"], "correct": 3}, {"word": "bashful", "meaning": "reluctant to draw attention to oneself; shy", "choices": ["reluctant to draw attention to oneself; shy", "the quality of being appropriate or suitable", "to strongly urge or encourage someone to do something", "showing excessive pride in one's achievements"], "correct": 0}, {"word": "desirous", "meaning": "having a strong wish or desire for something", "choices": ["the quality of being appropriate or suitable", "having a strong wish or desire for something", "lying face upward; passive and inactive", "to beg someone earnestly and desperately"], "correct": 1}, {"word": "exhort", "meaning": "to strongly urge or encourage someone to do something", "choices": ["to strongly urge or encourage someone to do something", "showing a superior attitude toward others", "to suggest something unpleasant in an indirect way", "a person who believes in high principles and perfection"], "correct": 0}, {"word": "contrite", "meaning": "feeling or expressing remorse or guilt", "choices": ["showing smug self-satisfaction; uncritically content", "splendor and impressiveness of appearance", "feeling or expressing remorse or guilt", "to gradually diminish and come to an end"], "correct": 2}, {"word": "boastful", "meaning": "showing excessive pride in one's achievements", "choices": ["a minor weakness or character flaw", "to beg someone earnestly and desperately", "showing excessive pride in one's achievements", "lacking skill or ability; incompetent"], "correct": 2}, {"word": "rueful", "meaning": "feeling or expressing regret or sorrow", "choices": ["a prediction or forecast about the future", "to struggle or compete; to assert strongly", "feeling or expressing regret or sorrow", "a rigid ornamental bracelet or anklet"], "correct": 2}, {"word": "conversant", "meaning": "familiar with or knowledgeable about something", "choices": ["to delay or postpone something", "lying stretched out on the ground face downward", "to put forward as fact or assumption", "familiar with or knowledgeable about something"], "correct": 3}, {"word": "misdeed", "meaning": "a wrongful or wicked act", "choices": ["familiar with or knowledgeable about something", "splendor and impressiveness of appearance", "showing excessive pride in one's achievements", "a wrongful or wicked act"], "correct": 3}, {"word": "trouncing", "meaning": "a decisive defeat; severe criticism", "choices": ["a decisive defeat; severe criticism", "to struggle or compete; to assert strongly", "seeming contradictory but possibly true", "a humble and earnest prayer or request"], "correct": 0}, {"word": "inept", "meaning": "lacking skill or ability; incompetent", "choices": ["lacking skill or ability; incompetent", "a rigid ornamental bracelet or anklet", "seeming contradictory but possibly true", "excessively particular about details; hard to please"], "correct": 0}];
+  var TOTAL = QUESTIONS.length;
+  var state = loadState();
+
+  function loadState() {
+    try {
+      var s = localStorage.getItem('sion_naver_dict_v1');
+      if (s) return JSON.parse(s);
+    } catch(e) {}
+    return { cur: 0, answers: {}, shown: false };
+  }
+  function saveState() {
+    try { localStorage.setItem('sion_naver_dict_v1', JSON.stringify(state)); } catch(e) {}
+  }
+
+  function answeredCount() {
+    return Object.keys(state.answers).length;
+  }
+  function allAnswered() {
+    return answeredCount() === TOTAL;
+  }
+
+  function updateNav() {
+    var ans = answeredCount();
+    document.getElementById('progress-label').textContent = ans + ' / ' + TOTAL;
+    var pct = (ans / TOTAL) * 100;
+    document.getElementById('progress-bar-fill').style.width = pct + '%';
+
+    // dots
+    var dotsEl = document.getElementById('jump-dots');
+    dotsEl.innerHTML = '';
+    for (var i = 0; i < TOTAL; i++) {
+      var d = document.createElement('button');
+      d.className = 'dot';
+      d.textContent = i + 1;
+      if (state.answers[i] !== undefined) {
+        var q = QUESTIONS[i];
+        d.className += (state.answers[i] === q.correct) ? ' correct' : ' wrong';
+      }
+      (function(idx){ d.onclick = function() { state.cur = idx; render(); }; })(i);
+      dotsEl.appendChild(d);
+    }
+
+    // results pill
+    document.getElementById('results-pill').style.display = allAnswered() ? 'block' : 'none';
+
+    // prev/next
+    document.getElementById('prev-btn').disabled = (state.cur === 0);
+    var nextBtn = document.getElementById('next-btn');
+    if (state.cur === TOTAL - 1) {
+      nextBtn.textContent = 'See Results ✓';
+    } else {
+      nextBtn.textContent = 'Next →';
+    }
+  }
+
+  function render() {
+    if (state.shown) { showResults(); return; }
+    var q = QUESTIONS[state.cur];
+    document.getElementById('q-number').textContent = 'Question ' + (state.cur + 1) + ' of ' + TOTAL;
+    document.getElementById('q-word').textContent = q.word;
+
+    var choicesEl = document.getElementById('choices');
+    choicesEl.innerHTML = '';
+    var answered = state.answers[state.cur] !== undefined;
+
+    q.choices.forEach(function(ch, idx) {
+      var btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = (idx + 1) + '. ' + ch;
+      if (answered) {
+        btn.disabled = true;
+        if (idx === q.correct) btn.classList.add('correct-ans');
+        if (idx === state.answers[state.cur] && idx !== q.correct) btn.classList.add('wrong-ans');
+      } else {
+        (function(i){
+          btn.onclick = function() { answer(i); };
+        })(idx);
+      }
+      choicesEl.appendChild(btn);
+    });
+
+    // explanation
+    var expEl = document.getElementById('explanation');
+    if (answered && state.answers[state.cur] !== q.correct) {
+      expEl.style.display = 'block';
+      expEl.innerHTML = '<strong>Explanation:</strong> The correct answer is <em>"' + q.meaning + '"</em>. '
+        + 'The word <strong>' + q.word + '</strong> means: ' + q.meaning + '.';
+    } else {
+      expEl.style.display = 'none';
+    }
+
+    updateNav();
+    window.scrollTo(0, 0);
+  }
+
+  function answer(idx) {
+    if (state.answers[state.cur] !== undefined) return;
+    state.answers[state.cur] = idx;
+    saveState();
+    render();
+  }
+
+  window.speakWord = function() {
+    var w = QUESTIONS[state.cur].word;
+    var u = new SpeechSynthesisUtterance(w);
+    u.lang = 'en-US';
+    u.rate = 0.9;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  };
+
+  window.toggleJump = function() {
+    var panel = document.getElementById('jump-panel');
+    var btn = document.getElementById('jump-toggle');
+    if (panel.style.display === 'block') {
+      panel.style.display = 'none';
+      btn.textContent = 'Jump';
+    } else {
+      panel.style.display = 'block';
+      btn.textContent = 'Hide';
+      updateNav();
+    }
+  };
+
+  window.goPrev = function() {
+    if (state.cur > 0) { state.cur--; saveState(); render(); }
+  };
+
+  window.goNext = function() {
+    if (state.cur === TOTAL - 1) {
+      window.goResults();
+    } else {
+      state.cur++;
+      saveState();
+      render();
+    }
+  };
+
+  window.goResults = function() {
+    state.shown = true;
+    saveState();
+    showResults();
+  };
+
+  function showResults() {
+    document.getElementById('question-card').style.display = 'none';
+    document.getElementById('bottom-nav').style.display = 'none';
+    var rs = document.getElementById('results-screen');
+    rs.style.display = 'block';
+
+    var correct = 0;
+    var wrongItems = [];
+    for (var i = 0; i < TOTAL; i++) {
+      var q = QUESTIONS[i];
+      if (state.answers[i] === q.correct) {
+        correct++;
+      } else {
+        wrongItems.push({ q: q, given: state.answers[i] });
+      }
+    }
+
+    document.getElementById('score-display').textContent = correct + ' / ' + TOTAL;
+    var pct = Math.round((correct / TOTAL) * 100);
+    document.getElementById('score-sub').textContent = pct + '% correct';
+
+    var wl = document.getElementById('wrong-list');
+    if (wrongItems.length === 0) {
+      wl.innerHTML = '<p style="color:#1D9E75;font-weight:700;text-align:center;font-size:16px;">Perfect score! 🎉</p>';
+    } else {
+      var html = '<h3>Words to Review (' + wrongItems.length + ')</h3>';
+      wrongItems.forEach(function(item) {
+        var given = item.given !== undefined ? item.q.choices[item.given] : 'No answer';
+        html += '<div class="wrong-item">'
+          + '<strong>' + item.q.word + '</strong><br>'
+          + '✗ Your answer: ' + given + '<br>'
+          + '✓ Correct: ' + item.q.meaning
+          + '</div>';
+      });
+      wl.innerHTML = html;
+    }
+    updateNav();
+  }
+
+  window.retryQuiz = function() {
+    showModal('Start over? All your answers will be cleared.', function() {
+      state = { cur: 0, answers: {}, shown: false };
+      saveState();
+      document.getElementById('results-screen').style.display = 'none';
+      document.getElementById('question-card').style.display = 'block';
+      document.getElementById('bottom-nav').style.display = 'flex';
+      render();
+    });
+  };
+
+  // Modal
+  var modalCallback = null;
+  function showModal(msg, cb) {
+    document.getElementById('modal-msg').textContent = msg;
+    modalCallback = cb;
+    document.getElementById('modal-overlay').classList.add('show');
+  }
+  window.closeModal = function() {
+    document.getElementById('modal-overlay').classList.remove('show');
+    modalCallback = null;
+  };
+  document.getElementById('modal-confirm').onclick = function() {
+    window.closeModal();
+    if (modalCallback) modalCallback();
+  };
+
+  render();
+})();
+</script>
+</body>
+</html>

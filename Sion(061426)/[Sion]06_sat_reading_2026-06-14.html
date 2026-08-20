@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT Reading</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:720px;margin:0 auto;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px 0;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.passage-label{font-size:0.78rem;font-weight:700;color:#185FA5;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;}
+.passage-card{background:#f5f7fa;border-left:4px solid #185FA5;border-radius:8px;padding:14px 16px;margin-bottom:14px;font-size:0.93rem;line-height:1.75;color:#333;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:6px;}
+.q-stem{font-size:1rem;font-weight:600;color:#111;margin-bottom:10px;line-height:1.5;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.93rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:12px 16px;margin:6px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:10px;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-14</div>
+<div class="title-hd">[Sion] SAT Reading</div>
+<div class="instruction">Read each passage and answer the questions that follow.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 10</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump ▾</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="passage-label" id="passage-label"></div>
+  <div class="passage-card" id="passage-card"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="q-stem" id="q-stem"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_sionreading_10_20260613_v1';
+var ATT_KEY='quiz_sionreading_att_20260613_v1';
+
+var passages=[
+  {label:"Passage 1 — Darwin's Finches",
+   text:"When Charles Darwin visited the Galápagos Islands in 1835, he observed something that would later reshape his thinking about evolution. Isolated from mainland South America by hundreds of miles of ocean, the islands had developed ecosystems unlike any Darwin had previously encountered. Most striking were the finches — thirteen distinct species, each with a beak specialized to a particular food source. Some had heavy, powerful beaks suited for cracking hard seeds; others had thin, sharp beaks designed for catching insects; still others had curved beaks adapted to feeding on cactus flowers. Darwin eventually concluded that all these species had descended from a single ancestral population, and that geographic isolation — separation from the mainland — had allowed each island's population to evolve independently in response to local food sources."},
+  {label:"Passage 2 — Neuroplasticity",
+   text:"For much of the twentieth century, scientists believed that the adult human brain was essentially fixed — that neurons could not grow or form new connections after childhood development was complete. This view held that the brain was like a machine whose parts, once set, could not be rearranged. In the late twentieth and early twenty-first centuries, however, research began to overturn this assumption. Scientists discovered that the brain is remarkably adaptable — a quality they called neuroplasticity. Studies of musicians revealed that the areas of the brain controlling finger movement were significantly larger in people who had practiced an instrument since childhood. Research on stroke patients showed that damaged brain regions could, with intensive therapy, be partially compensated for by neighboring areas that took on new functions."},
+  {label:"Passage 3 — The Silk Road",
+   text:"The Silk Road was not a single road but a network of trade routes connecting China, Central Asia, the Middle East, and Europe for more than a thousand years. Its name suggests a focus on silk, which was indeed one of China's most prized exports, but the Silk Road facilitated the movement of far more than luxury goods. Spices, glassware, precious metals, and agricultural products all flowed along these routes. More significantly, the Silk Road served as a channel for ideas, religions, and technologies. Buddhism spread from India into Central Asia and China along these corridors. The printing press, paper, and gunpowder all traveled from East to West through these networks. No understanding of the ancient world is complete without recognizing the Silk Road's role as a highway not just of commerce, but of civilization."},
+  {label:"Passage 4 — Impostor Syndrome",
+   text:"Psychologists Pauline Clance and Suzanne Imes first described the \"impostor phenomenon\" in 1978 after noticing a pattern among high-achieving professional women. Despite clear external evidence of their competence — advanced degrees, published research, and professional recognition — these individuals persistently believed their success was the result of luck or deception rather than genuine ability. They lived in fear of being \"found out.\" Though early research focused on women, later studies confirmed that the phenomenon affects people of all genders and professions. Interestingly, some researchers have suggested that mild forms of impostor feelings may actually be beneficial: they can motivate people to work harder and prepare more carefully. However, when impostor feelings become extreme or chronic, they are linked to anxiety, burnout, and reduced performance."},
+  {label:"Passage 5 — Virginia Woolf",
+   text:"The novelist Virginia Woolf pioneered a technique known as \"stream of consciousness,\" which attempts to replicate on the page the actual flow of a character's thoughts and perceptions. Rather than organizing a narrative around external events and dialogue, Woolf structured her novels around the interior lives of her characters — the associations, memories, and fleeting impressions that pass through a mind from moment to moment. In her novel Mrs. Dalloway, a character walking down a London street might move seamlessly from observing traffic, to remembering a conversation from years ago, to imagining a future encounter. Woolf believed this technique captured the truth of human experience more accurately than conventional narrative could. She argued that life, as it is actually lived, does not unfold in neat, logical sequence — it moves associatively, looping back and forward in time."}
+];
+
+var qs=[
+  {pi:0,stem:"What is the primary purpose of this passage?",
+   opts:["to describe the geography of the Galápagos Islands in detail",
+         "to illustrate how geographic isolation can drive evolutionary change",
+         "to argue that Darwin's theory of evolution was proven by finches alone",
+         "to compare the ecosystems of mainland South America and the Galápagos Islands"],ci:1,
+   exp:'The passage focuses on how the isolation of the Galápagos Islands led to the independent evolution of different finch species — making geographic isolation as a driver of evolution the central idea.'},
+  {pi:0,stem:"According to the passage, a finch that feeds mainly on large, hard seeds would most likely have which type of beak?",
+   opts:["a thin, sharp beak suited for precision work",
+         "a curved beak adapted to reaching into flowers",
+         "a heavy, powerful beak suited for cracking hard shells",
+         "no beak specialization, since it eats a wide variety of foods"],ci:2,
+   exp:'The passage states that some finches "had heavy, powerful beaks suited for cracking hard seeds." A finch eating large, hard seeds would therefore have this type of beak.'},
+  {pi:1,stem:"Which statement best describes the dominant scientific view of the brain during most of the twentieth century?",
+   opts:["that the brain improves steadily and continuously with age and experience",
+         "that neuroplasticity was widely recognized but poorly understood by researchers",
+         "that the adult brain was essentially fixed and could not form new connections after childhood",
+         "that stroke patients could reliably recover full brain function through intensive therapy"],ci:2,
+   exp:'The passage states that for much of the twentieth century, scientists believed "the adult brain was essentially fixed" and that "neurons could not grow or form new connections after childhood development was complete."'},
+  {pi:1,stem:"The examples of musicians and stroke patients in the passage primarily serve to:",
+   opts:["prove that stroke recovery is possible and reliable for all patients",
+         "provide evidence that the brain can change and adapt in measurable ways",
+         "show that musical training is the most effective way to increase brain capacity",
+         "illustrate the risks of relying on a single brain region for important tasks"],ci:1,
+   exp:'Both examples — larger motor areas in musicians and function transfer in stroke patients — demonstrate in concrete, measurable ways that the brain can change. They are evidence for neuroplasticity.'},
+  {pi:2,stem:"Which statement about the Silk Road is best supported by the passage?",
+   opts:["It was primarily a route for transporting silk and luxury goods",
+         "It connected only China and Europe, bypassing the Middle East",
+         "It facilitated both commercial trade and the broader exchange of ideas and culture",
+         "Its most important contribution was the westward spread of gunpowder technology"],ci:2,
+   exp:'The passage explicitly states that the Silk Road moved far more than goods — it also spread religions, ideas, and technologies. The author calls it "a highway not just of commerce, but of civilization."'},
+  {pi:2,stem:"The author mentions the spread of Buddhism along the Silk Road primarily to:",
+   opts:["argue that religion was ultimately more important than trade on the Silk Road",
+         "demonstrate that non-commercial ideas and beliefs also traveled these routes",
+         "explain why Buddhism is widely practiced throughout Central Asia today",
+         "contrast the religious influence of India with the commercial influence of China"],ci:1,
+   exp:'Buddhism is used as one example among several (along with paper, printing, gunpowder) to show that non-commercial things — beliefs and ideas — also spread along the Silk Road.'},
+  {pi:3,stem:"As used in the passage, the phrase \"external evidence\" most closely refers to:",
+   opts:["personal feelings of confidence and internal satisfaction",
+         "the supportive opinions of close friends and family members",
+         "observable indicators such as academic credentials and professional recognition",
+         "published psychological research conducted on high-achieving individuals"],ci:2,
+   exp:'The passage immediately follows "external evidence" with specific examples: "advanced degrees, published research, and professional recognition." These are observable, public indicators of competence.'},
+  {pi:3,stem:"According to the passage, which statement best describes the impostor phenomenon?",
+   opts:["It affects only high-achieving women in professional settings",
+         "It always leads to anxiety and reduced performance regardless of severity",
+         "It can have mild positive effects but becomes harmful when extreme or persistent",
+         "It is unrelated to a person's actual level of competence or achievement"],ci:2,
+   exp:'The passage notes that "mild forms of impostor feelings may actually be beneficial" by motivating harder work, but that "when impostor feelings become extreme or chronic, they are linked to anxiety, burnout, and reduced performance."'},
+  {pi:4,stem:"What is the author's primary claim about Woolf's stream-of-consciousness technique?",
+   opts:["that it was too difficult for most readers of her era to appreciate",
+         "that it was modeled directly on the style of other modernist novelists",
+         "that it captured inner mental experience more accurately than traditional narrative",
+         "that it succeeded mainly because of its unusual organizational structure"],ci:2,
+   exp:'The passage states that "Woolf believed this technique captured the truth of human experience more accurately than conventional narrative could." This is the central claim about her technique.'},
+  {pi:4,stem:"The example of a character moving from observing traffic to an old memory to a future anticipation primarily illustrates:",
+   opts:["the confusion that many critics found in Woolf\'s novels",
+         "the way external events directly shape a character\'s inner psychology",
+         "the non-linear, associative nature of stream-of-consciousness writing",
+         "the importance of a clear chronological order in Woolf\'s narrative style"],ci:2,
+   exp:'The example shows a mind jumping freely between present observation, past memory, and future imagining — demonstrating the non-linear, associative quality of the stream-of-consciousness technique Woolf pioneered.'}
+];
+
+var state={};
+function loadState(){try{var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');if(s&&typeof s.cur==='number'&&s.cur>=0&&s.cur<qs.length&&s.answers&&s.shuffles){state=s;}else{resetState();}}catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}}
+function resetState(){state={cur:0,answers:{},shuffles:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+function getShuffle(i){if(!state.shuffles[i]){var a=[0,1,2,3];for(var k=3;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}state.shuffles[i]=a;}return state.shuffles[i];}
+function getCSI(i){return getShuffle(i).indexOf(qs[i].ci);}
+function loadAttempts(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function updateNav(){var ans=Object.keys(state.answers).length;document.getElementById('nav-count').textContent=ans+' / '+qs.length;document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';renderDots();}
+function toggleJump(){var p=document.getElementById('dot-panel');var b=document.getElementById('jump-btn');if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}else{p.style.display='none';b.textContent='Jump ▾';}}
+function renderDots(){var p=document.getElementById('dot-panel');if(p.style.display==='none')return;var h='';for(var i=0;i<qs.length;i++){var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===getCSI(i)?'#185FA5':'#E24B4A');h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';}if(Object.keys(state.answers).length===qs.length){h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';}p.innerHTML=h;}
+function goToQ(i){state.cur=i;state.showResults=false;saveState();render();document.getElementById('dot-panel').style.display='none';document.getElementById('jump-btn').textContent='Jump ▾';}
+function showResults(){state.showResults=true;localStorage.setItem(ATT_KEY,loadAttempts()+1);saveState();render();}
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAttempts();
+  if(state.showResults){renderResults();return;}
+  document.getElementById('quizArea').style.display='block';document.getElementById('resultsArea').style.display='none';updateNav();
+  var i=state.cur;var q=qs[i];var p=passages[q.pi];
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('passage-label').textContent=p.label;
+  document.getElementById('passage-card').textContent=p.text;
+  document.getElementById('q-stem').textContent=q.stem;
+  var sh=getShuffle(i);var ans=state.answers[i];var csi=getCSI(i);
+  var html='';for(var s=0;s<4;s++){var oi=sh[s];var cls='opt-btn';var dis='';if(ans!==undefined){dis='disabled';if(s===csi)cls+=' correct';else if(s===ans)cls+=' wrong';}html+='<button class="'+cls+'" '+dis+' onclick="pick('+i+','+s+')">'+escHtml(q.opts[oi])+'</button>';}
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');if(ans!==undefined&&ans!==csi){eb.style.display='block';eb.textContent=q.exp;}else{eb.style.display='none';}
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.querySelector('.prev-btn').disabled=(i===0);
+}
+function renderResults(){
+  document.getElementById('quizArea').style.display='none';document.getElementById('resultsArea').style.display='block';updateNav();
+  var c=0,w=0,sk=0;for(var i=0;i<qs.length;i++){if(state.answers[i]===undefined)sk++;else if(state.answers[i]===getCSI(i))c++;else w++;}
+  document.getElementById('results-summary').innerHTML='<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var html='';for(var i=0;i<qs.length;i++){var a=state.answers[i];var label,bg,tc;if(a===undefined){label='Skipped';bg='#d7dde6';tc='#555';}else if(a===getCSI(i)){label='Correct';bg='#E1F5EE';tc='#085041';}else{label='Wrong';bg='#FCEBEB';tc='#501313';}var qShort=qs[i].stem.length>55?qs[i].stem.slice(0,55)+'…':qs[i].stem;html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.88rem;color:#333;">Q'+(i+1)+': '+escHtml(qShort)+'</span><span style="white-space:nowrap;padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';}
+  document.getElementById('results-cards').innerHTML=html;
+}
+function pick(qi,si){if(state.answers[qi]!==undefined)return;state.answers[qi]=si;saveState();render();}
+function go(dir){if(dir===1&&state.cur===qs.length-1){showResults();return;}state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));saveState();render();}
+function retryWrong(){var first=-1;for(var i=0;i<qs.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==getCSI(i)){if(first===-1)first=i;delete state.answers[i];}}if(first!==-1){state.cur=first;state.showResults=false;saveState();render();}}
+function copyRes(){var lines=['[Sion] SAT Reading - Results (2026-06-14)'];for(var i=0;i<qs.length;i++){var a=state.answers[i];var label=a===undefined?'Skipped':a===getCSI(i)?'Correct':'Wrong';lines.push('Q'+(i+1)+': '+label+' — '+qs[i].stem.slice(0,60));}var txt=lines.join('\n');if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fbCopy(txt);});}else{fbCopy(txt);}}
+function fbCopy(t){var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){document.getElementById('freshModal').style.display='none';localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+window.pick=pick;window.go=go;window.goToQ=goToQ;window.toggleJump=toggleJump;
+window.retryWrong=retryWrong;window.copyRes=copyRes;window.openFreshModal=openFreshModal;
+window.confirmFresh=confirmFresh;window.showResults=showResults;
+
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

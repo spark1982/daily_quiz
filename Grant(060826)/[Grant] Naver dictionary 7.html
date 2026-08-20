@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>English Vocabulary Quiz</title>
+<style>
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { margin:0; background:#f4f6fa; color:#111;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+.dateBar { font-size:2rem; font-weight:800; text-align:center; color:#185FA5; background:#fff; padding:12px 8px; }
+.header { text-align:center; padding:8px 12px 0; }
+.header h1 { color:#185FA5; font-size:1.5rem; margin:8px 0 4px; }
+.attempts { font-size:0.95rem; color:#333; margin:0 0 8px; }
+.wrap { max-width:720px; margin:0 auto; padding:0 12px 48px; }
+.dotNav { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; padding:12px 6px; }
+.dot { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:0.9rem; cursor:pointer; border:none; background:#d9dee6; color:#555; padding:0; }
+.dot.correct { background:#185FA5; color:#fff; }
+.dot.wrong { background:#E24B4A; color:#fff; }
+.dot.current { box-shadow:0 0 0 3px rgba(24,95,165,0.35); }
+.pill { height:34px; border-radius:18px; padding:0 16px; border:none; background:#185FA5; color:#fff;
+  font-weight:700; font-size:0.9rem; cursor:pointer; }
+.pill.active { background:#103a63; }
+#quizArea, #resultsScreen { background:#fff; border-radius:14px; padding:18px; margin-top:6px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+.counter { text-align:right; color:#555; font-size:0.9rem; }
+.typeBadge { display:inline-block; background:#185FA5; color:#fff; border-radius:14px; padding:4px 12px;
+  font-size:0.85rem; font-weight:700; margin:6px 0 12px; }
+.word { font-size:1.8rem; font-weight:800; color:#111; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.spk { width:40px; height:40px; border-radius:50%; background:#185FA5; border:none; cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; padding:0; }
+.spk svg { fill:#fff; }
+.options { display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+.opt { width:100%; text-align:left; padding:14px 16px; border-radius:10px; font-size:1.05rem; line-height:1.45;
+  cursor:pointer; background:#e8edf4; color:#111111; border:2px solid transparent; }
+.opt.correct { background:#E1F5EE; border-color:#1D9E75; color:#085041; }
+.opt.wrong { background:#FCEBEB; border-color:#E24B4A; color:#501313; }
+.opt:disabled { cursor:default; }
+.explain { margin-top:14px; padding:12px 14px; border-radius:10px; background:#eef3fb; color:#103a63;
+  border-left:4px solid #185FA5; font-size:1rem; line-height:1.45; }
+.navBtns { display:flex; justify-content:space-between; gap:12px; margin-top:18px; }
+.navBtn { flex:1; padding:14px; border-radius:10px; border:none; font-size:1.05rem; font-weight:700; cursor:pointer; }
+.navBtn.prev { background:#e8edf4; color:#185FA5; }
+.navBtn.next { background:#185FA5; color:#fff; }
+.navBtn:disabled { opacity:0.5; cursor:default; }
+.resTitle { color:#185FA5; margin:0 0 6px; }
+.score { font-size:1.1rem; font-weight:700; color:#111; margin-bottom:10px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(64px,1fr)); gap:8px; margin:14px 0; }
+.gcard { padding:8px 4px; border-radius:8px; text-align:center; cursor:pointer; border:1px solid #ccc; background:#fff; }
+.gcard.correct { background:#E1F5EE; color:#085041; border-color:#1D9E75; }
+.gcard.wrong { background:#FCEBEB; color:#501313; border-color:#E24B4A; }
+.gcard.skipped { background:#f0f0f0; color:#555; border-color:#bbb; }
+.gnum { font-size:1rem; font-weight:800; }
+.gst { font-size:0.72rem; font-weight:700; margin-top:2px; }
+.reviewBox { margin-top:8px; }
+.rev { padding:12px 0; border-bottom:1px solid #eee; }
+.revHead { font-size:1.05rem; }
+.revQ { color:#555; font-weight:700; margin-right:6px; }
+.revWord { font-weight:800; color:#111; }
+.revMean { color:#085041; margin:4px 0 8px; line-height:1.4; }
+.miniCopy { background:#185FA5; color:#fff; border:none; border-radius:8px; padding:6px 14px;
+  font-size:0.85rem; font-weight:700; cursor:pointer; }
+.resBtns { display:flex; flex-direction:column; gap:10px; margin-top:18px; }
+.bigBtn { padding:14px; border-radius:10px; border:none; font-size:1.05rem; font-weight:700; cursor:pointer; }
+.copyBtn { background:#185FA5; color:#fff; }
+.retryBtn { background:#1D9E75; color:#fff; }
+.backBtn { background:#e8edf4; color:#185FA5; }
+.freshBtn { background:#fff; color:#E24B4A; border:2px solid #E24B4A; }
+.modalOverlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5);
+  align-items:center; justify-content:center; z-index:100; padding:20px; }
+.modalBox { background:#fff; border-radius:14px; padding:22px; max-width:340px; width:100%; text-align:center; }
+.modalTitle { font-size:1.2rem; font-weight:800; color:#111; margin-bottom:8px; }
+.modalText { font-size:0.98rem; color:#444; margin-bottom:18px; line-height:1.4; }
+.modalBtns { display:flex; gap:10px; }
+.mCancel { flex:1; padding:12px; border-radius:10px; border:none; background:#e8edf4; color:#185FA5; font-weight:700; font-size:1rem; cursor:pointer; }
+.mConfirm { flex:1; padding:12px; border-radius:10px; border:none; background:#E24B4A; color:#fff; font-weight:700; font-size:1rem; cursor:pointer; }
+#fallback { display:none; margin:20px; padding:20px; border-radius:12px; background:#FCEBEB; color:#501313; }
+#fallback button { margin-top:12px; padding:12px 18px; border:none; border-radius:10px; background:#185FA5; color:#fff; font-weight:700; cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="dateBar">June 8, 2026</div>
+<div class="header">
+  <h1>English Vocabulary Quiz</h1>
+  <div class="attempts" id="attempts">Total Attempts: 0</div>
+</div>
+<div class="wrap">
+  <div id="dotNav" class="dotNav"></div>
+  <div id="quizArea" style="display:none;">
+    <div class="counter" id="counter"></div>
+    <span class="typeBadge">Vocabulary</span>
+    <div class="word" id="word"></div>
+    <div class="options" id="options"></div>
+    <div class="explain" id="explain" style="display:none;"></div>
+    <div class="navBtns">
+      <button class="navBtn prev" id="prevBtn">Prev</button>
+      <button class="navBtn next" id="nextBtn">Next</button>
+    </div>
+  </div>
+  <div id="resultsScreen" style="display:none;"></div>
+</div>
+
+<div id="modal" class="modalOverlay">
+  <div class="modalBox">
+    <div class="modalTitle">Start Fresh?</div>
+    <div class="modalText">This will clear your current answers and progress.</div>
+    <div class="modalBtns">
+      <button id="modalCancel" class="mCancel">Cancel</button>
+      <button id="modalConfirm" class="mConfirm">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<div id="fallback">
+  Something went wrong displaying the quiz.
+  <br>
+  <button onclick="try{localStorage.removeItem('quiz_english_vocab_53_v1');}catch(e){} location.reload();">Reset Quiz</button>
+</div>
+
+<script>
+var QUESTIONS = [{"word": "preposition", "options": ["a word used before a noun or pronoun to show its relation to another word, such as in or on", "unable to stay still, rest, or relax", "a clear difference that is seen when two things are compared", "sleepy and lacking energy"], "answer": 0}, {"word": "foul", "options": ["offensive to the senses, or unfair and dishonest", "a union or agreement formed between groups for mutual benefit", "a place where people come to live and build a community", "relating to the continent of Europe or its people"], "answer": 0}, {"word": "drowsy", "options": ["sleepy and lacking energy", "the act of traveling through an unknown area to learn about it", "relating to the human spirit or soul rather than to material things", "a union or agreement formed between groups for mutual benefit"], "answer": 0}, {"word": "ancestor", "options": ["a person from whom one is descended, such as a great-grandparent", "made up of many connected parts and difficult to understand", "unwilling to accept ideas or behavior that differ from one's own", "a union or agreement formed between groups for mutual benefit"], "answer": 0}, {"word": "architecture", "options": ["the art and practice of designing and constructing buildings", "neatly arranged within a small space", "an area of fairly flat land that is higher than the land around it", "stated clearly and in full detail, leaving no room for doubt"], "answer": 0}, {"word": "adobe", "options": ["a building material of sun-dried clay and straw, or a brick made from it", "relating to France, its people, or its language", "sleepy and lacking energy", "offensive to the senses, or unfair and dishonest"], "answer": 0}, {"word": "plateau", "options": ["an area of fairly flat land that is higher than the land around it", "a building material of sun-dried clay and straw, or a brick made from it", "the power to affect how someone or something develops or behaves", "the act of traveling through an unknown area to learn about it"], "answer": 0}, {"word": "complex", "options": ["made up of many connected parts and difficult to understand", "not even, balanced, or following a usual pattern", "in a way that shows perfect happiness", "offensive to the senses, or unfair and dishonest"], "answer": 0}, {"word": "contrast", "options": ["a clear difference that is seen when two things are compared", "made of parts that are packed closely together so it is thick", "to set up or found something on a firm basis", "to make someone into a slave"], "answer": 0}, {"word": "spiritual", "options": ["relating to the human spirit or soul rather than to material things", "feeling annoyed or slightly angry", "a country in southwestern Europe on the Iberian Peninsula", "neatly arranged within a small space"], "answer": 0}, {"word": "as opposed to", "options": ["in contrast with, or rather than", "an advanced stage of human social and cultural development", "relating to the continent of Europe or its people", "to talk about a subject in order to reach a decision or exchange ideas"], "answer": 0}, {"word": "in/with regard to", "options": ["concerning or relating to a particular matter", "unable to stay still, rest, or relax", "to give someone support, confidence, or hope", "a word used before a noun or pronoun to show its relation to another word, such as in or on"], "answer": 0}, {"word": "league", "options": ["a group of sports teams or people who compete against one another", "decorated with or covered in small beads", "in contrast with, or rather than", "a country in southwestern Europe on the Iberian Peninsula"], "answer": 0}, {"word": "establish", "options": ["to set up or found something on a firm basis", "relating to France, its people, or its language", "relating to Portugal, its people, or its language", "a place where people come to live and build a community"], "answer": 0}, {"word": "influence", "options": ["the power to affect how someone or something develops or behaves", "relating to the human spirit or soul rather than to material things", "to set up or found something on a firm basis", "the practice of farming, including growing crops and raising animals"], "answer": 0}, {"word": "exploration", "options": ["the act of traveling through an unknown area to learn about it", "relating to Portugal, its people, or its language", "an area of fairly flat land that is higher than the land around it", "a building material of sun-dried clay and straw, or a brick made from it"], "answer": 0}, {"word": "European", "options": ["relating to the continent of Europe or its people", "a long journey, especially one made by sea or in space", "an area of fairly flat land that is higher than the land around it", "to include or affect something as a necessary part"], "answer": 0}, {"word": "slavery", "options": ["the condition of being owned by another person and forced to work", "an organized journey made for a particular purpose, such as exploration", "burning or shining in an unsteady, wavering way", "relating to the continent of Europe or its people"], "answer": 0}, {"word": "settlement", "options": ["a place where people come to live and build a community", "sleepy and lacking energy", "a union or agreement formed between groups for mutual benefit", "to talk about a subject in order to reach a decision or exchange ideas"], "answer": 0}, {"word": "encourage", "options": ["to give someone support, confidence, or hope", "neatly arranged within a small space", "made up of many connected parts and difficult to understand", "a long journey, especially one made by sea or in space"], "answer": 0}, {"word": "relate to", "options": ["to be connected with or have a relationship to something", "a building material of sun-dried clay and straw, or a brick made from it", "in a way that shows perfect happiness", "a person who forces others to become slaves"], "answer": 0}, {"word": "enslaver", "options": ["a person who forces others to become slaves", "feeling annoyed or slightly angry", "unable to stay still, rest, or relax", "a long journey, especially one made by sea or in space"], "answer": 0}, {"word": "Portuguese", "options": ["relating to Portugal, its people, or its language", "to reach a conclusion by reasoning from known facts", "a group of sports teams or people who compete against one another", "to make someone into a slave"], "answer": 0}, {"word": "involve", "options": ["to include or affect something as a necessary part", "the art and practice of designing and constructing buildings", "sleepy and lacking energy", "unwilling to wait and easily annoyed by delay"], "answer": 0}, {"word": "expedition", "options": ["an organized journey made for a particular purpose, such as exploration", "the power to affect how someone or something develops or behaves", "to give someone support, confidence, or hope", "a building material of sun-dried clay and straw, or a brick made from it"], "answer": 0}, {"word": "voyage", "options": ["a long journey, especially one made by sea or in space", "the power to affect how someone or something develops or behaves", "an area of fairly flat land that is higher than the land around it", "an area of land that is under the control of a ruler or government"], "answer": 0}, {"word": "courage", "options": ["the ability to face danger or difficulty without being overcome by fear", "the condition of being owned by another person and forced to work", "having existed for a long time and being firmly accepted", "unable to stay still, rest, or relax"], "answer": 0}, {"word": "territory", "options": ["an area of land that is under the control of a ruler or government", "an organized journey made for a particular purpose, such as exploration", "in contrast with, or rather than", "to include or affect something as a necessary part"], "answer": 0}, {"word": "French", "options": ["relating to France, its people, or its language", "to set up or found something on a firm basis", "unwilling to wait and easily annoyed by delay", "the condition of being owned by another person and forced to work"], "answer": 0}, {"word": "civilization", "options": ["an advanced stage of human social and cultural development", "a country in southwestern Europe on the Iberian Peninsula", "unwilling to accept ideas or behavior that differ from one's own", "feeling annoyed or slightly angry"], "answer": 0}, {"word": "established", "options": ["having existed for a long time and being firmly accepted", "the art and practice of designing and constructing buildings", "burning or shining in an unsteady, wavering way", "feeling annoyed or slightly angry"], "answer": 0}, {"word": "discuss", "options": ["to talk about a subject in order to reach a decision or exchange ideas", "in contrast with, or rather than", "neatly arranged within a small space", "to travel through an area in order to learn about it"], "answer": 0}, {"word": "refer to", "options": ["to mention something or direct attention to it", "the condition of being owned by another person and forced to work", "a group of sports teams or people who compete against one another", "not even, balanced, or following a usual pattern"], "answer": 0}, {"word": "irregular", "options": ["not even, balanced, or following a usual pattern", "an organized journey made for a particular purpose, such as exploration", "the condition of being owned by another person and forced to work", "unable to stay still, rest, or relax"], "answer": 0}, {"word": "tender", "options": ["gentle and kind, or soft and easy to chew", "a country in southwestern Europe on the Iberian Peninsula", "made of parts that are packed closely together so it is thick", "the power to affect how someone or something develops or behaves"], "answer": 0}, {"word": "compact", "options": ["neatly arranged within a small space", "a country in southwestern Europe on the Iberian Peninsula", "to be connected with or have a relationship to something", "completely certain that something is true"], "answer": 0}, {"word": "dense", "options": ["made of parts that are packed closely together so it is thick", "completely certain that something is true", "a person from whom one is descended, such as a great-grandparent", "the power to affect how someone or something develops or behaves"], "answer": 0}, {"word": "deduce", "options": ["to reach a conclusion by reasoning from known facts", "sleepy and lacking energy", "in or to every part of something, or during the whole of a period", "to be connected with or have a relationship to something"], "answer": 0}, {"word": "explicit", "options": ["stated clearly and in full detail, leaving no room for doubt", "a long journey, especially one made by sea or in space", "the condition of being owned by another person and forced to work", "the art and practice of designing and constructing buildings"], "answer": 0}, {"word": "blissfully", "options": ["in a way that shows perfect happiness", "to set up or found something on a firm basis", "made of parts that are packed closely together so it is thick", "to make someone into a slave"], "answer": 0}, {"word": "flickering", "options": ["burning or shining in an unsteady, wavering way", "to be connected with or have a relationship to something", "to set up or found something on a firm basis", "feeling annoyed or slightly angry"], "answer": 0}, {"word": "restless", "options": ["unable to stay still, rest, or relax", "to talk about a subject in order to reach a decision or exchange ideas", "a long journey, especially one made by sea or in space", "feeling annoyed or slightly angry"], "answer": 0}, {"word": "irritated", "options": ["feeling annoyed or slightly angry", "an advanced stage of human social and cultural development", "relating to the human spirit or soul rather than to material things", "relating to the continent of Europe or its people"], "answer": 0}, {"word": "impatient", "options": ["unwilling to wait and easily annoyed by delay", "a clear difference that is seen when two things are compared", "the act of traveling through an unknown area to learn about it", "decorated with or covered in small beads"], "answer": 0}, {"word": "intolerant", "options": ["unwilling to accept ideas or behavior that differ from one's own", "neatly arranged within a small space", "gentle and kind, or soft and easy to chew", "relating to the continent of Europe or its people"], "answer": 0}, {"word": "Portugal", "options": ["a country in southwestern Europe on the Iberian Peninsula", "a union or agreement formed between groups for mutual benefit", "to reach a conclusion by reasoning from known facts", "an area of land that is under the control of a ruler or government"], "answer": 0}, {"word": "enslave", "options": ["to make someone into a slave", "in a way that shows perfect happiness", "an area of land that is under the control of a ruler or government", "a long journey, especially one made by sea or in space"], "answer": 0}, {"word": "explore", "options": ["to travel through an area in order to learn about it", "the power to affect how someone or something develops or behaves", "a clear difference that is seen when two things are compared", "neatly arranged within a small space"], "answer": 0}, {"word": "alliance", "options": ["a union or agreement formed between groups for mutual benefit", "to mention something or direct attention to it", "a building material of sun-dried clay and straw, or a brick made from it", "decorated with or covered in small beads"], "answer": 0}, {"word": "agriculture", "options": ["the practice of farming, including growing crops and raising animals", "a person from whom one is descended, such as a great-grandparent", "made up of many connected parts and difficult to understand", "relating to the human spirit or soul rather than to material things"], "answer": 0}, {"word": "beaded", "options": ["decorated with or covered in small beads", "burning or shining in an unsteady, wavering way", "in contrast with, or rather than", "completely certain that something is true"], "answer": 0}, {"word": "convinced", "options": ["completely certain that something is true", "unwilling to wait and easily annoyed by delay", "an area of land that is under the control of a ruler or government", "stated clearly and in full detail, leaving no room for doubt"], "answer": 0}, {"word": "throughout", "options": ["in or to every part of something, or during the whole of a period", "the art and practice of designing and constructing buildings", "an organized journey made for a particular purpose, such as exploration", "stated clearly and in full detail, leaving no room for doubt"], "answer": 0}];
+var STATE_KEY = "quiz_english_vocab_53_v1";
+var ATTEMPTS_KEY = "quiz_english_vocab_53_attempts_v1";
+var TOTAL = QUESTIONS.length;
+
+var MODE = 'main';
+var main = { cur:0, answers:{}, shuffles:{}, showResults:false };
+var retry = { list:[], cur:0, answers:{}, shuffles:{}, showResults:false };
+var attemptsCount = 0;
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function activeSession(){ return MODE==='main' ? main : retry; }
+function activeList(){ if(MODE==='main'){ var a=[]; for(var i=0;i<TOTAL;i++){a.push(i);} return a; } return retry.list; }
+function activeLen(){ return activeList().length; }
+function questionAt(pos){ return QUESTIONS[ activeList()[pos] ]; }
+
+function save(){ try{ localStorage.setItem(STATE_KEY, JSON.stringify(main)); }catch(e){} }
+
+function loadState(){
+  try{
+    var raw = localStorage.getItem(STATE_KEY);
+    if(!raw){ return; }
+    var o = JSON.parse(raw);
+    if(!o || typeof o!=='object'){ throw 0; }
+    if(typeof o.cur!=='number' || o.cur<0 || o.cur>=TOTAL){ throw 0; }
+    if(typeof o.answers!=='object' || o.answers===null){ throw 0; }
+    if(typeof o.shuffles!=='object' || o.shuffles===null){ throw 0; }
+    if(typeof o.showResults!=='boolean'){ throw 0; }
+    main = { cur:o.cur, answers:o.answers, shuffles:o.shuffles, showResults:o.showResults };
+  }catch(e){
+    try{ localStorage.removeItem(STATE_KEY); }catch(e2){}
+    main = { cur:0, answers:{}, shuffles:{}, showResults:false };
+  }
+}
+
+function readAttempts(){ try{ var v=parseInt(localStorage.getItem(ATTEMPTS_KEY),10); return isNaN(v)?0:v; }catch(e){ return 0; } }
+function updateAttempts(){ var el=document.getElementById('attempts'); if(el){ el.textContent='Total Attempts: '+attemptsCount; } }
+function incrementAttempts(){ attemptsCount++; try{ localStorage.setItem(ATTEMPTS_KEY, String(attemptsCount)); }catch(e){} updateAttempts(); }
+
+function getShuffle(pos){
+  var sess=activeSession();
+  var sh=sess.shuffles[pos];
+  if(!Array.isArray(sh) || sh.length!==4){
+    sh=[0,1,2,3];
+    for(var i=sh.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=sh[i]; sh[i]=sh[j]; sh[j]=t; }
+    sess.shuffles[pos]=sh;
+    if(MODE==='main'){ save(); }
+  }
+  return sh;
+}
+
+function speak(w){
+  try{
+    if(!('speechSynthesis' in window)){ return; }
+    window.speechSynthesis.cancel();
+    var u=new SpeechSynthesisUtterance(String(w).replace(/\//g,' '));
+    u.lang='en-US'; u.rate=0.9;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+function render(){
+  try{
+    var quizArea=document.getElementById('quizArea');
+    var resultsScreen=document.getElementById('resultsScreen');
+    var sess=activeSession();
+    if(sess.showResults){
+      quizArea.style.display='none';
+      resultsScreen.classList.add('show');
+      resultsScreen.style.display='block';
+      renderResults();
+    } else {
+      resultsScreen.classList.remove('show');
+      resultsScreen.style.display='none';
+      quizArea.style.display='block';
+      renderQuestion();
+    }
+    renderDotNav();
+  }catch(e){
+    var fb=document.getElementById('fallback');
+    if(fb){ fb.style.display='block'; }
+  }
+}
+
+function renderQuestion(){
+  var sess=activeSession();
+  var pos=sess.cur;
+  var q=questionAt(pos);
+  document.getElementById('counter').textContent=(pos+1)+' / '+activeLen();
+  var wordEl=document.getElementById('word');
+  wordEl.innerHTML='<span>'+esc(q.word)+'</span>';
+  var spk=document.createElement('button');
+  spk.className='spk'; spk.setAttribute('aria-label','Listen');
+  spk.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>';
+  spk.onclick=function(){ speak(q.word); };
+  wordEl.appendChild(spk);
+
+  var sh=getShuffle(pos);
+  var answered = (sess.answers[pos]!==undefined);
+  var selected = sess.answers[pos];
+  var optsEl=document.getElementById('options');
+  optsEl.innerHTML='';
+  for(var d=0; d<sh.length; d++){
+    var oi=sh[d];
+    var btn=document.createElement('button');
+    btn.className='opt';
+    btn.textContent=q.options[oi];
+    if(answered){
+      btn.disabled=true;
+      if(oi===q.answer){ btn.className='opt correct'; }
+      else if(oi===selected){ btn.className='opt wrong'; }
+    } else {
+      (function(dd){ btn.onclick=function(){ selectOption(dd); }; })(d);
+    }
+    optsEl.appendChild(btn);
+  }
+
+  var ex=document.getElementById('explain');
+  if(answered && selected!==q.answer){
+    ex.style.display='block';
+    ex.innerHTML='<strong>'+esc(q.word)+'</strong> means: '+esc(q.options[q.answer]);
+  } else {
+    ex.style.display='none';
+    ex.innerHTML='';
+  }
+
+  var prev=document.getElementById('prevBtn');
+  var next=document.getElementById('nextBtn');
+  prev.disabled=(pos===0);
+  next.textContent = (pos===activeLen()-1) ? 'See Results \u2192' : 'Next';
+}
+
+function selectOption(d){
+  var sess=activeSession();
+  var pos=sess.cur;
+  if(sess.answers[pos]!==undefined){ return; }
+  var sh=getShuffle(pos);
+  sess.answers[pos]=sh[d];
+  if(MODE==='main'){ save(); }
+  render();
+}
+
+function nextQuestion(){
+  var sess=activeSession();
+  if(sess.cur < activeLen()-1){ sess.cur++; if(MODE==='main'){ save(); } render(); }
+  else { goToResults(); }
+}
+function prevQuestion(){
+  var sess=activeSession();
+  if(sess.cur>0){ sess.cur--; if(MODE==='main'){ save(); } render(); }
+}
+function goToQuestion(pos){
+  var sess=activeSession();
+  sess.cur=pos; sess.showResults=false;
+  if(MODE==='main'){ save(); }
+  render();
+}
+function goToResults(){
+  var sess=activeSession();
+  if(!sess.showResults){
+    if(MODE==='main'){ incrementAttempts(); }
+    sess.showResults=true;
+    if(MODE==='main'){ save(); }
+  }
+  render();
+}
+
+function renderDotNav(){
+  var sess=activeSession();
+  var list=activeList();
+  var nav=document.getElementById('dotNav');
+  nav.innerHTML='';
+  for(var pos=0; pos<list.length; pos++){
+    var dot=document.createElement('button');
+    dot.className='dot';
+    dot.textContent=(pos+1);
+    var ans=sess.answers[pos];
+    if(ans!==undefined){
+      var q=QUESTIONS[list[pos]];
+      dot.className += (ans===q.answer) ? ' correct' : ' wrong';
+    }
+    if(!sess.showResults && pos===sess.cur){ dot.className += ' current'; }
+    (function(p){ dot.onclick=function(){ goToQuestion(p); }; })(pos);
+    nav.appendChild(dot);
+  }
+  var pill=document.createElement('button');
+  pill.className='pill'+(sess.showResults?' active':'');
+  pill.textContent='Results';
+  pill.onclick=function(){ goToResults(); };
+  nav.appendChild(pill);
+}
+
+function computeBuckets(){
+  var sess=activeSession();
+  var list=activeList();
+  var correct=[], wrong=[], skipped=[];
+  for(var pos=0; pos<list.length; pos++){
+    var ans=sess.answers[pos];
+    var q=QUESTIONS[list[pos]];
+    if(ans===undefined){ skipped.push(pos); }
+    else if(ans===q.answer){ correct.push(pos); }
+    else { wrong.push(pos); }
+  }
+  return {correct:correct, wrong:wrong, skipped:skipped};
+}
+
+function renderResults(){
+  var sess=activeSession();
+  var list=activeList();
+  var b=computeBuckets();
+  var rs=document.getElementById('resultsScreen');
+  var title = (MODE==='retry') ? 'Retry Results' : 'Results';
+  var html='';
+  html += '<h2 class="resTitle">'+title+'</h2>';
+  html += '<div class="score">You got '+b.correct.length+' out of '+list.length+' correct.</div>';
+  html += '<div class="grid" id="grid"></div>';
+  var review = b.wrong.concat(b.skipped);
+  if(review.length){ html += '<div class="reviewBox" id="reviewBox"></div>'; }
+  html += '<div class="resBtns" id="resBtns"></div>';
+  rs.innerHTML=html;
+
+  var grid=document.getElementById('grid');
+  for(var pos=0; pos<list.length; pos++){
+    var ans=sess.answers[pos];
+    var q=QUESTIONS[list[pos]];
+    var st, cls;
+    if(ans===undefined){ st='Skipped'; cls='skipped'; }
+    else if(ans===q.answer){ st='Correct'; cls='correct'; }
+    else { st='Wrong'; cls='wrong'; }
+    var card=document.createElement('button');
+    card.className='gcard '+cls;
+    card.innerHTML='<div class="gnum">'+(pos+1)+'</div><div class="gst">'+st+'</div>';
+    (function(p){ card.onclick=function(){ jumpToFromResults(p); }; })(pos);
+    grid.appendChild(card);
+  }
+
+  if(review.length){
+    var rb=document.getElementById('reviewBox');
+    review.sort(function(a,bb){ return a-bb; });
+    for(var i=0;i<review.length;i++){
+      var pos2=review[i];
+      var q2=QUESTIONS[list[pos2]];
+      var item=document.createElement('div');
+      item.className='rev';
+      var head=document.createElement('div');
+      head.className='revHead';
+      head.innerHTML='<span class="revQ">Q'+(pos2+1)+'</span><span class="revWord">'+esc(q2.word)+'</span>';
+      var mean=document.createElement('div');
+      mean.className='revMean';
+      mean.textContent=q2.options[q2.answer];
+      var cp=document.createElement('button');
+      cp.className='miniCopy';
+      cp.textContent='Copy';
+      (function(qq, button){ button.onclick=function(){ copyText(qq.word+' - '+qq.options[qq.answer], button); }; })(q2, cp);
+      item.appendChild(head);
+      item.appendChild(mean);
+      item.appendChild(cp);
+      rb.appendChild(item);
+    }
+  }
+
+  var rbtns=document.getElementById('resBtns');
+  var copyAll=document.createElement('button');
+  copyAll.className='bigBtn copyBtn';
+  copyAll.textContent='Copy All Results';
+  copyAll.onclick=function(){ copyText(buildSummary(), copyAll); };
+  rbtns.appendChild(copyAll);
+
+  if(b.wrong.length+b.skipped.length>0){
+    var retryBtn=document.createElement('button');
+    retryBtn.className='bigBtn retryBtn';
+    retryBtn.textContent='Retry Wrong Questions';
+    retryBtn.onclick=function(){ startRetry(); };
+    rbtns.appendChild(retryBtn);
+  }
+
+  if(MODE==='retry'){
+    var backBtn=document.createElement('button');
+    backBtn.className='bigBtn backBtn';
+    backBtn.textContent='Back to Full Results';
+    backBtn.onclick=function(){ backToFull(); };
+    rbtns.appendChild(backBtn);
+  } else {
+    var freshBtn=document.createElement('button');
+    freshBtn.className='bigBtn freshBtn';
+    freshBtn.textContent='Start Fresh';
+    freshBtn.onclick=function(){ openModal(); };
+    rbtns.appendChild(freshBtn);
+  }
+}
+
+function buildSummary(){
+  var sess=activeSession();
+  var list=activeList();
+  var b=computeBuckets();
+  var lines=[];
+  lines.push(MODE==='retry'?'Retry Results':'Results');
+  lines.push('Score: '+b.correct.length+' / '+list.length);
+  lines.push('');
+  for(var pos=0; pos<list.length; pos++){
+    var ans=sess.answers[pos];
+    var q=QUESTIONS[list[pos]];
+    var st;
+    if(ans===undefined){ st='SKIPPED'; }
+    else if(ans===q.answer){ st='CORRECT'; }
+    else { st='WRONG'; }
+    var line='Q'+(pos+1)+'. '+q.word+' - '+st;
+    if(st!=='CORRECT'){ line += ' | Answer: '+q.options[q.answer]; }
+    lines.push(line);
+  }
+  return lines.join('\n');
+}
+
+function jumpToFromResults(pos){
+  var sess=activeSession();
+  sess.showResults=false; sess.cur=pos;
+  if(MODE==='main'){ save(); }
+  render();
+}
+function startRetry(){
+  var sess=activeSession();
+  var list=activeList();
+  var notCorrect=[];
+  for(var pos=0; pos<list.length; pos++){
+    var ans=sess.answers[pos];
+    var q=QUESTIONS[list[pos]];
+    if(ans===undefined || ans!==q.answer){ notCorrect.push(list[pos]); }
+  }
+  if(notCorrect.length===0){ return; }
+  MODE='retry';
+  retry={ list:notCorrect, cur:0, answers:{}, shuffles:{}, showResults:false };
+  render();
+}
+function backToFull(){ MODE='main'; render(); }
+
+function openModal(){ var m=document.getElementById('modal'); if(m){ m.style.display='flex'; } }
+function closeModal(){ var m=document.getElementById('modal'); if(m){ m.style.display='none'; } }
+function confirmFresh(){
+  try{ localStorage.removeItem(STATE_KEY); }catch(e){}
+  main={ cur:0, answers:{}, shuffles:{}, showResults:false };
+  MODE='main';
+  closeModal();
+  render();
+}
+
+function copyText(txt, btn){
+  function done(ok){ if(btn){ var o=btn.textContent; btn.textContent= ok?'Copied':'Copy failed'; setTimeout(function(){ btn.textContent=o; },1200); } }
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){ done(true); }, function(){ fallbackCopy(txt, done); });
+      return;
+    }
+  }catch(e){}
+  fallbackCopy(txt, done);
+}
+function fallbackCopy(txt, done){
+  try{
+    var ta=document.createElement('textarea');
+    ta.value=txt;
+    ta.style.position='fixed'; ta.style.top='0'; ta.style.left='0'; ta.style.opacity='0';
+    ta.contentEditable=true; ta.readOnly=false;
+    document.body.appendChild(ta);
+    var range=document.createRange(); range.selectNodeContents(ta);
+    var sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    ta.setSelectionRange(0, txt.length);
+    var ok=document.execCommand('copy');
+    document.body.removeChild(ta);
+    if(done){ done(ok); }
+  }catch(e){ if(done){ done(false); } }
+}
+
+document.getElementById('prevBtn').onclick=function(){ prevQuestion(); };
+document.getElementById('nextBtn').onclick=function(){ nextQuestion(); };
+document.getElementById('modalCancel').onclick=function(){ closeModal(); };
+document.getElementById('modalConfirm').onclick=function(){ confirmFresh(); };
+
+loadState();
+attemptsCount=readAttempts();
+updateAttempts();
+render();
+</script>
+</body>
+</html>

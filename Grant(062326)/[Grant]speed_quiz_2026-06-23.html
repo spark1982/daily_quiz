@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Speed Quiz</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0 auto;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+.date-hd{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:6px 0;}
+.title-hd{text-align:center;font-size:1.3rem;font-weight:700;margin:4px 0 2px;color:#111;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+.attempts-hd{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;}
+.tag-badge{display:inline-block;color:#fff;font-size:0.74rem;font-weight:700;padding:3px 10px;border-radius:12px;margin-bottom:10px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.timer-row{display:flex;justify-content:center;align-items:center;gap:8px;margin-bottom:10px;}
+.timer-label{font-size:0.82rem;color:#888;}
+.timer-val{font-size:1.6rem;font-weight:800;min-width:2.2ch;text-align:right;}
+.pause-btn{font-size:0.78rem;padding:4px 12px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;}
+.pause-btn:disabled{opacity:0.4;cursor:default;}
+.q-text{font-size:1rem;font-weight:600;color:#111;margin-bottom:14px;line-height:1.6;white-space:pre-line;}
+.opt-btn{display:block;width:100%;padding:11px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#eaf1f7;color:#111;font-size:0.93rem;text-align:left;cursor:pointer;font-family:inherit;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;line-height:1.6;}
+.timeout-note{text-align:center;color:#E24B4A;font-weight:700;font-size:0.9rem;margin-bottom:8px;display:none;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#eaf1f7;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.prog-track{background:#d6e2ec;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#eaf1f7;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#eaf1f7;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.chapter-row{display:flex;justify-content:space-between;align-items:center;background:#f4f7fa;border-radius:8px;padding:8px 14px;margin:4px 0;font-size:0.88rem;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="date-hd">2026-06-23</div>
+<div class="title-hd">[Grant] Speed Quiz</div>
+<div class="instruction">Each question has its own 40-second countdown. Pause it any time, and use Next / Prev to move at your own pace.</div>
+<div class="attempts-hd" id="att-display">Total Attempts: 0</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / 30</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div class="tag-badge" id="tag-badge"></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="timer-row">
+    <span class="timer-label">Time Left:</span><span class="timer-val" id="timer-val">40</span><span class="timer-label">s</span>
+    <button class="pause-btn" id="pause-btn" onclick="togglePause()">Pause</button>
+  </div>
+  <div class="timeout-note" id="timeout-note">Time's up!</div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" id="prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.05rem;margin-bottom:14px;"></div>
+  <div id="chapter-breakdown"></div>
+  <div id="results-cards" style="margin-top:10px;"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;margin-top:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#7b61ff;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal()" style="display:block;width:100%;padding:13px;background:#eaf1f7;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#eaf1f7;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var QUIZ_KEY='quiz_grantspeedquiz_30_20260622_v2';
+var ATT_KEY='quiz_grantspeedquiz_att_20260622_v2';
+var TAG_COLORS={'Gauss':'#185FA5','Intervals':'#7b61ff','Add & Sub':'#1D9E75','Multiply':'#c07800','Geometry':'#E24B4A'};
+
+function svgLines8(){
+  return '<svg width="280" height="70" viewBox="0 0 280 70" style="display:block;margin:10px auto;">'+
+   '<line x1="15" y1="35" x2="260" y2="35" stroke="#333" stroke-width="2"/>'+
+   '<circle cx="15" cy="35" r="4" fill="#185FA5"/><text x="15" y="22" font-size="13" text-anchor="middle" fill="#333">A</text>'+
+   '<circle cx="35" cy="35" r="4" fill="#185FA5"/><text x="35" y="22" font-size="13" text-anchor="middle" fill="#333">B</text>'+
+   '<circle cx="60" cy="35" r="4" fill="#185FA5"/><text x="60" y="22" font-size="13" text-anchor="middle" fill="#333">C</text>'+
+   '<circle cx="90" cy="35" r="4" fill="#185FA5"/><text x="90" y="22" font-size="13" text-anchor="middle" fill="#333">D</text>'+
+   '<circle cx="125" cy="35" r="4" fill="#185FA5"/><text x="125" y="22" font-size="13" text-anchor="middle" fill="#333">E</text>'+
+   '<circle cx="165" cy="35" r="4" fill="#185FA5"/><text x="165" y="22" font-size="13" text-anchor="middle" fill="#333">F</text>'+
+   '<circle cx="210" cy="35" r="4" fill="#185FA5"/><text x="210" y="22" font-size="13" text-anchor="middle" fill="#333">G</text>'+
+   '<circle cx="260" cy="35" r="4" fill="#185FA5"/><text x="260" y="22" font-size="13" text-anchor="middle" fill="#333">H</text>'+
+   '</svg>';
+}
+function svgSquares3x3(){
+  return '<svg width="155" height="155" viewBox="0 0 155 155" style="display:block;margin:10px auto;">'+
+   '<rect x="10" y="10" width="135" height="135" fill="none" stroke="#333" stroke-width="2"/>'+
+   '<line x1="55" y1="10" x2="55" y2="145" stroke="#333" stroke-width="1.5"/>'+
+   '<line x1="100" y1="10" x2="100" y2="145" stroke="#333" stroke-width="1.5"/>'+
+   '<line x1="10" y1="55" x2="145" y2="55" stroke="#333" stroke-width="1.5"/>'+
+   '<line x1="10" y1="100" x2="145" y2="100" stroke="#333" stroke-width="1.5"/>'+
+   '</svg>';
+}
+function svgRect1x9(){
+  return '<svg width="272" height="60" viewBox="0 0 272 60" style="display:block;margin:10px auto;">'+
+   '<rect x="10" y="10" width="252" height="40" fill="none" stroke="#333" stroke-width="2"/>'+
+   '<line x1="38" y1="10" x2="38" y2="50" stroke="#333" stroke-width="1.5"/>'+
+   '<line x1="66" y1="10" x2="66" y2="50" stroke="#333" stroke-width="1.5"/>'+
+   '<line x1="94" y1="10" x2="94" y2="50" stroke="#333" stroke-width="1.5"/>'+
+   '<line x1="122" y1="10" x2="122" y2="50" stroke="#333" stroke-width="1.5"/>'+
+   '<line x1="150" y1="10" x2="150" y2="50" stroke="#333" stroke-width="1.5"/>'+
+   '<line x1="178" y1="10" x2="178" y2="50" stroke="#333" stroke-width="1.5"/>'+
+   '<line x1="206" y1="10" x2="206" y2="50" stroke="#333" stroke-width="1.5"/>'+
+   '<line x1="234" y1="10" x2="234" y2="50" stroke="#333" stroke-width="1.5"/>'+
+   '</svg>';
+}
+function svgRect6x1(){
+  return '<svg width="70" height="188" viewBox="0 0 70 188" style="display:block;margin:10px auto;">'+
+   '<rect x="10" y="10" width="50" height="168" fill="none" stroke="#333" stroke-width="2"/>'+
+   '<line x1="10" y1="38" x2="60" y2="38" stroke="#333" stroke-width="1.5"/>'+
+   '<line x1="10" y1="66" x2="60" y2="66" stroke="#333" stroke-width="1.5"/>'+
+   '<line x1="10" y1="94" x2="60" y2="94" stroke="#333" stroke-width="1.5"/>'+
+   '<line x1="10" y1="122" x2="60" y2="122" stroke="#333" stroke-width="1.5"/>'+
+   '<line x1="10" y1="150" x2="60" y2="150" stroke="#333" stroke-width="1.5"/>'+
+   '</svg>';
+}
+function svgTriCevian1(){
+  return '<svg width="150" height="150" viewBox="0 0 150 150" style="display:block;margin:10px auto;">'+
+   '<polygon points="75,10 10,140 140,140" fill="none" stroke="#333" stroke-width="2"/>'+
+   '<line x1="75" y1="10" x2="75" y2="140" stroke="#333" stroke-width="1.5"/>'+
+   '</svg>';
+}
+function svgTriCevian5(){
+  return '<svg width="150" height="150" viewBox="0 0 150 150" style="display:block;margin:10px auto;">'+
+   '<polygon points="75,10 10,140 140,140" fill="none" stroke="#333" stroke-width="2"/>'+
+   '<line x1="75" y1="10" x2="32" y2="140" stroke="#333" stroke-width="1.5"/>'+
+   '<line x1="75" y1="10" x2="53" y2="140" stroke="#333" stroke-width="1.5"/>'+
+   '<line x1="75" y1="10" x2="75" y2="140" stroke="#333" stroke-width="1.5"/>'+
+   '<line x1="75" y1="10" x2="97" y2="140" stroke="#333" stroke-width="1.5"/>'+
+   '<line x1="75" y1="10" x2="118" y2="140" stroke="#333" stroke-width="1.5"/>'+
+   '</svg>';
+}
+
+var qs=[
+ {tag:'Gauss',q:'Compute the following series.<br>996 + 997 + 998 + 999 + 995 =',
+  opts:['4975','4995','4985','4980'],ci:2,
+  exp:'996, 997, 998, 999, and 995 are all close to 997. Their deviations from 997 are &minus;1, 0, +1, +2, and &minus;2, which sum to 0, so the total is 5×997 = 4,985.'},
+ {tag:'Gauss',q:'Compute the following series.<br>1 + 3 + 5 + 7 + … + 45 + 47 + 49.',
+  opts:['625','600','650','575'],ci:0,
+  exp:'There are 25 odd numbers from 1 to 49, and the sum of the first n odd numbers is always n². So the sum is 25² = 625.'},
+ {tag:'Gauss',q:'Compute the following series.<br>17 + 18 + 19 + 20 + 21 + 22 + 23.',
+  opts:['130','150','135','140'],ci:3,
+  exp:'These are 7 consecutive integers centered on 20, so the sum is 7 × 20 = 140.'},
+ {tag:'Gauss',q:'Compute the following series.<br>100 + 102 + 104 + 106 + 108 + 110.',
+  opts:['600','630','615','645'],ci:1,
+  exp:'There are 6 terms, and the sum of an arithmetic series is (first+last)×count÷2 = (100+110)×6÷2 = 630.'},
+ {tag:'Gauss',q:'Compute the following series.<br>754 + 750 + 742 + 746 + 758 =',
+  opts:['3750','3740','3760','3700'],ci:0,
+  exp:'754, 750, 742, 746, and 758 are all close to 750. Their deviations from 750 are +4, 0, &minus;8, &minus;4, and +8, which sum to 0, so the total is 5×750 = 3,750.'},
+ {tag:'Gauss',q:'What is the sum of the first 30 numbers in the series below?<br>1, 2, 3, 4, 5, 2, 3, 4, 5, 6, 3, 4, 5, 6, 7, 4, 5, 6, 7, 8, …',
+  opts:['150','175','165','160'],ci:2,
+  exp:'The series is made of six blocks of 5 numbers, where block k reads k, k+1, k+2, k+3, k+4 (sum = 5k+10). Summing blocks 1 through 6 gives 15+20+25+30+35+40 = 165.'},
+ {tag:'Intervals',q:'21 trees are to be planted at regular intervals along a road that is 800 m long. If both ends of the road are planted with trees as well, how far is one tree from another?',
+  opts:['38 m','40 m','42 m','45 m'],ci:1,
+  exp:'21 trees with both ends planted create 21&minus;1 = 20 equal gaps, so each gap is 800÷20 = 40 m.'},
+ {tag:'Intervals',q:'My grandfather clock takes 6 seconds to chime 3 times at 3 o\'clock. How long does it take to chime 6 times at 6 o\'clock?',
+  opts:['12 seconds','18 seconds','9 seconds','15 seconds'],ci:3,
+  exp:'Chiming 3 times takes 2 gaps in 6 seconds, so each gap is 3 seconds. Chiming 6 times takes 5 gaps, so the total is 5×3 = 15 seconds.'},
+ {tag:'Intervals',q:"Stella tied 6 knots on a piece of ribbon. The length between the second and fifth knots was 60 cm. What was the length between the first and sixth knots?",
+  opts:['100 cm','80 cm','120 cm','90 cm'],ci:0,
+  exp:'The 2nd to 5th knots span 3 equal gaps totaling 60 cm, so each gap is 20 cm. The 1st to 6th knots span 5 gaps, so the length is 5×20 = 100 cm.'},
+ {tag:'Intervals',q:'It takes Professor Sullivan 11 minutes to stroll past the twelfth lamp post along a quiet road. How many lamp posts would he have strolled past after 30 minutes?',
+  opts:['30','32','31','28'],ci:2,
+  exp:'Reaching the 12th lamp post from the 1st takes 11 gaps in 11 minutes, so each gap is 1 minute. After 30 minutes he has passed 30 gaps, putting him at lamp post 1+30 = 31.'},
+ {tag:'Intervals',q:'Trees are to be planted along a road that is 40 m long. The distance between every two trees is 8 m. How many trees can be planted if both ends of the road are to be planted with trees?',
+  opts:['5','6','7','4'],ci:1,
+  exp:'The 40 m road is divided into 40÷8 = 5 equal gaps, and including both end trees means there are 5+1 = 6 trees.'},
+ {tag:'Intervals',q:'It takes Uncle Sam 50 seconds to bike from the first lamp post to the eleventh lamp post. How many lamp posts would he bike past after 80 seconds?',
+  opts:['16','18','15','17'],ci:3,
+  exp:'From the 1st to the 11th lamp post there are 10 equal gaps in 50 seconds, so each gap takes 5 seconds. After 80 seconds he has covered 80÷5 = 16 gaps, putting him at lamp post 1+16 = 17.'},
+ {tag:'Add & Sub',q:'Compute the following.<br>64 + 36 =',
+  opts:['100','90','110','98'],ci:0,
+  exp:'64 + 36 = (64 + 6) + (36 &minus; 6) = 70 + 30 = 100.'},
+ {tag:'Add & Sub',q:'Compute the following.<br>24 + 37 + 23 + 16 =',
+  opts:['90','110','100','95'],ci:2,
+  exp:'24 + 16 = 40, and 37 + 23 = 60. Total = 40 + 60 = 100.'},
+ {tag:'Add & Sub',q:'Compute the following.<br>257 + 243 =',
+  opts:['490','500','510','495'],ci:1,
+  exp:'257 + 243 = (250+7) + (250&minus;7) = 250 + 250 = 500.'},
+ {tag:'Add & Sub',q:'Compute the following.<br>673 + 1,038 =',
+  opts:['1701','1721','1611','1711'],ci:3,
+  exp:'673 + 1,038 = 673 + 1,000 + 38 = 1,673 + 38 = 1,711.'},
+ {tag:'Add & Sub',q:'Compute the following.<br>175 + 246 + 225 + 254 =',
+  opts:['890','910','900','880'],ci:2,
+  exp:'175 + 225 = 400 and 246 + 254 = 500, so the total is 400 + 500 = 900.'},
+ {tag:'Add & Sub',q:'Compute the following. (See Example 6.)<br>388 - 144 - 44 =',
+  opts:['200','190','210','180'],ci:0,
+  exp:'388 &minus; 144 = 244, then 244 &minus; 44 = 200.'},
+ {tag:'Multiply',q:'Compute the following.<br>28 x 25 =',
+  opts:['680','720','750','700'],ci:3,
+  exp:'28 × 25 = 28 × 100 ÷ 4 = 2,800 ÷ 4 = 700.'},
+ {tag:'Multiply',q:'Compute the following.<br>16 x 25 =',
+  opts:['380','400','420','450'],ci:1,
+  exp:'16 × 25 = 4 × 4 × 25 = 4 × 100 = 400.'},
+ {tag:'Multiply',q:'Compute the following.<br>125 x 16 x 5 =',
+  opts:['10000','9000','11000','8000'],ci:0,
+  exp:'Group 16 × 5 = 80 first, then 125 × 80 = 10,000.'},
+ {tag:'Multiply',q:'Compute the following.<br>18 x 125 =',
+  opts:['2150','2350','2250','2025'],ci:2,
+  exp:'18 × 125 = 125 × 20 &minus; 125 × 2 = 2,500 &minus; 250 = 2,250.'},
+ {tag:'Multiply',q:'Compute the following.<br>33 x 101 =',
+  opts:['3303','3330','3343','3333'],ci:3,
+  exp:'33 × 101 = 33 × 100 + 33 = 3,300 + 33 = 3,333.'},
+ {tag:'Multiply',q:'Compute the following.<br>24 x 11 =',
+  opts:['234','264','274','246'],ci:1,
+  exp:'Using the ×11 shortcut, 2 and 4 add to 6, so placing 6 between them gives 264.'},
+ {tag:'Geometry',q:'There are 8 points, A, B, C, D, E, F, G, and H, placed on a line at unequal intervals. How many line segments of different lengths can be drawn by connecting any two of these points, assuming no two segments happen to share the same length?<br>'+svgLines8(),
+  opts:['28','24','32','21'],ci:0,
+  exp:'With 8 points where every pairwise distance is different, the number of distinct-length segments equals C(8,2) = (8×7)÷2 = 28.'},
+ {tag:'Geometry',q:'How many squares are there altogether?<br>'+svgSquares3x3(),
+  opts:['9','13','14','17'],ci:2,
+  exp:'In a 3×3 grid: 1×1 squares: 9. 2×2 squares: 4. 3×3 squares: 1. Total = 9+4+1 = 14.'},
+ {tag:'Geometry',q:'How many rectangles are there altogether?<br>'+svgRect1x9(),
+  opts:['36','45','40','50'],ci:1,
+  exp:'Choosing 2 of the 10 vertical lines and the single row gives C(10,2) × C(2,2) = 45 × 1 = 45 rectangles.'},
+ {tag:'Geometry',q:'How many rectangles are there altogether?<br>'+svgRect6x1(),
+  opts:['15','18','24','21'],ci:3,
+  exp:'Choosing 2 of the 7 horizontal lines and the single column gives C(7,2) × C(2,2) = 21 × 1 = 21 rectangles.'},
+ {tag:'Geometry',q:'How many triangles are there altogether?<br>'+svgTriCevian1(),
+  opts:['3','2','4','5'],ci:0,
+  exp:'With 1 cevian from the apex, the base is split into 2 regions. Counting the single regions (2) and both regions together (1) gives 2+1 = 3 triangles.'},
+ {tag:'Geometry',q:'How many triangles are there altogether?<br>'+svgTriCevian5(),
+  opts:['15','18','21','24'],ci:2,
+  exp:'With 5 cevians from the apex, the base is split into 6 regions. Summing the ways to pick 1 up to all 6 adjacent regions gives 6+5+4+3+2+1 = 21 triangles.'}
+];
+
+function getShuffle(i){return [0,1,2,3];}
+function getCSI(i){return qs[i].ci;}
+function loadAtt(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+
+var state={};
+var timerInterval=null;
+var paused=false;
+function loadState(){
+  try{
+    var s=JSON.parse(localStorage.getItem(QUIZ_KEY)||'null');
+    if(s&&typeof s.cur==='number'&&s.cur>=0&&s.cur<qs.length&&s.answers){state=s;}
+    else resetState();
+  }catch(e){localStorage.removeItem(QUIZ_KEY);resetState();}
+}
+function resetState(){state={cur:0,answers:{},showResults:false};}
+function saveState(){localStorage.setItem(QUIZ_KEY,JSON.stringify(state));}
+
+function updateNav(){
+  var ans=Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent=ans+' / '+qs.length;
+  document.getElementById('prog-fill').style.width=(ans/qs.length*100).toFixed(1)+'%';
+  renderDots();
+}
+
+function toggleJump(){
+  var p=document.getElementById('dot-panel');
+  var b=document.getElementById('jump-btn');
+  if(p.style.display==='block'){p.style.display='none';b.innerHTML='Jump &#9662;';}
+  else{p.style.display='block';b.innerHTML='Hide &#9652;';renderDots();}
+}
+
+function renderDots(){
+  var p=document.getElementById('dot-panel');
+  if(p.style.display!=='block')return;
+  var h='';
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    var bg='#d6e2ec';
+    if(a){if(a.correct)bg='#1D9E75';else if(a.timedOut)bg='#c07800';else bg='#E24B4A';}
+    h+='<span class="dot" style="background:'+bg+';" onclick="goToQ('+i+')">'+(i+1)+'</span>';
+  }
+  if(Object.keys(state.answers).length===qs.length){
+    h+='<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';
+  }
+  p.innerHTML=h;
+}
+
+function goToQ(i){
+  state.cur=i; state.showResults=false; saveState(); render();
+  document.getElementById('dot-panel').style.display='none';
+  document.getElementById('jump-btn').innerHTML='Jump &#9662;';
+}
+
+function showResults(){
+  clearInterval(timerInterval);
+  state.showResults=true;
+  localStorage.setItem(ATT_KEY,loadAtt()+1);
+  saveState(); render();
+}
+
+function startTimer(){
+  clearInterval(timerInterval);
+  paused=false;
+  state.timerVal=40;
+  var pb=document.getElementById('pause-btn');
+  pb.textContent='Pause'; pb.disabled=false;
+  renderTimerDisplay();
+  timerInterval=setInterval(tick,1000);
+}
+
+function tick(){
+  state.timerVal--;
+  if(state.timerVal<=0){
+    clearInterval(timerInterval);
+    handleTimeout();
+  } else {
+    renderTimerDisplay();
+  }
+}
+
+function togglePause(){
+  if(state.answers[state.cur]!==undefined)return;
+  var pb=document.getElementById('pause-btn');
+  if(paused){
+    paused=false; pb.textContent='Pause';
+    timerInterval=setInterval(tick,1000);
+  } else {
+    paused=true; pb.textContent='Resume';
+    clearInterval(timerInterval);
+  }
+}
+
+function renderTimerDisplay(){
+  var t=document.getElementById('timer-val');
+  t.textContent=state.timerVal;
+  var color = state.timerVal>=22?'#1D9E75':(state.timerVal>=11?'#f5a623':'#E24B4A');
+  t.style.color=color;
+}
+
+function render(){
+  document.getElementById('att-display').textContent='Total Attempts: '+loadAtt();
+  if(state.showResults){
+    clearInterval(timerInterval);
+    document.getElementById('quizArea').style.display='none';
+    renderResults();
+    return;
+  }
+  document.getElementById('resultsArea').style.display='none';
+  document.getElementById('quizArea').style.display='block';
+  updateNav();
+  var i=state.cur;
+  var q=qs[i];
+  var badge=document.getElementById('tag-badge');
+  badge.textContent=q.tag;
+  badge.style.background=TAG_COLORS[q.tag];
+  document.getElementById('q-num').textContent='Question '+(i+1)+' of '+qs.length;
+  document.getElementById('q-text').innerHTML=q.q;
+  var a=state.answers[i];
+  var csi=getCSI(i);
+  var html='';
+  for(var s=0;s<4;s++){
+    var cls='opt-btn'; var dis='';
+    if(a!==undefined){dis='disabled ';if(s===csi)cls+=' correct';else if(s===a.selected)cls+=' wrong';}
+    html+='<button class="'+cls+'" '+dis+'onclick="pick('+s+')">'+q.opts[s]+'</button>';
+  }
+  document.getElementById('opts-area').innerHTML=html;
+  var eb=document.getElementById('exp-box');
+  var tn=document.getElementById('timeout-note');
+  var pb=document.getElementById('pause-btn');
+  if(a!==undefined){
+    eb.style.display='block'; eb.innerHTML=q.exp;
+    tn.style.display=a.timedOut?'block':'none';
+    clearInterval(timerInterval);
+    state.timerVal=(typeof a.timeLeft==='number')?a.timeLeft:0;
+    renderTimerDisplay();
+    pb.disabled=true; pb.textContent='Pause';
+  } else {
+    eb.style.display='none';
+    tn.style.display='none';
+    startTimer();
+  }
+  document.getElementById('next-btn').textContent=(i===qs.length-1)?'See Results →':'Next';
+  document.getElementById('prev-btn').disabled=(i===0);
+}
+
+function pick(si){
+  var i=state.cur;
+  if(state.answers[i]!==undefined)return;
+  clearInterval(timerInterval);
+  var q=qs[i]; var csi=getCSI(i);
+  var correct=(si===csi);
+  state.answers[i]={selected:si,csi:csi,correct:correct,timedOut:false,timeLeft:state.timerVal};
+  saveState();
+  render();
+}
+
+function handleTimeout(){
+  var i=state.cur;
+  if(state.answers[i]!==undefined)return;
+  var q=qs[i]; var csi=getCSI(i);
+  state.answers[i]={selected:null,csi:csi,correct:false,timedOut:true,timeLeft:0};
+  saveState();
+  render();
+}
+
+function go(dir){
+  if(dir===1&&state.cur===qs.length-1){showResults();return;}
+  state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));
+  saveState();render();
+}
+
+function renderResults(){
+  document.getElementById('resultsArea').style.display='block';
+  updateNav();
+  var c=0,w=0,t=0,sk=0;
+  var chapterStats={};
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i]; var tag=qs[i].tag;
+    if(!chapterStats[tag])chapterStats[tag]={correct:0,total:0};
+    chapterStats[tag].total++;
+    if(a&&a.correct){c++;chapterStats[tag].correct++;}
+    else if(a&&a.timedOut)t++;
+    else if(a)w++;
+    else sk++;
+  }
+  document.getElementById('results-summary').innerHTML=
+    '<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;'+
+    '<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;'+
+    '<span style="color:#c07800;font-weight:700;">'+t+'</span> timed out &nbsp;'+
+    '<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+  var chHtml='';
+  var order=['Gauss','Intervals','Add & Sub','Multiply','Geometry'];
+  for(var oi=0;oi<order.length;oi++){
+    var tg=order[oi]; var st=chapterStats[tg]||{correct:0,total:0};
+    chHtml+='<div class="chapter-row"><span style="font-weight:600;color:'+TAG_COLORS[tg]+';">'+tg+'</span><span>'+st.correct+' / '+st.total+'</span></div>';
+  }
+  document.getElementById('chapter-breakdown').innerHTML=chHtml;
+  var html='';
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i]; var label,bg,tc;
+    if(a&&a.correct){label='Correct';bg='#E1F5EE';tc='#085041';}
+    else if(a&&a.timedOut){label='Timed Out';bg='#fff3e0';tc='#7a4a00';}
+    else if(a){label='Wrong';bg='#FCEBEB';tc='#501313';}
+    else{label='Skipped';bg='#d6e2ec';tc='#555';}
+    html+='<div class="results-card" onclick="goToQ('+i+')"><span style="font-size:0.9rem;color:#333;">Q'+(i+1)+': '+qs[i].tag+'</span><span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';">'+label+'</span></div>';
+  }
+  document.getElementById('results-cards').innerHTML=html;
+}
+
+function retryWrong(){
+  var wrongIdx=[];
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    if(a&&!a.correct){wrongIdx.push(i);delete state.answers[i];}
+  }
+  if(wrongIdx.length===0)return;
+  state.cur=Math.min.apply(null,wrongIdx);
+  state.showResults=false;
+  saveState(); render();
+}
+
+function copyRes(){
+  var lines=['[Grant] Speed Quiz - Results (2026-06-23)'];
+  for(var i=0;i<qs.length;i++){
+    var a=state.answers[i];
+    var label=a?(a.correct?'Correct':(a.timedOut?'Timed Out':'Wrong')):'Skipped';
+    lines.push('Q'+(i+1)+' ('+qs[i].tag+'): '+label);
+  }
+  var txt=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).catch(function(){fallbackCopy(txt);});}
+  else fallbackCopy(txt);
+}
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function confirmFresh(){
+  document.getElementById('freshModal').style.display='none';
+  clearInterval(timerInterval);
+  localStorage.removeItem(QUIZ_KEY);resetState();saveState();render();
+}
+
+window.pick=pick;window.toggleJump=toggleJump;window.goToQ=goToQ;window.go=go;
+window.retryWrong=retryWrong;window.copyRes=copyRes;window.openFreshModal=openFreshModal;
+window.confirmFresh=confirmFresh;window.showResults=showResults;window.togglePause=togglePause;
+
+loadState();saveState();render();
+})();
+</script>
+</body>
+</html>

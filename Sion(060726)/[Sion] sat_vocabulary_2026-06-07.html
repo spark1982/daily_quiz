@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT Vocabulary</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, 'Segoe UI', Arial, sans-serif; background:#ffffff; color:#111111; }
+  .dateBar { font-size:2rem; font-weight:800; text-align:center; color:#185FA5; background:#ffffff; padding:14px 10px 0 10px; }
+  .titleBar { font-size:1.4rem; font-weight:800; text-align:center; color:#185FA5; padding:6px 10px; }
+  .attemptsBar { text-align:center; font-size:0.95rem; color:#185FA5; padding-bottom:8px; }
+  .dots { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:8px; max-width:760px; margin:0 auto; }
+  .dot { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.78rem; font-weight:700; cursor:pointer; color:#ffffff; background:#9aa4af; border:2px solid transparent; }
+  .dot.correct { background:#185FA5; }
+  .dot.wrong { background:#E24B4A; }
+  .dot.results { background:#185FA5; border-radius:14px; width:auto; padding:0 12px; }
+  .container { max-width:760px; margin:0 auto; padding:14px; }
+  .tag { display:inline-block; background:#185FA5; color:#ffffff; border-radius:999px; padding:4px 14px; font-size:0.8rem; font-weight:700; margin-bottom:10px; }
+  .qBox { background:#f4f7fb; border-radius:14px; padding:22px; font-size:2rem; font-weight:800; line-height:1.5; min-height:60px; display:flex; align-items:center; justify-content:center; gap:16px; text-align:center; }
+  .speakBtn { background:#185FA5; color:#ffffff; border:none; border-radius:999px; padding:0 18px; height:46px; font-size:0.95rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .options { display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+  .opt { background:#e8edf4; color:#111111; border:2px solid transparent; border-radius:12px; padding:14px 16px; font-size:1rem; text-align:left; cursor:pointer; }
+  .opt.correctOpt { background:#E1F5EE; border-color:#1D9E75; color:#085041; }
+  .opt.wrongOpt { background:#FCEBEB; border-color:#E24B4A; color:#501313; }
+  .explain { margin-top:14px; background:#FCEBEB; border:2px solid #E24B4A; color:#501313; border-radius:12px; padding:14px 16px; font-size:0.95rem; line-height:1.5; display:none; }
+  .navRow { display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .navBtn { flex:1; background:#185FA5; color:#ffffff; border:none; border-radius:12px; padding:14px; font-size:1rem; font-weight:700; cursor:pointer; }
+  .navBtn:disabled { background:#b7c6d8; cursor:default; }
+  .counter { text-align:center; margin-top:10px; font-size:0.95rem; color:#185FA5; font-weight:700; }
+  .summaryGrid { display:grid; grid-template-columns: repeat(auto-fill, minmax(54px,1fr)); gap:8px; margin:14px 0; }
+  .sumCard { border-radius:10px; padding:10px 4px; text-align:center; font-weight:700; cursor:pointer; font-size:0.82rem; color:#ffffff; }
+  .sumCard.c { background:#1D9E75; }
+  .sumCard.w { background:#E24B4A; }
+  .sumCard.s { background:#9aa4af; }
+  .resultBtns { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .resultBtn { background:#185FA5; color:#ffffff; border:none; border-radius:12px; padding:14px; font-size:1rem; font-weight:700; cursor:pointer; }
+  .resultBtn.secondary { background:#e8edf4; color:#111111; }
+  .modalOverlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; z-index:50; }
+  .modalBox { background:#ffffff; border-radius:14px; padding:22px; max-width:340px; width:88%; text-align:center; }
+  .modalBtns { display:flex; gap:10px; margin-top:16px; }
+  .modalBtns button { flex:1; border:none; border-radius:10px; padding:12px; font-size:0.95rem; font-weight:700; cursor:pointer; }
+  .mCancel { background:#e8edf4; color:#111111; }
+  .mConfirm { background:#E24B4A; color:#ffffff; }
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#185FA5; color:#ffffff; padding:10px 20px; border-radius:10px; font-size:0.9rem; display:none; }
+  @media (max-width:480px){ .dateBar{font-size:1.5rem;} .titleBar{font-size:1.15rem;} .qBox{font-size:1.6rem;} }
+</style>
+</head>
+<body>
+  <div class="dateBar">June 7, 2026</div>
+  <div class="titleBar">[Sion] SAT Vocabulary</div>
+  <div class="attemptsBar" id="attemptsBar">Total Attempts: 0</div>
+  <div class="dots" id="dots"></div>
+  <div class="container">
+    <div id="quizArea" style="display:none;">
+      <span class="tag" id="typeTag">Vocabulary</span>
+      <div class="qBox">
+        <span id="qWord"></span>
+        <button class="speakBtn" id="speakBtn" title="Listen" aria-label="Listen">Listen</button>
+      </div>
+      <div class="options" id="options"></div>
+      <div class="explain" id="explain"></div>
+      <div class="navRow">
+        <button class="navBtn" id="prevBtn">Prev</button>
+        <button class="navBtn" id="nextBtn">Next</button>
+      </div>
+      <div class="counter" id="counter"></div>
+    </div>
+    <div id="resultsArea" style="display:none;">
+      <h2 style="color:#185FA5;">Results</h2>
+      <div class="counter" id="resultSummary"></div>
+      <div class="summaryGrid" id="summaryGrid"></div>
+      <div class="resultBtns">
+        <button class="resultBtn" id="copyBtn">Copy All Results</button>
+        <button class="resultBtn" id="retryBtn">Retry Wrong Questions</button>
+        <button class="resultBtn secondary" id="freshBtn">Start Fresh</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modalOverlay" id="modalOverlay">
+    <div class="modalBox">
+      <p style="font-size:1.05rem; font-weight:700; color:#111111;">Start over and clear all saved progress?</p>
+      <div class="modalBtns">
+        <button class="mCancel" id="modalCancel">Cancel</button>
+        <button class="mConfirm" id="modalConfirm">Start Fresh</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+(function(){
+  var TOPIC = 'satvocab';
+  var QCOUNT = 15;
+  var STATE_KEY = 'quiz_' + TOPIC + '_' + QCOUNT + '_v1';
+  var ATTEMPTS_KEY = 'quiz_' + TOPIC + '_attempts_v1';
+
+  var QUESTIONS = [
+    { word:'abase', correct:'to lower in rank, esteem, or dignity; to humiliate', distractors:['to formally give up a position of power or responsibility','to take someone away by force; to kidnap','to repeal or do away with a law or agreement'] },
+    { word:'abate', correct:'to reduce in intensity or amount; to lessen', distractors:['to bring to a premature end; to cut short','to shorten a piece of writing without losing its sense','to leave hurriedly and secretly, typically to escape'] },
+    { word:'abdicate', correct:'to formally give up a position of power or responsibility', distractors:['to lower in rank, esteem, or dignity; to humiliate','to encourage or assist someone in wrongdoing','to solemnly renounce a belief or claim'] },
+    { word:'abduct', correct:'to take someone away by force; to kidnap', distractors:['to regard with disgust and hatred','a departure from what is normal or expected','to accept or act in accordance with a rule; to tolerate'] },
+    { word:'aberration', correct:'a departure from what is normal or expected', distractors:['the act of renouncing or rejecting something, especially self-interest','present or experienced to the maximum degree, especially something unpleasant','to reduce in intensity or amount; to lessen'] },
+    { word:'abet', correct:'to encourage or assist someone in wrongdoing', distractors:['to lower in rank, esteem, or dignity; to humiliate','to take someone away by force; to kidnap','to repeal or do away with a law or agreement'] },
+    { word:'abhor', correct:'to regard with disgust and hatred', distractors:['to accept or act in accordance with a rule; to tolerate','to shorten a piece of writing without losing its sense','to leave hurriedly and secretly, typically to escape'] },
+    { word:'abide', correct:'to accept or act in accordance with a rule; to tolerate', distractors:['to regard with disgust and hatred','to solemnly renounce a belief or claim','to bring to a premature end; to cut short'] },
+    { word:'abject', correct:'present or experienced to the maximum degree, especially something unpleasant', distractors:['a departure from what is normal or expected','to formally give up a position of power or responsibility','to reduce in intensity or amount; to lessen'] },
+    { word:'abjure', correct:'to solemnly renounce a belief or claim', distractors:['to formally give up a position of power or responsibility','to encourage or assist someone in wrongdoing','to repeal or do away with a law or agreement'] },
+    { word:'abnegation', correct:'the act of renouncing or rejecting something, especially self-interest', distractors:['a departure from what is normal or expected','to lower in rank, esteem, or dignity; to humiliate','to leave hurriedly and secretly, typically to escape'] },
+    { word:'abort', correct:'to bring to a premature end; to cut short', distractors:['to reduce in intensity or amount; to lessen','to shorten a piece of writing without losing its sense','to accept or act in accordance with a rule; to tolerate'] },
+    { word:'abridge', correct:'to shorten a piece of writing without losing its sense', distractors:['to bring to a premature end; to cut short','to repeal or do away with a law or agreement','to take someone away by force; to kidnap'] },
+    { word:'abrogate', correct:'to repeal or do away with a law or agreement', distractors:['to solemnly renounce a belief or claim','to formally give up a position of power or responsibility','to shorten a piece of writing without losing its sense'] },
+    { word:'abscond', correct:'to leave hurriedly and secretly, typically to escape', distractors:['to regard with disgust and hatred','to encourage or assist someone in wrongdoing','the act of renouncing or rejecting something, especially self-interest'] }
+  ];
+  QUESTIONS.forEach(function(item){
+    item.tag = 'Vocabulary';
+    item.options = [item.correct].concat(item.distractors);
+    item.q = item.word;
+    item.explain = '"' + item.word + '" means: ' + item.correct + '.';
+  });
+
+  var state = null;
+  function defaultState(){ return { cur: 0, answers: {}, shuffles: {}, showResults: false }; }
+
+  function loadState(){
+    try {
+      var raw = localStorage.getItem(STATE_KEY);
+      if(!raw) return defaultState();
+      var s = JSON.parse(raw);
+      if(typeof s !== 'object' || s === null) throw new Error('bad');
+      if(typeof s.cur !== 'number' || s.cur < 0 || s.cur >= QUESTIONS.length) throw new Error('bad cur');
+      if(typeof s.answers !== 'object' || s.answers === null) throw new Error('bad answers');
+      if(typeof s.shuffles !== 'object' || s.shuffles === null) throw new Error('bad shuffles');
+      if(typeof s.showResults !== 'boolean') s.showResults = false;
+      return s;
+    } catch(e){
+      try { localStorage.removeItem(STATE_KEY); } catch(e2){}
+      return defaultState();
+    }
+  }
+  function saveState(){ try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch(e){} }
+
+  function getAttempts(){ try { return parseInt(localStorage.getItem(ATTEMPTS_KEY) || '0', 10) || 0; } catch(e){ return 0; } }
+  function incAttempts(){
+    var n = getAttempts() + 1;
+    try { localStorage.setItem(ATTEMPTS_KEY, String(n)); } catch(e){}
+    document.getElementById('attemptsBar').textContent = 'Total Attempts: ' + n;
+  }
+
+  function shuffleIndices(n){
+    var arr = [];
+    for(var i=0;i<n;i++) arr.push(i);
+    for(var i=arr.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=arr[i]; arr[i]=arr[j]; arr[j]=t; }
+    return arr;
+  }
+  function getShuffleFor(qIndex){
+    var key = String(qIndex);
+    if(!state.shuffles[key]){ state.shuffles[key] = shuffleIndices(QUESTIONS[qIndex].options.length); saveState(); }
+    return state.shuffles[key];
+  }
+
+  function speak(text){
+    try {
+      if('speechSynthesis' in window){
+        var u = new SpeechSynthesisUtterance(text);
+        u.lang = 'en-US';
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(u);
+      }
+    } catch(e){}
+  }
+
+  var dotsEl, quizArea, resultsArea, qWord, optionsEl, explainEl, typeTag, counterEl, prevBtn, nextBtn, speakBtn;
+
+  function buildDots(){
+    dotsEl.innerHTML = '';
+    for(var i=0;i<QUESTIONS.length;i++){
+      var d = document.createElement('div');
+      d.className = 'dot';
+      d.textContent = String(i+1);
+      d.addEventListener('click', (function(idx){ return function(){ goTo(idx); }; })(i));
+      dotsEl.appendChild(d);
+    }
+    var rd = document.createElement('div');
+    rd.className = 'dot results';
+    rd.id = 'resultsDot';
+    rd.textContent = 'Results';
+    rd.addEventListener('click', function(){ if(state.showResults){ showResultsScreen(); } });
+    dotsEl.appendChild(rd);
+  }
+  function refreshDots(){
+    for(var i=0;i<QUESTIONS.length;i++){
+      var d = dotsEl.children[i];
+      d.classList.remove('correct','wrong');
+      var rec = state.answers[i];
+      if(rec){
+        if(QUESTIONS[i].options[rec.choiceIndex] === QUESTIONS[i].correct) d.classList.add('correct');
+        else d.classList.add('wrong');
+      }
+    }
+    document.getElementById('resultsDot').style.display = state.showResults ? 'flex' : 'none';
+  }
+
+  function render(){
+    try {
+      if(state.showResults){ showResultsScreen(); return; }
+      quizArea.style.display = 'block';
+      resultsArea.style.display = 'none';
+      var idx = state.cur;
+      var question = QUESTIONS[idx];
+      typeTag.textContent = question.tag;
+      qWord.textContent = question.word;
+      speakBtn.onclick = function(){ speak(question.word); };
+      optionsEl.innerHTML = '';
+      explainEl.style.display = 'none';
+      explainEl.textContent = '';
+
+      var order = getShuffleFor(idx);
+      var rec = state.answers[idx];
+      for(var k=0;k<order.length;k++){
+        var optIdx = order[k];
+        var btn = document.createElement('button');
+        btn.className = 'opt';
+        btn.textContent = question.options[optIdx];
+        (function(optIdx){ btn.addEventListener('click', function(){ selectAnswer(idx, optIdx); }); })(optIdx);
+        optionsEl.appendChild(btn);
+      }
+      if(rec) applyAnswerStyles(idx);
+
+      prevBtn.disabled = (idx === 0);
+      nextBtn.textContent = (idx === QUESTIONS.length - 1) ? 'See Results →' : 'Next';
+      counterEl.textContent = (idx+1) + ' / ' + QUESTIONS.length;
+      refreshDots();
+      saveState();
+    } catch(e){
+      quizArea.innerHTML = '<p style="color:#E24B4A;">Something went wrong loading this question. Please use the dots above to navigate.</p>';
+      quizArea.style.display = 'block';
+    }
+  }
+
+  function applyAnswerStyles(qIdx){
+    var question = QUESTIONS[qIdx];
+    var rec = state.answers[qIdx];
+    var order = getShuffleFor(qIdx);
+    var correctIndex = -1;
+    for(var i=0;i<question.options.length;i++){ if(question.options[i] === question.correct){ correctIndex = i; break; } }
+    var btns = optionsEl.children;
+    for(var k=0;k<order.length;k++){
+      var optIdx = order[k];
+      btns[k].classList.remove('correctOpt','wrongOpt');
+      if(optIdx === correctIndex) btns[k].classList.add('correctOpt');
+      else if(optIdx === rec.choiceIndex && optIdx !== correctIndex) btns[k].classList.add('wrongOpt');
+      btns[k].disabled = true;
+    }
+    if(rec.choiceIndex !== correctIndex){
+      explainEl.textContent = question.explain;
+      explainEl.style.display = 'block';
+    }
+  }
+
+  function selectAnswer(qIdx, optIdx){
+    if(state.answers[qIdx]) return;
+    state.answers[qIdx] = { choiceIndex: optIdx };
+    saveState();
+    render();
+  }
+  function goTo(idx){ state.cur = idx; state.showResults = false; saveState(); render(); }
+  function next(){
+    if(state.cur === QUESTIONS.length - 1){
+      state.showResults = true;
+      incAttempts();
+      saveState();
+      render();
+    } else { state.cur += 1; saveState(); render(); }
+  }
+  function prev(){ if(state.cur > 0){ state.cur -= 1; saveState(); render(); } }
+
+  function showResultsScreen(){
+    quizArea.style.display = 'none';
+    resultsArea.style.display = 'block';
+    var correct=0, wrong=0, skipped=0;
+    var grid = document.getElementById('summaryGrid');
+    grid.innerHTML = '';
+    for(var i=0;i<QUESTIONS.length;i++){
+      var rec = state.answers[i];
+      var card = document.createElement('div');
+      card.textContent = String(i+1);
+      if(!rec){ card.className='sumCard s'; skipped++; }
+      else if(QUESTIONS[i].options[rec.choiceIndex] === QUESTIONS[i].correct){ card.className='sumCard c'; correct++; }
+      else { card.className='sumCard w'; wrong++; }
+      card.addEventListener('click', (function(idx){ return function(){ state.showResults=false; state.cur=idx; saveState(); render(); }; })(i));
+      grid.appendChild(card);
+    }
+    document.getElementById('resultSummary').textContent =
+      'Correct: ' + correct + '   Wrong: ' + wrong + '   Skipped: ' + skipped + '   (' + correct + ' / ' + QUESTIONS.length + ')';
+    refreshDots();
+  }
+
+  function copyResults(){
+    var correct=0, wrong=0, skipped=0;
+    for(var i=0;i<QUESTIONS.length;i++){
+      var rec = state.answers[i];
+      if(!rec) skipped++;
+      else if(QUESTIONS[i].options[rec.choiceIndex] === QUESTIONS[i].correct) correct++;
+      else wrong++;
+    }
+    var text = '[Sion] SAT Vocabulary — June 7, 2026\nScore: ' + correct + ' / ' + QUESTIONS.length +
+      '\nCorrect: ' + correct + '   Wrong: ' + wrong + '   Skipped: ' + skipped;
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try {
+      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text);
+      else document.execCommand('copy');
+    } catch(e){ try { document.execCommand('copy'); } catch(e2){} }
+    document.body.removeChild(ta);
+    var toast = document.getElementById('toast');
+    toast.style.display = 'block';
+    setTimeout(function(){ toast.style.display = 'none'; }, 1800);
+  }
+
+  var retrySession = null;
+  function startRetry(){
+    var wrongIdx = [];
+    for(var i=0;i<QUESTIONS.length;i++){
+      var rec = state.answers[i];
+      if(!rec || QUESTIONS[i].options[rec.choiceIndex] !== QUESTIONS[i].correct) wrongIdx.push(i);
+    }
+    if(wrongIdx.length === 0){ alertModalText('No wrong or skipped questions to retry.'); return; }
+    retrySession = { indices: wrongIdx, cur: 0, answers: {}, shuffles: {} };
+    renderRetry();
+  }
+  function renderRetry(){
+    quizArea.style.display = 'block';
+    resultsArea.style.display = 'none';
+    dotsEl.style.display = 'none';
+    var pos = retrySession.cur;
+    var qIdx = retrySession.indices[pos];
+    var question = QUESTIONS[qIdx];
+    typeTag.textContent = question.tag + ' (Retry)';
+    qWord.textContent = question.word;
+    speakBtn.onclick = function(){ speak(question.word); };
+    optionsEl.innerHTML = '';
+    explainEl.style.display = 'none';
+    explainEl.textContent = '';
+
+    if(!retrySession.shuffles[pos]) retrySession.shuffles[pos] = shuffleIndices(question.options.length);
+    var order = retrySession.shuffles[pos];
+    var rec = retrySession.answers[pos];
+    var correctIndex = -1;
+    for(var i=0;i<question.options.length;i++){ if(question.options[i] === question.correct){ correctIndex = i; break; } }
+
+    for(var k=0;k<order.length;k++){
+      var optIdx = order[k];
+      var btn = document.createElement('button');
+      btn.className = 'opt';
+      btn.textContent = question.options[optIdx];
+      if(rec){
+        btn.disabled = true;
+        if(optIdx === correctIndex) btn.classList.add('correctOpt');
+        else if(optIdx === rec.choiceIndex) btn.classList.add('wrongOpt');
+      } else {
+        (function(optIdx){ btn.addEventListener('click', function(){ retrySession.answers[pos] = { choiceIndex: optIdx }; renderRetry(); }); })(optIdx);
+      }
+      optionsEl.appendChild(btn);
+    }
+    if(rec && rec.choiceIndex !== correctIndex){ explainEl.textContent = question.explain; explainEl.style.display = 'block'; }
+    prevBtn.disabled = (pos === 0);
+    nextBtn.textContent = (pos === retrySession.indices.length - 1) ? 'See Results →' : 'Next';
+    counterEl.textContent = 'Retry ' + (pos+1) + ' / ' + retrySession.indices.length;
+    nextBtn.onclick = function(){
+      if(pos === retrySession.indices.length - 1) showRetryMiniResults();
+      else { retrySession.cur += 1; renderRetry(); }
+    };
+    prevBtn.onclick = function(){ if(pos > 0){ retrySession.cur -= 1; renderRetry(); } };
+  }
+  function showRetryMiniResults(){
+    var c=0, w=0;
+    for(var i=0;i<retrySession.indices.length;i++){
+      var rec = retrySession.answers[i];
+      var qIdx = retrySession.indices[i];
+      if(rec && QUESTIONS[qIdx].options[rec.choiceIndex] === QUESTIONS[qIdx].correct) c++; else w++;
+    }
+    quizArea.style.display = 'none';
+    resultsArea.style.display = 'block';
+    document.getElementById('summaryGrid').innerHTML = '';
+    document.getElementById('resultSummary').textContent =
+      'Retry session finished — Correct: ' + c + '   Still wrong: ' + w + '   (' + c + ' / ' + retrySession.indices.length + ')';
+    var backBtn = document.createElement('button');
+    backBtn.className = 'resultBtn';
+    backBtn.textContent = 'Back to Full Results';
+    backBtn.addEventListener('click', function(){
+      retrySession = null;
+      dotsEl.style.display = 'flex';
+      restoreMainNav();
+      showResultsScreen();
+    });
+    document.querySelector('.resultBtns').insertBefore(backBtn, document.querySelector('.resultBtns').firstChild);
+  }
+  function restoreMainNav(){ nextBtn.onclick = next; prevBtn.onclick = prev; }
+
+  function alertModalText(msg){
+    var overlay = document.getElementById('modalOverlay');
+    var box = overlay.querySelector('.modalBox');
+    box.innerHTML = '<p style="font-size:1.05rem; font-weight:700; color:#111111;">' + msg + '</p><div class="modalBtns"><button class="mConfirm" id="modalOk" style="flex:1;">OK</button></div>';
+    overlay.style.display = 'flex';
+    document.getElementById('modalOk').addEventListener('click', function(){ overlay.style.display = 'none'; });
+  }
+
+  function startFresh(){
+    try { localStorage.removeItem(STATE_KEY); } catch(e){}
+    state = defaultState();
+    retrySession = null;
+    dotsEl.style.display = 'flex';
+    restoreMainNav();
+    saveState();
+    render();
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    dotsEl = document.getElementById('dots');
+    quizArea = document.getElementById('quizArea');
+    resultsArea = document.getElementById('resultsArea');
+    qWord = document.getElementById('qWord');
+    optionsEl = document.getElementById('options');
+    explainEl = document.getElementById('explain');
+    typeTag = document.getElementById('typeTag');
+    counterEl = document.getElementById('counter');
+    prevBtn = document.getElementById('prevBtn');
+    nextBtn = document.getElementById('nextBtn');
+    speakBtn = document.getElementById('speakBtn');
+
+    document.getElementById('attemptsBar').textContent = 'Total Attempts: ' + getAttempts();
+
+    buildDots();
+    state = loadState();
+    restoreMainNav();
+
+    document.getElementById('copyBtn').addEventListener('click', copyResults);
+    document.getElementById('retryBtn').addEventListener('click', startRetry);
+    document.getElementById('freshBtn').addEventListener('click', function(){ document.getElementById('modalOverlay').style.display = 'flex'; });
+    document.getElementById('modalCancel').addEventListener('click', function(){ document.getElementById('modalOverlay').style.display = 'none'; });
+    document.getElementById('modalConfirm').addEventListener('click', function(){ document.getElementById('modalOverlay').style.display = 'none'; startFresh(); });
+
+    render();
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>[Grant] Math Competition</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh}
+.top-bar{background:#fff;text-align:center;padding:10px 12px 4px}
+.date-lbl{font-size:2rem;font-weight:800;color:#185FA5}
+.title-lbl{font-size:1.25rem;font-weight:700;color:#185FA5;margin-top:2px}
+.att-lbl{font-size:0.85rem;color:#555;margin-top:2px;padding-bottom:6px}
+.nav-row{background:#fff;display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;border-top:1px solid #e0e7ef;justify-content:center}
+.nav-dot{width:32px;height:32px;border-radius:50%;border:2px solid #ccc;background:#e8edf4;font-size:0.72rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#333}
+.nav-dot.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.nav-dot.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.nav-dot.active{border-color:#185FA5;color:#185FA5}
+.nav-dot.results-pill{width:auto;padding:0 12px;border-radius:16px;font-size:0.8rem}
+.quiz-area{max-width:700px;margin:16px auto;padding:0 12px 40px}
+.card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.tag-badge{display:inline-block;background:#185FA5;color:#fff;border-radius:20px;padding:3px 12px;font-size:0.78rem;font-weight:600;margin-bottom:10px}
+.q-num{font-size:0.85rem;color:#666;margin-bottom:4px}
+.q-text{font-size:1.05rem;line-height:1.6;margin-bottom:16px;color:#111}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt-btn{background:#e8edf4;color:#111111;border:2px solid transparent;border-radius:8px;padding:11px 16px;font-size:0.95rem;text-align:left;cursor:pointer;transition:all 0.15s;font-family:inherit}
+.opt-btn:hover{background:#d0d9e8}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.opt-btn.revealed{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt-btn:disabled{cursor:default}
+.exp-box{background:#f7f9fc;border-left:4px solid #185FA5;padding:10px 14px;border-radius:0 8px 8px 0;margin-top:12px;font-size:0.9rem;color:#333;line-height:1.6;display:none}
+.nav-btns{display:flex;gap:10px;margin-top:18px;justify-content:flex-end}
+.nav-btn{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:0.9rem;font-weight:600;cursor:pointer}
+.nav-btn.prev-btn{background:#e8edf4;color:#185FA5}
+.results-area{max-width:700px;margin:16px auto;padding:0 12px 40px;display:none}
+.results-card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:16px}
+.results-title{font-size:1.3rem;font-weight:700;color:#185FA5;margin-bottom:14px}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+.res-item{border-radius:8px;padding:8px;text-align:center;cursor:pointer;font-size:0.82rem;font-weight:600;border:2px solid transparent}
+.res-item.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.res-item.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.res-item.skipped{background:#f0f4f8;border-color:#aaa;color:#555}
+.score-line{font-size:1.1rem;font-weight:700;color:#185FA5;margin-bottom:8px}
+.action-btn{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:0.88rem;font-weight:600;cursor:pointer;margin-right:8px;margin-top:8px}
+.action-btn.sec{background:#e8edf4;color:#185FA5}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-box{background:#fff;border-radius:12px;padding:24px;max-width:360px;width:90%;text-align:center}
+.modal-box p{font-size:1rem;color:#333;margin-bottom:18px;line-height:1.5}
+.btn-blue{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:9px 22px;font-size:0.9rem;font-weight:600;cursor:pointer;margin:4px}
+.btn-gray{background:#e8edf4;color:#333;border:none;border-radius:8px;padding:9px 22px;font-size:0.9rem;cursor:pointer;margin:4px}
+.retry-area{display:none}
+/* Fraction */
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 2px;line-height:1.1}
+.frac-n{border-bottom:1.5px solid currentColor;padding:0 3px;text-align:center}
+.frac-d{padding:0 3px;text-align:center}
+/* Radical */
+.rad{display:inline-flex;align-items:center;vertical-align:middle;line-height:1}
+.rad-idx{font-size:0.6em;line-height:1;align-self:flex-start;margin-top:0.1em;margin-right:1px}
+.rad-sign{display:inline-flex;align-items:center;line-height:1}
+.rad-tick{font-size:1.35em;line-height:1;position:relative;top:0.06em}
+.rad-body{border-top:2px solid currentColor;padding:1px 5px 1px 1px;display:inline-flex;align-items:center;line-height:1.25;flex-wrap:nowrap;gap:2px}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <div class="date-lbl">2026-06-12</div>
+  <div class="title-lbl">[Grant] Math Competition</div>
+  <div class="att-lbl" id="attLbl">Total Attempts: 0</div>
+</div>
+<div class="nav-row" id="navRow"></div>
+<div class="quiz-area" id="quizArea" style="display:none">
+  <div class="card" id="qCard">
+    <div class="tag-badge" id="tagBadge"></div>
+    <div class="q-num" id="qNum"></div>
+    <div class="q-text" id="qText"></div>
+    <div class="opts" id="opts"></div>
+    <div class="exp-box" id="expBox"></div>
+    <div class="nav-btns">
+      <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+      <button class="nav-btn" id="nextBtn" onclick="go(1)">Next</button>
+    </div>
+  </div>
+</div>
+<div class="results-area" id="resultsArea">
+  <div class="results-card">
+    <div class="results-title">Results</div>
+    <div class="score-line" id="scoreLine"></div>
+    <div class="res-grid" id="resGrid"></div>
+    <div style="margin-top:14px">
+      <button class="action-btn" onclick="copyRes()">Copy All Results</button>
+      <button class="action-btn" onclick="startRetry()">Retry Wrong Questions</button>
+      <button class="action-btn sec" onclick="openFreshModal()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<div class="retry-area" id="retryArea">
+  <div class="results-card">
+    <div class="results-title">Retry Wrong Questions</div>
+    <div class="card" id="retryCard" style="margin-top:0;box-shadow:none;padding:0"></div>
+    <div id="retryResult" style="margin-top:12px;font-weight:600;color:#185FA5;display:none"></div>
+  </div>
+</div>
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p>Reset all progress and start fresh?</p>
+    <button class="btn-blue" onclick="confirmFresh()">Yes, Start Fresh</button>
+    <button class="btn-gray" onclick="closeFreshModal()">Cancel</button>
+  </div>
+</div>
+<script>
+(function(){
+const KEY='quiz_mathcomp_28_v1';
+const ATT_KEY='quiz_mathcomp_attempts_v1';
+
+function rad(n,inner){const idx=n?`<span class="rad-idx">${n}</span>`:'';return `<span class="rad">${idx}<span class="rad-sign"><span class="rad-tick">&#x221a;</span><span class="rad-body">${inner}</span></span></span>`;}
+function cbrt(inner){return rad(3,inner);}
+function sqr(inner){return rad('',inner);}
+
+var qs=[
+// Chapter 1
+{tag:'Chapter 1',q:'Solve: (1 + 2) &times; 2',opts:['4','6','9','12'],ci:1,exp:'Follow order of operations: parentheses first. (1+2)=3, then 3&times;2=6.'},
+{tag:'Chapter 1',q:'How many integers are between &minus;10 and 10? (not including &minus;10 and 10)',opts:['19','20','21','18'],ci:0,exp:'Integers from &minus;9 to 9 inclusive: count = 9+1+9 = 19.'},
+{tag:'Chapter 1',q:'Solve: 5(2 + 4 + 6 + 8 + 10)',opts:['100','150','120','180'],ci:1,exp:'Sum inside: 2+4+6+8+10=30. Then 5&times;30=150.'},
+{tag:'Chapter 1',q:'Solve: 16 &divide; (2 + 2)<sup>2</sup> + (19 &minus; 2 &divide; 2) &divide; 6',opts:['3','4','5','6'],ci:1,exp:'(2+2)=4; 4<sup>2</sup>=16; 16&divide;16=1. Inner: 2&divide;2=1; 19&minus;1=18; 18&divide;6=3. Total: 1+3=4.'},
+// Chapter 2
+{tag:'Chapter 2',q:'What is the largest two-digit whole number that is divisible by 6?',opts:['90','92','96','98'],ci:2,exp:'96=6&times;16. Check 96&divide;6=16 exactly. 98&divide;6 is not an integer.'},
+{tag:'Chapter 2',q:'Jerry is thinking of a number between 1 and 100. The number is a multiple of both 11 and 5. What is the number?',opts:['44','55','65','77'],ci:1,exp:'LCM(11,5)=55. 55 is between 1 and 100, and 110 exceeds 100. Answer: 55.'},
+{tag:'Chapter 2',q:'What is the smallest three-digit number that is a multiple of 5?',opts:['100','105','110','95'],ci:0,exp:'The smallest three-digit number is 100. 100&divide;5=20 exactly. So 100 is the answer.'},
+{tag:'Chapter 2',q:'Marina remembers a number: more than 40, less than 70, divisible by both 8 and 7. What is her number?',opts:['42','48','56','63'],ci:2,exp:'LCM(8,7)=56. 56 is between 40 and 70. Answer: 56.'},
+// Chapter 3
+{tag:'Chapter 3',q:'What is the largest prime number less than 100?',opts:['91','97','99','93'],ci:1,exp:'97 is prime (not divisible by 2,3,5,7). 91=7&times;13, 99=9&times;11, 93=3&times;31.'},
+{tag:'Chapter 3',q:'How many prime numbers are between 1 and 50?',opts:['13','14','15','16'],ci:2,exp:'Primes: 2,3,5,7,11,13,17,19,23,29,31,37,41,43,47. Count = 15.'},
+{tag:'Chapter 3',q:'What are the prime factors of 360? Express using exponents.',opts:['2<sup>2</sup>&middot;3<sup>2</sup>&middot;5','2<sup>3</sup>&middot;3<sup>2</sup>&middot;5','2<sup>3</sup>&middot;3&middot;5<sup>2</sup>','2<sup>2</sup>&middot;3<sup>3</sup>&middot;5'],ci:1,exp:'360=8&times;45=2<sup>3</sup>&times;9&times;5=2<sup>3</sup>&times;3<sup>2</sup>&times;5.'},
+{tag:'Chapter 3',q:'How many whole numbers less than 20 have an odd number of factors?',opts:['3','4','5','6'],ci:1,exp:'Only perfect squares have an odd number of factors: 1,4,9,16. That is 4 numbers.'},
+// Chapter 4
+{tag:'Chapter 4',q:'Find the sum of all the factors of 30.',opts:['60','72','64','80'],ci:1,exp:'30=2&times;3&times;5. Factors: 1,2,3,5,6,10,15,30. Sum=1+2+3+5+6+10+15+30=72.'},
+{tag:'Chapter 4',q:'Find the sum of all the factors of 8, 16, 32, and 64. Which list is correct?',opts:['15, 30, 62, 127','15, 31, 63, 127','14, 30, 63, 126','15, 31, 64, 127'],ci:1,exp:'&sigma;(8)=1+2+4+8=15; &sigma;(16)=1+2+4+8+16=31; &sigma;(32)=1+2+4+8+16+32=63; &sigma;(64)=1+2+4+8+16+32+64=127.'},
+{tag:'Chapter 4',q:'How many factors do 2<sup>14</sup>5<sup>7</sup>11<sup>5</sup> and 3<sup>8</sup>7<sup>3</sup>13<sup>12</sup> share?',opts:['1','2','0','3'],ci:0,exp:'GCD = 1 because the two numbers share no prime factors. The only common factor is 1.'},
+{tag:'Chapter 4',q:'How many factors do 42 and 630 share?',opts:['6','7','8','12'],ci:2,exp:'42=2&times;3&times;7. 630=2&times;3<sup>2</sup>&times;5&times;7. GCD(42,630)=42. The number of factors of 42 is (1+1)(1+1)(1+1)=8.'},
+// Chapter 5
+{tag:'Chapter 5',q:'How many perfect-square factors does 2<sup>5</sup>3<sup>8</sup>7<sup>4</sup> have?',opts:['36','40','45','48'],ci:2,exp:'For a perfect-square factor 2<sup>a</sup>3<sup>b</sup>7<sup>c</sup>: a&isin;{0,2,4}(3 choices), b&isin;{0,2,4,6,8}(5 choices), c&isin;{0,2,4}(3 choices). Total: 3&times;5&times;3=45.'},
+{tag:'Chapter 5',q:'Is 64 a perfect square? Is 64 a perfect cube?',opts:['Yes, but not a perfect cube','No, and not a perfect cube','Yes, and also a perfect cube','No, but it is a perfect cube'],ci:2,exp:'64=8<sup>2</sup> (perfect square) and 64=4<sup>3</sup> (perfect cube). Both are true.'},
+{tag:'Chapter 5',q:'Find the number of factors that are perfect cubes for 2<sup>2</sup>3<sup>4</sup>5<sup>3</sup>.',opts:['2','3','4','6'],ci:2,exp:'Need 2<sup>a</sup>3<sup>b</sup>5<sup>c</sup> where each exponent is divisible by 3. a&isin;{0}(1 choice, since max=2), b&isin;{0,3}(2 choices), c&isin;{0,3}(2 choices). Total: 1&times;2&times;2=4.'},
+{tag:'Chapter 5',q:'How many factors of 2<sup>20</sup>3<sup>15</sup>5<sup>5</sup> are divisible by 30 but NOT by 270?',opts:['100','150','200','250'],ci:2,exp:'30=2&times;3&times;5: count=20&times;15&times;5=1500. 270=2&times;3<sup>3</sup>&times;5: count=20&times;13&times;5=1300. Difference: 1500&minus;1300=200.'},
+// Chapter 6
+{tag:'Chapter 6',q:'Sasha has 3 half-dollars, 8 quarters, 11 dimes, 7 nickels, and 13 pennies. How much money does she have in total?',opts:['$4.98','$5.08','$5.18','$5.28'],ci:1,exp:'3&times;$0.50=$1.50; 8&times;$0.25=$2.00; 11&times;$0.10=$1.10; 7&times;$0.05=$0.35; 13&times;$0.01=$0.13. Total=$5.08.'},
+{tag:'Chapter 6',q:'Alex bought 4 chocolate bars at $2 each and 5 lollipops at $0.50 each. If Alex had a $20 bill, how much money did he have left?',opts:['$8.00','$8.50','$9.00','$9.50'],ci:3,exp:'4&times;$2=$8.00; 5&times;$0.50=$2.50. Total spent=$10.50. Change=$20.00&minus;$10.50=$9.50.'},
+{tag:'Chapter 6',q:'Julie takes a taxi that charges $4.50 to start and $1.10 per mile. The distance is 15 miles. How much will she pay?',opts:['$19.00','$20.00','$21.00','$22.00'],ci:2,exp:'$4.50 + $1.10&times;15 = $4.50 + $16.50 = $21.00.'},
+{tag:'Chapter 6',q:'4 adults and 2 children went to an aquarium. One adult ticket costs $14 and one child ticket costs $5. What was the total cost?',opts:['$56','$60','$64','$66'],ci:3,exp:'4&times;$14=$56; 2&times;$5=$10. Total=$56+$10=$66.'},
+// Chapter 7
+{tag:'Chapter 7',q:'Simplify: <span class="frac"><span class="frac-n">1</span><span class="frac-d">8<sup>&minus;2</sup></span></span>',opts:['16','32','64','128'],ci:2,exp:'8<sup>&minus;2</sup> = 1/64. So 1/(1/64) = 64.'},
+{tag:'Chapter 7',q:'Find the two consecutive integers that are closest to '+cbrt('150')+'.',opts:['4 and 5','5 and 6','6 and 7','7 and 8'],ci:1,exp:'5<sup>3</sup>=125 and 6<sup>3</sup>=216. Since 125 &lt; 150 &lt; 216, the two consecutive integers closest to '+cbrt('150')+' are 5 and 6.'},
+{tag:'Chapter 7',q:'Simplify: ('+cbrt('27,000,000')+')<sup>2</sup>',opts:['9,000','30,000','90,000','900,000'],ci:2,exp:'27,000,000 = 27&times;10<sup>6</sup> = 3<sup>3</sup>&times;10<sup>6</sup>. '+cbrt('27,000,000')+' = 3&times;10<sup>2</sup> = 300. 300<sup>2</sup> = 90,000.'},
+{tag:'Chapter 7',q:'Simplify: '+rad(2,'11')+' &times; '+rad(3,'11')+' &times; '+rad(6,'11'),opts:['11<sup>2</sup>','11',''+rad('','11')+'','11<sup>3</sup>'],ci:1,exp:'11<sup>1/2</sup>&times;11<sup>1/3</sup>&times;11<sup>1/6</sup> = 11<sup>(3+2+1)/6</sup> = 11<sup>1</sup> = 11.'}
+];
+
+var state={cur:0,answers:{},shuffles:{},showResults:false};
+
+function loadState(){
+  try{
+    var s=JSON.parse(localStorage.getItem(KEY)||'null');
+    if(s&&typeof s.cur==='number'&&typeof s.answers==='object'&&s.answers!==null&&typeof s.shuffles==='object'&&s.shuffles!==null){
+      if(s.cur<0||s.cur>=qs.length)s.cur=0;
+      state=s;
+    }
+  }catch(e){localStorage.removeItem(KEY);}
+}
+function saveState(){localStorage.setItem(KEY,JSON.stringify(state));}
+function loadAttempts(){return parseInt(localStorage.getItem(ATT_KEY)||'0');}
+function saveAttempts(n){localStorage.setItem(ATT_KEY,String(n));}
+
+function getShuffled(i){
+  if(!state.shuffles[i]){
+    var arr=qs[i].opts.map((_,j)=>j);
+    for(var k=arr.length-1;k>0;k--){var r=Math.floor(Math.random()*(k+1));var t=arr[k];arr[k]=arr[r];arr[r]=t;}
+    state.shuffles[i]=arr;
+    saveState();
+  }
+  return state.shuffles[i];
+}
+
+function render(){
+  try{
+    document.getElementById('attLbl').textContent='Total Attempts: '+loadAttempts();
+    buildNav();
+    if(state.showResults){
+      document.getElementById('quizArea').style.display='none';
+      document.getElementById('resultsArea').style.display='block';
+      buildResults();
+    } else {
+      document.getElementById('quizArea').style.display='block';
+      document.getElementById('resultsArea').style.display='none';
+      buildQ();
+    }
+  }catch(e){document.getElementById('quizArea').innerHTML='<div class="card"><p style="color:red">Error rendering quiz. Please refresh.</p></div>';document.getElementById('quizArea').style.display='block';}
+}
+
+function buildNav(){
+  var row=document.getElementById('navRow');
+  row.innerHTML='';
+  for(var i=0;i<qs.length;i++){
+    var d=document.createElement('button');
+    d.className='nav-dot';
+    d.textContent=i+1;
+    if(state.answers[i]!==undefined){
+      d.className+=(state.answers[i]===qs[i].ci?' correct':' wrong');
+    }
+    if(!state.showResults&&i===state.cur)d.className+=' active';
+    (function(idx){d.onclick=function(){if(state.showResults){state.showResults=false;saveState();}state.cur=idx;saveState();render();};})(i);
+    row.appendChild(d);
+  }
+  if(state.showResults){
+    var p=document.createElement('button');
+    p.className='nav-dot results-pill active';
+    p.textContent='Results';
+    p.onclick=function(){state.showResults=true;saveState();render();};
+    row.appendChild(p);
+  }
+}
+
+function buildQ(){
+  var q=qs[state.cur];
+  document.getElementById('tagBadge').textContent=q.tag;
+  document.getElementById('qNum').textContent='Question '+(state.cur+1)+' / '+qs.length;
+  document.getElementById('qText').innerHTML=q.q;
+  var shuffled=getShuffled(state.cur);
+  var answered=state.answers[state.cur]!==undefined;
+  var chosen=state.answers[state.cur];
+  var container=document.getElementById('opts');
+  container.innerHTML='';
+  shuffled.forEach(function(origIdx){
+    var btn=document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML=q.opts[origIdx];
+    if(answered){
+      btn.disabled=true;
+      if(origIdx===q.ci)btn.className='opt-btn revealed';
+      if(origIdx===chosen&&chosen!==q.ci)btn.className='opt-btn wrong';
+      if(origIdx===chosen&&chosen===q.ci)btn.className='opt-btn correct';
+    }
+    (function(oIdx){btn.onclick=function(){pick(oIdx);};})(origIdx);
+    container.appendChild(btn);
+  });
+  var exp=document.getElementById('expBox');
+  if(answered&&chosen!==q.ci){exp.style.display='block';exp.innerHTML=q.exp;}
+  else{exp.style.display='none';}
+  document.getElementById('nextBtn').textContent=(state.cur===qs.length-1?'See Results →':'Next');
+}
+
+function pick(origIdx){
+  if(state.answers[state.cur]!==undefined)return;
+  state.answers[state.cur]=origIdx;
+  saveState();
+  render();
+}
+
+function go(dir){
+  if(dir===1&&state.cur===qs.length-1){
+    var att=loadAttempts()+1;
+    saveAttempts(att);
+    state.showResults=true;
+    saveState();
+    render();
+    return;
+  }
+  state.cur=Math.max(0,Math.min(qs.length-1,state.cur+dir));
+  saveState();
+  render();
+}
+
+function buildResults(){
+  var correct=0,wrong=0,skipped=0;
+  var lines=['[Grant] Math Competition Results - 2026-06-12'];
+  var grid=document.getElementById('resGrid');
+  grid.innerHTML='';
+  for(var i=0;i<qs.length;i++){
+    var item=document.createElement('div');
+    item.className='res-item';
+    var ans=state.answers[i];
+    if(ans===undefined){item.className+=' skipped';item.textContent='Q'+(i+1)+': Skipped';skipped++;lines.push('Q'+(i+1)+': Skipped');}
+    else if(ans===qs[i].ci){item.className+=' correct';item.textContent='Q'+(i+1)+': Correct';correct++;lines.push('Q'+(i+1)+': Correct');}
+    else{item.className+=' wrong';item.textContent='Q'+(i+1)+': Wrong';wrong++;lines.push('Q'+(i+1)+': Wrong');}
+    (function(idx){item.onclick=function(){state.showResults=false;state.cur=idx;saveState();render();};})(i);
+    grid.appendChild(item);
+  }
+  document.getElementById('scoreLine').textContent='Score: '+correct+' / '+qs.length+' correct';
+  lines.push('Score: '+correct+'/'+qs.length);
+  window._resText=lines.join('\n');
+}
+
+function copyRes(){
+  if(navigator.clipboard){navigator.clipboard.writeText(window._resText||'');}
+  else{var ta=document.createElement('textarea');ta.value=window._resText||'';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+}
+
+var retryList=[],retryIdx=0,retryAns={};
+function startRetry(){
+  retryList=[];retryIdx=0;retryAns={};
+  for(var i=0;i<qs.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==qs[i].ci)retryList.push(i);}
+  if(!retryList.length){alert('No wrong questions to retry!');return;}
+  document.getElementById('retryArea').style.display='block';
+  document.getElementById('retryResult').style.display='none';
+  renderRetry();
+  document.getElementById('retryArea').scrollIntoView({behavior:'smooth'});
+}
+
+function renderRetry(){
+  var qi=retryList[retryIdx];
+  var q=qs[qi];
+  var shuffled=getShuffled(qi);
+  var answered=retryAns[retryIdx]!==undefined;
+  var chosen=retryAns[retryIdx];
+  var html='<div class="tag-badge">'+q.tag+'</div>';
+  html+='<div class="q-num">Retry '+(retryIdx+1)+' / '+retryList.length+'</div>';
+  html+='<div class="q-text">'+q.q+'</div>';
+  html+='<div class="opts" id="rOpts"></div>';
+  html+='<div class="exp-box" id="rExp" style="display:none">'+q.exp+'</div>';
+  html+='<div class="nav-btns">';
+  if(retryIdx>0)html+='<button class="nav-btn prev-btn" onclick="retryNav(-1)">Prev</button>';
+  if(retryIdx<retryList.length-1)html+='<button class="nav-btn" onclick="retryNav(1)">Next</button>';
+  else html+='<button class="nav-btn" onclick="finishRetry()">Finish</button>';
+  html+='</div>';
+  document.getElementById('retryCard').innerHTML=html;
+  var optsEl=document.getElementById('rOpts');
+  shuffled.forEach(function(origIdx){
+    var btn=document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML=q.opts[origIdx];
+    if(answered){
+      btn.disabled=true;
+      if(origIdx===q.ci)btn.className='opt-btn revealed';
+      if(origIdx===chosen&&chosen!==q.ci)btn.className='opt-btn wrong';
+      if(origIdx===chosen&&chosen===q.ci)btn.className='opt-btn correct';
+    }
+    (function(oIdx){btn.onclick=function(){retryAns[retryIdx]=oIdx;renderRetry();if(answered){var ex=document.getElementById('rExp');if(ex&&oIdx!==q.ci)ex.style.display='block';}};})(origIdx);
+    optsEl.appendChild(btn);
+  });
+  if(answered&&chosen!==q.ci){var ex=document.getElementById('rExp');if(ex)ex.style.display='block';}
+}
+
+function retryNav(dir){retryIdx+=dir;renderRetry();}
+function finishRetry(){
+  var c=0;for(var k in retryAns){if(retryAns[k]===qs[retryList[k]].ci)c++;}
+  var res=document.getElementById('retryResult');
+  res.textContent='Retry complete: '+c+' / '+retryList.length+' correct';
+  res.style.display='block';
+}
+
+function openFreshModal(){document.getElementById('freshModal').style.display='flex';}
+function closeFreshModal(){document.getElementById('freshModal').style.display='none';}
+function confirmFresh(){
+  localStorage.removeItem(KEY);
+  state={cur:0,answers:{},shuffles:{},showResults:false};
+  closeFreshModal();
+  render();
+}
+
+window.pick=pick;
+window.go=go;
+window.copyRes=copyRes;
+window.startRetry=startRetry;
+window.retryNav=retryNav;
+window.finishRetry=finishRetry;
+window.openFreshModal=openFreshModal;
+window.closeFreshModal=closeFreshModal;
+window.confirmFresh=confirmFresh;
+
+loadState();
+render();
+})();
+</script>
+</body>
+</html>

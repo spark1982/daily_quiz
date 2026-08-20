@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Quiz – 20 Questions</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4fa;min-height:100vh;padding:0 0 40px}
+#due-date{font-size:2rem;font-weight:800;text-align:center;color:#185FA5;background:#fff;padding:14px 0 8px;letter-spacing:0.01em}
+#quiz-title{text-align:center;font-size:1.3rem;font-weight:700;color:#185FA5;background:#fff;padding:0 16px 14px;border-bottom:2px solid #d0dff5}
+#dot-nav{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;padding:14px 12px 8px;background:#f7f9fd;border-bottom:1px solid #d8e5f5}
+.dot{width:34px;height:34px;border-radius:50%;border:2px solid #b0c8e8;background:#fff;color:#185FA5;font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.dot.correct{background:#185FA5;border-color:#185FA5;color:#fff}
+.dot.wrong{background:#E24B4A;border-color:#E24B4A;color:#fff}
+.dot.active{box-shadow:0 0 0 3px #185FA5aa}
+.dot.results-pill{border-radius:16px;width:auto;padding:0 14px;background:#185FA5;color:#fff;border-color:#185FA5}
+#quiz-area{display:none;max-width:640px;margin:0 auto;padding:16px}
+.q-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.q-num{font-size:1rem;font-weight:700;color:#185FA5}
+.type-badge{background:#185FA5;color:#fff;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.04em}
+.q-text{font-size:1.08rem;font-weight:600;color:#1a2a3a;margin-bottom:18px;line-height:1.7}
+.options{display:flex;flex-direction:column;gap:10px}
+.opt-btn{background:#e8edf4;color:#111;border:2px solid transparent;border-radius:10px;padding:13px 16px;font-size:1rem;font-weight:600;cursor:pointer;text-align:left;transition:all .12s;line-height:1.5}
+.opt-btn:active{filter:brightness(0.95)}
+.opt-btn.correct{background:#E1F5EE!important;border-color:#1D9E75!important;color:#085041!important}
+.opt-btn.wrong{background:#FCEBEB!important;border-color:#E24B4A!important;color:#501313!important}
+.opt-btn.reveal{background:#E1F5EE!important;border-color:#1D9E75!important;color:#085041!important}
+#explanation{margin-top:14px;background:#fffbe6;border-left:4px solid #f5a623;padding:12px 14px;border-radius:8px;font-size:0.95rem;color:#5a3e00;display:none;line-height:1.6}
+#nav-row{display:flex;justify-content:space-between;margin-top:20px}
+.nav-btn{background:#185FA5;color:#fff;border:none;border-radius:8px;padding:11px 28px;font-size:1rem;font-weight:700;cursor:pointer}
+.nav-btn:disabled{background:#b0c0d8;cursor:default}
+/* Results */
+#results-screen{display:none;max-width:640px;margin:0 auto;padding:16px}
+.results-title{text-align:center;font-size:1.4rem;font-weight:800;color:#185FA5;margin-bottom:4px}
+.score-line{text-align:center;font-size:1.1rem;color:#333;margin-bottom:16px}
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+.sg-card{border-radius:10px;padding:9px 4px;text-align:center;cursor:pointer;font-size:0.85rem;font-weight:700;border:2px solid transparent}
+.sg-card.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.sg-card.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.sg-card.skipped{background:#f0f0f0;border-color:#aaa;color:#555}
+.results-btn{display:block;width:100%;padding:13px;border-radius:10px;border:none;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:10px}
+.btn-copy{background:#185FA5;color:#fff}
+.btn-retry{background:#1D9E75;color:#fff}
+.btn-fresh{background:#E24B4A;color:#fff}
+.wrong-list{margin-top:10px}
+.wrong-item{background:#fff;border:1px solid #e0e8f5;border-radius:10px;padding:13px;margin-bottom:10px}
+.wrong-item .wq{font-weight:700;color:#1a2a3a;font-size:0.97rem;margin-bottom:4px}
+.wrong-item .your-ans{color:#E24B4A;font-size:0.9rem}
+.wrong-item .corr-ans{color:#1D9E75;font-size:0.9rem}
+.wrong-item .expl{color:#5a3e00;font-size:0.88rem;margin-top:5px;background:#fffbe6;padding:7px 10px;border-radius:6px}
+/* Retry mini results */
+#retry-results{display:none;max-width:640px;margin:0 auto;padding:16px}
+/* Modal */
+#modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center}
+#modal-overlay.active{display:flex}
+#modal-box{background:#fff;border-radius:14px;padding:28px 24px;max-width:320px;width:90%;text-align:center}
+#modal-box h3{font-size:1.1rem;font-weight:800;margin-bottom:10px;color:#1a2a3a}
+#modal-box p{font-size:0.95rem;color:#444;margin-bottom:20px}
+.modal-btns{display:flex;gap:12px;justify-content:center}
+.modal-btns button{padding:10px 22px;border-radius:8px;border:none;font-weight:700;font-size:0.97rem;cursor:pointer}
+#modal-cancel{background:#e8edf4;color:#333}
+#modal-confirm{background:#E24B4A;color:#fff}
+/* fraction */
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:0.95em;margin:0 2px}
+.frac .num{border-bottom:1.5px solid currentColor;padding:0 3px 1px;text-align:center;line-height:1.2}
+.frac .den{padding:1px 3px 0;text-align:center;line-height:1.2}
+.mixed{display:inline-flex;align-items:center;gap:2px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div id="due-date">📅 Due: June 6, 2025</div>
+<div id="quiz-title">Math Quiz &nbsp;|&nbsp; 20 Questions</div>
+<div id="dot-nav"></div>
+<div id="quiz-area"></div>
+<div id="results-screen"></div>
+<div id="retry-results"></div>
+<div id="modal-overlay">
+  <div id="modal-box">
+    <h3>Start Fresh?</h3>
+    <p>All your progress will be cleared.</p>
+    <div class="modal-btns">
+      <button id="modal-cancel">Cancel</button>
+      <button id="modal-confirm">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── helpers ───────────────────────────────────────────────
+function frac(n,d){return `<span class="frac"><span class="num">${n}</span><span class="den">${d}</span></span>`}
+function mixed(w,n,d){return `<span class="mixed">${w}&thinsp;${frac(n,d)}</span>`}
+
+// ─── QUESTIONS ─────────────────────────────────────────────
+const QUESTIONS = [
+  // ── FRACTIONS (4) ──
+  {
+    type:'Fractions',
+    q:`Calculate: ${frac(3,4)} + ${frac(2,9)}  &nbsp; (Express as a fraction in simplest form)`,
+    options:[frac(35,36), frac(5,13), frac(11,36), frac(1,3)],
+    ci:0,
+    expl:`Convert to a common denominator of 36: 3/4 = 27/36 and 2/9 = 8/36. Adding gives 27/36 + 8/36 = 35/36. This fraction is already in simplest form.`
+  },
+  {
+    type:'Fractions',
+    q:`Calculate: ${frac(5,6)} − ${frac(3,14)}  &nbsp; (Express as a fraction in simplest form)`,
+    options:[frac(13,21), frac(2,8), frac(11,21), frac(1,6)],
+    ci:0,
+    expl:`LCD of 6 and 14 is 42. 5/6 = 35/42 and 3/14 = 9/42. Subtracting: 35/42 − 9/42 = 26/42 = 13/21 in simplest form.`
+  },
+  {
+    type:'Fractions',
+    q:`Calculate: ${mixed(1,3,5)} × ${mixed(2,1,3)}  &nbsp; (Express as a mixed number)`,
+    options:[mixed(3,11,15), mixed(2,7,15), mixed(4,1,5), mixed(3,2,5)],
+    ci:0,
+    expl:`Convert to improper fractions: 1 3/5 = 8/5 and 2 1/3 = 7/3. Multiply: 8/5 × 7/3 = 56/15 = 3 11/15 as a mixed number.`
+  },
+  {
+    type:'Fractions',
+    q:`Calculate: (${frac(7,8)} ÷ ${frac(7,16)}) − ${frac(5,12)}  &nbsp; (Express as an improper fraction)`,
+    options:[frac(19,12), frac(7,12), frac(23,12), frac(5,8)],
+    ci:0,
+    expl:`First, 7/8 ÷ 7/16 = 7/8 × 16/7 = 112/56 = 2. Then 2 − 5/12 = 24/12 − 5/12 = 19/12 as an improper fraction.`
+  },
+  // ── DECIMALS (4) ──
+  {
+    type:'Decimals',
+    q:`Calculate: 4.5 + 3.25 − 1.8`,
+    options:['5.95','5.75','6.05','5.85'],
+    ci:0,
+    expl:`4.5 + 3.25 = 7.75. Then 7.75 − 1.8 = 5.95.`
+  },
+  {
+    type:'Decimals',
+    q:`Calculate: 2.4 × 1.5 − 0.36`,
+    options:['3.24','3.60','2.88','3.06'],
+    ci:0,
+    expl:`Multiply first: 2.4 × 1.5 = 3.60. Then subtract: 3.60 − 0.36 = 3.24.`
+  },
+  {
+    type:'Decimals',
+    q:`Calculate: (6.3 − 1.8) ÷ 0.9`,
+    options:['5','4.5','5.5','4'],
+    ci:0,
+    expl:`Parentheses first: 6.3 − 1.8 = 4.5. Then divide: 4.5 ÷ 0.9 = 5.`
+  },
+  {
+    type:'Decimals',
+    q:`Calculate: 0.75 × 3.2 + 1.16`,
+    options:['3.56','3.72','2.96','3.40'],
+    ci:0,
+    expl:`Multiply first: 0.75 × 3.2 = 2.40. Then add: 2.40 + 1.16 = 3.56.`
+  },
+  // ── INTEGERS (4) ──
+  {
+    type:'Integers',
+    q:`Calculate: (−4)<sup>2</sup> × 3 + 60 ÷ (−5) − (−15)`,
+    options:['51','37','61','43'],
+    ci:0,
+    expl:`(−4)² = 16. Then: 16 × 3 = 48. 60 ÷ (−5) = −12. So: 48 + (−12) − (−15) = 48 − 12 + 15 = 51.`
+  },
+  {
+    type:'Integers',
+    q:`Calculate: −8 + (3 − 7)<sup>2</sup> × 2 − 14 ÷ (−7)`,
+    options:['26','24','30','18'],
+    ci:0,
+    expl:`Parentheses first: (3 − 7) = −4, then (−4)² = 16. Multiply: 16 × 2 = 32. Divide: 14 ÷ (−7) = −2. So: −8 + 32 − (−2) = −8 + 32 + 2 = 26.`
+  },
+  {
+    type:'Integers',
+    q:`Calculate: 5<sup>2</sup> − (−3) × 4 + 18 ÷ (−6)`,
+    options:['34','22','40','28'],
+    ci:0,
+    expl:`5² = 25. Multiply: (−3) × 4 = −12. Divide: 18 ÷ (−6) = −3. So: 25 − (−12) + (−3) = 25 + 12 − 3 = 34.`
+  },
+  {
+    type:'Integers',
+    q:`Calculate: (−2)<sup>2</sup> + (−6)<sup>2</sup> ÷ 4 − 3 × (−5)`,
+    options:['28','16','22','34'],
+    ci:0,
+    expl:`(−2)² = 4 and (−6)² = 36. Multiply/divide first: 36 ÷ 4 = 9 and 3 × (−5) = −15. So: 4 + 9 − (−15) = 4 + 9 + 15 = 28.`
+  },
+  // ── UNIT CONVERSIONS (4) ──
+  {
+    type:'Unit Conversion',
+    q:`${mixed(5,1,2)} hours = ? minutes`,
+    options:['330','320','300','345'],
+    ci:0,
+    expl:`5 1/2 hours = 5.5 hours. Multiply by 60 minutes/hour: 5.5 × 60 = 330 minutes.`
+  },
+  {
+    type:'Unit Conversion',
+    q:`0.4 pounds = ? ounces &nbsp;&nbsp; <em>(1 pound = 16 ounces)</em>`,
+    options:['6.4 oz','4.0 oz','8.0 oz','5.6 oz'],
+    ci:0,
+    expl:`Multiply: 0.4 × 16 = 6.4 ounces.`
+  },
+  {
+    type:'Unit Conversion',
+    q:`${mixed(3,1,4)} feet = ? inches &nbsp;&nbsp; <em>(1 foot = 12 inches)</em>`,
+    options:['39 in','36 in','42 in','38 in'],
+    ci:0,
+    expl:`3 1/4 feet = 3.25 feet. Multiply: 3.25 × 12 = 39 inches.`
+  },
+  {
+    type:'Unit Conversion',
+    q:`2 pounds 6 ounces = ? ounces &nbsp;&nbsp; <em>(1 pound = 16 ounces)</em>`,
+    options:['38 oz','32 oz','46 oz','40 oz'],
+    ci:0,
+    expl:`2 pounds = 2 × 16 = 32 ounces. Add the extra 6 ounces: 32 + 6 = 38 ounces.`
+  },
+  // ── LAWS OF EXPONENTS (4) ──
+  {
+    type:'Exponents',
+    q:`Simplify: x<sup>3</sup> × x<sup>5</sup>`,
+    options:['x<sup>8</sup>','x<sup>15</sup>','x<sup>2</sup>','2x<sup>8</sup>'],
+    ci:0,
+    expl:`When multiplying powers with the same base, add the exponents: x³ × x⁵ = x^(3+5) = x⁸.`
+  },
+  {
+    type:'Exponents',
+    q:`Simplify: (2a<sup>2</sup>)<sup>3</sup>`,
+    options:['8a<sup>6</sup>','6a<sup>5</sup>','2a<sup>6</sup>','8a<sup>5</sup>'],
+    ci:0,
+    expl:`Apply the power to each factor: 2³ = 8 and (a²)³ = a^(2×3) = a⁶. Result: 8a⁶.`
+  },
+  {
+    type:'Exponents',
+    q:`Simplify: 6<sup>8</sup> ÷ 6<sup>5</sup>`,
+    options:['6<sup>3</sup>','6<sup>13</sup>','1<sup>3</sup>','6<sup>40</sup>'],
+    ci:0,
+    expl:`When dividing powers with the same base, subtract the exponents: 6⁸ ÷ 6⁵ = 6^(8−5) = 6³.`
+  },
+  {
+    type:'Exponents',
+    q:`Simplify: (3x<sup>2</sup>y)<sup>2</sup>`,
+    options:['9x<sup>4</sup>y<sup>2</sup>','6x<sup>4</sup>y<sup>2</sup>','9x<sup>4</sup>y','3x<sup>4</sup>y<sup>2</sup>'],
+    ci:0,
+    expl:`Apply the power to each factor: 3² = 9, (x²)² = x⁴, and y² = y². Result: 9x⁴y².`
+  }
+];
+
+const LSKEY = 'quiz_math_mixed_20_v1';
+
+// ─── STATE ─────────────────────────────────────────────────
+let state;
+function defaultState(){
+  const shuffles={};
+  QUESTIONS.forEach((q,i)=>{
+    const idx=[0,1,2,3];
+    for(let j=3;j>0;j--){const k=Math.floor(Math.random()*(j+1));[idx[j],idx[k]]=[idx[k],idx[j]];}
+    shuffles[i]=idx;
+  });
+  return {cur:0,answers:{},shuffles,showResults:false};
+}
+function saveState(){try{localStorage.setItem(LSKEY,JSON.stringify(state));}catch(e){}}
+function loadState(){
+  try{
+    const raw=localStorage.getItem(LSKEY);
+    if(!raw)return defaultState();
+    const s=JSON.parse(raw);
+    if(typeof s.cur!=='number'||s.cur<0||s.cur>=QUESTIONS.length)throw new Error();
+    if(typeof s.answers!=='object'||typeof s.shuffles!=='object')throw new Error();
+    for(let i=0;i<QUESTIONS.length;i++){
+      if(!Array.isArray(s.shuffles[i])||s.shuffles[i].length!==4)throw new Error();
+    }
+    return s;
+  }catch(e){
+    try{localStorage.removeItem(LSKEY);}catch(x){}
+    return defaultState();
+  }
+}
+
+// ─── RETRY STATE ───────────────────────────────────────────
+let retryMode=false;
+let retryQuestions=[];
+let retryState={cur:0,answers:{},shuffles:{}};
+
+function startRetry(){
+  const wrongIdx=QUESTIONS.map((_,i)=>i).filter(i=>state.answers[i]!==undefined&&state.answers[i]!==QUESTIONS[i].shuffles?false:state.answers[i]!==undefined&&state.answers[i]!==getShuffle(i,QUESTIONS[i].ci));
+  // build retry list from wrong answers
+  const wrongList=[];
+  QUESTIONS.forEach((q,i)=>{
+    const ans=state.answers[i];
+    if(ans===undefined)return; // skipped - don't include
+    const correctShuffledIdx=state.shuffles[i].indexOf(q.ci);
+    if(ans!==correctShuffledIdx){wrongList.push(i);}
+  });
+  if(wrongList.length===0)return;
+  retryQuestions=wrongList;
+  retryState={cur:0,answers:{},shuffles:{}};
+  retryQuestions.forEach((origIdx,ri)=>{
+    const idx=[0,1,2,3];
+    for(let j=3;j>0;j--){const k=Math.floor(Math.random()*(j+1));[idx[j],idx[k]]=[idx[k],idx[j]];}
+    retryState.shuffles[ri]=idx;
+  });
+  retryMode=true;
+  renderRetry();
+}
+
+function getShuffle(i,ci){return state.shuffles[i].indexOf(ci);}
+
+// ─── RENDER MAIN ───────────────────────────────────────────
+function render(){
+  try{
+    const dotNav=document.getElementById('dot-nav');
+    const quizArea=document.getElementById('quiz-area');
+    const resultsScreen=document.getElementById('results-screen');
+    const retryResults=document.getElementById('retry-results');
+
+    // hide retry
+    retryResults.style.display='none';
+
+    if(state.showResults){
+      quizArea.style.display='none';
+      resultsScreen.style.display='block';
+      renderResults();
+      // dot nav with Results pill
+      dotNav.innerHTML='';
+      QUESTIONS.forEach((_,i)=>{
+        const ans=state.answers[i];
+        const correctShuffledIdx=state.shuffles[i].indexOf(QUESTIONS[i].ci);
+        let cls='dot';
+        if(ans!==undefined){cls+=(ans===correctShuffledIdx)?' correct':' wrong';}
+        const d=document.createElement('button');
+        d.className=cls;d.textContent=i+1;
+        d.onclick=()=>{state.showResults=false;state.cur=i;saveState();render();};
+        dotNav.appendChild(d);
+      });
+      const pill=document.createElement('span');
+      pill.className='dot results-pill';pill.textContent='Results';
+      dotNav.appendChild(pill);
+    } else {
+      resultsScreen.style.display='none';
+      quizArea.style.display='block';
+      renderQuestion();
+      // dot nav
+      dotNav.innerHTML='';
+      QUESTIONS.forEach((_,i)=>{
+        const ans=state.answers[i];
+        const correctShuffledIdx=state.shuffles[i].indexOf(QUESTIONS[i].ci);
+        let cls='dot';
+        if(ans!==undefined){cls+=(ans===correctShuffledIdx)?' correct':' wrong';}
+        if(i===state.cur)cls+=' active';
+        const d=document.createElement('button');
+        d.className=cls;d.textContent=i+1;
+        d.onclick=()=>{state.cur=i;saveState();render();};
+        dotNav.appendChild(d);
+      });
+    }
+  }catch(e){
+    document.getElementById('quiz-area').style.display='block';
+    document.getElementById('quiz-area').innerHTML='<p style="color:red;padding:20px">Display error. Please reload.</p>';
+  }
+}
+
+function renderQuestion(){
+  const q=QUESTIONS[state.cur];
+  const shuffle=state.shuffles[state.cur];
+  const answered=state.answers[state.cur];
+  const correctShuffledIdx=shuffle.indexOf(q.ci);
+
+  const isLast=state.cur===QUESTIONS.length-1;
+  let html=`<div class="q-header"><span class="q-num">Q${state.cur+1} / ${QUESTIONS.length}</span><span class="type-badge">${q.type}</span></div>`;
+  html+=`<div class="q-text">${q.q}</div><div class="options">`;
+  shuffle.forEach((origIdx,si)=>{
+    let cls='opt-btn';
+    if(answered!==undefined){
+      if(si===correctShuffledIdx)cls+=' correct';
+      else if(si===answered)cls+=' wrong';
+    }
+    const disabled=answered!==undefined?'disabled':'';
+    html+=`<button class="${cls}" ${disabled} onclick="chooseAnswer(${si})">${q.options[origIdx]}</button>`;
+  });
+  html+=`</div>`;
+  if(answered!==undefined&&answered!==correctShuffledIdx){
+    html+=`<div id="explanation" style="display:block">${q.expl}</div>`;
+  }
+  html+=`<div id="nav-row">
+    <button class="nav-btn" onclick="goTo(${state.cur-1})" ${state.cur===0?'disabled':''}>← Prev</button>
+    <button class="nav-btn" onclick="${isLast?'showResults()':'goTo('+(state.cur+1)+')'}">${isLast?'See Results →':'Next →'}</button>
+  </div>`;
+  document.getElementById('quiz-area').innerHTML=html;
+}
+
+function chooseAnswer(si){
+  if(state.answers[state.cur]!==undefined)return;
+  state.answers[state.cur]=si;
+  saveState();
+  render();
+}
+function goTo(i){if(i>=0&&i<QUESTIONS.length){state.cur=i;saveState();render();}}
+function showResults(){
+  try{state.showResults=true;saveState();render();}
+  catch(e){document.getElementById('results-screen').innerHTML='<p style="color:red;padding:20px">Error loading results. Please reload.</p>';document.getElementById('results-screen').style.display='block';}
+}
+
+function renderResults(){
+  let correct=0,wrong=0,skipped=0;
+  QUESTIONS.forEach((q,i)=>{
+    const ans=state.answers[i];
+    const csi=state.shuffles[i].indexOf(q.ci);
+    if(ans===undefined)skipped++;
+    else if(ans===csi)correct++;
+    else wrong++;
+  });
+
+  let html=`<div class="results-title">Results</div>
+  <div class="score-line">${correct} / ${QUESTIONS.length} Correct</div>
+  <div class="summary-grid">`;
+  QUESTIONS.forEach((q,i)=>{
+    const ans=state.answers[i];
+    const csi=state.shuffles[i].indexOf(q.ci);
+    let cls='sg-card',label='';
+    if(ans===undefined){cls+=' skipped';label='Skipped';}
+    else if(ans===csi){cls+=' correct';label='✓ Correct';}
+    else{cls+=' wrong';label='✗ Wrong';}
+    html+=`<div class="${cls}" onclick="jumpFromResults(${i})"><div>Q${i+1}</div><div style="font-size:0.75rem">${label}</div></div>`;
+  });
+  html+=`</div>`;
+  html+=`<button class="results-btn btn-copy" onclick="copyResults()">Copy All Results</button>`;
+  if(wrong>0)html+=`<button class="results-btn btn-retry" onclick="startRetry()">Retry Wrong Questions (${wrong})</button>`;
+  html+=`<button class="results-btn btn-fresh" onclick="openModal()">Start Fresh</button>`;
+
+  // wrong items
+  let hasWrong=false;
+  QUESTIONS.forEach((q,i)=>{
+    const ans=state.answers[i];
+    if(ans===undefined)return;
+    const csi=state.shuffles[i].indexOf(q.ci);
+    if(ans===csi)return;
+    if(!hasWrong){html+=`<div class="wrong-list">`;hasWrong=true;}
+    const yourOptIdx=state.shuffles[i][ans];
+    html+=`<div class="wrong-item">
+      <div class="wq">Q${i+1}: ${q.q}</div>
+      <div class="your-ans">Your answer: ${q.options[yourOptIdx]}</div>
+      <div class="corr-ans">Correct answer: ${q.options[q.ci]}</div>
+      <div class="expl">${q.expl}</div>
+    </div>`;
+  });
+  if(hasWrong)html+=`</div>`;
+
+  document.getElementById('results-screen').innerHTML=html;
+}
+
+function jumpFromResults(i){state.showResults=false;state.cur=i;saveState();render();}
+
+function copyResults(){
+  let txt=`Math Quiz Results\n${new Date().toLocaleDateString()}\n\n`;
+  QUESTIONS.forEach((q,i)=>{
+    const ans=state.answers[i];
+    const csi=state.shuffles[i].indexOf(QUESTIONS[i].ci);
+    let status=ans===undefined?'Skipped':ans===csi?'Correct':'Wrong';
+    txt+=`Q${i+1} [${QUESTIONS[i].type}]: ${status}\n`;
+  });
+  try{navigator.clipboard.writeText(txt);}catch(e){
+    const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+  }
+  alert('Results copied!');
+}
+
+// ─── MODAL ─────────────────────────────────────────────────
+function openModal(){document.getElementById('modal-overlay').classList.add('active');}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('active');}
+function confirmFresh(){
+  closeModal();
+  try{localStorage.removeItem(LSKEY);}catch(e){}
+  retryMode=false;
+  state=defaultState();
+  saveState();
+  render();
+}
+document.getElementById('modal-cancel').onclick=closeModal;
+document.getElementById('modal-confirm').onclick=confirmFresh;
+
+// ─── RETRY MODE ────────────────────────────────────────────
+function renderRetry(){
+  document.getElementById('quiz-area').style.display='none';
+  document.getElementById('results-screen').style.display='none';
+  document.getElementById('retry-results').style.display='none';
+
+  const dotNav=document.getElementById('dot-nav');
+  dotNav.innerHTML='';
+  retryQuestions.forEach((_,ri)=>{
+    const origIdx=retryQuestions[ri];
+    const ans=retryState.answers[ri];
+    const csi=retryState.shuffles[ri].indexOf(QUESTIONS[origIdx].ci);
+    let cls='dot';
+    if(ans!==undefined){cls+=(ans===csi)?' correct':' wrong';}
+    if(ri===retryState.cur)cls+=' active';
+    const d=document.createElement('button');
+    d.className=cls;d.textContent=`R${ri+1}`;
+    d.onclick=()=>{retryState.cur=ri;renderRetry();};
+    dotNav.appendChild(d);
+  });
+
+  const origQ=QUESTIONS[retryQuestions[retryState.cur]];
+  const shuffle=retryState.shuffles[retryState.cur];
+  const answered=retryState.answers[retryState.cur];
+  const csi=shuffle.indexOf(origQ.ci);
+  const isLast=retryState.cur===retryQuestions.length-1;
+
+  let html=`<div style="background:#fff3cd;padding:9px 14px;border-radius:8px;margin-bottom:14px;font-size:0.9rem;font-weight:700;color:#856404">🔁 Retry: Wrong Questions</div>`;
+  html+=`<div class="q-header"><span class="q-num">R${retryState.cur+1} / ${retryQuestions.length}</span><span class="type-badge">${origQ.type}</span></div>`;
+  html+=`<div class="q-text">${origQ.q}</div><div class="options">`;
+  shuffle.forEach((origOptIdx,si)=>{
+    let cls='opt-btn';
+    if(answered!==undefined){
+      if(si===csi)cls+=' correct';
+      else if(si===answered)cls+=' wrong';
+    }
+    const disabled=answered!==undefined?'disabled':'';
+    html+=`<button class="${cls}" ${disabled} onclick="retryChoose(${si})">${origQ.options[origOptIdx]}</button>`;
+  });
+  html+=`</div>`;
+  if(answered!==undefined&&answered!==csi){
+    html+=`<div id="explanation" style="display:block">${origQ.expl}</div>`;
+  }
+  html+=`<div id="nav-row">
+    <button class="nav-btn" onclick="retryGo(${retryState.cur-1})" ${retryState.cur===0?'disabled':''}>← Prev</button>
+    <button class="nav-btn" onclick="${isLast?'showRetryResults()':'retryGo('+(retryState.cur+1)+')'}">${isLast?'See Results →':'Next →'}</button>
+  </div>`;
+
+  const container=document.createElement('div');
+  container.id='retry-area-inner';
+  container.style.cssText='max-width:640px;margin:0 auto;padding:16px';
+  container.innerHTML=html;
+
+  // replace any existing retry inner
+  const old=document.getElementById('retry-area-inner');
+  if(old)old.remove();
+  document.body.appendChild(container);
+}
+
+function retryChoose(si){
+  if(retryState.answers[retryState.cur]!==undefined)return;
+  retryState.answers[retryState.cur]=si;
+  renderRetry();
+}
+function retryGo(ri){if(ri>=0&&ri<retryQuestions.length){retryState.cur=ri;renderRetry();}}
+
+function showRetryResults(){
+  document.getElementById('quiz-area').style.display='none';
+  document.getElementById('results-screen').style.display='none';
+  const old=document.getElementById('retry-area-inner');if(old)old.remove();
+
+  let correct=0;
+  retryQuestions.forEach((origIdx,ri)=>{
+    const ans=retryState.answers[ri];
+    const csi=retryState.shuffles[ri].indexOf(QUESTIONS[origIdx].ci);
+    if(ans===csi)correct++;
+  });
+
+  let html=`<div class="results-title">Retry Results</div>
+  <div class="score-line">${correct} / ${retryQuestions.length} Correct (Retry)</div>
+  <div class="summary-grid">`;
+  retryQuestions.forEach((origIdx,ri)=>{
+    const ans=retryState.answers[ri];
+    const csi=retryState.shuffles[ri].indexOf(QUESTIONS[origIdx].ci);
+    let cls='sg-card',label='';
+    if(ans===undefined){cls+=' skipped';label='Skipped';}
+    else if(ans===csi){cls+=' correct';label='✓ Correct';}
+    else{cls+=' wrong';label='✗ Wrong';}
+    html+=`<div class="${cls}"><div>R${ri+1}</div><div style="font-size:0.75rem">${label}</div></div>`;
+  });
+  html+=`</div>`;
+  html+=`<button class="results-btn" style="background:#185FA5;color:#fff" onclick="backToMain()">← Back to Main Results</button>`;
+
+  const rr=document.getElementById('retry-results');
+  rr.innerHTML=html;
+  rr.style.display='block';
+
+  // Update dot nav
+  const dotNav=document.getElementById('dot-nav');
+  dotNav.innerHTML='';
+  retryQuestions.forEach((origIdx,ri)=>{
+    const ans=retryState.answers[ri];
+    const csi=retryState.shuffles[ri].indexOf(QUESTIONS[origIdx].ci);
+    let cls='dot';
+    if(ans!==undefined)cls+=(ans===csi)?' correct':' wrong';
+    const d=document.createElement('button');
+    d.className=cls;d.textContent=`R${ri+1}`;
+    dotNav.appendChild(d);
+  });
+  const pill=document.createElement('span');
+  pill.className='dot results-pill';pill.textContent='Retry Done';
+  dotNav.appendChild(pill);
+}
+
+function backToMain(){
+  retryMode=false;
+  const rr=document.getElementById('retry-results');rr.style.display='none';
+  const old=document.getElementById('retry-area-inner');if(old)old.remove();
+  state.showResults=true;
+  render();
+}
+
+// ─── INIT ──────────────────────────────────────────────────
+try{
+  state=loadState();
+  render();
+}catch(e){
+  document.getElementById('quiz-area').style.display='block';
+  document.getElementById('quiz-area').innerHTML='<p style="color:red;padding:20px">Failed to initialize quiz. Please reload.</p>';
+}
+</script>
+</body>
+</html>
