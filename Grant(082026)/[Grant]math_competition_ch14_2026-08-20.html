@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grant Math Competition - Chapter 14</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;margin:0 auto;}
+.title-hd{text-align:center;font-size:1.5rem;font-weight:800;color:#1D9E75;padding:10px 0 2px;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:6px 12px 10px;background:#fff;}
+#qzAttemptsBar{text-align:center;font-size:0.8rem;color:#888;margin-bottom:6px;}
+#qzAttemptsBar span{font-weight:700;color:#185FA5;margin-left:4px;}
+
+.timer-bar{background:#fff;border-bottom:1px solid #d0dce8;padding:8px 12px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+.timer-setup{display:flex;align-items:center;gap:8px;font-size:0.85rem;color:#444;}
+.timer-setup label{font-weight:700;}
+.timer-setup input[type="number"]{width:56px;padding:5px 6px;border:1.5px solid #d0dce8;border-radius:6px;font-size:0.9rem;text-align:center;}
+.timer-start-btn{background:#185FA5;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;}
+.timer-start-btn:active{opacity:0.8;}
+.timer-running{display:flex;align-items:center;gap:8px;}
+.timer-label{font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.02em;}
+.timer-display{font-size:1.1rem;font-weight:900;color:#185FA5;font-family:'Courier New',monospace;letter-spacing:0.02em;}
+.timer-display.warn{color:#f5a623;}
+.timer-display.danger{color:#E24B4A;}
+.timer-pause-btn{background:#e8edf4;color:#185FA5;border:1.5px solid #185FA5;border-radius:6px;padding:5px 12px;font-size:0.8rem;font-weight:700;cursor:pointer;}
+
+.q-tag{display:inline-block;background:#1D9E75;color:#fff;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:8px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.passage-box{background:#f0f4ff;border-left:4px solid #185FA5;border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:0.92rem;color:#222;line-height:1.65;}
+.context-box{background:#f0f4ff;border-left:4px solid #185FA5;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.92rem;color:#222;line-height:1.6;}
+.q-text{font-size:1.05rem;font-weight:700;color:#111;margin-bottom:14px;line-height:1.5;}
+.opt-btn{display:block;width:100%;padding:12px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.95rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;white-space:pre-line;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#1D9E75;}
+.next-btn{background:#1D9E75;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:340px;margin:20px;text-align:center;}
+
+.fr{display:inline-block;vertical-align:middle;text-align:center;font-style:italic;}
+.fr .fn,.fr .fd{display:block;font-size:0.78em;line-height:1.25;padding:0 3px;}
+.fr .fb{display:block;border-top:1.5px solid currentColor;min-width:14px;}
+.mblock{text-align:center;margin:10px 0;font-size:1.05em;font-style:italic;line-height:2;}
+.radical{display:inline-flex;align-items:center;vertical-align:middle;}
+.radical-index{font-size:0.65em;align-self:flex-start;margin-right:1px;line-height:1;}
+.radical-symbol{display:inline-flex;align-items:stretch;}
+.radical-symbol::before{content:"\221A";font-size:1.15em;line-height:1;position:relative;top:2px;}
+.radical-content{border-top:2.5px solid currentColor;padding:1px 4px 1px 2px;display:inline-block;line-height:1.3;}
+.matrix-table{display:inline-table;vertical-align:middle;border-left:2.5px solid #111;border-right:2.5px solid #111;padding:2px 4px;margin:0 4px;border-collapse:collapse;}
+.matrix-table td{padding:3px 10px;text-align:center;font-style:italic;font-size:1.02em;}
+.matrix-label{font-style:italic;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="title-hd">Grant Math Competition - Chapter 14</div>
+<div class="instruction">Choose the correct answer for each problem.</div>
+<div id="qzAttemptsBar">Total Attempts:<span id="qzAttemptsCount">0</span></div>
+
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="20"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">20:00</span>
+  </div>
+</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / N</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div><span class="q-tag" id="q-tag-label"></span></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="passage-box" id="passage-box" style="display:none;"></div>
+  <div class="context-box" id="context-box" style="display:none;"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#1D9E75;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModalOriginal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:12px;">Start Fresh (Original Order)</button>
+  <button onclick="openFreshModalRandom()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh (Random Order)</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <h3 id="freshModalTitle" style="margin:0 0 10px;color:#185FA5;font-size:1.05rem;">Start Fresh?</h3>
+    <p id="freshModalText" style="font-size:0.95rem;color:#444;margin:0 0 16px;">All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="closeFreshModal()" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+
+var QUIZ_KEY = 'quiz_grantmathcomp_ch14_20_20260815_v1';
+var ATT_KEY  = 'quiz_grantmathcomp_ch14_20_att_20260815_v1';
+var ORDER_KEY = 'quiz_grantmathcomp_ch14_20_20260815_v1_order_v1';
+var QUIZ_LABEL = 'Grant Math Competition - Chapter 14 - Results';
+
+function fr(n, d) {
+  return '<span class="fr"><span class="fn">'+n+'</span><span class="fb"></span><span class="fd">'+d+'</span></span>';
+}
+function mx(w, n, d) {
+  return w+'&thinsp;'+fr(n,d);
+}
+function R(idx, inner) {
+  var i = idx ? '<span class="radical-index">'+idx+'</span>' : '';
+  return '<span class="radical">'+i+
+         '<span class="radical-symbol">'+
+           '<span class="radical-content">'+inner+'</span>'+
+         '</span></span>';
+}
+function mat(rows) {
+  var html = '<table class="matrix-table"><tbody>';
+  for (var r=0;r<rows.length;r++){
+    html += '<tr>';
+    for (var c=0;c<rows[r].length;c++){ html += '<td>'+rows[r][c]+'</td>'; }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  return html;
+}
+
+var RAW_QUESTIONS = [{"q": "How many ways can the digits in the number 1,234 be rearranged?", "opts": ["24", "12", "256", "6"], "ci": 0, "exp": "All 4 digits are different, so this is a straightforward permutation: 4! = 4&times;3&times;2&times;1 = 24. 256 comes from treating each of the 4 positions as if any digit could repeat (4<sup>4</sup>). 12 only accounts for arranging 2 of the digits (4&times;3), and 6 only accounts for 3 digits (3!)."}, {"q": "How many ways can 6 people finish a race given that there are no ties?", "opts": ["720", "120", "46,656", "30"], "ci": 0, "exp": "With no ties, every one of the 6 people gets a distinct place, so the count is 6! = 720. 120 is 5!, which leaves out one of the runners. 46,656 is 6<sup>6</sup>, which would allow repeated finishing positions. 30 is 6&times;5, which only ranks the top 2 finishers."}, {"q": "How many ways can 8 different colored beads be placed in a circle on a table?", "opts": ["5,040", "40,320", "2,520", "720"], "ci": 0, "exp": "For circular arrangements of <i>n</i> distinct objects, one position is fixed to remove rotational duplicates, giving (n-1)! = 7! = 5,040. 40,320 is 8!, which is the count for a straight line, not a circle. 2,520 mistakenly divides the circular count by 2 as though the arrangement could also be flipped, which does not apply to beads simply placed on a table. 720 is 6!, one factor too small."}, {"q": "A bead bracelet consists of 7 different colored beads. How many different ways can the beads be arranged? Hint: The bracelet can be flipped.", "opts": ["360", "720", "5,040", "2,520"], "ci": 0, "exp": "A bracelet is a circular arrangement that can also be flipped over, so the count is (n-1)!/2 = 6!/2 = 720/2 = 360. 720 forgets to divide by 2 for the flip. 5,040 mistakenly uses n! = 7! instead of (n-1)!. 2,520 divides 7! by 2 without first reducing for the circular arrangement."}, {"q": "How many ways can 10 people enter a building if one person goes in at a time?", "opts": ["3,628,800", "362,880", "90", "10"], "ci": 0, "exp": "Since the 10 people enter one at a time in some order, this is a straightforward permutation of all 10 people: 10! = 3,628,800. 362,880 is 9!, which leaves one person out. 90 is 10&times;9, which only orders the first 2 people to enter. 10 simply counts the people without considering order at all."}, {"q": "11 people are running for office. There are three positions available: president, secretary and treasurer. One person can only hold one position. How many ways can these positions be filled up?", "opts": ["990", "165", "1,331", "110"], "ci": 0, "exp": "Since the three positions are distinct, order matters, so this is a permutation: P(11,3) = 11&times;10&times;9 = 990. 165 is C(11,3), which would apply if the three positions were interchangeable (unordered). 1,331 is 11<sup>3</sup>, which would allow the same person to hold more than one position. 110 is 11&times;10, which only fills 2 of the 3 positions."}, {"q": "8 people are running in a race. How many ways can the top 3 runners finish? (Assuming there are no ties)", "opts": ["336", "56", "1,680", "512"], "ci": 0, "exp": "The top 3 places (1st, 2nd, 3rd) are distinct, so order matters: P(8,3) = 8&times;7&times;6 = 336. 56 is C(8,3), which would apply if the 3 finishers were an unordered group rather than ranked places. 1,680 is P(8,4), one runner too many. 512 is 8<sup>3</sup>, which would allow the same runner to finish in more than one place."}, {"q": "Josie has 6 favorite pens of different colors. If she can only take 3 to school, how many different sets of pens can she bring?", "opts": ["20", "15", "120", "216"], "ci": 0, "exp": "Since a \"set\" of pens has no order, this is a combination: C(6,3) = 20. 15 is C(6,2), which chooses only 2 pens instead of 3. 120 is P(6,3), which would apply if the order the pens were packed mattered. 216 is 6<sup>3</sup>, which would allow choosing the same pen more than once."}, {"q": "John has 10 wood blocks of different shapes. How many ways can he choose 8 blocks?", "opts": ["45", "120", "10", "252"], "ci": 0, "exp": "Choosing a group of blocks has no order, so this is a combination: C(10,8) = 45 (equivalently, choosing which 2 blocks to leave out, C(10,2) = 45). 120 is C(10,7), one block short. 10 is C(10,9), one block too many. 252 is C(10,5), the wrong number of blocks entirely."}, {"q": "A bag has 5 different colored marbles: red, orange, green, blue, and yellow. How many ways can 3 of the marbles be drawn from the bag if they are all drawn at the same time?", "opts": ["10", "60", "15", "32"], "ci": 0, "exp": "Drawing marbles \"at the same time\" means the order they come out doesn't matter, so this is a combination: C(5,3) = 10. 60 is P(5,3), which would apply if the marbles were drawn one at a time in a specific order. 15 is 5&times;3, not a valid combination calculation. 32 is 2<sup>5</sup>, the count of all possible subsets of the 5 marbles, not just the 3-marble groups."}, {"q": "A company wants to choose a group of 4 representatives from 10 employees to send to a conference. How many ways can this group be formed?", "opts": ["210", "5,040", "120", "252"], "ci": 0, "exp": "A \"group of representatives\" is unordered, so this is a combination: C(10,4) = 210. 5,040 is P(10,4), which would apply if the 4 representatives were assigned distinct ordered roles. 120 is C(10,3), one representative short. 252 is C(10,5), one representative too many."}, {"q": "There are 4 boys and 4 girls standing in a line waiting to purchase movie tickets. How many ways can they stand in a line if all the boys must stand together and all the girls must stand together?", "opts": ["1,152", "2", "48", "40,320"], "ci": 0, "exp": "Treat the block of boys and the block of girls as two units: they can be ordered 2! ways (boys-first or girls-first). Within the boys' block, the 4 boys can be arranged 4! ways, and within the girls' block, the 4 girls can be arranged 4! ways. Total: 2! &times; 4! &times; 4! = 2 &times; 24 &times; 24 = 1,152. Just 2 only counts which block comes first and ignores the arrangements inside each block. 48 (2! &times; 4!) only arranges one of the two blocks internally. 40,320 is 8!, the count with no grouping restriction at all.", "tag": "Challenge", "tagColor": "#f5a623"}, {"q": "James has 10 favorite toys. He needs to choose 2 of them for one bag and then choose 3 of them for one box. How many ways can he choose these 5 toys to store away?", "opts": ["2,520", "252", "30,240", "101"], "ci": 0, "exp": "First choose 2 toys for the bag from all 10: C(10,2) = 45. Then choose 3 toys for the box from the 8 remaining: C(8,3) = 56. Multiply the two stages: 45 &times; 56 = 2,520. 252 is C(10,5), which treats this as one undivided group of 5 toys rather than two separate choices. 30,240 comes from using ordered selections (permutations) at each stage instead of combinations. 101 mistakenly adds the two stage counts (45 + 56) instead of multiplying them."}, {"q": "There are 6 balls arranged in a row: 2 red, 1 green, 1 blue, 1 yellow and 1 purple. If the red balls are identical, how many ways can the balls be arranged?", "opts": ["360", "720", "120", "180"], "ci": 0, "exp": "There are 6 balls total, but the 2 red balls are identical, so the count of distinguishable arrangements is 6!/2! = 720/2 = 360. 720 is 6!, which treats the two red balls as if they were different from each other. 120 is 5!, which undercounts the total number of balls. 180 divides by 2! twice, as though a second pair of balls were also identical."}, {"q": "There are 6 balls arranged in a row: 2 red, 2 white, 1 blue and 1 yellow. If the 2 red balls are identical and the 2 white balls are identical, how many ways can the balls be arranged?", "opts": ["180", "720", "360", "90"], "ci": 0, "exp": "There are 6 balls total, with 2 identical red balls and 2 identical white balls, so the count is 6!/(2!&times;2!) = 720/4 = 180. 720 is plain 6!, which treats every ball as distinguishable. 360 only divides out one identical pair (either the reds or the whites), not both. 90 divides by an extra factor of 2, as though a third pair were also identical."}, {"q": "How many ways can the letters in the word CREAM be arranged?", "opts": ["120", "24", "20", "3,125"], "ci": 0, "exp": "CREAM has 5 different letters, so the count is a straightforward 5! = 120. 24 is 4!, which leaves one letter out. 20 is 5&times;4, which only arranges 2 of the 5 letters. 3,125 is 5<sup>5</sup>, which would allow letters to repeat in the arrangement."}, {"q": "How many ways can the digits in the number 12,556 be arranged?", "opts": ["60", "120", "24", "30"], "ci": 0, "exp": "The digits are 1, 2, 5, 5, 6, which is 5 digits total, with the digit 5 repeated twice. The count of distinguishable arrangements is 5!/2! = 120/2 = 60. 120 is plain 5!, which treats the two 5s as if they were different digits. 24 is 4!, which undercounts the total number of digits. 30 divides by an extra factor of 2, as though another digit were also repeated."}, {"q": "How many ways can the letters in the word RACECAR be arranged?", "opts": ["630", "5,040", "2,520", "1,260"], "ci": 0, "exp": "RACECAR has 7 letters, with R repeated twice, A repeated twice, and C repeated twice (E appears once). The count is 7!/(2!&times;2!&times;2!) = 5,040/8 = 630. 5,040 is plain 7!, which treats every letter as distinct. 2,520 only divides out one repeated letter pair. 1,260 only divides out two of the three repeated letter pairs."}, {"q": "How many ways can the digits in the number 7,844,847 be arranged?", "opts": ["210", "5,040", "1,260", "840"], "ci": 0, "exp": "The digits are 7, 8, 4, 4, 8, 4, 7, which is 7 digits total, with 7 repeated twice, 8 repeated twice, and 4 repeated three times. The count is 7!/(2!&times;2!&times;3!) = 5,040/24 = 210. 5,040 is plain 7!, which treats every digit as distinct. 1,260 only accounts for the repeated 7s and 8s, forgetting that 4 repeats three times. 840 only accounts for the triple-repeated 4, forgetting that 7 and 8 each repeat twice."}, {"q": "How many ways can the letters in the word AARDVARK be arranged?", "opts": ["3,360", "40,320", "20,160", "6,720"], "ci": 0, "exp": "AARDVARK has 8 letters, with A repeated three times and R repeated twice (D, V, and K each appear once). The count is 8!/(3!&times;2!) = 40,320/12 = 3,360. 40,320 is plain 8!, which treats every letter as distinct. 20,160 only divides out the repeated R once, forgetting that A repeats three times. 6,720 only divides out the repeated A's, forgetting that R also repeats."}];
+
+function shuffle(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var tmp=a[i]; a[i]=a[j]; a[j]=tmp;
+  }
+  return a;
+}
+function identityOrder(){ var o=[]; for(var i=0;i<RAW_QUESTIONS.length;i++) o.push(i); return o; }
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length!==RAW_QUESTIONS.length) return false;
+  var sorted = arr.slice().sort(function(a,b){return a-b;});
+  for(var i=0;i<sorted.length;i++) if(sorted[i]!==i) return false;
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad order');
+    return arr;
+  }catch(e){ localStorage.removeItem(ORDER_KEY); return null; }
+}
+function saveOrder(order){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(order)); }catch(e){} }
+function buildQuestions(raw, order){
+  var out=[];
+  for(var i=0;i<order.length;i++) out.push(raw[order[i]]);
+  return out;
+}
+var currentOrder = loadOrder() || identityOrder();
+var qs = buildQuestions(RAW_QUESTIONS, currentOrder);
+var pendingFreshMode = 'original';
+
+var state = {};
+
+function loadState() {
+  try {
+    var s = JSON.parse(localStorage.getItem(QUIZ_KEY) || 'null');
+    if (s && typeof s.cur === 'number' && s.answers && s.shuffles) {
+      state = s;
+    } else {
+      resetState();
+    }
+  } catch(e) {
+    localStorage.removeItem(QUIZ_KEY);
+    resetState();
+  }
+}
+function resetState() {
+  state = { cur: 0, answers: {}, shuffles: {}, showResults: false, timerTotalSec: null, timerStartedAt: null };
+}
+function saveState() {
+  localStorage.setItem(QUIZ_KEY, JSON.stringify(state));
+}
+
+function getShuffle(i) {
+  if (!state.shuffles[i]) {
+    var a = [0, 1, 2, 3];
+    for (var k = 3; k > 0; k--) {
+      var j = Math.floor(Math.random() * (k + 1));
+      var t = a[k]; a[k] = a[j]; a[j] = t;
+    }
+    state.shuffles[i] = a;
+  }
+  return state.shuffles[i];
+}
+function getCSI(i) {
+  return getShuffle(i).indexOf(qs[i].ci);
+}
+
+function loadAttempts() {
+  return parseInt(localStorage.getItem(ATT_KEY) || '0', 10);
+}
+function renderAttempts(){
+  document.getElementById('qzAttemptsCount').textContent = loadAttempts();
+}
+
+var timerInterval = null;
+function formatTime(sec) {
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec / 60);
+  var s = sec % 60;
+  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+function renderTimer() {
+  var setupEl = document.getElementById('timerSetup');
+  var runningEl = document.getElementById('timerRunning');
+  var displayEl = document.getElementById('timerDisplay');
+  if (!state.timerStartedAt) { setupEl.style.display = 'flex'; runningEl.style.display = 'none'; return; }
+  setupEl.style.display = 'none'; runningEl.style.display = 'flex';
+  var elapsed = (Date.now() - state.timerStartedAt) / 1000;
+  var remaining = state.timerTotalSec - elapsed;
+  displayEl.classList.remove('warn', 'danger');
+  if (remaining <= 0) { displayEl.textContent = "Time's Up"; displayEl.classList.add('danger'); stopTimerInterval(); return; }
+  displayEl.textContent = formatTime(remaining);
+  if (remaining <= state.timerTotalSec * 0.1) displayEl.classList.add('danger');
+  else if (remaining <= state.timerTotalSec * 0.25) displayEl.classList.add('warn');
+}
+function startTimer() {
+  var input = document.getElementById('timerMinutesInput');
+  var minutes = parseFloat(input.value);
+  if (!minutes || minutes <= 0) minutes = 20;
+  state.timerTotalSec = Math.round(minutes * 60);
+  state.timerStartedAt = Date.now();
+  saveState();
+  renderTimer();
+  startTimerInterval();
+}
+function startTimerInterval() { stopTimerInterval(); timerInterval = setInterval(renderTimer, 1000); }
+function stopTimerInterval() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
+function resetTimerForRestart(){
+  state.timerTotalSec = null;
+  state.timerStartedAt = null;
+  stopTimerInterval();
+}
+
+function updateNav() {
+  var ans = Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent = ans + ' / ' + qs.length;
+  document.getElementById('prog-fill').style.width = (ans / qs.length * 100).toFixed(1) + '%';
+  renderDots();
+}
+function toggleJump() {
+  var p = document.getElementById('dot-panel');
+  var b = document.getElementById('jump-btn');
+  if (p.style.display === 'none' || !p.style.display) {
+    p.style.display = 'block'; b.innerHTML = 'Hide &#9652;'; renderDots();
+  } else {
+    p.style.display = 'none'; b.innerHTML = 'Jump &#9662;';
+  }
+}
+function renderDots() {
+  var p = document.getElementById('dot-panel');
+  if (p.style.display !== 'block') return;
+  var h = '';
+  for (var i = 0; i < qs.length; i++) {
+    var bg = state.answers[i] === undefined ? '#d7dde6'
+           : (state.answers[i] === getCSI(i) ? '#185FA5' : '#E24B4A');
+    h += '<span class="dot" style="background:' + bg + ';" onclick="goToQ(' + i + ')">' + (i + 1) + '</span>';
+  }
+  if (Object.keys(state.answers).length === qs.length) {
+    h += '<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';
+  }
+  p.innerHTML = h;
+}
+function goToQ(i) {
+  state.cur = i; state.showResults = false; saveState(); render();
+  document.getElementById('dot-panel').style.display = 'none';
+  document.getElementById('jump-btn').innerHTML = 'Jump &#9662;';
+}
+
+function showResults() {
+  state.showResults = true;
+  localStorage.setItem(ATT_KEY, loadAttempts() + 1);
+  saveState(); render();
+}
+
+function render() {
+  if (state.showResults) { renderResults(); renderAttempts(); renderTimer(); return; }
+  document.getElementById('quizArea').style.display = 'block';
+  document.getElementById('resultsArea').style.display = 'none';
+  updateNav();
+
+  var i = state.cur;
+  var q = qs[i];
+  var isLast = (i === qs.length - 1);
+
+  document.getElementById('q-num').textContent = 'Question ' + (i + 1) + ' of ' + qs.length;
+
+  var tagEl = document.getElementById('q-tag-label');
+  if (q.tag) { tagEl.style.display='inline-block'; tagEl.textContent = q.tag; tagEl.style.background = q.tagColor || '#1D9E75'; } else { tagEl.style.display='none'; }
+
+  var pb = document.getElementById('passage-box');
+  if (q.passage) { pb.style.display='block'; pb.innerHTML = q.passage; } else { pb.style.display='none'; }
+
+  var cb = document.getElementById('context-box');
+  if (q.context) { cb.style.display='block'; cb.innerHTML = q.context; } else { cb.style.display='none'; }
+
+  document.getElementById('q-text').innerHTML = q.q;
+
+  var sh = getShuffle(i);
+  var ans = state.answers[i];
+  var csi = getCSI(i);
+  var html = '';
+  for (var s = 0; s < 4; s++) {
+    var oi = sh[s];
+    var cls = 'opt-btn';
+    var dis = '';
+    if (ans !== undefined) {
+      dis = 'disabled';
+      if (s === csi) cls += ' correct';
+      else if (s === ans) cls += ' wrong';
+    }
+    html += '<button class="' + cls + '" ' + dis + ' onclick="pick(' + i + ',' + s + ')">' + q.opts[oi] + '</button>';
+  }
+  document.getElementById('opts-area').innerHTML = html;
+
+  var eb = document.getElementById('exp-box');
+  if (ans !== undefined && ans !== csi) {
+    eb.style.display = 'block';
+    eb.innerHTML = q.exp;
+  } else {
+    eb.style.display = 'none';
+  }
+
+  document.getElementById('next-btn').textContent = isLast ? 'See Results →' : 'Next';
+  document.querySelector('.prev-btn').disabled = (i === 0);
+  renderAttempts();
+  renderTimer();
+}
+
+function renderResults() {
+  document.getElementById('quizArea').style.display = 'none';
+  document.getElementById('resultsArea').style.display = 'block';
+  updateNav();
+
+  var c = 0, w = 0, sk = 0;
+  for (var i = 0; i < qs.length; i++) {
+    if (state.answers[i] === undefined) sk++;
+    else if (state.answers[i] === getCSI(i)) c++;
+    else w++;
+  }
+  document.getElementById('results-summary').innerHTML =
+    '<span style="color:#1D9E75;font-weight:700;">' + c + '</span> correct &nbsp;' +
+    '<span style="color:#E24B4A;font-weight:700;">' + w + '</span> wrong &nbsp;' +
+    '<span style="color:#888;font-weight:700;">' + sk + '</span> skipped';
+
+  var html = '';
+  for (var i = 0; i < qs.length; i++) {
+    var a = state.answers[i];
+    var label, bg, tc;
+    if (a === undefined)              { label = 'Skipped'; bg = '#d7dde6'; tc = '#555'; }
+    else if (a === getCSI(i))         { label = 'Correct'; bg = '#E1F5EE'; tc = '#085041'; }
+    else                              { label = 'Wrong';   bg = '#FCEBEB'; tc = '#501313'; }
+    html += '<div class="results-card" onclick="goToQ(' + i + ')">' +
+            '<span style="font-size:0.92rem;font-weight:600;color:#333;">Q' + (i+1) + '</span>' +
+            '<span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:' + bg + ';color:' + tc + ';">' + label + '</span>' +
+            '</div>';
+  }
+  document.getElementById('results-cards').innerHTML = html;
+}
+
+function pick(qi, si) {
+  if (state.answers[qi] !== undefined) return;
+  state.answers[qi] = si;
+  saveState(); render();
+}
+function go(dir) {
+  if (dir === 1 && state.cur === qs.length - 1) { showResults(); return; }
+  state.cur = Math.max(0, Math.min(qs.length - 1, state.cur + dir));
+  saveState(); render();
+}
+function retryWrong() {
+  var first = -1;
+  for (var i = 0; i < qs.length; i++) {
+    if (state.answers[i] !== undefined && state.answers[i] !== getCSI(i)) {
+      if (first === -1) first = i;
+      delete state.answers[i];
+    }
+  }
+  resetTimerForRestart();
+  if (first !== -1) {
+    state.cur = first; state.showResults = false; saveState(); render();
+  } else {
+    saveState(); render();
+  }
+}
+function copyRes() {
+  var lines = [QUIZ_LABEL];
+  for (var i = 0; i < qs.length; i++) {
+    var a = state.answers[i];
+    lines.push('Q' + (i + 1) + ': ' +
+      (a === undefined ? 'Skipped' : a === getCSI(i) ? 'Correct' : 'Wrong'));
+  }
+  var txt = lines.join('\n');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(txt).catch(function() { fallbackCopy(txt); });
+  } else {
+    fallbackCopy(txt);
+  }
+}
+function fallbackCopy(txt) {
+  var ta = document.createElement('textarea');
+  ta.value = txt;
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+}
+
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var titleEl = document.getElementById('freshModalTitle');
+  var textEl = document.getElementById('freshModalText');
+  if(mode==='random'){
+    titleEl.textContent = 'Start Fresh (Random Order)?';
+    textEl.textContent = 'Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    titleEl.textContent = 'Start Fresh (Original Order)?';
+    textEl.textContent = 'Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  currentOrder = (pendingFreshMode==='random') ? shuffle(identityOrder()) : identityOrder();
+  saveOrder(currentOrder);
+  qs = buildQuestions(RAW_QUESTIONS, currentOrder);
+  resetState();
+  resetTimerForRestart();
+  saveState();
+  closeFreshModal();
+  render();
+}
+
+window.pick = pick;
+window.go = go;
+window.goToQ = goToQ;
+window.toggleJump = toggleJump;
+window.retryWrong = retryWrong;
+window.copyRes = copyRes;
+window.openFreshModalOriginal = openFreshModalOriginal;
+window.openFreshModalRandom = openFreshModalRandom;
+window.closeFreshModal = closeFreshModal;
+window.confirmFresh = confirmFresh;
+window.showResults = showResults;
+window.startTimer = startTimer;
+
+loadState(); saveState(); render(); renderTimer(); renderAttempts();
+if (state.timerStartedAt) startTimerInterval();
+
+})();
+</script>
+</body>
+</html>
