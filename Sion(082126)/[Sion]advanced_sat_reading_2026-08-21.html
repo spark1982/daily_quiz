@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Advanced SAT Reading</title>
+<style>
+  :root{
+    --blue:#185FA5;
+    --track:#d7dde6;
+    --red:#E24B4A;
+    --green:#1D9E75;
+    --purple:#7b61ff;
+    --orange:#e8912d;
+    --text:#1f2937;
+    --sub:#5b6472;
+    --bg:#ffffff;
+    --card:#f7f9fc;
+    --border:#e2e8f0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--text);
+    background:var(--bg);
+    max-width:760px;
+    margin:0 auto;
+    padding:20px 16px 60px;
+    line-height:1.5;
+  }
+  h1{font-size:1.4rem;margin:0 0 4px;}
+  .instr{color:var(--sub);font-size:0.95rem;margin:0 0 18px;}
+  .timer-widget{
+    border:1px solid var(--border);
+    background:var(--card);
+    border-radius:10px;
+    padding:12px 14px;
+    margin-bottom:16px;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:10px;
+    font-size:0.9rem;
+  }
+  .timer-widget input[type=number]{
+    width:64px;
+    padding:6px 8px;
+    border:1px solid var(--border);
+    border-radius:6px;
+    font-size:0.9rem;
+  }
+  .timer-widget button{
+    padding:7px 14px;
+    border:none;
+    border-radius:6px;
+    background:var(--blue);
+    color:#fff;
+    font-size:0.85rem;
+    cursor:pointer;
+  }
+  .timer-display{
+    font-weight:700;
+    font-size:1.05rem;
+    padding:4px 10px;
+    border-radius:6px;
+    background:var(--track);
+    color:var(--text);
+  }
+  .timer-display.orange{background:var(--orange);color:#fff;}
+  .timer-display.red{background:var(--red);color:#fff;}
+  .progress-wrap{margin-bottom:10px;}
+  .progress-label{font-size:0.85rem;color:var(--sub);margin-bottom:6px;}
+  .progress-track{
+    width:100%;
+    height:10px;
+    background:var(--track);
+    border-radius:6px;
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    background:var(--blue);
+    width:0%;
+    transition:width .2s ease;
+  }
+  .jump-toggle{
+    background:none;
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:6px 10px;
+    font-size:0.8rem;
+    cursor:pointer;
+    margin:8px 0;
+    color:var(--blue);
+  }
+  .jump-panel{
+    display:none;
+    flex-wrap:wrap;
+    gap:8px;
+    padding:10px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    margin-bottom:14px;
+  }
+  .jump-panel.open{display:flex;}
+  .jump-dot{
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    background:var(--track);
+    color:var(--text);
+    border:2px solid transparent;
+    font-size:0.75rem;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+  .jump-dot.answered{background:var(--blue);color:#fff;}
+  .jump-dot.wrong{background:var(--red);color:#fff;}
+  .jump-dot.current{border-color:var(--text);}
+  .slot-tag{
+    display:inline-block;
+    font-size:0.72rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    color:var(--blue);
+    background:#eaf2fb;
+    padding:3px 8px;
+    border-radius:5px;
+    margin-bottom:10px;
+  }
+  .card{
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:18px;
+    background:var(--bg);
+    margin-bottom:16px;
+  }
+  .box-ctx{
+    background:var(--card);
+    border-left:4px solid var(--blue);
+    border-radius:8px;
+    padding:12px 14px;
+    margin:10px 0 16px;
+    font-size:0.95rem;
+  }
+  .qtext{font-weight:600;margin-bottom:14px;font-size:1.02rem;}
+  .opt{
+    display:block;
+    width:100%;
+    text-align:left;
+    padding:11px 14px;
+    margin-bottom:10px;
+    border:1.5px solid var(--border);
+    border-radius:9px;
+    background:#fff;
+    cursor:pointer;
+    font-size:0.94rem;
+    color:var(--text);
+  }
+  .opt:hover{border-color:var(--blue);}
+  .opt.selected{border-color:var(--blue);background:#eaf2fb;}
+  .opt.correct{border-color:var(--green);background:#e7f8f2;}
+  .opt.incorrect{border-color:var(--red);background:#fdeceb;}
+  .opt:disabled{cursor:default;}
+  .nav-row{display:flex;justify-content:space-between;gap:10px;margin-top:16px;}
+  .nav-row button{
+    padding:10px 18px;
+    border:none;
+    border-radius:8px;
+    background:var(--blue);
+    color:#fff;
+    font-size:0.92rem;
+    cursor:pointer;
+  }
+  .nav-row button:disabled{background:var(--track);color:var(--sub);cursor:default;}
+  .explain{
+    margin-top:14px;
+    padding:12px 14px;
+    background:#fbfbfb;
+    border:1px dashed var(--border);
+    border-radius:8px;
+    font-size:0.9rem;
+    display:none;
+  }
+  .explain.show{display:block;}
+  #resultsScreen{display:none;}
+  .score-big{font-size:2rem;font-weight:800;color:var(--blue);margin:6px 0;}
+  .btn-row{display:flex;flex-direction:column;gap:10px;margin-top:20px;}
+  .btn-row button{
+    padding:12px 16px;
+    border:none;
+    border-radius:9px;
+    font-size:0.95rem;
+    cursor:pointer;
+    color:#fff;
+  }
+  .btn-copy{background:var(--blue);}
+  .btn-retry{background:var(--green);}
+  .btn-save{background:var(--purple);}
+  .btn-fresh1{background:var(--text);}
+  .btn-fresh2{background:var(--sub);}
+  .attempts-line{font-size:0.85rem;color:var(--sub);margin-top:10px;}
+  .modal-overlay{
+    display:none;
+    position:fixed;top:0;left:0;right:0;bottom:0;
+    background:rgba(0,0,0,0.45);
+    align-items:center;
+    justify-content:center;
+    z-index:50;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-box{
+    background:#fff;
+    border-radius:12px;
+    padding:22px;
+    max-width:340px;
+    width:90%;
+    text-align:center;
+  }
+  .modal-box p{margin:0 0 16px;font-size:0.95rem;}
+  .modal-btns{display:flex;gap:10px;justify-content:center;}
+  .modal-btns button{
+    padding:9px 16px;
+    border:none;
+    border-radius:7px;
+    cursor:pointer;
+    font-size:0.9rem;
+  }
+  .modal-confirm{background:var(--red);color:#fff;}
+  .modal-cancel{background:var(--track);color:var(--text);}
+  svg{max-width:100%;height:auto;}
+  .review-item{border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:10px;font-size:0.88rem;}
+  .review-item.bad{border-color:var(--red);}
+</style>
+</head>
+<body>
+
+<h1>[Sion] Advanced SAT Reading</h1>
+<p class="instr">Read each passage and answer the questions.</p>
+
+<div class="timer-widget" id="timerWidget">
+  <label for="timeLimitInput">Set Time Limit (min):</label>
+  <input type="number" id="timeLimitInput" min="1" max="180" value="20">
+  <button id="startTimerBtn" type="button">Start</button>
+  <span class="timer-display" id="timerDisplay">--:--</span>
+</div>
+
+<div id="quizScreen">
+  <div class="progress-wrap">
+    <div class="progress-label" id="progressLabel">Answered 0 / 12</div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+  <button class="jump-toggle" id="jumpToggle" type="button">Jump to Question &#9660;</button>
+  <div class="jump-panel" id="jumpPanel"></div>
+
+  <div class="card">
+    <div class="slot-tag" id="slotTag"></div>
+    <div class="qtext" id="qText"></div>
+    <div class="box-ctx" id="boxCtx"></div>
+    <div id="optsWrap"></div>
+    <div class="explain" id="explainWrap"></div>
+  </div>
+
+  <div class="nav-row">
+    <button id="prevBtn" type="button">&#8592; Previous</button>
+    <button id="nextBtn" type="button">Next &#8594;</button>
+  </div>
+</div>
+
+<div id="resultsScreen">
+  <div class="card">
+    <h2>Results</h2>
+    <div class="score-big" id="scoreBig"></div>
+    <div id="reviewList"></div>
+    <div class="attempts-line" id="attemptsLine"></div>
+    <div class="btn-row">
+      <button class="btn-copy" id="copyAllBtn" type="button">Copy All Results</button>
+      <button class="btn-retry" id="retryWrongBtn" type="button">Retry Wrong Ones</button>
+      <button class="btn-save" id="saveWrongBtn" type="button">Save Wrong Answers</button>
+      <button class="btn-fresh1" id="freshOrigBtn" type="button">Start Fresh (Original Order)</button>
+      <button class="btn-fresh2" id="freshRandBtn" type="button">Start Fresh (Random Order)</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <p id="modalText">Are you sure?</p>
+    <div class="modal-btns">
+      <button class="modal-cancel" id="modalCancelBtn" type="button">Cancel</button>
+      <button class="modal-confirm" id="modalConfirmBtn" type="button">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var QUIZ_KEY = "quiz_sionadvsatreading_12_20260820_v1";
+  var ATT_KEY = "quiz_sionadvsatreading_20260820_att_v1";
+  var ORDER_KEY = "quiz_sionadvsatreading_ordermode_20260820_v1";
+
+  var CHART_SVG = '<svg viewBox="0 0 320 210" xmlns="http://www.w3.org/2000/svg">' +
+    '<line x1="20" y1="180" x2="310" y2="180" stroke="#5b6472" stroke-width="1.5"/>' +
+    '<line x1="180" y1="15" x2="180" y2="180" stroke="#E24B4A" stroke-width="1.5" stroke-dasharray="5,4"/>' +
+    '<text x="182" y="14" font-size="10" fill="#E24B4A">Fertilizer introduced</text>' +
+    '<rect x="40" y="82" width="50" height="98" fill="#185FA5"/>' +
+    '<text x="65" y="76" font-size="11" text-anchor="middle" fill="#1f2937">98</text>' +
+    '<text x="65" y="196" font-size="10" text-anchor="middle" fill="#5b6472">Year 1</text>' +
+    '<rect x="110" y="78" width="50" height="102" fill="#185FA5"/>' +
+    '<text x="135" y="72" font-size="11" text-anchor="middle" fill="#1f2937">102</text>' +
+    '<text x="135" y="196" font-size="10" text-anchor="middle" fill="#5b6472">Year 2</text>' +
+    '<rect x="180" y="39" width="50" height="141" fill="#1D9E75"/>' +
+    '<text x="205" y="33" font-size="11" text-anchor="middle" fill="#1f2937">141</text>' +
+    '<text x="205" y="196" font-size="10" text-anchor="middle" fill="#5b6472">Year 3</text>' +
+    '<rect x="250" y="32" width="50" height="148" fill="#1D9E75"/>' +
+    '<text x="275" y="26" font-size="11" text-anchor="middle" fill="#1f2937">148</text>' +
+    '<text x="275" y="196" font-size="10" text-anchor="middle" fill="#5b6472">Year 4</text>' +
+    '<text x="20" y="205" font-size="10" fill="#5b6472">Corn yield per acre (bushels)</text>' +
+    '</svg>';
+
+  var QUESTIONS = [
+    {
+      slot: "Command of Evidence: If True",
+      q: "Agricultural researchers claim that Fertilizer X, introduced in Year 3, was the primary cause of the sharp increase in corn yield per acre shown in the graph. Which finding, if true, would most undermine the researchers' claim?",
+      box: CHART_SVG,
+      opts: [
+        "Average rainfall in the region increased by nearly 40 percent starting in Year 3, matching the timing of the fertilizer's introduction.",
+        "Total corn acreage planted in the region grew substantially in Year 3 as commodity prices rose.",
+        "Farmers in a neighboring county who used Fertilizer X on wheat also saw modest yield gains.",
+        "Surveyed farmers described Fertilizer X as inexpensive and simple to apply during planting season."
+      ],
+      ci: 0,
+      exp: "The rainfall increase gives an alternative explanation that lines up exactly with when the yield jump began, so it directly undermines the claim that the fertilizer caused the change. 'Total corn acreage planted in the region grew substantially in Year 3 as commodity prices rose' does not undermine the claim because the graph tracks yield per acre, not total production, so planting more acreage would not by itself explain a rise in per-acre yield. 'Farmers in a neighboring county who used Fertilizer X on wheat also saw modest yield gains' involves a different crop and location, so it says nothing about what caused the corn yield increase described in the claim."
+    },
+    {
+      slot: "Command of Evidence: If True",
+      q: "In the two years since City X installed protected bike lanes on its busiest streets, citywide traffic accidents fell by 18 percent. City officials attribute the decline primarily to the bike lanes. Which additional finding, if true, would most strongly support the officials' claim that the bike lanes caused the decline in accidents?",
+      box: "In the two years since City X installed protected bike lanes on its busiest streets, citywide traffic accidents fell by 18 percent. City officials attribute the decline primarily to the bike lanes, which they say slow vehicle traffic and separate cyclists from cars.",
+      opts: [
+        "The sharpest drops in accidents occurred specifically on the streets where the new bike lanes were installed, while accident rates on comparable streets without bike lanes stayed flat.",
+        "Cyclist ridership increased by 25 percent in the two years after the bike lanes were installed.",
+        "City officials received positive feedback from residents who felt safer walking near the new bike lanes.",
+        "The city also increased the number of traffic police patrolling major roads during the same two-year period."
+      ],
+      ci: 0,
+      exp: "Showing that accidents dropped specifically on the streets that got bike lanes, while similar streets without them stayed flat, isolates the bike lanes as the likely cause. An increase in cyclist ridership shows the lanes were used, but more cyclists on the road does not by itself demonstrate that accidents declined because of the lanes. The increase in traffic police patrols actually introduces a rival explanation for the drop in accidents, so it would weaken rather than strengthen the specific claim about the bike lanes."
+    },
+    {
+      slot: "Central Ideas and Details",
+      q: "Which choice best states the central idea of the text?",
+      box: "Margaret had once believed that a well-ordered life was the surest path to contentment: she rose early, kept her accounts precise, and expected the world to repay such diligence in kind. Yet the years had taught her otherwise. Diligence, she now understood, secured nothing; it merely postponed the reckoning. Still, from long habit rather than hope, she rose each morning at six and opened her ledger, as though order itself might yet be persuaded to yield some quiet, unearned grace.",
+      opts: [
+        "Margaret continues her orderly routines less because she still trusts they will bring happiness and more because habit alone sustains them.",
+        "Margaret has concluded that a well-ordered life is the only reliable path to lasting happiness, despite years of hardship.",
+        "Margaret regrets the discipline she practiced in her youth and now wishes she had lived less rigidly.",
+        "Margaret keeps her accounts precise because she believes financial order will eventually bring her the grace she seeks."
+      ],
+      ci: 0,
+      exp: "The text explicitly says Margaret rises and opens her ledger 'from long habit rather than hope,' meaning habit, not continued belief in its rewards, sustains her routine. The choice claiming order is 'the only reliable path to lasting happiness' contradicts the text, which states diligence 'secured nothing.' The choice about believing order will 'bring her the grace she seeks' overstates her attitude, since the text describes the grace as merely something order 'might yet be persuaded to yield,' an uncertain hope rather than a firm belief."
+    },
+    {
+      slot: "Central Ideas and Details",
+      q: "Which choice best states the central idea of the text?",
+      box: "The old lighthouse keeper had long since stopped counting the ships that passed safely by his light, for such tallies, he found, bred a dangerous pride. What mattered, he told the new apprentice, was not the vessel that made it home but the one that might not have, had the lamp gone dark for even an hour. So he polished the lens each dawn as if the sea itself were watching, indifferent to praise, wary only of the single night his vigilance might fail.",
+      opts: [
+        "The keeper maintains his vigilance not out of pride in his past successes but out of concern for the one failure that could prove costly.",
+        "The keeper believes that counting the ships he has safely guided is the best way to measure his worth as a lighthouse keeper.",
+        "The keeper has grown weary of his duties and performs them now only because the apprentice is watching.",
+        "The keeper polishes the lens each morning primarily to impress sailors passing by the lighthouse."
+      ],
+      ci: 0,
+      exp: "The passage states he is 'wary only of the single night his vigilance might fail,' showing his diligence is driven by fear of one costly failure rather than pride. The choice about counting ships to measure his worth directly contradicts the text, which says he 'stopped counting' because tallies 'bred a dangerous pride.' The choice about impressing sailors is contradicted by the description of him as 'indifferent to praise.'"
+    },
+    {
+      slot: "Command of Evidence: Textual Evidence",
+      q: "Which quotation from the text most directly supports the claim that Voss believed a narrow, sustained focus on one location could reveal more than briefly studying many locations?",
+      box: "Eleanor Voss spent four decades cataloguing wildflowers in the same six-mile stretch of coastline, refusing offers to study more celebrated ecosystems abroad. Colleagues often urged her to broaden her focus, but she maintained that true understanding required depth rather than breadth. 'A single meadow, watched closely enough and long enough,' she wrote in her final notebook, 'will eventually reveal more than a hundred meadows glimpsed once.' She died having named eleven species that others, moving too quickly, had simply walked past.",
+      opts: [
+        "'A single meadow, watched closely enough and long enough,' she wrote in her final notebook, 'will eventually reveal more than a hundred meadows glimpsed once.'",
+        "Eleanor Voss spent four decades cataloguing wildflowers in the same six-mile stretch of coastline, refusing offers to study more celebrated ecosystems abroad.",
+        "Colleagues often urged her to broaden her focus, but she maintained that true understanding required depth rather than breadth.",
+        "She died having named eleven species that others, moving too quickly, had simply walked past."
+      ],
+      ci: 0,
+      exp: "This is Voss's own quoted statement, and it makes the exact comparison the claim describes: one meadow watched closely versus a hundred meadows glimpsed briefly. The sentence about her four decades on one stretch of coastline only describes her career choice, not the outcome of comparing focused study to broad study. The sentence about her naming species others 'moving too quickly' had missed concerns thoroughness versus haste at a single site, not the specific comparison between studying one location deeply and studying many locations briefly."
+    },
+    {
+      slot: "Command of Evidence: Textual Evidence",
+      q: "Which quotation from the text most directly supports the claim that Hale believed demonstrating a working result was more effective than arguing for an idea?",
+      box: "When the printing guild dismissed Josiah Hale's proposal for a faster typesetting method, he did not argue his case before the assembled masters. Instead, he spent the following winter building a working model in his own workshop, testing it alone by lamplight until his fingers cramped. 'Persuasion,' he later remarked to an apprentice, 'is a poor substitute for a machine that simply works.' By spring, the guild adopted his method without further debate.",
+      opts: [
+        "'Persuasion,' he later remarked to an apprentice, 'is a poor substitute for a machine that simply works.'",
+        "When the printing guild dismissed Josiah Hale's proposal for a faster typesetting method, he did not argue his case before the assembled masters.",
+        "Instead, he spent the following winter building a working model in his own workshop, testing it alone by lamplight until his fingers cramped.",
+        "By spring, the guild adopted his method without further debate."
+      ],
+      ci: 0,
+      exp: "This is Hale's own quoted remark, and it directly states his belief that persuasion is inferior to a working demonstration. The sentence describing that he did not argue his case only reports what he refrained from doing, without stating his reasoning. The sentence about him building and testing the model describes his actions, which are consistent with the claim but do not, on their own, state what he believed the way his direct remark does."
+    },
+    {
+      slot: "Inferences",
+      q: "Which choice is the most reasonable inference based on the text?",
+      box: "Every Friday afternoon, Mrs. Okafor closed her bakery two hours early, though business was often brisk at that hour. She never explained the closure to customers, simply flipping the sign and drawing the blinds. Regulars had long since stopped asking, though newer customers sometimes grumbled at the inconvenience. On the shelf behind the register, half-hidden by a stack of order forms, sat a faded photograph of a young girl in a school uniform, dated some thirty years past.",
+      opts: [
+        "Mrs. Okafor's early Friday closures are likely connected to a personal matter she chooses not to discuss with customers.",
+        "Mrs. Okafor closes early on Fridays because her bakery does not earn enough profit to justify staying open later.",
+        "The girl in the photograph is Mrs. Okafor's daughter, who no longer visits the bakery.",
+        "Newer customers dislike Mrs. Okafor because she refuses to explain her Friday closures to them."
+      ],
+      ci: 0,
+      exp: "The consistent, unexplained weekly closure paired with the deliberately placed old photograph suggests a private, personal reason behind the routine, without requiring more specific detail than the text supports. The profit explanation is directly contradicted by the text, which states business was 'often brisk' at that hour. Identifying the girl as her daughter who 'no longer visits' goes beyond what the text establishes, since no relationship or current visiting pattern is ever described. Saying newer customers 'dislike' Mrs. Okafor overreaches what the text says, which is only that they 'grumbled at the inconvenience.'"
+    },
+    {
+      slot: "Inferences",
+      q: "Which choice is the most reasonable inference based on the text?",
+      box: "The quarterly report noted that customer complaints about shipping delays had fallen by half since the company opened a second distribution warehouse in March. However, the same report showed that overall order volume had also declined by nearly 30 percent over the same period, as a major competitor launched an aggressive discount campaign in January.",
+      opts: [
+        "The drop in shipping complaints may be partly explained by fewer orders being placed, rather than solely by the new warehouse.",
+        "The new distribution warehouse was ultimately not worth the cost the company invested in building it.",
+        "The competitor's discount campaign was directly responsible for the decline in the company's order volume.",
+        "Customers were more satisfied with the company's shipping performance than they had been in previous quarters."
+      ],
+      ci: 0,
+      exp: "Since order volume fell by nearly 30 percent over the same period, fewer complaints could simply reflect fewer total orders rather than proving the warehouse alone improved shipping. The choice about the warehouse not being 'worth the cost' goes beyond the text, which never discusses the warehouse's cost or value. Calling the competitor's campaign 'directly responsible' for the volume decline overstates what the text supports, since the two events are only reported as occurring around the same time. The choice about customers being 'more satisfied' overreaches, because a numerical drop in complaints amid a steep drop in orders does not establish that satisfaction, specifically, improved."
+    },
+    {
+      slot: "Cross-Text Connections",
+      q: "How would the author of Text 2 most likely respond to the argument in Text 1?",
+      box: "Text 1: Proponents of standardized testing argue that a single, uniform exam allows for fair comparison across students from vastly different schools and backgrounds, since every student answers the same questions under the same conditions.<br><br>Text 2: Critics counter that uniformity is not the same as fairness: students who attend under-resourced schools often lack access to test-preparation materials, tutoring, and even reliable transportation to testing centers, meaning that identical questions can still produce deeply unequal outcomes.",
+      opts: [
+        "By arguing that identical test conditions do not guarantee equal outcomes, since students face unequal resources before ever reaching the exam.",
+        "By agreeing that uniform exams are the fairest method available, while suggesting minor adjustments to test format.",
+        "By proposing that standardized tests be replaced with a system based entirely on teacher recommendations.",
+        "By conceding that test-preparation access matters but arguing it has little effect on actual exam performance."
+      ],
+      ci: 0,
+      exp: "Text 2 directly states that unequal access to preparation resources 'can still produce deeply unequal outcomes' even under identical test conditions, which is exactly this response. The choice claiming Text 2 agrees that uniform exams are 'the fairest method' contradicts its explicit critique of the fairness claim. The choice about replacing tests with teacher recommendations proposes a specific alternative that Text 2 never mentions. The choice claiming access to preparation has 'little effect' contradicts Text 2's actual point, which is that such access has a significant effect on outcomes."
+    },
+    {
+      slot: "Cross-Text Connections",
+      q: "How does Text 2 relate to the finding presented in Text 1?",
+      box: "Text 1: Urban planners have found that adding bicycle lanes to a handful of major roads modestly increases the number of commuters who choose cycling over driving, particularly on routes connecting residential neighborhoods to downtown business districts.<br><br>Text 2: A follow-up study across twelve cities found that the effect of bicycle lanes on cycling rates grew substantially stronger when lanes were physically separated from vehicle traffic by barriers, and stronger still when lanes formed a connected network rather than isolated, disconnected segments.",
+      opts: [
+        "It builds on Text 1's finding by identifying specific conditions, physical separation and network connectivity, that make bicycle lanes even more effective at increasing cycling rates.",
+        "It contradicts Text 1's finding by showing that bicycle lanes have no meaningful effect on commuter behavior.",
+        "It shifts focus away from bicycle lanes entirely to examine public transportation funding instead.",
+        "It questions the methodology used in Text 1's original study of commuter cycling rates."
+      ],
+      ci: 0,
+      exp: "Text 2 extends Text 1's general finding by specifying the conditions, physical separation and connected networks, under which the effect on cycling rates 'grew substantially stronger.' The choice describing a contradiction is wrong because Text 2 never says bicycle lanes have 'no meaningful effect'; it says the effect grows stronger under certain conditions. The choice about shifting to public transportation funding is unsupported, since Text 2 remains focused on bicycle lanes. The choice about questioning Text 1's methodology is unsupported, since Text 2 presents additional findings rather than a critique of how Text 1 was conducted."
+    },
+    {
+      slot: "Transitions",
+      q: "Which choice completes the text with the most logically precise transition?",
+      box: "For years, the town council maintained that the old bridge was structurally sound and required no immediate repair. ____ an independent engineering survey commissioned last spring revealed hairline fractures throughout the support beams, prompting an emergency closure.",
+      opts: [
+        "Nevertheless,",
+        "Consequently,",
+        "Likewise,",
+        "Furthermore,"
+      ],
+      ci: 0,
+      exp: "'Nevertheless' correctly signals that the survey's findings emerged despite the council's long-held assurance, creating the contrast the sentences describe. 'Consequently' is wrong because it implies the survey's findings were a result of the council's claim, when they actually contradicted it. 'Likewise' is wrong because it implies the survey supported or matched the council's claim, rather than opposing it. 'Furthermore' is wrong because it implies the second sentence simply adds to the same idea as the first, rather than overturning it."
+    },
+    {
+      slot: "Transitions",
+      q: "Which choice completes the text with the most logically precise transition?",
+      box: "The philosophy department adopted a policy requiring every dissertation to include a section addressing counterarguments. ____ students writing on contested ethical questions must now dedicate at least one chapter to perspectives they ultimately reject.",
+      opts: [
+        "By extension,",
+        "In contrast,",
+        "Regardless,",
+        "Otherwise,"
+      ],
+      ci: 0,
+      exp: "'By extension' correctly signals that the second sentence describes a specific consequence that logically follows from the general policy stated first. 'In contrast' is wrong because the second sentence does not oppose the first; it follows directly from it. 'Regardless' is wrong because it implies the requirement described in the second sentence occurs independent of the policy, when it is actually a direct result of it. 'Otherwise' is wrong because it introduces a conditional alternative, as if describing what would happen without the policy, which misrepresents the direct link shown."
+    }
+  ];
+
+  var TOTAL = QUESTIONS.length;
+
+  function safeGet(key){
+    try{ var v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
+    catch(e){ return null; }
+  }
+  function safeSet(key, val){
+    try{ localStorage.setItem(key, JSON.stringify(val)); }
+    catch(e){ /* ignore */ }
+  }
+
+  function shuffleArr(arr){
+    var a = arr.slice();
+    for(var i=a.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var tmp=a[i]; a[i]=a[j]; a[j]=tmp;
+    }
+    return a;
+  }
+
+  function buildOptShuffles(){
+    var out = [];
+    for(var i=0;i<TOTAL;i++){
+      out.push(shuffleArr([0,1,2,3]));
+    }
+    return out;
+  }
+
+  function freshState(orderMode){
+    var baseOrder = [];
+    for(var i=0;i<TOTAL;i++) baseOrder.push(i);
+    var order = orderMode === "random" ? shuffleArr(baseOrder) : baseOrder;
+    return {
+      orderMode: orderMode,
+      order: order,
+      optShuffle: buildOptShuffles(),
+      answers: new Array(TOTAL).fill(null),
+      current: 0,
+      timeLimitMin: null,
+      deadline: null,
+      timerRunning: false,
+      retryMode: false,
+      retryQuestionIds: null
+    };
+  }
+
+  var state = safeGet(QUIZ_KEY);
+  if(!state){
+    var savedOrderMode = safeGet(ORDER_KEY);
+    state = freshState(savedOrderMode && savedOrderMode.mode ? savedOrderMode.mode : "original");
+  }
+
+  function persist(){
+    safeSet(QUIZ_KEY, state);
+  }
+
+  // ---------- DOM refs ----------
+  var quizScreen = document.getElementById("quizScreen");
+  var resultsScreen = document.getElementById("resultsScreen");
+  var slotTag = document.getElementById("slotTag");
+  var qText = document.getElementById("qText");
+  var boxCtx = document.getElementById("boxCtx");
+  var optsWrap = document.getElementById("optsWrap");
+  var explainWrap = document.getElementById("explainWrap");
+  var prevBtn = document.getElementById("prevBtn");
+  var nextBtn = document.getElementById("nextBtn");
+  var progressLabel = document.getElementById("progressLabel");
+  var progressFill = document.getElementById("progressFill");
+  var jumpToggle = document.getElementById("jumpToggle");
+  var jumpPanel = document.getElementById("jumpPanel");
+  var timeLimitInput = document.getElementById("timeLimitInput");
+  var startTimerBtn = document.getElementById("startTimerBtn");
+  var timerDisplay = document.getElementById("timerDisplay");
+  var scoreBig = document.getElementById("scoreBig");
+  var reviewList = document.getElementById("reviewList");
+  var attemptsLine = document.getElementById("attemptsLine");
+  var modalOverlay = document.getElementById("modalOverlay");
+  var modalText = document.getElementById("modalText");
+  var modalCancelBtn = document.getElementById("modalCancelBtn");
+  var modalConfirmBtn = document.getElementById("modalConfirmBtn");
+
+  function activeOrder(){
+    return state.retryMode ? state.retryQuestionIds : state.order;
+  }
+
+  function currentQIndex(){
+    return activeOrder()[state.current];
+  }
+
+  // ---------- Rendering ----------
+  function renderJumpPanel(){
+    jumpPanel.innerHTML = "";
+    var ord = activeOrder();
+    for(var pos=0; pos<ord.length; pos++){
+      var qIdx = ord[pos];
+      var dot = document.createElement("div");
+      dot.className = "jump-dot";
+      dot.textContent = (pos+1);
+      if(state.answers[qIdx] !== null){
+        dot.classList.add("answered");
+        if(state.answers[qIdx] !== QUESTIONS[qIdx].ci){
+          dot.classList.add("wrong");
+        }
+      }
+      if(pos === state.current){
+        dot.classList.add("current");
+      }
+      (function(p){
+        dot.addEventListener("click", function(){
+          state.current = p;
+          persist();
+          renderQuestion();
+        });
+      })(pos);
+      jumpPanel.appendChild(dot);
+    }
+  }
+
+  function renderProgress(){
+    var answeredCount = 0;
+    var ord = activeOrder();
+    for(var i=0;i<ord.length;i++){
+      if(state.answers[ord[i]] !== null) answeredCount++;
+    }
+    progressLabel.textContent = "Answered " + answeredCount + " / " + ord.length;
+    progressFill.style.width = Math.round((answeredCount/ord.length)*100) + "%";
+  }
+
+  function renderQuestion(){
+    var ord = activeOrder();
+    var qIdx = ord[state.current];
+    var qd = QUESTIONS[qIdx];
+    slotTag.textContent = qd.slot;
+    qText.textContent = qd.q;
+    boxCtx.innerHTML = qd.box;
+
+    var order4 = state.optShuffle[qIdx];
+    optsWrap.innerHTML = "";
+    var picked = state.answers[qIdx];
+
+    for(var p=0; p<4; p++){
+      var underlyingIdx = order4[p];
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "opt";
+      btn.textContent = qd.opts[underlyingIdx];
+      if(picked !== null){
+        btn.disabled = true;
+        if(underlyingIdx === qd.ci){
+          btn.classList.add("correct");
+        } else if(underlyingIdx === picked){
+          btn.classList.add("incorrect");
+        }
+        if(underlyingIdx === picked){
+          btn.classList.add("selected");
+        }
+      }
+      (function(uIdx){
+        btn.addEventListener("click", function(){
+          window.selectOption(qIdx, uIdx);
+        });
+      })(underlyingIdx);
+      optsWrap.appendChild(btn);
+    }
+
+    if(picked !== null){
+      explainWrap.innerHTML = "<strong>Explanation:</strong> " + qd.exp;
+      explainWrap.classList.add("show");
+    } else {
+      explainWrap.innerHTML = "";
+      explainWrap.classList.remove("show");
+    }
+
+    prevBtn.disabled = (state.current === 0);
+    if(state.current === ord.length - 1){
+      nextBtn.textContent = "Show Results →";
+      nextBtn.disabled = false;
+    } else {
+      nextBtn.textContent = "Next →";
+      nextBtn.disabled = false;
+    }
+
+    renderProgress();
+    renderJumpPanel();
+  }
+
+  window.selectOption = function(qIdx, underlyingIdx){
+    if(state.answers[qIdx] !== null) return;
+    state.answers[qIdx] = underlyingIdx;
+    persist();
+    renderQuestion();
+  };
+
+  prevBtn.addEventListener("click", function(){
+    if(state.current > 0){
+      state.current--;
+      persist();
+      renderQuestion();
+    }
+  });
+
+  nextBtn.addEventListener("click", function(){
+    var ord = activeOrder();
+    if(state.current < ord.length - 1){
+      state.current++;
+      persist();
+      renderQuestion();
+    } else {
+      goToResults();
+    }
+  });
+
+  jumpToggle.addEventListener("click", function(){
+    jumpPanel.classList.toggle("open");
+  });
+
+  // ---------- Timer ----------
+  var timerInterval = null;
+
+  function formatTime(ms){
+    if(ms < 0) ms = 0;
+    var totalSec = Math.floor(ms/1000);
+    var m = Math.floor(totalSec/60);
+    var s = totalSec % 60;
+    return (m<10?"0":"")+m+":"+(s<10?"0":"")+s;
+  }
+
+  function tickTimer(){
+    if(!state.timerRunning || !state.deadline){
+      timerDisplay.textContent = "--:--";
+      timerDisplay.classList.remove("orange","red");
+      return;
+    }
+    var remaining = state.deadline - Date.now();
+    var totalMs = state.timeLimitMin * 60000;
+    if(remaining <= 0){
+      timerDisplay.textContent = "Time's Up";
+      timerDisplay.classList.add("red");
+      state.timerRunning = false;
+      persist();
+      if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
+      return;
+    }
+    timerDisplay.textContent = formatTime(remaining);
+    var pct = remaining / totalMs;
+    timerDisplay.classList.remove("orange","red");
+    if(pct <= 0.10){ timerDisplay.classList.add("red"); }
+    else if(pct <= 0.25){ timerDisplay.classList.add("orange"); }
+  }
+
+  startTimerBtn.addEventListener("click", function(){
+    var mins = parseFloat(timeLimitInput.value);
+    if(!mins || mins <= 0) mins = 20;
+    state.timeLimitMin = mins;
+    state.deadline = Date.now() + mins*60000;
+    state.timerRunning = true;
+    persist();
+    if(timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(tickTimer, 1000);
+    tickTimer();
+  });
+
+  function resumeTimerIfNeeded(){
+    if(state.timerRunning && state.deadline){
+      if(timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(tickTimer, 1000);
+      tickTimer();
+      if(state.timeLimitMin){
+        timeLimitInput.value = state.timeLimitMin;
+      }
+    }
+  }
+
+  // ---------- Results ----------
+  function computeScore(){
+    var correct = 0;
+    var ord = activeOrder();
+    for(var i=0;i<ord.length;i++){
+      var qIdx = ord[i];
+      if(state.answers[qIdx] === QUESTIONS[qIdx].ci) correct++;
+    }
+    return { correct: correct, total: ord.length };
+  }
+
+  function goToResults(){
+    quizScreen.style.display = "none";
+    resultsScreen.style.display = "block";
+
+    var sc = computeScore();
+    scoreBig.textContent = sc.correct + " / " + sc.total + " correct";
+
+    reviewList.innerHTML = "";
+    var ord = activeOrder();
+    for(var i=0;i<ord.length;i++){
+      var qIdx = ord[i];
+      var qd = QUESTIONS[qIdx];
+      var picked = state.answers[qIdx];
+      var isCorrect = picked === qd.ci;
+      var div = document.createElement("div");
+      div.className = "review-item" + (isCorrect ? "" : " bad");
+      var pickedText = picked !== null ? qd.opts[picked] : "(not answered)";
+      var correctText = qd.opts[qd.ci];
+      div.innerHTML = "<strong>Q" + (i+1) + " (" + qd.slot + "):</strong> " + qd.q +
+        "<br><em>Your answer:</em> " + pickedText +
+        (isCorrect ? "" : ("<br><em>Correct answer:</em> " + correctText));
+      reviewList.appendChild(div);
+    }
+
+    var attempts = safeGet(ATT_KEY);
+    var count = (typeof attempts === "number") ? attempts : 0;
+    count += 1;
+    safeSet(ATT_KEY, count);
+    attemptsLine.textContent = "Total Attempts: " + count;
+
+    if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
+  }
+
+  window.saveWrongAnswers = function(){
+    try{
+      var ord = activeOrder();
+      var wrong = [];
+      for(var i=0;i<ord.length;i++){
+        var qIdx = ord[i];
+        var qd = QUESTIONS[qIdx];
+        var picked = state.answers[qIdx];
+        if(picked !== qd.ci){
+          wrong.push({
+            q: qd.q,
+            opts: qd.opts,
+            ci: qd.ci,
+            picked: picked
+          });
+        }
+      }
+      if(wrong.length === 0){
+        alert("No wrong answers to save. Great job!");
+        return;
+      }
+      var payload = {
+        child: "Sion",
+        subject: "[Sion] Advanced SAT Reading",
+        date: "2026-08-21",
+        wrong: wrong
+      };
+      var blob = new Blob([JSON.stringify(payload, null, 2)], {type: "application/json"});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "sion_advanced_sat_reading_wrong_answers.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }catch(err){
+      alert("Could not save wrong answers.");
+    }
+  };
+
+  document.getElementById("saveWrongBtn").addEventListener("click", function(){
+    window.saveWrongAnswers();
+  });
+
+  window.copyAllResults = function(){
+    var ord = activeOrder();
+    var lines = [];
+    lines.push("[Sion] Advanced SAT Reading - Results");
+    var sc = computeScore();
+    lines.push("Score: " + sc.correct + " / " + sc.total);
+    for(var i=0;i<ord.length;i++){
+      var qIdx = ord[i];
+      var qd = QUESTIONS[qIdx];
+      var picked = state.answers[qIdx];
+      var pickedText = picked !== null ? qd.opts[picked] : "(not answered)";
+      var correctText = qd.opts[qd.ci];
+      lines.push((i+1) + ". " + qd.q);
+      lines.push("   Your answer: " + pickedText);
+      lines.push("   Correct answer: " + correctText);
+    }
+    var text = lines.join("\n");
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){
+          alert("Results copied to clipboard.");
+        }, function(){
+          fallbackCopy(text);
+        });
+      } else {
+        fallbackCopy(text);
+      }
+    }catch(err){
+      fallbackCopy(text);
+    }
+  };
+
+  function fallbackCopy(text){
+    try{
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      alert("Results copied to clipboard.");
+    }catch(e){
+      alert("Could not copy results automatically. Please copy manually.");
+    }
+  }
+
+  document.getElementById("copyAllBtn").addEventListener("click", function(){
+    window.copyAllResults();
+  });
+
+  window.retryWrongOnes = function(){
+    var ord = activeOrder();
+    var wrongIds = [];
+    for(var i=0;i<ord.length;i++){
+      var qIdx = ord[i];
+      var qd = QUESTIONS[qIdx];
+      if(state.answers[qIdx] !== qd.ci){
+        wrongIds.push(qIdx);
+      }
+    }
+    if(wrongIds.length === 0){
+      alert("No wrong answers to retry. Great job!");
+      return;
+    }
+    state.retryMode = true;
+    state.retryQuestionIds = wrongIds;
+    for(var j=0;j<wrongIds.length;j++){
+      state.answers[wrongIds[j]] = null;
+    }
+    state.current = 0;
+    persist();
+    resultsScreen.style.display = "none";
+    quizScreen.style.display = "block";
+    renderQuestion();
+  };
+
+  document.getElementById("retryWrongBtn").addEventListener("click", function(){
+    window.retryWrongOnes();
+  });
+
+  // ---------- Start Fresh (custom modal) ----------
+  var pendingFreshMode = null;
+
+  function openModal(msg, onConfirm){
+    modalText.textContent = msg;
+    modalOverlay.classList.add("show");
+    modalConfirmBtn.onclick = function(){
+      modalOverlay.classList.remove("show");
+      onConfirm();
+    };
+    modalCancelBtn.onclick = function(){
+      modalOverlay.classList.remove("show");
+    };
+  }
+
+  function doStartFresh(mode){
+    if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
+    state = freshState(mode);
+    persist();
+    safeSet(ORDER_KEY, {mode: mode});
+    resultsScreen.style.display = "none";
+    quizScreen.style.display = "block";
+    jumpPanel.classList.remove("open");
+    timerDisplay.textContent = "--:--";
+    timerDisplay.classList.remove("orange","red");
+    timeLimitInput.value = 20;
+    renderQuestion();
+  }
+
+  document.getElementById("freshOrigBtn").addEventListener("click", function(){
+    openModal("Start fresh with questions in original order? This will erase your current progress.", function(){
+      doStartFresh("original");
+    });
+  });
+
+  document.getElementById("freshRandBtn").addEventListener("click", function(){
+    openModal("Start fresh with questions in random order? This will erase your current progress.", function(){
+      doStartFresh("random");
+    });
+  });
+
+  // ---------- Init ----------
+  function init(){
+    if(state.current === undefined || state.current === null) state.current = 0;
+    if(!state.optShuffle || state.optShuffle.length !== TOTAL){
+      state.optShuffle = buildOptShuffles();
+    }
+    persist();
+    resumeTimerIfNeeded();
+    renderQuestion();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
