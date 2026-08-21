@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parts of Speech Quiz</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;color:#111111;}
+#app{max-width:700px;margin:0 auto;padding:12px;}
+
+#date-bar{text-align:center;font-size:2rem;font-weight:800;color:#185FA5;padding:10px 0 2px;}
+#quiz-title{text-align:center;font-size:1.35rem;font-weight:700;color:#1D9E75;padding:4px 0 4px;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:6px 12px 10px;background:#fff;}
+
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 4px;}
+.prog-fill{background:#1D9E75;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{width:26px;height:26px;border-radius:50%;border:none;font-size:11px;font-weight:700;cursor:pointer;color:#fff;background:#d7dde6;display:inline-flex;align-items:center;justify-content:center;margin:2px;}
+.dot.dot-correct{background:#1D9E75;}
+.dot.dot-wrong{background:#E24B4A;}
+.dot.dot-current{outline:2px solid #185FA5;outline-offset:2px;}
+
+#start-screen{padding:32px 12px;text-align:center;}
+#start-screen h2{font-size:1.4rem;font-weight:800;color:#1D9E75;margin-bottom:10px;}
+#start-screen p{font-size:0.95rem;color:#555;line-height:1.7;margin-bottom:24px;}
+#start-btn{background:#1D9E75;color:#fff;border:none;border-radius:10px;padding:14px 40px;font-size:1.05rem;font-weight:700;cursor:pointer;}
+
+#quiz-screen{display:none;}
+#q-num{font-size:0.8rem;color:#888;margin-bottom:8px;}
+.sent-box{background:#EEF4FF;border-left:4px solid #185FA5;padding:12px 16px;border-radius:6px;margin-bottom:14px;font-size:1rem;color:#1a2a4a;font-style:italic;line-height:1.6;}
+.q-text{font-size:1.05rem;font-weight:600;color:#111111;margin-bottom:14px;line-height:1.5;}
+
+.opt-btn{display:block;width:100%;text-align:left;background:#e8edf4;color:#111111;border:2px solid transparent;border-radius:8px;padding:13px 16px;font-size:1rem;cursor:pointer;margin-bottom:10px;}
+.opt-btn.sel{border-color:#185FA5;background:#dceeff;color:#111111;}
+.opt-btn.correct-pick{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong-pick{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn.missed{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn:disabled{cursor:default;}
+
+#exp-box{display:none;background:#FFFBF0;border-left:4px solid #f5a623;padding:11px 14px;border-radius:6px;font-size:0.9rem;color:#5a3e00;margin-top:2px;margin-bottom:12px;line-height:1.5;}
+
+#bottom-nav{display:flex;gap:10px;margin-top:16px;}
+.bnav{flex:1;padding:12px 0;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;cursor:pointer;}
+#prev-btn{background:#e8edf4;color:#444;}
+#check-btn{background:#185FA5;color:#fff;}
+#next-btn{background:#1D9E75;color:#fff;}
+.bnav:disabled{opacity:0.38;cursor:default;}
+
+#results-screen{display:none;padding:4px 0;}
+#results-screen h2{text-align:center;font-size:1.5rem;font-weight:800;color:#1D9E75;margin:12px 0 6px;}
+#score-line{text-align:center;font-size:1rem;color:#555;margin-bottom:14px;}
+.res-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;}
+.res-card{background:#f5f7fa;border-radius:8px;padding:12px 6px;text-align:center;}
+.rc-num{font-size:1.7rem;font-weight:800;}
+.rc-label{font-size:0.78rem;color:#888;margin-top:2px;}
+.rc-correct .rc-num{color:#1D9E75;}
+.rc-wrong .rc-num{color:#E24B4A;}
+.rc-skip .rc-num{color:#999;}
+#res-btns{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.rb{width:100%;padding:13px;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;}
+#btn-retry{background:#1D9E75;color:#fff;}
+#btn-copy{background:#185FA5;color:#fff;}
+#btn-fresh{background:#e8edf4;color:#444;}
+#review-title{font-size:0.93rem;font-weight:700;color:#333;margin-bottom:8px;}
+.rcard{background:#f5f7fa;border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;border-left:4px solid #d7dde6;}
+.rcard.rcc{border-left-color:#1D9E75;}
+.rcard.rcw{border-left-color:#E24B4A;}
+.rcard .rcq{font-size:0.84rem;color:#333;margin-bottom:4px;}
+.rcard .rca{font-size:0.8rem;margin-top:2px;}
+.rca .lc{color:#085041;font-weight:700;}
+.rca .lw{color:#501313;font-weight:700;}
+
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.48);align-items:center;justify-content:center;z-index:999;}
+#modal-overlay.open{display:flex;}
+#modal-box{background:#fff;border-radius:12px;padding:28px 22px;max-width:320px;width:90%;text-align:center;}
+#modal-box p{font-size:0.97rem;color:#333;line-height:1.6;margin-bottom:20px;}
+.mbtn-row{display:flex;gap:12px;justify-content:center;}
+.mbtn{padding:10px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:700;cursor:pointer;}
+#modal-cancel{background:#e8edf4;color:#444;}
+#modal-ok{background:#E24B4A;color:#fff;}
+
+@media(max-width:480px){
+  #date-bar{font-size:1.5rem;}
+  .opt-btn{font-size:0.93rem;padding:11px 13px;}
+}
+</style>
+</head>
+<body>
+<!-- ===== Universal Quiz Timer (auto-injected) ===== -->
+<style>
+  #qzTimerBar { background: #ffffff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-family: 'Segoe UI', Arial, sans-serif; }
+  #qzTimerSetup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+  #qzTimerSetup label { font-weight: 700; }
+  #qzTimerInput { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+  #qzTimerStartBtn { background: #185FA5; color: #ffffff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  #qzTimerStartBtn:active { opacity: 0.8; }
+  #qzTimerRunning { display: none; align-items: center; gap: 8px; }
+  #qzTimerLabel { font-size: 0.78rem; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 0.02em; }
+  #qzTimerDisplay { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+  #qzTimerDisplay.qz-warn { color: #f5a623; }
+  #qzTimerDisplay.qz-danger { color: #E24B4A; }
+</style>
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label for="qzTimerInput">Set Time Limit:</label>
+    <input type="number" id="qzTimerInput" min="1" max="180" value="20"> min
+    <button id="qzTimerStartBtn" type="button">Start</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span id="qzTimerLabel">Time Left</span>
+    <span id="qzTimerDisplay">20:00</span>
+  </div>
+</div>
+<script>
+(function(){
+  var QZ_KEY = 'qzTimer_' + location.pathname;
+  var qz = { totalSec: null, startedAt: null };
+  try {
+    var raw = localStorage.getItem(QZ_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p.totalSec === 'number' && typeof p.startedAt === 'number') qz = p;
+    }
+  } catch(e) {}
+  var qzInterval = null;
+
+  function qzSave() { try { localStorage.setItem(QZ_KEY, JSON.stringify(qz)); } catch(e) {} }
+  function qzFormat(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60), s = sec % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function qzRender() {
+    var setupEl = document.getElementById('qzTimerSetup');
+    var runEl = document.getElementById('qzTimerRunning');
+    var disp = document.getElementById('qzTimerDisplay');
+    if (!setupEl || !runEl || !disp) return;
+    if (!qz.startedAt) {
+      setupEl.style.display = 'flex';
+      runEl.style.display = 'none';
+      return;
+    }
+    setupEl.style.display = 'none';
+    runEl.style.display = 'flex';
+    var elapsed = (Date.now() - qz.startedAt) / 1000;
+    var remaining = qz.totalSec - elapsed;
+    disp.classList.remove('qz-warn', 'qz-danger');
+    if (remaining <= 0) {
+      disp.textContent = "Time's Up";
+      disp.classList.add('qz-danger');
+      qzStopInterval();
+      return;
+    }
+    disp.textContent = qzFormat(remaining);
+    if (remaining <= qz.totalSec * 0.1) disp.classList.add('qz-danger');
+    else if (remaining <= qz.totalSec * 0.25) disp.classList.add('qz-warn');
+  }
+  function qzStartInterval() {
+    qzStopInterval();
+    qzInterval = setInterval(qzRender, 1000);
+  }
+  function qzStopInterval() {
+    if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+  }
+  function qzStart() {
+    var input = document.getElementById('qzTimerInput');
+    var minutes = parseFloat(input.value);
+    if (!minutes || minutes <= 0) minutes = 20;
+    qz.totalSec = Math.round(minutes * 60);
+    qz.startedAt = Date.now();
+    qzSave();
+    qzRender();
+    qzStartInterval();
+  }
+
+  var btn = document.getElementById('qzTimerStartBtn');
+  if (btn) btn.addEventListener('click', qzStart);
+  qzRender();
+  if (qz.startedAt) qzStartInterval();
+
+  function qzResetTimer() {
+    qz.totalSec = null;
+    qz.startedAt = null;
+    qzSave();
+    qzStopInterval();
+    qzRender();
+  }
+  var qzRetryRe = /retry|restart|reset|start\s*fresh|try\s*again|\uB2E4\uC2DC\s*\uC2DC\uC791|\uCC98\uC74C\uBD80\uD0B0/i;
+  document.addEventListener('click', function(ev) {
+    var el = ev.target, depth = 0;
+    while (el && depth < 4) {
+      if (el.id === 'qzTimerBar' || el.id === 'qzAttemptsBar') return;
+      var isClickable = el.tagName === 'BUTTON' || el.tagName === 'A' ||
+        (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) ||
+        (el.getAttribute && el.getAttribute('role') === 'button');
+      if (isClickable) {
+        var txt = (el.textContent || el.value || '').trim();
+        if (txt.length > 0 && txt.length < 40 && qzRetryRe.test(txt)) {
+          qzResetTimer();
+          return;
+        }
+      }
+      el = el.parentElement;
+      depth++;
+    }
+  }, true);
+})();
+</script>
+<!-- ===== End Universal Quiz Timer ===== -->
+<!-- ===== Universal Total Attempts Counter (auto-injected) ===== -->
+<style>
+  #qzAttemptsBar { background: #f5f8fc; border-bottom: 1px solid #d0dce8; padding: 6px 12px; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', Arial, sans-serif; font-size: 0.82rem; color: #4a6fa5; font-weight: 700; letter-spacing: 0.01em; }
+  #qzAttemptsBar span { color: #185FA5; font-weight: 900; margin-left: 4px; }
+</style>
+<div id="qzAttemptsBar">Total Attempts:<span id="qzAttemptsCount">0</span></div>
+<script>
+(function(){
+  var QA_KEY = 'qzAttempts_' + location.pathname;
+  function qaGet(){ try { return parseInt(localStorage.getItem(QA_KEY)||'0',10) || 0; } catch(e){ return 0; } }
+  function qaSet(n){ try { localStorage.setItem(QA_KEY, String(n)); } catch(e){} }
+  function qaRenderCount(){
+    var el = document.getElementById('qzAttemptsCount');
+    if (el) el.textContent = qaGet();
+  }
+  function qaIsVisible(el){
+    if (!el) return false;
+    var r = el.getBoundingClientRect();
+    if (r.width < 80 || r.height < 30) return false;
+    var cs = window.getComputedStyle(el);
+    return cs.display !== 'none' && cs.visibility !== 'hidden';
+  }
+  function qaResultsShowing(){
+    var els = document.querySelectorAll('[id*="result" i],[class*="result" i],[id*="score" i],[class*="score" i]');
+    for (var i=0;i<els.length;i++){ if (qaIsVisible(els[i])) return true; }
+    return false;
+  }
+  var qaWasShowing = false;
+  function qaCheck(){
+    var showing = qaResultsShowing();
+    if (showing && !qaWasShowing) {
+      qaSet(qaGet()+1);
+      qaRenderCount();
+    }
+    qaWasShowing = showing;
+  }
+  qaRenderCount();
+  setInterval(qaCheck, 800);
+  function qaObserve(){
+    if (!document.body) return;
+    var mo = new MutationObserver(function(){ qaCheck(); });
+    mo.observe(document.body, { attributes: true, childList: true, subtree: true });
+  }
+  if (document.body) qaObserve();
+  else document.addEventListener('DOMContentLoaded', qaObserve);
+  setTimeout(qaCheck, 1500);
+})();
+</script>
+<!-- ===== End Universal Total Attempts Counter ===== -->
+
+
+<div id="app">
+  <div id="quiz-title">Parts of Speech Quiz</div>
+  <div class="instruction">Select your answer(s), then tap Check Answer. Multiple answers may be correct.</div>
+
+  <div id="nav-bar">
+    <span id="nav-count">0 / 100</span>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+    <button id="jump-btn">Jump v</button>
+  </div>
+  <div id="dot-panel"></div>
+
+  <div id="start-screen">
+    <h2>Parts of Speech Quiz</h2>
+    <p>100 questions across 25 sentences.<br>Questions 1-20: simple sentences.<br>Questions 21-100: complex sentences.<br>Select ALL correct answers before checking.</p>
+    <button id="start-btn">Start Quiz</button>
+  </div>
+
+  <div id="quiz-screen">
+    <div id="q-num"></div>
+    <div class="sent-box" id="sent-box"></div>
+    <div class="q-text" id="q-text"></div>
+    <span id="qIdentity" style="display:none"></span>
+    <div id="opts-area"></div>
+    <div id="exp-box"></div>
+    <div id="bottom-nav">
+      <button class="bnav" id="prev-btn">Prev</button>
+      <button class="bnav" id="check-btn">Check Answer</button>
+      <button class="bnav" id="next-btn">Next</button>
+    </div>
+  </div>
+
+  <div id="results-screen">
+    <h2>Quiz Results</h2>
+    <div id="score-line"></div>
+    <div class="res-grid" id="res-grid"></div>
+    <div id="res-btns">
+      <button class="rb" id="btn-retry">Retry Wrong Ones</button>
+      <button class="rb" id="btn-copy">Copy All Results</button>
+      <button class="rb" id="btn-fresh">Start Fresh (Original Order)</button>
+      <button class="rb" id="btn-fresh-random">Start Fresh (Random Order)</button>
+    </div>
+    <div id="review-title">Question Review</div>
+    <div id="review-list"></div>
+  </div>
+</div>
+
+<div id="modal-overlay">
+  <div id="modal-box">
+    <h2 id="modalTitle" style="font-size:1.1rem;font-weight:800;color:#111;margin-bottom:8px;">Start Fresh?</h2>
+    <p id="modalText">Reset all progress and start over from the beginning?</p>
+    <div class="mbtn-row">
+      <button class="mbtn" id="modal-cancel">Cancel</button>
+      <button class="mbtn" id="modal-ok">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var QUIZ_KEY = 'quiz_pos100_20260618_v1';
+
+// ── QUESTION DATA ──────────────────────────────────────────────────────────
+// answers: array of correct indices into opts[]
+var RAW = [
+// EASY E1 "The happy dog runs quickly."
+{sentence:"The happy dog runs quickly.",q:"Select all the NOUNS.",opts:["dog","happy","runs","quickly"],answers:[0],exp:"'Dog' is a noun - a person, place, or thing."},
+{sentence:"The happy dog runs quickly.",q:"Select all the ADJECTIVES.",opts:["the","happy","dog","quickly"],answers:[1],exp:"'Happy' is an adjective - it describes the dog."},
+{sentence:"The happy dog runs quickly.",q:"Select all the VERBS.",opts:["happy","dog","runs","quickly"],answers:[2],exp:"'Runs' is the verb - the action in the sentence."},
+{sentence:"The happy dog runs quickly.",q:"Select all the ADVERBS.",opts:["happy","dog","runs","quickly"],answers:[3],exp:"'Quickly' is an adverb - it tells how the dog runs."},
+// EASY E2 "She reads a long book."
+{sentence:"She reads a long book.",q:"Select all the NOUNS.",opts:["reads","she","book","long"],answers:[1,2],exp:"'She' is a pronoun used as a noun, and 'book' is a noun."},
+{sentence:"She reads a long book.",q:"Select all the VERBS.",opts:["she","reads","long","book"],answers:[1],exp:"'Reads' is the verb."},
+{sentence:"She reads a long book.",q:"Select all the ADJECTIVES.",opts:["she","reads","long","book"],answers:[2],exp:"'Long' is an adjective - it describes the book."},
+{sentence:"She reads a long book.",q:"Select all the ADVERBS.",opts:["reads","long","she","None of the above"],answers:[3],exp:"There is no adverb in this sentence. 'Long' is an adjective modifying 'book', not a verb. The correct answer is 'None of the above'."},
+// EASY E3 "The tall teacher speaks softly."
+{sentence:"The tall teacher speaks softly.",q:"Select all the NOUNS.",opts:["tall","teacher","speaks","softly"],answers:[1],exp:"'Teacher' is the noun."},
+{sentence:"The tall teacher speaks softly.",q:"Select all the VERBS.",opts:["tall","teacher","speaks","softly"],answers:[2],exp:"'Speaks' is the verb."},
+{sentence:"The tall teacher speaks softly.",q:"Select all the ADJECTIVES.",opts:["tall","teacher","speaks","softly"],answers:[0],exp:"'Tall' is an adjective - it describes the teacher."},
+{sentence:"The tall teacher speaks softly.",q:"Select all the ADVERBS.",opts:["tall","teacher","speaks","softly"],answers:[3],exp:"'Softly' is an adverb - it tells how the teacher speaks."},
+// EASY E4 "We ate warm soup yesterday."
+{sentence:"We ate warm soup yesterday.",q:"Select all the NOUNS.",opts:["we","ate","soup","yesterday"],answers:[0,2],exp:"'We' is a pronoun used as a noun, and 'soup' is a noun."},
+{sentence:"We ate warm soup yesterday.",q:"Select all the VERBS.",opts:["we","ate","warm","yesterday"],answers:[1],exp:"'Ate' is the past tense verb."},
+{sentence:"We ate warm soup yesterday.",q:"Select all the ADJECTIVES.",opts:["we","ate","warm","yesterday"],answers:[2],exp:"'Warm' is an adjective - it describes the soup."},
+{sentence:"We ate warm soup yesterday.",q:"Select all the ADVERBS.",opts:["warm","ate","soup","yesterday"],answers:[3],exp:"'Yesterday' is an adverb - it tells when they ate."},
+// EASY E5 "The little bird sings beautifully every morning."
+{sentence:"The little bird sings beautifully every morning.",q:"Select all the NOUNS.",opts:["little","bird","beautifully","morning"],answers:[1,3],exp:"'Bird' and 'morning' are both nouns."},
+{sentence:"The little bird sings beautifully every morning.",q:"Select all the VERBS.",opts:["little","sings","beautifully","morning"],answers:[1],exp:"'Sings' is the verb."},
+{sentence:"The little bird sings beautifully every morning.",q:"Select all the ADJECTIVES.",opts:["little","bird","beautifully","morning"],answers:[0],exp:"'Little' is an adjective - it describes the bird."},
+{sentence:"The little bird sings beautifully every morning.",q:"Select all the ADVERBS.",opts:["little","sings","beautifully","morning"],answers:[2],exp:"'Beautifully' is an adverb - it tells how the bird sings."},
+// HARD H1
+{sentence:"The brilliant scientist carefully analyzed the complex data she had collected during her extensive fieldwork.",q:"Select all the NOUNS.",opts:["scientist","carefully","data","brilliant"],answers:[0,2],exp:"'Scientist' and 'data' are both nouns."},
+{sentence:"The brilliant scientist carefully analyzed the complex data she had collected during her extensive fieldwork.",q:"Select all the ADJECTIVES.",opts:["brilliant","carefully","complex","analyzed"],answers:[0,2],exp:"'Brilliant' describes the scientist; 'complex' describes the data."},
+{sentence:"The brilliant scientist carefully analyzed the complex data she had collected during her extensive fieldwork.",q:"Select all the VERBS.",opts:["carefully","analyzed","collected","extensive"],answers:[1,2],exp:"'Analyzed' and 'collected' are both verbs."},
+{sentence:"The brilliant scientist carefully analyzed the complex data she had collected during her extensive fieldwork.",q:"Select all the ADVERBS.",opts:["carefully","brilliant","complex","fieldwork"],answers:[0],exp:"'Carefully' is an adverb - it modifies 'analyzed'."},
+// HARD H2
+{sentence:"Although the weather was unusually cold, the determined athletes trained vigorously for the upcoming championship.",q:"Select all the ADJECTIVES.",opts:["cold","determined","vigorously","unusually"],answers:[0,1],exp:"'Cold' describes the weather; 'determined' describes the athletes."},
+{sentence:"Although the weather was unusually cold, the determined athletes trained vigorously for the upcoming championship.",q:"Select all the ADVERBS.",opts:["unusually","vigorously","cold","determined"],answers:[0,1],exp:"'Unusually' modifies 'cold'; 'vigorously' modifies 'trained'."},
+{sentence:"Although the weather was unusually cold, the determined athletes trained vigorously for the upcoming championship.",q:"Select all the NOUNS.",opts:["weather","athletes","championship","vigorously"],answers:[0,1,2],exp:"'Weather', 'athletes', and 'championship' are all nouns."},
+{sentence:"Although the weather was unusually cold, the determined athletes trained vigorously for the upcoming championship.",q:"Select all the VERBS.",opts:["was","trained","cold","determined"],answers:[0,1],exp:"'Was' and 'trained' are the verbs."},
+// HARD H3
+{sentence:"The elderly professor quietly entered the crowded lecture hall and immediately began his fascinating presentation.",q:"Select all the ADVERBS.",opts:["quietly","immediately","elderly","crowded"],answers:[0,1],exp:"'Quietly' and 'immediately' are both adverbs."},
+{sentence:"The elderly professor quietly entered the crowded lecture hall and immediately began his fascinating presentation.",q:"Select all the ADJECTIVES.",opts:["quietly","elderly","crowded","fascinating"],answers:[1,2,3],exp:"'Elderly', 'crowded', and 'fascinating' are all adjectives."},
+{sentence:"The elderly professor quietly entered the crowded lecture hall and immediately began his fascinating presentation.",q:"Select all the VERBS.",opts:["entered","began","quietly","crowded"],answers:[0,1],exp:"'Entered' and 'began' are both verbs."},
+{sentence:"The elderly professor quietly entered the crowded lecture hall and immediately began his fascinating presentation.",q:"Select all the NOUNS.",opts:["professor","hall","presentation","quietly"],answers:[0,1,2],exp:"'Professor', 'hall', and 'presentation' are all nouns."},
+// HARD H4
+{sentence:"The freshly baked bread smelled absolutely wonderful and disappeared surprisingly fast from the bakery shelves.",q:"Select all the ADJECTIVES.",opts:["freshly","baked","wonderful","surprisingly"],answers:[1,2],exp:"'Baked' (past participle as adjective) and 'wonderful' are adjectives."},
+{sentence:"The freshly baked bread smelled absolutely wonderful and disappeared surprisingly fast from the bakery shelves.",q:"Select all the ADVERBS.",opts:["freshly","absolutely","surprisingly","wonderful"],answers:[0,1,2],exp:"'Freshly', 'absolutely', and 'surprisingly' are all adverbs."},
+{sentence:"The freshly baked bread smelled absolutely wonderful and disappeared surprisingly fast from the bakery shelves.",q:"Select all the NOUNS.",opts:["bread","bakery","shelves","freshly"],answers:[0,1,2],exp:"'Bread', 'bakery', and 'shelves' are all nouns."},
+{sentence:"The freshly baked bread smelled absolutely wonderful and disappeared surprisingly fast from the bakery shelves.",q:"Select all the VERBS.",opts:["smelled","disappeared","freshly","wonderful"],answers:[0,1],exp:"'Smelled' and 'disappeared' are both verbs."},
+// HARD H5
+{sentence:"Despite the heavy rain, the cheerful children played energetically in the muddy puddles outside.",q:"Select all the ADJECTIVES.",opts:["heavy","cheerful","energetically","muddy"],answers:[0,1,3],exp:"'Heavy', 'cheerful', and 'muddy' are all adjectives."},
+{sentence:"Despite the heavy rain, the cheerful children played energetically in the muddy puddles outside.",q:"Select all the ADVERBS.",opts:["cheerful","energetically","outside","muddy"],answers:[1,2],exp:"'Energetically' tells how; 'outside' tells where they played."},
+{sentence:"Despite the heavy rain, the cheerful children played energetically in the muddy puddles outside.",q:"Select all the NOUNS.",opts:["rain","children","puddles","energetically"],answers:[0,1,2],exp:"'Rain', 'children', and 'puddles' are all nouns."},
+{sentence:"Despite the heavy rain, the cheerful children played energetically in the muddy puddles outside.",q:"Select all the VERBS.",opts:["heavy","played","cheerful","outside"],answers:[1],exp:"'Played' is the main verb."},
+// HARD H6
+{sentence:"The remarkably talented young musician performed flawlessly before a completely silent, awestruck audience.",q:"Select all the ADJECTIVES.",opts:["talented","young","silent","remarkably"],answers:[0,1,2],exp:"'Talented', 'young', and 'silent' are all adjectives."},
+{sentence:"The remarkably talented young musician performed flawlessly before a completely silent, awestruck audience.",q:"Select all the ADVERBS.",opts:["remarkably","flawlessly","completely","talented"],answers:[0,1,2],exp:"'Remarkably', 'flawlessly', and 'completely' are all adverbs."},
+{sentence:"The remarkably talented young musician performed flawlessly before a completely silent, awestruck audience.",q:"Select all the NOUNS.",opts:["musician","audience","flawlessly","silent"],answers:[0,1],exp:"'Musician' and 'audience' are the nouns."},
+{sentence:"The remarkably talented young musician performed flawlessly before a completely silent, awestruck audience.",q:"Select all the VERBS.",opts:["remarkably","performed","talented","silent"],answers:[1],exp:"'Performed' is the main verb."},
+// HARD H7
+{sentence:"She nervously handed the carefully written letter to her strict but fair supervisor.",q:"Select all the ADVERBS.",opts:["nervously","carefully","strict","fair"],answers:[0,1],exp:"'Nervously' modifies 'handed'; 'carefully' modifies 'written'."},
+{sentence:"She nervously handed the carefully written letter to her strict but fair supervisor.",q:"Select all the ADJECTIVES.",opts:["nervously","written","strict","fair"],answers:[1,2,3],exp:"'Written', 'strict', and 'fair' are all adjectives."},
+{sentence:"She nervously handed the carefully written letter to her strict but fair supervisor.",q:"Select all the NOUNS.",opts:["she","letter","supervisor","nervously"],answers:[0,1,2],exp:"'She', 'letter', and 'supervisor' are all nouns."},
+{sentence:"She nervously handed the carefully written letter to her strict but fair supervisor.",q:"Select all the VERBS.",opts:["nervously","handed","written","strict"],answers:[1],exp:"'Handed' is the main verb. 'Written' functions as an adjective here."},
+// HARD H8
+{sentence:"The ancient ruins stood silently on the rocky hilltop, attracting curious travelers from distant countries.",q:"Select all the NOUNS.",opts:["ruins","hilltop","travelers","silently"],answers:[0,1,2],exp:"'Ruins', 'hilltop', and 'travelers' are all nouns."},
+{sentence:"The ancient ruins stood silently on the rocky hilltop, attracting curious travelers from distant countries.",q:"Select all the ADJECTIVES.",opts:["ancient","silently","rocky","curious"],answers:[0,2,3],exp:"'Ancient', 'rocky', and 'curious' are all adjectives."},
+{sentence:"The ancient ruins stood silently on the rocky hilltop, attracting curious travelers from distant countries.",q:"Select all the ADVERBS.",opts:["ancient","silently","rocky","curious"],answers:[1],exp:"'Silently' is the adverb - it tells how the ruins stood."},
+{sentence:"The ancient ruins stood silently on the rocky hilltop, attracting curious travelers from distant countries.",q:"Select all the VERBS.",opts:["stood","attracting","silently","ancient"],answers:[0,1],exp:"'Stood' is the main verb; 'attracting' is a participial verb form."},
+// HARD H9
+{sentence:"The genuinely kind volunteers worked tirelessly to rebuild the severely damaged homes in the flood-affected region.",q:"Select all the ADVERBS.",opts:["genuinely","tirelessly","severely","kind"],answers:[0,1,2],exp:"'Genuinely', 'tirelessly', and 'severely' are all adverbs."},
+{sentence:"The genuinely kind volunteers worked tirelessly to rebuild the severely damaged homes in the flood-affected region.",q:"Select all the ADJECTIVES.",opts:["kind","damaged","tirelessly","genuinely"],answers:[0,1],exp:"'Kind' describes volunteers; 'damaged' describes homes."},
+{sentence:"The genuinely kind volunteers worked tirelessly to rebuild the severely damaged homes in the flood-affected region.",q:"Select all the NOUNS.",opts:["volunteers","homes","region","tirelessly"],answers:[0,1,2],exp:"'Volunteers', 'homes', and 'region' are all nouns."},
+{sentence:"The genuinely kind volunteers worked tirelessly to rebuild the severely damaged homes in the flood-affected region.",q:"Select all the VERBS.",opts:["worked","rebuild","kind","severely"],answers:[0,1],exp:"'Worked' and 'rebuild' are both verbs."},
+// HARD H10
+{sentence:"His deeply emotional speech moved the audience profoundly and sparked an intense national conversation.",q:"Select all the ADJECTIVES.",opts:["emotional","profoundly","intense","deeply"],answers:[0,2],exp:"'Emotional' describes the speech; 'intense' describes the conversation."},
+{sentence:"His deeply emotional speech moved the audience profoundly and sparked an intense national conversation.",q:"Select all the ADVERBS.",opts:["deeply","profoundly","emotional","intense"],answers:[0,1],exp:"'Deeply' modifies 'emotional'; 'profoundly' modifies 'moved'."},
+{sentence:"His deeply emotional speech moved the audience profoundly and sparked an intense national conversation.",q:"Select all the VERBS.",opts:["moved","sparked","deeply","emotional"],answers:[0,1],exp:"'Moved' and 'sparked' are both verbs."},
+{sentence:"His deeply emotional speech moved the audience profoundly and sparked an intense national conversation.",q:"Select all the NOUNS.",opts:["speech","audience","conversation","profoundly"],answers:[0,1,2],exp:"'Speech', 'audience', and 'conversation' are all nouns."},
+// HARD H11
+{sentence:"The fiercely competitive market forces companies to innovate constantly and respond swiftly to changing customer needs.",q:"Select all the ADVERBS.",opts:["fiercely","constantly","swiftly","competitive"],answers:[0,1,2],exp:"'Fiercely', 'constantly', and 'swiftly' are all adverbs."},
+{sentence:"The fiercely competitive market forces companies to innovate constantly and respond swiftly to changing customer needs.",q:"Select all the ADJECTIVES.",opts:["competitive","changing","constantly","swiftly"],answers:[0,1],exp:"'Competitive' describes the market; 'changing' describes needs."},
+{sentence:"The fiercely competitive market forces companies to innovate constantly and respond swiftly to changing customer needs.",q:"Select all the NOUNS.",opts:["market","companies","needs","fiercely"],answers:[0,1,2],exp:"'Market', 'companies', and 'needs' are all nouns."},
+{sentence:"The fiercely competitive market forces companies to innovate constantly and respond swiftly to changing customer needs.",q:"Select all the VERBS.",opts:["forces","innovate","respond","competitive"],answers:[0,1,2],exp:"'Forces', 'innovate', and 'respond' are all verbs."},
+// HARD H12
+{sentence:"The warmly decorated living room felt surprisingly cozy despite its relatively small size.",q:"Select all the ADJECTIVES.",opts:["decorated","cozy","small","surprisingly"],answers:[0,1,2],exp:"'Decorated', 'cozy', and 'small' are all adjectives."},
+{sentence:"The warmly decorated living room felt surprisingly cozy despite its relatively small size.",q:"Select all the ADVERBS.",opts:["warmly","surprisingly","relatively","cozy"],answers:[0,1,2],exp:"'Warmly', 'surprisingly', and 'relatively' are all adverbs."},
+{sentence:"The warmly decorated living room felt surprisingly cozy despite its relatively small size.",q:"Select all the NOUNS.",opts:["room","size","warmly","cozy"],answers:[0,1],exp:"'Room' and 'size' are the nouns."},
+{sentence:"The warmly decorated living room felt surprisingly cozy despite its relatively small size.",q:"Select all the VERBS.",opts:["felt","decorated","warmly","small"],answers:[0],exp:"'Felt' is the main linking verb. 'Decorated' functions as an adjective here."},
+// HARD H13
+{sentence:"The highly skilled surgeon operated calmly and efficiently even as the situation became increasingly critical.",q:"Select all the ADVERBS.",opts:["highly","calmly","efficiently","increasingly"],answers:[0,1,2,3],exp:"'Highly', 'calmly', 'efficiently', and 'increasingly' are all adverbs."},
+{sentence:"The highly skilled surgeon operated calmly and efficiently even as the situation became increasingly critical.",q:"Select all the ADJECTIVES.",opts:["skilled","critical","increasingly","calmly"],answers:[0,1],exp:"'Skilled' describes the surgeon; 'critical' describes the situation."},
+{sentence:"The highly skilled surgeon operated calmly and efficiently even as the situation became increasingly critical.",q:"Select all the NOUNS.",opts:["surgeon","situation","calmly","critical"],answers:[0,1],exp:"'Surgeon' and 'situation' are the nouns."},
+{sentence:"The highly skilled surgeon operated calmly and efficiently even as the situation became increasingly critical.",q:"Select all the VERBS.",opts:["operated","became","highly","critical"],answers:[0,1],exp:"'Operated' and 'became' are both verbs."},
+// HARD H14
+{sentence:"The passionate debate between the two brilliant lawyers lasted unexpectedly long and left everyone deeply impressed.",q:"Select all the ADJECTIVES.",opts:["passionate","brilliant","unexpectedly","deeply"],answers:[0,1],exp:"'Passionate' describes the debate; 'brilliant' describes the lawyers."},
+{sentence:"The passionate debate between the two brilliant lawyers lasted unexpectedly long and left everyone deeply impressed.",q:"Select all the ADVERBS.",opts:["unexpectedly","deeply","passionate","brilliant"],answers:[0,1],exp:"'Unexpectedly' modifies 'long'; 'deeply' modifies 'impressed'."},
+{sentence:"The passionate debate between the two brilliant lawyers lasted unexpectedly long and left everyone deeply impressed.",q:"Select all the NOUNS.",opts:["debate","lawyers","everyone","unexpectedly"],answers:[0,1,2],exp:"'Debate', 'lawyers', and 'everyone' are all nouns."},
+{sentence:"The passionate debate between the two brilliant lawyers lasted unexpectedly long and left everyone deeply impressed.",q:"Select all the VERBS.",opts:["lasted","left","passionate","unexpectedly"],answers:[0,1],exp:"'Lasted' and 'left' are both verbs."},
+// HARD H15
+{sentence:"The visibly nervous student answered each question slowly but demonstrated surprisingly thorough knowledge.",q:"Select all the ADVERBS.",opts:["visibly","slowly","surprisingly","thorough"],answers:[0,1,2],exp:"'Visibly', 'slowly', and 'surprisingly' are all adverbs."},
+{sentence:"The visibly nervous student answered each question slowly but demonstrated surprisingly thorough knowledge.",q:"Select all the ADJECTIVES.",opts:["nervous","thorough","slowly","visibly"],answers:[0,1],exp:"'Nervous' describes the student; 'thorough' describes the knowledge."},
+{sentence:"The visibly nervous student answered each question slowly but demonstrated surprisingly thorough knowledge.",q:"Select all the NOUNS.",opts:["student","question","knowledge","slowly"],answers:[0,1,2],exp:"'Student', 'question', and 'knowledge' are all nouns."},
+{sentence:"The visibly nervous student answered each question slowly but demonstrated surprisingly thorough knowledge.",q:"Select all the VERBS.",opts:["answered","demonstrated","visibly","thorough"],answers:[0,1],exp:"'Answered' and 'demonstrated' are both verbs."},
+// HARD H16
+{sentence:"The perfectly organized bookshelf displayed hundreds of neatly arranged novels and academic journals.",q:"Select all the ADJECTIVES.",opts:["organized","arranged","academic","neatly"],answers:[0,1,2],exp:"'Organized', 'arranged', and 'academic' are all adjectives."},
+{sentence:"The perfectly organized bookshelf displayed hundreds of neatly arranged novels and academic journals.",q:"Select all the ADVERBS.",opts:["perfectly","neatly","organized","arranged"],answers:[0,1],exp:"'Perfectly' modifies 'organized'; 'neatly' modifies 'arranged'."},
+{sentence:"The perfectly organized bookshelf displayed hundreds of neatly arranged novels and academic journals.",q:"Select all the NOUNS.",opts:["bookshelf","novels","journals","neatly"],answers:[0,1,2],exp:"'Bookshelf', 'novels', and 'journals' are all nouns."},
+{sentence:"The perfectly organized bookshelf displayed hundreds of neatly arranged novels and academic journals.",q:"Select all the VERBS.",opts:["displayed","organized","neatly","arranged"],answers:[0],exp:"'Displayed' is the main verb. 'Organized' and 'arranged' are adjectives here."},
+// HARD H17
+{sentence:"The unexpectedly harsh winter devastated local crops and forced many desperate farmers to seek government assistance.",q:"Select all the ADVERBS.",opts:["unexpectedly","harsh","desperate","local"],answers:[0],exp:"'Unexpectedly' is the only adverb - it modifies 'harsh'."},
+{sentence:"The unexpectedly harsh winter devastated local crops and forced many desperate farmers to seek government assistance.",q:"Select all the ADJECTIVES.",opts:["harsh","local","desperate","unexpectedly"],answers:[0,1,2],exp:"'Harsh', 'local', and 'desperate' are all adjectives."},
+{sentence:"The unexpectedly harsh winter devastated local crops and forced many desperate farmers to seek government assistance.",q:"Select all the VERBS.",opts:["devastated","forced","seek","desperate"],answers:[0,1,2],exp:"'Devastated', 'forced', and 'seek' are all verbs."},
+{sentence:"The unexpectedly harsh winter devastated local crops and forced many desperate farmers to seek government assistance.",q:"Select all the NOUNS.",opts:["winter","crops","farmers","unexpectedly"],answers:[0,1,2],exp:"'Winter', 'crops', and 'farmers' are all nouns."},
+// HARD H18
+{sentence:"The elegantly dressed woman walked gracefully across the marble floor toward the brightly lit stage.",q:"Select all the ADJECTIVES.",opts:["dressed","marble","gracefully","lit"],answers:[0,1,3],exp:"'Dressed', 'marble', and 'lit' all modify nouns as adjectives."},
+{sentence:"The elegantly dressed woman walked gracefully across the marble floor toward the brightly lit stage.",q:"Select all the ADVERBS.",opts:["elegantly","gracefully","brightly","marble"],answers:[0,1,2],exp:"'Elegantly', 'gracefully', and 'brightly' are all adverbs."},
+{sentence:"The elegantly dressed woman walked gracefully across the marble floor toward the brightly lit stage.",q:"Select all the NOUNS.",opts:["woman","floor","stage","gracefully"],answers:[0,1,2],exp:"'Woman', 'floor', and 'stage' are all nouns."},
+{sentence:"The elegantly dressed woman walked gracefully across the marble floor toward the brightly lit stage.",q:"Select all the VERBS.",opts:["walked","dressed","gracefully","lit"],answers:[0],exp:"'Walked' is the main verb. 'Dressed' and 'lit' are adjectives here."},
+// HARD H19
+{sentence:"The boldly innovative startup rapidly gained recognition after its founder passionately pitched an utterly unique solution.",q:"Select all the ADVERBS.",opts:["boldly","rapidly","passionately","utterly"],answers:[0,1,2,3],exp:"'Boldly', 'rapidly', 'passionately', and 'utterly' are all adverbs."},
+{sentence:"The boldly innovative startup rapidly gained recognition after its founder passionately pitched an utterly unique solution.",q:"Select all the ADJECTIVES.",opts:["innovative","unique","boldly","rapidly"],answers:[0,1],exp:"'Innovative' describes the startup; 'unique' describes the solution."},
+{sentence:"The boldly innovative startup rapidly gained recognition after its founder passionately pitched an utterly unique solution.",q:"Select all the NOUNS.",opts:["startup","recognition","founder","boldly"],answers:[0,1,2],exp:"'Startup', 'recognition', and 'founder' are all nouns."},
+{sentence:"The boldly innovative startup rapidly gained recognition after its founder passionately pitched an utterly unique solution.",q:"Select all the VERBS.",opts:["gained","pitched","innovative","rapidly"],answers:[0,1],exp:"'Gained' and 'pitched' are both verbs."},
+// HARD H20
+{sentence:"The newly appointed director confidently restructured the struggling department and gradually restored its former prestige.",q:"Select all the ADVERBS.",opts:["newly","confidently","gradually","struggling"],answers:[0,1,2],exp:"'Newly', 'confidently', and 'gradually' are all adverbs."},
+{sentence:"The newly appointed director confidently restructured the struggling department and gradually restored its former prestige.",q:"Select all the ADJECTIVES.",opts:["appointed","struggling","former","gradually"],answers:[0,1,2],exp:"'Appointed', 'struggling', and 'former' are all adjectives."},
+{sentence:"The newly appointed director confidently restructured the struggling department and gradually restored its former prestige.",q:"Select all the NOUNS.",opts:["director","department","prestige","gradually"],answers:[0,1,2],exp:"'Director', 'department', and 'prestige' are all nouns."},
+{sentence:"The newly appointed director confidently restructured the struggling department and gradually restored its former prestige.",q:"Select all the VERBS.",opts:["restructured","restored","appointed","struggling"],answers:[0,1],exp:"'Restructured' and 'restored' are the main verbs. 'Appointed' and 'struggling' are adjectives here."}
+];
+
+// ── ORDER: shuffle easy (0-19) and hard (20-99) independently ──
+function shuffle(arr, a, b) {
+  for (var i = b; i > a; i--) {
+    var j = Math.floor(Math.random() * (i - a + 1)) + a;
+    var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+  }
+}
+
+var TOTAL = RAW.length; // 100
+var ORDER_KEY = QUIZ_KEY + '_order_v1';
+
+function identityOrder() {
+  var arr = [];
+  for (var i = 0; i < TOTAL; i++) arr.push(i);
+  return arr;
+}
+function randomOrder() {
+  var arr = identityOrder();
+  shuffle(arr, 0, 19);
+  shuffle(arr, 20, 99);
+  return arr;
+}
+function isValidOrder(arr) {
+  if (!Array.isArray(arr) || arr.length !== TOTAL) return false;
+  var seen = {};
+  for (var i = 0; i < arr.length; i++) {
+    var v = arr[i];
+    if (typeof v !== 'number' || v < 0 || v >= TOTAL || seen[v]) return false;
+    seen[v] = true;
+  }
+  return true;
+}
+function loadOrder() {
+  try {
+    var raw = localStorage.getItem(ORDER_KEY);
+    if (!raw) return null;
+    var arr = JSON.parse(raw);
+    return isValidOrder(arr) ? arr : null;
+  } catch(e) { return null; }
+}
+function saveOrder(order) {
+  try { localStorage.setItem(ORDER_KEY, JSON.stringify(order)); } catch(e) {}
+}
+
+var currentOrder = loadOrder() || identityOrder();
+saveOrder(currentOrder);
+var pendingFreshMode = 'original';
+function Q(i) { return RAW[currentOrder[i]]; }
+// Pre-populate the hidden identity marker for position 0 so it's correct even
+// before the user clicks "Start Quiz" (render() hasn't run yet at that point).
+(function(){
+  var qi = document.getElementById('qIdentity');
+  if (qi) qi.textContent = String(currentOrder[0]);
+})();
+
+// ── STATE ──────────────────────────────────────────────────────
+var state = {
+  cur: 0,
+  sel: {},          // pos -> array of selected indices
+  submitted: {},    // pos -> true/false
+  showResults: false,
+  retryMode: false,
+  retryList: []
+};
+function getList() { return state.retryMode ? state.retryList : Array.from({length: 100}, function(_, i){ return i; }); }
+
+function getSel(pos) {
+  if (!state.sel[pos]) state.sel[pos] = [];
+  return state.sel[pos];
+}
+
+function toggleSel(pos, idx) {
+  var arr = getSel(pos);
+  var i = arr.indexOf(idx);
+  if (i === -1) arr.push(idx); else arr.splice(i, 1);
+}
+
+function isCorrect(pos) {
+  var q = Q(pos);
+  var sel = getSel(pos).slice().sort(function(a,b){return a-b;});
+  var ans = q.answers.slice().sort(function(a,b){return a-b;});
+  if (sel.length !== ans.length) return false;
+  for (var i = 0; i < ans.length; i++) { if (sel[i] !== ans[i]) return false; }
+  return true;
+}
+
+// ── SAVE / LOAD ────────────────────────────────────────────────
+function save() {
+  try {
+    localStorage.setItem(QUIZ_KEY, JSON.stringify({
+      cur: state.cur,
+      sel: state.sel,
+      submitted: state.submitted,
+      showResults: state.showResults,
+      retryMode: state.retryMode,
+      retryList: state.retryList
+    }));
+  } catch(e) {}
+}
+
+function load() {
+  try {
+    var raw = localStorage.getItem(QUIZ_KEY);
+    if (!raw) return false;
+    var s = JSON.parse(raw);
+    if (typeof s.cur !== 'number' || s.cur < 0 || s.cur >= 100) return false;
+    state.cur = s.cur;
+    state.sel = s.sel || {};
+    state.submitted = s.submitted || {};
+    state.showResults = !!s.showResults;
+    state.retryMode = !!s.retryMode;
+    state.retryList = Array.isArray(s.retryList) ? s.retryList : [];
+    return true;
+  } catch(e) { return false; }
+}
+
+// ── NAV ────────────────────────────────────────────────────────
+function updateNav() {
+  var list = getList();
+  var done = list.filter(function(p){ return !!state.submitted[p]; }).length;
+  document.getElementById('nav-count').textContent = done + ' / ' + list.length;
+  document.getElementById('prog-fill').style.width = (done / list.length * 100).toFixed(1) + '%';
+  // refresh dots if panel visible
+  var panel = document.getElementById('dot-panel');
+  if (panel.style.display === 'block') buildDots();
+}
+
+function buildDots() {
+  var panel = document.getElementById('dot-panel');
+  var list = getList();
+  var html = '';
+  list.forEach(function(p, i) {
+    var cls = 'dot';
+    if (i === state.cur) cls += ' dot-current';
+    else if (state.submitted[p]) cls += isCorrect(p) ? ' dot-correct' : ' dot-wrong';
+    html += '<button class="' + cls + '" data-pos="' + i + '">' + (i+1) + '</button>';
+  });
+  if (list.filter(function(p){ return !!state.submitted[p]; }).length === list.length) {
+    html += '<button id="results-pill" style="background:#1D9E75;color:#fff;border:none;border-radius:12px;padding:4px 14px;font-size:11px;font-weight:700;cursor:pointer;margin:2px;">Results</button>';
+  }
+  panel.innerHTML = html;
+  // attach dot click listeners
+  var dots = panel.querySelectorAll('.dot');
+  for (var d = 0; d < dots.length; d++) {
+    dots[d].addEventListener('click', dotClick);
+  }
+  var pill = document.getElementById('results-pill');
+  if (pill) pill.addEventListener('click', function(){ goResults(); });
+}
+
+function dotClick(e) {
+  var pos = parseInt(e.currentTarget.getAttribute('data-pos'), 10);
+  state.cur = pos;
+  render();
+}
+
+document.getElementById('jump-btn').addEventListener('click', function() {
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if (panel.style.display === 'block') {
+    panel.style.display = 'none';
+    btn.textContent = 'Jump v';
+  } else {
+    panel.style.display = 'block';
+    btn.textContent = 'Hide ^';
+    buildDots();
+  }
+});
+
+// ── RENDER ────────────────────────────────────────────────────
+function render() {
+  var startEl  = document.getElementById('start-screen');
+  var quizEl   = document.getElementById('quiz-screen');
+  var resEl    = document.getElementById('results-screen');
+
+  if (state.showResults) {
+    startEl.style.display  = 'none';
+    quizEl.style.display   = 'none';
+    resEl.style.display    = 'block';
+    renderResults();
+    updateNav();
+    save();
+    return;
+  }
+
+  startEl.style.display = 'none';
+  quizEl.style.display  = 'block';
+  resEl.style.display   = 'none';
+
+  var list      = getList();
+  var pos       = list[state.cur];
+  var q         = Q(pos);
+  var submitted = !!state.submitted[pos];
+  var sel       = getSel(pos);
+
+  document.getElementById('q-num').textContent = 'Question ' + (state.cur + 1) + ' of ' + list.length;
+  document.getElementById('sent-box').textContent = q.sentence;
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('qIdentity').textContent = String(currentOrder[pos]);
+
+  // options
+  var optsEl = document.getElementById('opts-area');
+  optsEl.innerHTML = '';
+  for (var i = 0; i < q.opts.length; i++) {
+    var btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = q.opts[i];
+    btn.disabled = submitted;
+
+    if (submitted) {
+      var isAns  = q.answers.indexOf(i) !== -1;
+      var picked = sel.indexOf(i) !== -1;
+      if (isAns && picked)  btn.className += ' correct-pick';
+      else if (!isAns && picked) btn.className += ' wrong-pick';
+      else if (isAns && !picked) btn.className += ' missed';
+    } else {
+      if (sel.indexOf(i) !== -1) btn.className += ' sel';
+    }
+
+    if (!submitted) {
+      (function(idx) {
+        btn.addEventListener('click', function() {
+          toggleSel(pos, idx);
+          render();
+        });
+      })(i);
+    }
+    optsEl.appendChild(btn);
+  }
+
+  // explanation
+  var expEl = document.getElementById('exp-box');
+  if (submitted) {
+    expEl.style.display = 'block';
+    expEl.textContent = q.exp;
+  } else {
+    expEl.style.display = 'none';
+    expEl.textContent = '';
+  }
+
+  // bottom nav
+  var prevBtn  = document.getElementById('prev-btn');
+  var checkBtn = document.getElementById('check-btn');
+  var nextBtn  = document.getElementById('next-btn');
+
+  prevBtn.disabled = (state.cur === 0);
+
+  if (submitted) {
+    checkBtn.style.display = 'none';
+    nextBtn.style.display  = 'block';
+    if (state.cur === list.length - 1) {
+      nextBtn.textContent = 'See Results';
+    } else {
+      nextBtn.textContent = 'Next';
+    }
+    nextBtn.disabled = false;
+  } else {
+    checkBtn.style.display = 'block';
+    nextBtn.style.display  = 'none';
+    checkBtn.disabled = false;
+  }
+
+  updateNav();
+  save();
+}
+
+// ── BUTTON LISTENERS ──────────────────────────────────────────
+document.getElementById('prev-btn').addEventListener('click', function() {
+  if (state.cur > 0) { state.cur--; render(); }
+});
+
+document.getElementById('check-btn').addEventListener('click', function() {
+  if (state.submitted[state.cur]) return;
+  state.submitted[state.cur] = true;
+  render();
+});
+
+document.getElementById('next-btn').addEventListener('click', function() {
+  var list = getList();
+  if (state.cur === list.length - 1) { goResults(); return; }
+  state.cur++;
+  render();
+});
+
+document.getElementById('start-btn').addEventListener('click', function() {
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('quiz-screen').style.display  = 'block';
+  render();
+});
+
+// ── RESULTS ───────────────────────────────────────────────────
+function goResults() {
+  state.showResults = true;
+  render();
+}
+
+function renderResults() {
+  var list = getList();
+  var correct = 0, wrong = 0, skip = 0;
+  list.forEach(function(p) {
+    if (!state.submitted[p]) { skip++; return; }
+    if (isCorrect(p)) correct++; else wrong++;
+  });
+  document.getElementById('score-line').textContent =
+    correct + ' correct out of ' + list.length + '  (' + Math.round(correct) + '%)';
+
+  document.getElementById('res-grid').innerHTML =
+    '<div class="res-card rc-correct"><div class="rc-num">' + correct + '</div><div class="rc-label">Correct</div></div>' +
+    '<div class="res-card rc-wrong"><div class="rc-num">' + wrong + '</div><div class="rc-label">Wrong</div></div>' +
+    '<div class="res-card rc-skip"><div class="rc-num">' + skip + '</div><div class="rc-label">Skipped</div></div>';
+
+  var html = '';
+  list.forEach(function(p, i) {
+    var q   = Q(p);
+    var sub = !!state.submitted[p];
+    var ok  = sub && isCorrect(p);
+    var cls = 'rcard' + (sub ? (ok ? ' rcc' : ' rcw') : '');
+    var correctWords = q.answers.length === 0 ? '(none)' :
+      q.answers.map(function(ai){ return q.opts[ai]; }).join(', ');
+    html += '<div class="' + cls + '" data-goto="' + i + '">';
+    html += '<div class="rcq">Q' + (i+1) + '. ' + q.q + '</div>';
+    html += '<div class="rca"><span class="lc">Correct: </span>' + correctWords + '</div>';
+    if (sub && !ok) {
+      var selWords = getSel(p).length === 0 ? '(none)' :
+        getSel(p).map(function(ai){ return q.opts[ai]; }).join(', ');
+      html += '<div class="rca"><span class="lw">Your answer: </span>' + selWords + '</div>';
+    }
+    html += '</div>';
+  });
+  document.getElementById('review-list').innerHTML = html;
+
+  // attach click-to-jump on review cards
+  var cards = document.querySelectorAll('#review-list .rcard');
+  for (var c = 0; c < cards.length; c++) {
+    cards[c].addEventListener('click', function(e) {
+      var i = parseInt(e.currentTarget.getAttribute('data-goto'), 10);
+      state.cur = i;
+      state.showResults = false;
+      render();
+    });
+  }
+}
+
+document.getElementById('btn-retry').addEventListener('click', function() {
+  var list = getList();
+  var wrong = list.filter(function(p) { return state.submitted[p] && !isCorrect(p); });
+  if (wrong.length === 0) return;
+  wrong.forEach(function(p) { delete state.submitted[p]; state.sel[p] = []; });
+  state.retryMode = true;
+  state.retryList = wrong;
+  state.cur = 0;
+  state.showResults = false;
+  save();
+  render();
+});
+
+document.getElementById('btn-copy').addEventListener('click', function() {
+  var list = getList();
+  var lines = ['Parts of Speech Quiz', 'June 18, 2026', ''];
+  var correct = 0;
+  list.forEach(function(p, i) {
+    var q   = Q(p);
+    var ok  = state.submitted[p] && isCorrect(p);
+    if (ok) correct++;
+    var status = !state.submitted[p] ? 'SKIP' : (ok ? 'OK' : 'WRONG');
+    var ans = q.answers.length === 0 ? '(none)' : q.answers.map(function(ai){return q.opts[ai];}).join(', ');
+    lines.push('Q' + (i+1) + ' [' + status + '] ' + q.q);
+    lines.push('  Correct: ' + ans);
+    if (state.submitted[p] && !ok) {
+      var selW = getSel(p).length === 0 ? '(none)' : getSel(p).map(function(ai){return q.opts[ai];}).join(', ');
+      lines.push('  Your answer: ' + selW);
+    }
+    lines.push('');
+  });
+  lines.push('Score: ' + correct + ' / ' + list.length);
+  var text = lines.join('\n');
+  try {
+    navigator.clipboard.writeText(text).catch(function(){
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+    });
+  } catch(e) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+});
+
+function openFreshModal(mode) {
+  pendingFreshMode = mode;
+  document.getElementById('modalTitle').textContent = mode === 'random' ? 'Start Fresh (Random Order)?' : 'Start Fresh (Original Order)?';
+  document.getElementById('modalText').textContent = mode === 'random' ? 'Questions will be reshuffled into a new random order, and all progress will be reset.' : 'Questions will return to their original order, and all progress will be reset.';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+document.getElementById('btn-fresh').addEventListener('click', function() { openFreshModal('original'); });
+document.getElementById('btn-fresh-random').addEventListener('click', function() { openFreshModal('random'); });
+document.getElementById('modal-cancel').addEventListener('click', function() {
+  document.getElementById('modal-overlay').classList.remove('open');
+});
+document.getElementById('modal-ok').addEventListener('click', function() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  currentOrder = (pendingFreshMode === 'random') ? randomOrder() : identityOrder();
+  saveOrder(currentOrder);
+  state.cur = 0;
+  state.sel = {};
+  state.submitted = {};
+  state.showResults = false;
+  state.retryMode = false;
+  state.retryList = [];
+  save();
+  render();
+});
+
+// ── INIT ──────────────────────────────────────────────────────
+if (load()) {
+  document.getElementById('start-screen').style.display = 'none';
+  render();
+}
+// else start-screen stays visible
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Punctuation &amp; Capitalization</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #111111; }
+
+  #date-display { text-align: center; font-size: 1.1rem; font-weight: 800; color: #185FA5; background: #fff; padding: 10px 0 2px; }
+  #quiz-title { text-align: center; font-size: 1.45rem; font-weight: 800; color: #1D9E75; background: #fff; padding: 4px 16px 2px; }
+  #quiz-subtitle { text-align: center; font-size: 0.85rem; color: #444; background: #fff; padding: 2px 16px 6px; border-bottom: 1px solid #e0e0e0; }
+  .instruction { text-align: center; font-size: 0.88rem; color: #555; background: #fff; padding: 5px 16px 8px; }
+
+  #nav-bar { background: #fff; border-bottom: 1px solid #e0e0e0; padding: 6px 12px 4px; }
+  #nav-top { display: flex; align-items: center; gap: 8px; }
+  #answered-count { font-size: 0.8rem; color: #555; white-space: nowrap; }
+  #progress-track { flex: 1; height: 7px; background: #d7dde6; border-radius: 4px; overflow: hidden; }
+  #progress-fill { height: 100%; background: #1D9E75; border-radius: 4px; width: 0%; transition: width 0.3s; }
+  #jump-btn { font-size: 0.78rem; background: none; border: 1px solid #1D9E75; color: #1D9E75; border-radius: 4px; padding: 2px 8px; cursor: pointer; white-space: nowrap; }
+  #results-pill { display: none; font-size: 0.78rem; background: #1D9E75; color: #fff; border: none; border-radius: 4px; padding: 2px 10px; cursor: pointer; white-space: nowrap; }
+  #dot-panel { display: none; flex-wrap: wrap; gap: 5px; padding: 7px 2px 3px; max-height: 170px; overflow-y: auto; }
+  .dot { width: 26px; height: 26px; border-radius: 5px; border: 2px solid #d7dde6; background: #d7dde6; color: #555; font-size: 0.72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .dot.correct { background: #1D9E75; border-color: #1D9E75; color: #fff; }
+  .dot.wrong { background: #E24B4A; border-color: #E24B4A; color: #fff; }
+
+  #quiz-area { display: none; max-width: 680px; margin: 0 auto; padding: 18px 14px 80px; }
+  .q-number { font-size: 0.82rem; color: #888; margin-bottom: 4px; }
+  .q-text { font-size: 1.05rem; font-weight: 600; color: #111; margin-bottom: 16px; line-height: 1.55; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .opt-btn {
+    background: #e8edf4; color: #111111; border: 2px solid transparent;
+    border-radius: 9px; padding: 12px 16px; font-size: 0.97rem;
+    text-align: left; cursor: pointer; line-height: 1.45;
+    transition: background 0.15s;
+  }
+  .opt-btn:disabled { cursor: default; }
+  .opt-btn.correct-ans { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .opt-btn.wrong-ans { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+
+  .explanation { margin-top: 14px; background: #f0f8f4; border-left: 4px solid #1D9E75; border-radius: 6px; padding: 10px 14px; font-size: 0.9rem; color: #1a4a38; line-height: 1.5; }
+
+  #bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e0e0e0; display: none; justify-content: center; gap: 12px; padding: 10px 16px; z-index: 100; }
+  .nav-btn { padding: 10px 28px; border-radius: 8px; font-size: 1rem; font-weight: 700; border: none; cursor: pointer; }
+
+  #results-screen { display: none; max-width: 680px; margin: 0 auto; padding: 24px 14px 100px; }
+  .results-card { background: #f5f7fa; border-radius: 12px; padding: 22px 20px; margin-bottom: 18px; }
+  .results-heading { font-size: 1.4rem; font-weight: 800; color: #1D9E75; text-align: center; margin-bottom: 4px; }
+  .results-score { font-size: 2.4rem; font-weight: 900; color: #111; text-align: center; margin: 8px 0 2px; }
+  .results-pct { font-size: 1rem; color: #555; text-align: center; margin-bottom: 12px; }
+  .results-item { padding: 10px 0; border-bottom: 1px solid #e0e0e0; }
+  .results-item:last-child { border-bottom: none; }
+  .ri-q { font-size: 0.87rem; color: #555; margin-bottom: 3px; }
+  .ri-correct { font-size: 0.9rem; color: #085041; font-weight: 600; }
+  .ri-wrong { font-size: 0.9rem; color: #501313; font-weight: 600; }
+  .ri-exp { font-size: 0.84rem; color: #444; margin-top: 4px; }
+
+  .res-btn { width: 100%; padding: 13px; border-radius: 9px; font-size: 1rem; font-weight: 700; border: none; cursor: pointer; margin-bottom: 10px; }
+
+  #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 999; align-items: center; justify-content: center; }
+  #modal-overlay.active { display: flex; }
+  .modal-box { background: #fff; border-radius: 12px; padding: 28px 24px; max-width: 320px; width: 90%; text-align: center; }
+  .modal-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; }
+  .modal-msg { font-size: 0.92rem; color: #555; margin-bottom: 20px; }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-cancel { flex: 1; padding: 11px; border-radius: 8px; background: #e8edf4; color: #333; border: none; cursor: pointer; font-weight: 700; font-size: 0.95rem; }
+  .modal-confirm { flex: 1; padding: 11px; border-radius: 8px; background: #E24B4A; color: #fff; border: none; cursor: pointer; font-weight: 700; font-size: 0.95rem; }
+</style>
+</head>
+<body>
+<!-- ===== Universal Quiz Timer (auto-injected) ===== -->
+<style>
+  #qzTimerBar { background: #ffffff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-family: 'Segoe UI', Arial, sans-serif; }
+  #qzTimerSetup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+  #qzTimerSetup label { font-weight: 700; }
+  #qzTimerInput { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+  #qzTimerStartBtn { background: #185FA5; color: #ffffff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  #qzTimerStartBtn:active { opacity: 0.8; }
+  #qzTimerRunning { display: none; align-items: center; gap: 8px; }
+  #qzTimerLabel { font-size: 0.78rem; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 0.02em; }
+  #qzTimerDisplay { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+  #qzTimerDisplay.qz-warn { color: #f5a623; }
+  #qzTimerDisplay.qz-danger { color: #E24B4A; }
+</style>
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label for="qzTimerInput">Set Time Limit:</label>
+    <input type="number" id="qzTimerInput" min="1" max="180" value="20"> min
+    <button id="qzTimerStartBtn" type="button">Start</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span id="qzTimerLabel">Time Left</span>
+    <span id="qzTimerDisplay">20:00</span>
+  </div>
+</div>
+<script>
+(function(){
+  var QZ_KEY = 'qzTimer_' + location.pathname;
+  var qz = { totalSec: null, startedAt: null };
+  try {
+    var raw = localStorage.getItem(QZ_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p.totalSec === 'number' && typeof p.startedAt === 'number') qz = p;
+    }
+  } catch(e) {}
+  var qzInterval = null;
+
+  function qzSave() { try { localStorage.setItem(QZ_KEY, JSON.stringify(qz)); } catch(e) {} }
+  function qzFormat(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60), s = sec % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function qzRender() {
+    var setupEl = document.getElementById('qzTimerSetup');
+    var runEl = document.getElementById('qzTimerRunning');
+    var disp = document.getElementById('qzTimerDisplay');
+    if (!setupEl || !runEl || !disp) return;
+    if (!qz.startedAt) {
+      setupEl.style.display = 'flex';
+      runEl.style.display = 'none';
+      return;
+    }
+    setupEl.style.display = 'none';
+    runEl.style.display = 'flex';
+    var elapsed = (Date.now() - qz.startedAt) / 1000;
+    var remaining = qz.totalSec - elapsed;
+    disp.classList.remove('qz-warn', 'qz-danger');
+    if (remaining <= 0) {
+      disp.textContent = "Time's Up";
+      disp.classList.add('qz-danger');
+      qzStopInterval();
+      return;
+    }
+    disp.textContent = qzFormat(remaining);
+    if (remaining <= qz.totalSec * 0.1) disp.classList.add('qz-danger');
+    else if (remaining <= qz.totalSec * 0.25) disp.classList.add('qz-warn');
+  }
+  function qzStartInterval() {
+    qzStopInterval();
+    qzInterval = setInterval(qzRender, 1000);
+  }
+  function qzStopInterval() {
+    if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+  }
+  function qzStart() {
+    var input = document.getElementById('qzTimerInput');
+    var minutes = parseFloat(input.value);
+    if (!minutes || minutes <= 0) minutes = 20;
+    qz.totalSec = Math.round(minutes * 60);
+    qz.startedAt = Date.now();
+    qzSave();
+    qzRender();
+    qzStartInterval();
+  }
+
+  var btn = document.getElementById('qzTimerStartBtn');
+  if (btn) btn.addEventListener('click', qzStart);
+  qzRender();
+  if (qz.startedAt) qzStartInterval();
+
+  function qzResetTimer() {
+    qz.totalSec = null;
+    qz.startedAt = null;
+    qzSave();
+    qzStopInterval();
+    qzRender();
+  }
+  var qzRetryRe = /retry|restart|reset|start\s*fresh|try\s*again|\uB2E4\uC2DC\s*\uC2DC\uC791|\uCC98\uC74C\uBD80\uD0B0/i;
+  document.addEventListener('click', function(ev) {
+    var el = ev.target, depth = 0;
+    while (el && depth < 4) {
+      if (el.id === 'qzTimerBar' || el.id === 'qzAttemptsBar') return;
+      var isClickable = el.tagName === 'BUTTON' || el.tagName === 'A' ||
+        (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) ||
+        (el.getAttribute && el.getAttribute('role') === 'button');
+      if (isClickable) {
+        var txt = (el.textContent || el.value || '').trim();
+        if (txt.length > 0 && txt.length < 40 && qzRetryRe.test(txt)) {
+          qzResetTimer();
+          return;
+        }
+      }
+      el = el.parentElement;
+      depth++;
+    }
+  }, true);
+})();
+</script>
+<!-- ===== End Universal Quiz Timer ===== -->
+
+
+<div id="quiz-title">[Grant] Punctuation &amp; Capitalization</div>
+<div id="quiz-subtitle">Punctuation &amp; Capitalization | <span id="att-display">Total Attempts: 0</span></div>
+<div class="instruction">Choose the sentence that uses punctuation and capitalization correctly.</div>
+
+<div id="nav-bar">
+  <div id="nav-top">
+    <span id="answered-count">0 / 50</span>
+    <div id="progress-track"><div id="progress-fill"></div></div>
+    <button id="jump-btn" onclick="window.toggleDots()">Jump</button>
+    <button id="results-pill" onclick="window.goResults()">Results</button>
+  </div>
+  <div id="dot-panel"></div>
+</div>
+
+<div id="quiz-area"></div>
+<div id="results-screen"></div>
+
+<div id="bottom-nav"></div>
+
+<div id="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title" id="modalTitle">Start Fresh?</div>
+    <div class="modal-msg" id="modalText">All your answers and progress will be cleared.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="window.closeModal()">Cancel</button>
+      <button class="modal-confirm" id="modalConfirm" onclick="window.confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const QUIZ_ID = 'grantpunct50';
+  const LS_KEY = 'quiz_' + QUIZ_ID + '_v2';
+  const ATT_KEY = 'quiz_' + QUIZ_ID + '_att_v2';
+
+  const questions = [
+    // ── Q1–10: original questions ──
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'My teacher, Mrs. johnson, assigned us a project on the american revolution.',
+        'My teacher, Mrs. Johnson, assigned us a project on the American Revolution.',
+        'My Teacher, Mrs. Johnson, assigned us a project on the American Revolution.',
+        'My teacher, mrs. Johnson, assigned us a project on the American revolution.'
+      ],
+      ci: 1,
+      exp: '"Mrs. Johnson" is a title with a proper name — both words are capitalized. "American Revolution" is a proper noun and must be capitalized. "teacher" at the start is a common noun and stays lowercase.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        '"Look out!" she screamed, "the bridge is going to collapse!"',
+        '"Look out!" She screamed, "the bridge is going to collapse!"',
+        '"Look out!" she screamed. "The bridge is going to collapse!"',
+        '"Look out"! she screamed. "The bridge is going to collapse!"'
+      ],
+      ci: 2,
+      exp: 'After a complete exclamatory quote, the dialogue tag begins with a lowercase letter ("she screamed"). A period ends the tag, and the next quoted sentence starts with a capital letter. The exclamation mark goes inside the closing quotation mark.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'Before leaving for school, jake packed his lunch, his homework, and his gym shoes.',
+        'Before leaving for school Jake packed his lunch, his homework, and his gym shoes.',
+        'Before leaving for school, Jake packed his lunch, his homework, and his gym shoes.',
+        'Before leaving for school, Jake packed his lunch his homework and his gym shoes.'
+      ],
+      ci: 2,
+      exp: 'An introductory phrase ("Before leaving for school") must be followed by a comma. Items in a series of three or more must be separated by commas. "Jake" is a proper noun and is capitalized.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'The package, which arrived on monday, contained books, a map and an old compass.',
+        'The package, which arrived on Monday, contained books, a map, and an old compass.',
+        'The package which arrived on Monday contained books, a map, and an old compass.',
+        'The package, which arrived on Monday, contained books a map and an old compass.'
+      ],
+      ci: 1,
+      exp: '"Monday" is a proper noun and must be capitalized. A nonessential clause ("which arrived on Monday") must be set off by commas on both sides. A serial comma is needed before "and" in a list of three items.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'Dr. Martinez asked, "have you taken your medication today?"',
+        'Dr. Martinez asked, "Have you taken your medication today"?',
+        'Dr. Martinez asked, "Have you taken your medication today?"',
+        'Dr. martinez asked, "Have you taken your medication today?"'
+      ],
+      ci: 2,
+      exp: 'A direct question inside quotation marks begins with a capital letter. The question mark belongs inside the closing quotation mark because it is part of the quoted question. "Dr. Martinez" — both the title and the name — are capitalized.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'We visited Paris, France and london, England on our trip last Summer.',
+        'We visited Paris, France, and London, England on our trip last summer.',
+        'We visited Paris, France, and London, England, on our trip last summer.',
+        'We visited Paris France and London England on our trip last summer.'
+      ],
+      ci: 1,
+      exp: 'City and country names are proper nouns and must be capitalized. A comma separates city from country. A serial comma goes after "London, England" before "and." "Summer" is a common noun and should not be capitalized.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'Its important to remember that the sun rises in the east.',
+        "It's important to remember that the sun rises in the East.",
+        "It's important to remember that the Sun rises in the east.",
+        "It's important to remember that the sun rises in the east."
+      ],
+      ci: 3,
+      exp: '"It\'s" (with an apostrophe) means "it is" — the correct form here. "The sun" is not capitalized unless used as a formal astronomical name. "East" as a general direction is lowercase (unlike "the East" as a named region).'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'After the storm passed the children who had stayed inside rushed outside to play.',
+        'After the storm passed, the children who had stayed inside, rushed outside to play.',
+        'After the storm passed, the children who had stayed inside rushed outside to play.',
+        'After the storm passed, the children, who had stayed inside rushed outside to play.'
+      ],
+      ci: 2,
+      exp: 'An introductory adverb clause ("After the storm passed") is followed by a comma. "who had stayed inside" is a restrictive relative clause — it identifies which children — so it should NOT be set off by commas.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'The coach yelled, "don\'t give up, we can still win this game!"',
+        'The coach yelled, "Don\'t give up, we can still win this game!"',
+        'The coach yelled "Don\'t give up, we can still win this game!"',
+        'The coach yelled, "Don\'t give up; we can still win this game"!'
+      ],
+      ci: 1,
+      exp: 'A direct quote introduced by "yelled," begins with a capital letter. A comma after the dialogue verb is required before the opening quotation mark. The exclamation mark belongs inside the closing quotation mark because it is part of the quote.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'Yoshida-san, our japanese exchange student, speaks three languages: English, japanese, and Korean.',
+        'Yoshida-san, our Japanese exchange student, speaks three languages: English, Japanese, and Korean.',
+        'Yoshida-san, our Japanese exchange student speaks three languages: English, Japanese, and Korean.',
+        'Yoshida-san, our Japanese exchange student, speaks three languages; English, Japanese, and Korean.'
+      ],
+      ci: 1,
+      exp: '"Japanese," "English," and "Korean" are proper adjectives or nouns derived from country names — all must be capitalized. The nonessential phrase "our Japanese exchange student" is correctly set off by commas. A colon (not a semicolon) introduces a list.'
+    },
+    // ── Q11–50: new questions ──
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'The senator said "I will fight for lower taxes" at the rally.',
+        'The senator said, "I will fight for lower taxes," at the rally.',
+        'The senator said, "I will fight for lower taxes", at the rally.',
+        'The senator said, "i will fight for lower taxes," at the rally.'
+      ],
+      ci: 1,
+      exp: 'A comma introduces a direct quote after a dialogue verb. The first word of a direct quote is capitalized. The comma at the end of the quote goes inside the closing quotation mark, not outside.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'My favorite subjects are math, science and english.',
+        'My favorite subjects are Math, Science, and English.',
+        'My favorite subjects are math, science, and English.',
+        'My favorite subjects are Math, science, and English.'
+      ],
+      ci: 2,
+      exp: 'General school subjects like math and science are common nouns and are not capitalized. However, "English" is always capitalized because it is derived from a proper noun (England). A serial comma is needed before "and."'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'We need to buy: eggs, milk, butter, and flour.',
+        'We need to buy eggs, milk, butter, and flour.',
+        'We need to buy eggs milk butter and flour.',
+        'We need to buy — eggs, milk, butter, and flour.'
+      ],
+      ci: 1,
+      exp: 'A colon should not be placed directly after a verb. When a list follows a verb naturally (like "buy"), no colon is needed. Commas are required to separate list items, and a serial comma goes before "and."'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        "Won't you please help me carry these boxes inside?",
+        "Wont you please help me carry these boxes inside?",
+        "Won't you please help me carry these boxes inside.",
+        "Won't you please help me carry these boxes, inside?"
+      ],
+      ci: 0,
+      exp: '"Won\'t" is a contraction of "will not" and requires an apostrophe. The sentence is a question, so it ends with a question mark. No comma is needed before "inside."'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'The book, "Charlotte\'s Web," was written by E.B. White.',
+        'The book "Charlotte\'s Web" was written by E.B. White.',
+        'The book "charlotte\'s web" was written by E.B. White.',
+        'The book, "Charlotte\'s Web", was written by E.B. White.'
+      ],
+      ci: 1,
+      exp: 'Titles of books are placed in quotation marks (or italics) with major words capitalized. When a title in quotation marks is the direct object of the sentence, no introductory comma is needed. The period goes inside the closing quotation mark at end of sentence.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'Although she was tired she stayed up to finish her report.',
+        'Although she was tired, she stayed up to finish her report.',
+        'Although she was tired; she stayed up to finish her report.',
+        'Although, she was tired, she stayed up to finish her report.'
+      ],
+      ci: 1,
+      exp: 'An introductory subordinate clause ("Although she was tired") must be followed by a comma. A semicolon cannot connect a subordinate clause to a main clause. No comma goes after "Although."'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        "The students who studied hardest earned the best grades.",
+        "The students, who studied hardest, earned the best grades.",
+        "The students who studied hardest, earned the best grades.",
+        "The students, who studied hardest earned the best grades."
+      ],
+      ci: 0,
+      exp: '"Who studied hardest" is a restrictive clause — it identifies which students — so no commas should be used. Adding commas would imply that all students studied hardest, changing the meaning.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'I have lived in three states: ohio, texas, and California.',
+        'I have lived in three states: Ohio, Texas, and California.',
+        'I have lived in three states; Ohio, Texas, and California.',
+        'I have lived in three states, Ohio, Texas, and California.'
+      ],
+      ci: 1,
+      exp: 'State names are proper nouns and must always be capitalized. A colon is correct here because it follows a complete clause and introduces a list. A semicolon is not used to introduce a list.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'She whispered, "please don\'t tell anyone what I said."',
+        'She whispered, "Please don\'t tell anyone what I said."',
+        'She whispered "Please don\'t tell anyone what I said."',
+        'She whispered, "Please don\'t tell anyone what I said".'
+      ],
+      ci: 1,
+      exp: 'A direct quote after a dialogue verb starts with a capital letter. A comma follows the dialogue verb before the opening quotation mark. The period at the end of the quoted sentence goes inside the closing quotation mark.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'Theyre going to the park aren\'t they?',
+        "They're going to the park, aren't they?",
+        "They're going to the park aren't they?",
+        "Theyre going to the park, aren't they?"
+      ],
+      ci: 1,
+      exp: '"They\'re" is a contraction of "they are" and needs an apostrophe. "Aren\'t" also needs an apostrophe. A tag question ("aren\'t they?") is set off from the main clause with a comma.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'The museum, which opened in 1987 displays artifacts from ancient egypt.',
+        'The museum, which opened in 1987, displays artifacts from Ancient Egypt.',
+        'The museum which opened in 1987, displays artifacts from ancient Egypt.',
+        'The museum, which opened in 1987, displays artifacts from ancient egypt.'
+      ],
+      ci: 1,
+      exp: 'A nonessential clause ("which opened in 1987") must be set off by commas on both sides. "Ancient Egypt" refers to a specific historical civilization and is a proper noun — both words are capitalized.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'My uncle, who is a doctor works at st. Luke\'s hospital.',
+        'My uncle, who is a Doctor, works at St. Luke\'s Hospital.',
+        'My uncle, who is a doctor, works at St. Luke\'s Hospital.',
+        'My uncle who is a doctor, works at St. Luke\'s Hospital.'
+      ],
+      ci: 2,
+      exp: '"doctor" used as a general occupation (not a title before a name) is a common noun and is not capitalized. "St. Luke\'s Hospital" is a proper noun and must be capitalized. The nonessential clause is set off by commas on both sides.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'The play was, in my opinion, the best one I have ever seen.',
+        'The play was in my opinion the best one I have ever seen.',
+        'The play was, in my opinion the best one I have ever seen.',
+        'The play was in my opinion, the best one I have ever seen.'
+      ],
+      ci: 0,
+      exp: 'A parenthetical phrase like "in my opinion" is a nonessential interruption and must be set off by commas on both sides.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'Have you read the book, "The Giver" by Lois Lowry?',
+        'Have you read the book "The Giver" by Lois Lowry?',
+        'Have you read the book "the giver" by Lois Lowry?',
+        'Have you read the book "The Giver," by Lois Lowry?'
+      ],
+      ci: 1,
+      exp: 'Book titles use title case (major words capitalized). When a book title is used as a direct object with no introductory pause, no comma is needed before the title. No comma is needed after the closing quotation mark here because the title is not a nonessential element.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'We hiked for three hours however we never reached the summit.',
+        'We hiked for three hours, however we never reached the summit.',
+        'We hiked for three hours; however, we never reached the summit.',
+        'We hiked for three hours; however we never reached the summit.'
+      ],
+      ci: 2,
+      exp: '"However" is a conjunctive adverb connecting two independent clauses. It requires a semicolon before it and a comma after it. A comma alone before "however" creates a comma splice.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'The 4th of July, also known as Independence day, is a federal holiday.',
+        'The 4th of July, also known as Independence Day, is a federal holiday.',
+        'The 4th of july, also known as Independence Day, is a federal holiday.',
+        'The 4th of July also known as Independence Day is a federal holiday.'
+      ],
+      ci: 1,
+      exp: '"Independence Day" is the official name of the holiday and is a proper noun — both words are capitalized. "July" is a proper noun (month name) and must be capitalized. The parenthetical phrase is set off with commas.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        "I'm not sure whether i should choose the red one or the blue one.",
+        "I'm not sure whether I should choose the red one or the blue one.",
+        "Im not sure whether I should choose the red one or the blue one.",
+        "I'm not sure whether I should choose the Red one or the Blue one."
+      ],
+      ci: 1,
+      exp: '"I\'m" needs an apostrophe. The pronoun "I" is always capitalized regardless of its position in a sentence. Colors used as adjectives ("red," "blue") are common words and are not capitalized.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        '"Is dinner ready yet" the child asked impatiently.',
+        '"Is dinner ready yet?" the child asked impatiently.',
+        '"Is dinner ready yet?" The child asked impatiently.',
+        '"Is dinner ready yet", the child asked impatiently.'
+      ],
+      ci: 1,
+      exp: 'A question mark ends a quoted question and goes inside the quotation mark. After a complete quoted question followed by a dialogue tag, the dialogue tag ("the child asked") begins with a lowercase letter. No comma is needed when the quote ends with a question mark.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'The three branches of government are: the Legislative, the Executive, and the Judicial.',
+        'The three branches of government are the legislative, the executive, and the judicial.',
+        'The three branches of government are the Legislative, the Executive, and the Judicial.',
+        'The three branches of government are: the legislative, the executive, and the judicial.'
+      ],
+      ci: 2,
+      exp: '"Legislative," "Executive," and "Judicial" are proper nouns when referring to specific branches of the U.S. government. A colon should not follow "are" — when a verb leads directly into a list, no colon is needed.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        "Let's meet at the corner of Main street and oak avenue at noon.",
+        "Let's meet at the corner of main street and Oak Avenue at noon.",
+        "Let's meet at the corner of Main Street and Oak Avenue at noon.",
+        "Lets meet at the corner of Main Street and Oak Avenue at noon."
+      ],
+      ci: 2,
+      exp: '"Let\'s" is a contraction of "let us" and needs an apostrophe. Street names ("Main Street," "Oak Avenue") are proper nouns and must be fully capitalized — both the name and the type of road.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'The principal not the teacher made the final decision.',
+        'The principal, not the teacher made the final decision.',
+        'The principal, not the teacher, made the final decision.',
+        'The principal not the teacher, made the final decision.'
+      ],
+      ci: 2,
+      exp: '"Not the teacher" is a parenthetical interruption that must be set off by commas on both sides. Only one comma on one side is not enough.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'Emma who sits next to me in class is my best friend.',
+        'Emma, who sits next to me in class, is my best friend.',
+        'Emma who sits next to me in class, is my best friend.',
+        'Emma, who sits next to me in class is my best friend.'
+      ],
+      ci: 1,
+      exp: 'When a relative clause follows a specific name (like Emma), it provides extra information about an already-identified person. This makes it a nonessential clause, which must be set off with commas on both sides.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'She received three gifts a book, a scarf, and a journal.',
+        'She received three gifts: a book, a scarf, and a journal.',
+        'She received three gifts; a book, a scarf, and a journal.',
+        'She received three gifts, a book, a scarf, and a journal.'
+      ],
+      ci: 1,
+      exp: 'A colon is used after a complete independent clause to introduce a list. A semicolon is not used to introduce a list. A single comma creates ambiguity with the list commas that follow.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        "You're the one who forgot to bring the map, weren't you?",
+        "Your the one who forgot to bring the map, weren't you?",
+        "You're the one who forgot to bring the map weren't you?",
+        "You're the one who forgot to bring the map, werent you?"
+      ],
+      ci: 0,
+      exp: '"You\'re" = "you are" (needs apostrophe). "Your" is a possessive pronoun and would be wrong here. "Weren\'t" also needs an apostrophe. A tag question is set off with a comma.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'The movie which I saw last friday was directed by a Korean filmmaker.',
+        'The movie, which I saw last Friday, was directed by a Korean filmmaker.',
+        'The movie which I saw last Friday was directed by a Korean filmmaker.',
+        'The movie, which I saw last Friday was directed by a Korean filmmaker.'
+      ],
+      ci: 1,
+      exp: '"Friday" is a proper noun and must be capitalized. "Korean" is a proper adjective derived from a country name and must be capitalized. The nonessential clause "which I saw last Friday" must be set off by commas on both sides.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'Marcus said that he would, "arrive by six o\'clock."',
+        'Marcus said that he would arrive by six o\'clock.',
+        'Marcus said that he would arrive by six o\'clock',
+        'Marcus said that he would "arrive by six o\'clock."'
+      ],
+      ci: 1,
+      exp: 'An indirect quote (introduced by "that") does not use quotation marks at all — it rephrases someone\'s words, not repeating them exactly. The sentence ends with a period.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'Well I guess we could try again tomorrow.',
+        'Well, I guess we could try again tomorrow.',
+        'Well I guess, we could try again tomorrow.',
+        'Well; I guess we could try again tomorrow.'
+      ],
+      ci: 1,
+      exp: 'An introductory interjection like "Well" must be followed by a comma before the rest of the sentence. A semicolon cannot follow a single word like "Well."'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'The President of the United States lives in the white house.',
+        'The president of the United States lives in the White House.',
+        'The President of the United states lives in the White House.',
+        'The president of the united states lives in the White House.'
+      ],
+      ci: 1,
+      exp: '"President" used without a name after it is a common noun and is not capitalized. "United States" is a proper noun and must be capitalized. "White House" is a specific landmark and a proper noun, so both words are capitalized.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'No I don\'t think that\'s a good idea.',
+        'No, I don\'t think that\'s a good idea.',
+        'No I don\'t think, that\'s a good idea.',
+        'No; I don\'t think that\'s a good idea.'
+      ],
+      ci: 1,
+      exp: 'An introductory word like "No" (or "Yes") used as a response must be followed by a comma. "Don\'t" and "that\'s" are contractions that each need an apostrophe.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'My mothers recipe for kimchi is very different from my aunts.',
+        "My mother's recipe for kimchi is very different from my aunt's.",
+        "My mothers' recipe for kimchi is very different from my aunts'.",
+        "My mother's recipe for kimchi is very different from my aunts."
+      ],
+      ci: 1,
+      exp: 'A singular possessive adds apostrophe + s. "My mother\'s" = the recipe belonging to one mother. "My aunt\'s" = something belonging to one aunt. "My aunts" without an apostrophe is simply a plural, not a possessive.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'On saturdays, we usually visit grandma and grandpa.',
+        'On Saturdays, we usually visit Grandma and Grandpa.',
+        'On Saturdays, we usually visit grandma and grandpa.',
+        'On saturdays, we usually visit Grandma and Grandpa.'
+      ],
+      ci: 1,
+      exp: '"Saturdays" is a proper noun (day of the week) and must be capitalized. "Grandma" and "Grandpa" are used here as names substituting for the actual names — when a family title is used in place of a name (without a possessive pronoun before it), it is capitalized.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'The students turned in their projects on time; however some of them were incomplete.',
+        'The students turned in their projects on time, however, some of them were incomplete.',
+        'The students turned in their projects on time; however, some of them were incomplete.',
+        'The students turned in their projects on time however some of them were incomplete.'
+      ],
+      ci: 2,
+      exp: '"However" as a conjunctive adverb connecting two independent clauses needs a semicolon before it and a comma after it. A comma alone before "however" is a comma splice.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        '"Stop right there!" The officer commanded.',
+        '"Stop right there!" the officer commanded.',
+        '"Stop right there"! the officer commanded.',
+        '"Stop right there!" the officer Commanded.'
+      ],
+      ci: 1,
+      exp: 'The exclamation mark goes inside the closing quotation mark. After a complete exclamatory direct quote, the dialogue tag ("the officer commanded") begins with a lowercase letter. The dialogue tag is not a new sentence.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'This is, without a doubt the most exciting game of the season.',
+        'This is without a doubt, the most exciting game of the season.',
+        'This is, without a doubt, the most exciting game of the season.',
+        'This is without a doubt the most exciting game of the season.'
+      ],
+      ci: 2,
+      exp: '"Without a doubt" is a parenthetical interruption and must be set off by commas on both sides. Having only one comma on one side creates an unbalanced and incorrect structure.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'The childrens playground equipment was replaced last spring.',
+        "The children's playground equipment was replaced last spring.",
+        "The childrens' playground equipment was replaced last spring.",
+        "The children's Playground equipment was replaced last Spring."
+      ],
+      ci: 1,
+      exp: '"Children" is already an irregular plural (not "childrens"). To show possession for an irregular plural not ending in s, add apostrophe + s: "children\'s." "Playground" and "spring" are common nouns and are not capitalized.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'We studied the Civil War, the reconstruction era, and the Gilded Age.',
+        'We studied the civil war, the Reconstruction Era, and the Gilded Age.',
+        'We studied the Civil War, the Reconstruction Era, and the Gilded Age.',
+        'We studied the Civil War, the Reconstruction Era and the Gilded Age.'
+      ],
+      ci: 2,
+      exp: '"Civil War," "Reconstruction Era," and "Gilded Age" are all names of specific historical periods and are proper nouns — all words in each name are capitalized. A serial comma is required before "and" in a list of three items.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        "I wanted to go to the concert but I didn't have enough money.",
+        "I wanted to go to the concert, but I didn't have enough money.",
+        "I wanted to go to the concert but, I didn't have enough money.",
+        "I wanted to go to the concert, but, I didn't have enough money."
+      ],
+      ci: 1,
+      exp: 'When a coordinating conjunction like "but" joins two independent clauses, a comma is placed before it. "Didn\'t" is a contraction of "did not" and needs an apostrophe. No comma goes after "but."'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'To improve your writing, use specific details vivid language, and strong verbs.',
+        'To improve your writing use specific details, vivid language, and strong verbs.',
+        'To improve your writing, use specific details, vivid language, and strong verbs.',
+        'To improve your writing, use specific details, vivid language and strong verbs.'
+      ],
+      ci: 2,
+      exp: 'An introductory infinitive phrase ("To improve your writing") is followed by a comma. Items in a series must be separated by commas, and a serial comma goes before "and" in a list of three items.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        'The library on elm street closes at nine p.m on weekdays.',
+        'The library on Elm Street closes at nine p.m. on weekdays.',
+        'The library on Elm street closes at nine P.M. on weekdays.',
+        'The library on elm Street closes at nine p.m. on weekdays.'
+      ],
+      ci: 1,
+      exp: '"Elm Street" is a proper noun — both words must be capitalized. "p.m." is an abbreviation and uses periods after each letter, all lowercase. "P.M." in all caps is also acceptable, but "p.m" without the final period is incorrect.'
+    },
+    {
+      q: "Which sentence uses punctuation and capitalization correctly?",
+      options: [
+        "It's the teams responsibility to clean up after practice.",
+        "It's the team's responsibility to clean up after practice.",
+        "Its the team's responsibility to clean up after practice.",
+        "It's the teams' responsibility to clean up after practice."
+      ],
+      ci: 1,
+      exp: '"It\'s" = "it is" (contraction, needs apostrophe). "Team\'s" = belonging to one team (singular possessive: apostrophe + s). "Teams\'" would mean belonging to multiple teams, which changes the meaning.'
+    }
+  ];
+
+  const total = questions.length;
+
+  const ORDER_KEY = LS_KEY + '_order_v1';
+  function identityOrder() { return Array.from({length: total}, (_, i) => i); }
+  function isValidOrder(arr) {
+    if (!Array.isArray(arr) || arr.length !== total) return false;
+    const seen = new Set();
+    for (const v of arr) {
+      if (typeof v !== 'number' || v < 0 || v >= total || seen.has(v)) return false;
+      seen.add(v);
+    }
+    return true;
+  }
+  function loadOrder() {
+    try {
+      const raw = localStorage.getItem(ORDER_KEY);
+      if (!raw) return null;
+      const arr = JSON.parse(raw);
+      return isValidOrder(arr) ? arr : null;
+    } catch(e) { return null; }
+  }
+  function saveOrder(order) { try { localStorage.setItem(ORDER_KEY, JSON.stringify(order)); } catch(e) {} }
+  function shuffleOrder(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+  let currentOrder = loadOrder() || identityOrder();
+  let pendingFreshMode = 'original';
+  function Q(i) { return questions[currentOrder[i]]; }
+
+  let state = { cur: 0, answers: {}, shuffles: {}, showResults: false, retryMode: false, retryList: [] };
+  function getList() { return state.retryMode ? state.retryList : Array.from({length: total}, (_, i) => i); }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      const retryMode = !!s.retryMode;
+      const retryList = Array.isArray(s.retryList) ? s.retryList : [];
+      const listLen = retryMode ? retryList.length : total;
+      if (typeof s.cur !== 'number' || s.cur < 0 || s.cur >= listLen) { localStorage.removeItem(LS_KEY); return; }
+      if (typeof s.answers !== 'object' || typeof s.shuffles !== 'object') { localStorage.removeItem(LS_KEY); return; }
+      state = s;
+      state.retryMode = retryMode;
+      state.retryList = retryList;
+    } catch(e) { localStorage.removeItem(LS_KEY); }
+  }
+
+  function saveState() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {}
+  }
+
+  function getAttempts() {
+    try { return parseInt(localStorage.getItem(ATT_KEY) || '0'); } catch(e) { return 0; }
+  }
+
+  function setAttempts(n) {
+    try { localStorage.setItem(ATT_KEY, String(n)); } catch(e) {}
+  }
+
+  function getShuffled(qi) {
+    if (state.shuffles[qi]) return state.shuffles[qi];
+    const indices = [0,1,2,3];
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    state.shuffles[qi] = indices;
+    saveState();
+    return indices;
+  }
+
+  function countAnswered() {
+    return Object.keys(state.answers).length;
+  }
+
+  function updateNav() {
+    const list = getList();
+    let ans = 0;
+    for (let k = 0; k < list.length; k++) { if (state.answers[list[k]] !== undefined) ans++; }
+    document.getElementById('answered-count').textContent = ans + ' / ' + list.length;
+    document.getElementById('progress-fill').style.width = (ans / list.length * 100) + '%';
+    document.getElementById('att-display').textContent = 'Total Attempts: ' + getAttempts();
+    document.getElementById('results-pill').style.display = (ans === list.length && !state.showResults) ? 'inline-block' : 'none';
+    renderDots();
+  }
+
+  function renderDots() {
+    const list = getList();
+    const panel = document.getElementById('dot-panel');
+    panel.innerHTML = '';
+    for (let pos = 0; pos < list.length; pos++) {
+      const i = list[pos];
+      const d = document.createElement('div');
+      d.className = 'dot';
+      d.textContent = pos + 1;
+      if (state.answers[i] !== undefined) {
+        const shuffled = getShuffled(i);
+        d.classList.add(shuffled[state.answers[i]] === Q(i).ci ? 'correct' : 'wrong');
+      }
+      d.onclick = (function(p){ return function(){ goTo(p); }; })(pos);
+      panel.appendChild(d);
+    }
+  }
+
+  window.toggleDots = function() {
+    const panel = document.getElementById('dot-panel');
+    panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+  };
+
+  window.goResults = function() {
+    state.showResults = true;
+    saveState();
+    if (!state.retryMode) {
+      const att = getAttempts() + 1;
+      setAttempts(att);
+    }
+    render();
+  };
+
+  function render() {
+    try {
+      if (state.showResults) {
+        document.getElementById('quiz-area').style.display = 'none';
+        document.getElementById('results-screen').style.display = 'block';
+        renderResults();
+      } else {
+        document.getElementById('results-screen').style.display = 'none';
+        document.getElementById('quiz-area').style.display = 'block';
+        renderQuestion();
+      }
+      updateNav();
+      renderBottomNav();
+    } catch(e) {
+      document.getElementById('quiz-area').style.display = 'block';
+      document.getElementById('quiz-area').innerHTML = '<p style="color:red;padding:20px;">Error rendering quiz. Please refresh.</p>';
+    }
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function renderQuestion() {
+    const list = getList();
+    const pos = state.cur;
+    const qi = list[pos];
+    const q = Q(qi);
+    const shuffled = getShuffled(qi);
+    const answered = state.answers[qi] !== undefined;
+    const selectedShuffleIdx = state.answers[qi];
+
+    let html = '<div class="q-number">Question ' + (pos+1) + ' of ' + list.length + '</div>';
+    html += '<div class="q-text">' + q.q + '</div>';
+    html += '<span id="qIdentity" style="display:none">' + currentOrder[qi] + '</span>';
+    html += '<div class="options">';
+
+    shuffled.forEach(function(origIdx, si) {
+      let cls = 'opt-btn';
+      let disabled = '';
+      if (answered) {
+        disabled = 'disabled';
+        if (si === selectedShuffleIdx) {
+          cls += (origIdx === q.ci) ? ' correct-ans' : ' wrong-ans';
+        } else if (origIdx === q.ci) {
+          cls += ' correct-ans';
+        }
+      }
+      html += '<button class="' + cls + '" ' + disabled + ' onclick="window.selectOpt(' + qi + ',' + si + ')">' + escHtml(q.options[origIdx]) + '</button>';
+    });
+
+    html += '</div>';
+    if (answered) {
+      html += '<div class="explanation">' + q.exp + '</div>';
+    }
+
+    document.getElementById('quiz-area').innerHTML = html;
+  }
+
+  window.selectOpt = function(qi, si) {
+    if (state.answers[qi] !== undefined) return;
+    state.answers[qi] = si;
+    saveState();
+    render();
+  };
+
+  function renderBottomNav() {
+    const list = getList();
+    const nav = document.getElementById('bottom-nav');
+    nav.innerHTML = '';
+    if (state.showResults) {
+      nav.style.display = 'none';
+      return;
+    }
+    nav.style.display = 'flex';
+
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'nav-btn';
+    prevBtn.textContent = 'Prev';
+    prevBtn.style.background = '#e8edf4';
+    prevBtn.style.color = '#555';
+    prevBtn.onclick = function() { goTo(state.cur - 1); };
+    if (state.cur === 0) prevBtn.disabled = true;
+    nav.appendChild(prevBtn);
+
+    const allDone = list.every(function(i) { return state.answers[i] !== undefined; });
+
+    if (allDone) {
+      const resBtn = document.createElement('button');
+      resBtn.className = 'nav-btn';
+      resBtn.textContent = 'Results';
+      resBtn.style.background = '#1D9E75';
+      resBtn.style.color = '#fff';
+      resBtn.onclick = function() { window.goResults(); };
+      nav.appendChild(resBtn);
+    } else {
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'nav-btn';
+      nextBtn.style.color = '#fff';
+      nextBtn.style.background = '#1D9E75';
+      nextBtn.textContent = 'Next';
+      const isLastQ = state.cur === list.length - 1;
+      const lastAnswered = state.answers[list[state.cur]] !== undefined;
+      nextBtn.disabled = isLastQ && !lastAnswered;
+      nextBtn.onclick = function() {
+        if (isLastQ) { window.goResults(); } else { goTo(state.cur + 1); }
+      };
+      nav.appendChild(nextBtn);
+    }
+  }
+
+  function goTo(i) {
+    const list = getList();
+    if (i < 0 || i >= list.length) return;
+    state.cur = i; state.showResults = false; saveState(); render();
+  }
+  window.goTo = goTo;
+
+  function renderResults() {
+    const list = getList();
+    let correct = 0;
+    for (let k = 0; k < list.length; k++) {
+      const i = list[k];
+      if (state.answers[i] !== undefined) {
+        const shuffled = getShuffled(i);
+        if (shuffled[state.answers[i]] === Q(i).ci) correct++;
+      }
+    }
+    const pct = Math.round(correct / list.length * 100);
+    const att = getAttempts();
+
+    let html = '<div class="results-card">';
+    html += '<div class="results-heading">' + (state.retryMode ? 'Retry Results' : 'Results') + '</div>';
+    html += '<div class="results-score">' + correct + ' / ' + list.length + '</div>';
+    html += '<div class="results-pct">' + pct + '% correct</div>';
+
+    for (let k = 0; k < list.length; k++) {
+      const i = list[k];
+      const q = Q(i);
+      const shuffled = getShuffled(i);
+      const userOrigIdx = state.answers[i] !== undefined ? shuffled[state.answers[i]] : undefined;
+      const isCorrect = userOrigIdx === q.ci;
+      html += '<div class="results-item">';
+      html += '<div class="ri-q">Q' + (k+1) + ': ' + q.q + '</div>';
+      if (userOrigIdx !== undefined) {
+        if (isCorrect) {
+          html += '<div class="ri-correct">Your answer: ' + escHtml(q.options[userOrigIdx]) + '</div>';
+        } else {
+          html += '<div class="ri-wrong">Your answer: ' + escHtml(q.options[userOrigIdx]) + '</div>';
+          html += '<div class="ri-correct">Correct: ' + escHtml(q.options[q.ci]) + '</div>';
+        }
+      } else {
+        html += '<div class="ri-wrong">Not answered</div>';
+        html += '<div class="ri-correct">Correct: ' + escHtml(q.options[q.ci]) + '</div>';
+      }
+      html += '<div class="ri-exp">' + q.exp + '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+
+    html += '<button class="res-btn" style="background:#1D9E75;color:#fff;" onclick="window.retryWrong()">Retry Wrong Ones</button>';
+    html += '<button class="res-btn" style="background:#185FA5;color:#fff;" onclick="window.copyResults()">Copy All Results</button>';
+    html += '<button class="res-btn" id="startFreshBtn" style="background:#e8edf4;color:#333;" onclick="window.openModal(\'original\')">Start Fresh (Original Order)</button>';
+    html += '<button class="res-btn" id="startFreshRandomBtn" style="background:#e8edf4;color:#333;" onclick="window.openModal(\'random\')">Start Fresh (Random Order)</button>';
+
+    document.getElementById('results-screen').innerHTML = html;
+    document.getElementById('att-display').textContent = 'Total Attempts: ' + att;
+  }
+
+  window.retryWrong = function() {
+    const list = getList();
+    const wrongQs = [];
+    for (let k = 0; k < list.length; k++) {
+      const i = list[k];
+      if (state.answers[i] !== undefined) {
+        const shuffled = getShuffled(i);
+        if (shuffled[state.answers[i]] !== Q(i).ci) wrongQs.push(i);
+      }
+    }
+    if (wrongQs.length === 0) return;
+    wrongQs.forEach(function(i) { delete state.answers[i]; });
+    state.retryMode = true;
+    state.retryList = wrongQs;
+    state.cur = 0;
+    state.showResults = false;
+    saveState();
+    render();
+  };
+
+  window.copyResults = function() {
+    const list = getList();
+    let text = '[Grant] Punctuation & Capitalization Results\n';
+    let correct = 0;
+    for (let k = 0; k < list.length; k++) {
+      const i = list[k];
+      const q = Q(i);
+      const shuffled = getShuffled(i);
+      const userOrigIdx = state.answers[i] !== undefined ? shuffled[state.answers[i]] : undefined;
+      const isCorrect = userOrigIdx === q.ci;
+      if (isCorrect) correct++;
+      text += '\nQ' + (k+1) + ': ' + (isCorrect ? 'Correct' : 'Wrong');
+      if (!isCorrect) text += '\n  Correct: ' + q.options[q.ci];
+    }
+    text += '\n\nScore: ' + correct + ' / ' + list.length;
+    try {
+      navigator.clipboard.writeText(text).catch(function() { alert('Copy failed. Please copy manually.'); });
+    } catch(e) { alert('Copy failed. Please copy manually.'); }
+  };
+
+  window.openModal = function(mode) {
+    pendingFreshMode = mode;
+    document.getElementById('modalTitle').textContent = mode === 'random' ? 'Start Fresh (Random Order)?' : 'Start Fresh (Original Order)?';
+    document.getElementById('modalText').textContent = mode === 'random' ? 'Questions will be reshuffled into a new random order, and all progress will be reset.' : 'Questions will return to their original order, and all progress will be reset.';
+    document.getElementById('modal-overlay').classList.add('active');
+  };
+  window.closeModal = function() { document.getElementById('modal-overlay').classList.remove('active'); };
+  window.confirmFresh = function() {
+    localStorage.removeItem(LS_KEY);
+    currentOrder = (pendingFreshMode === 'random') ? shuffleOrder(identityOrder()) : identityOrder();
+    saveOrder(currentOrder);
+    state = { cur: 0, answers: {}, shuffles: {}, showResults: false, retryMode: false, retryList: [] };
+    closeModal();
+    render();
+  };
+
+  loadState();
+  render();
+})();
+</script>
+</body>
+</html>

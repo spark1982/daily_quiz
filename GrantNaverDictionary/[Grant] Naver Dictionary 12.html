@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Naver Dictionary</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#111;min-height:100vh}
+
+/* TIMER */
+#qzTimerBar{position:sticky;top:0;z-index:200;background:#fff;border-bottom:1px solid #d7dde6;padding:8px 16px;display:flex;align-items:center;gap:10px}
+#qzTimerSetup{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#qzTimerSetup label{font-size:0.85rem;color:#444}
+#qzTimerSetup input{width:60px;padding:3px 6px;border:1px solid #ccc;border-radius:4px;font-size:0.85rem;text-align:center}
+#qzTimerStartBtn{background:#1D9E75;color:#fff;border:none;border-radius:4px;padding:4px 12px;font-size:0.85rem;cursor:pointer}
+#qzTimerRunning{display:none;align-items:center;gap:8px;flex-wrap:wrap}
+#qzTimerRunning .tz-label{font-size:0.85rem;color:#444}
+#qzCountdown{font-family:monospace;font-size:1rem;font-weight:700;color:#111;min-width:52px}
+#qzPauseBtn{background:#f5a623;color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:0.8rem;cursor:pointer}
+#qzResetBtn{background:#e2e8f0;color:#333;border:none;border-radius:4px;padding:4px 10px;font-size:0.8rem;cursor:pointer}
+
+#appWrap{max-width:720px;margin:0 auto;padding:20px 16px}
+h1{text-align:center;color:#1D9E75;font-size:1.5rem;margin-bottom:4px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px}
+
+/* NAV BAR */
+#navBar{background:#fff;border-radius:8px;padding:10px 14px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+.nav-top{display:flex;align-items:center;gap:10px}
+#progressLabel{font-size:0.82rem;color:#555;white-space:nowrap}
+#progressBar{flex:1;height:8px;background:#d7dde6;border-radius:4px;overflow:hidden}
+#progressFill{height:100%;background:#1D9E75;border-radius:4px;transition:width 0.3s}
+#jumpToggle{background:none;border:1px solid #aaa;border-radius:4px;padding:2px 8px;font-size:0.78rem;color:#555;cursor:pointer;white-space:nowrap}
+#dotPanel{display:none;margin-top:8px;max-height:170px;overflow-y:auto;display:none;flex-wrap:wrap;gap:4px;padding-top:6px}
+.dot{width:26px;height:26px;border-radius:50%;background:#d7dde6;border:none;font-size:0.7rem;font-weight:700;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center}
+.dot.correct{background:#1D9E75}
+.dot.wrong{background:#E24B4A}
+#resultsPill{display:none;margin-top:6px}
+#resultsPill button{background:#1D9E75;color:#fff;border:none;border-radius:12px;padding:4px 14px;font-size:0.8rem;cursor:pointer}
+
+#subtitleBar{text-align:center;font-size:0.78rem;color:#777;margin-bottom:14px}
+
+/* QUIZ AREA */
+#quizArea{display:none}
+.qcard{background:#fff;border-radius:10px;padding:20px;box-shadow:0 1px 6px rgba(0,0,0,0.09);margin-bottom:14px}
+.qnum{font-size:0.78rem;color:#888;margin-bottom:6px}
+.qtext{font-size:1.15rem;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.speak-btn{background:none;border:none;cursor:pointer;font-size:1.1rem;padding:2px 4px;color:#185FA5;line-height:1}
+.opts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.opt{background:#e8edf4;border:2px solid transparent;border-radius:7px;padding:11px 14px;font-size:0.97rem;cursor:pointer;text-align:left;color:#111;transition:background 0.15s,border-color 0.15s}
+.opt:hover{background:#d5dce8}
+.opt.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.explanation{display:none;border:2px solid #f5a623;background:#fffbf0;border-radius:7px;padding:10px 14px;font-size:0.88rem;margin-top:10px;color:#444;line-height:1.5}
+
+/* BOTTOM NAV */
+#bottomNav{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.nav-btn{background:#1D9E75;color:#fff;border:none;border-radius:7px;padding:10px 22px;font-size:0.95rem;cursor:pointer}
+.nav-btn:disabled{background:#b0bec5;cursor:default}
+#nextBtn{background:#1D9E75}
+
+/* RESULTS */
+#resultsArea{display:none;background:#fff;border-radius:10px;padding:24px;box-shadow:0 1px 6px rgba(0,0,0,0.09)}
+#resultsArea h2{text-align:center;color:#1D9E75;font-size:1.3rem;margin-bottom:16px}
+#summaryGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-bottom:20px}
+.scard{border-radius:7px;padding:8px 6px;text-align:center;font-size:0.78rem;cursor:pointer;border:2px solid transparent}
+.scard.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.scard.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.scard.skipped{background:#f5f5f5;border-color:#aaa;color:#555}
+.scard .sc-num{font-size:1rem;font-weight:700}
+.res-btns{display:flex;flex-direction:column;gap:10px}
+#retryBtn{background:#1D9E75;color:#fff;border:none;border-radius:7px;padding:11px;font-size:0.97rem;cursor:pointer}
+#copyBtn{background:#185FA5;color:#fff;border:none;border-radius:7px;padding:11px;font-size:0.97rem;cursor:pointer}
+#freshBtn,#freshBtnRandom{background:#e2e8f0;color:#333;border:none;border-radius:7px;padding:11px;font-size:0.97rem;cursor:pointer}
+
+/* MODAL */
+#modalOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:500;align-items:center;justify-content:center}
+#modalBox{background:#fff;border-radius:10px;padding:24px;max-width:320px;width:90%;text-align:center}
+#modalBox p{margin-bottom:18px;font-size:0.97rem;color:#333}
+#modalBox .mbBtns{display:flex;gap:10px;justify-content:center}
+#modalCancelBtn{background:#e2e8f0;color:#333;border:none;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.9rem}
+#modalConfirmBtn{background:#E24B4A;color:#fff;border:none;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.9rem}
+</style>
+</head>
+<body>
+
+<!-- TIMER BAR -->
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label>Timer (min):</label>
+    <input type="number" id="qzTimerInput" value="20" min="1" max="120">
+    <button id="qzTimerStartBtn" onclick="window.qzStartTimer()">Start Timer</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span class="tz-label">Time Left:</span>
+    <span id="qzCountdown">20:00</span>
+    <button id="qzPauseBtn" onclick="window.qzPauseResume()">Pause</button>
+    <button id="qzResetBtn" onclick="window.qzTimerReset()">Reset</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="appWrap">
+  <h1>[Grant] Naver Dictionary</h1>
+  <p class="instruction">Choose the correct meaning for each word.</p>
+
+  <!-- NAV BAR -->
+  <div id="navBar">
+    <div class="nav-top">
+      <span id="progressLabel">0 / 52</span>
+      <div id="progressBar"><div id="progressFill" style="width:0%"></div></div>
+      <button id="jumpToggle" onclick="window.toggleDots()">Jump ▾</button>
+    </div>
+    <div id="dotPanel"></div>
+    <div id="resultsPill"><button onclick="window.goResults()">Results</button></div>
+  </div>
+
+  <div id="subtitleBar">Vocabulary Quiz | Total Attempts: <span id="attCount">0</span></div>
+
+  <!-- QUIZ AREA -->
+  <div id="quizArea">
+    <div class="qcard">
+      <div class="qnum" id="qNum"></div>
+      <div class="qtext">
+        <span id="qWord"></span>
+        <button class="speak-btn" onclick="window.speakWord()" title="Listen">&#128266;</button>
+      </div>
+      <div class="opts" id="optsDiv"></div>
+      <div class="explanation" id="explDiv"></div>
+    </div>
+    <div id="bottomNav">
+      <button class="nav-btn" id="prevBtn" onclick="window.goPrev()" disabled>&#8592; Prev</button>
+      <button class="nav-btn" id="nextBtn" onclick="window.goNext()">Next &#8594;</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="resultsArea">
+    <h2>Results</h2>
+    <div id="summaryGrid"></div>
+    <div class="res-btns">
+      <button id="retryBtn" onclick="window.retryWrong()">Retry Wrong Ones</button>
+      <button id="copyBtn" onclick="window.copyResults()">Copy All Results</button>
+      <button id="freshBtn" onclick="window.askFresh('original')">Start Fresh (Original Order)</button>
+      <button id="freshBtnRandom" onclick="window.askFresh('random')">Start Fresh (Random Order)</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modalOverlay" style="display:none">
+  <div id="modalBox">
+    <h3 id="modalTitle" style="font-size:1.05rem;color:#111;margin-bottom:10px;">Start Fresh?</h3>
+    <p id="modalMsg"></p>
+    <div class="mbBtns">
+      <button id="modalCancelBtn" onclick="window.closeModal()">Cancel</button>
+      <button id="modalConfirmBtn" onclick="window.confirmModal()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== TIMER IIFE ===== */
+(function(){
+  var QUIZ_ID='grant_naver_dict_01';
+  var TK='qzTimer_'+QUIZ_ID;
+  var interval=null,pausedRemaining=null,startedAt=null,totalMs=0;
+
+  function fmt(ms){
+    if(ms<=0)return'Time\'s Up';
+    var s=Math.ceil(ms/1000);
+    var m=Math.floor(s/60);s=s%60;
+    return(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function setColor(ms){
+    var el=document.getElementById('qzCountdown');
+    var pct=totalMs>0?ms/totalMs:1;
+    el.style.color=pct<=0.10?'#E24B4A':pct<=0.25?'#f5a623':'#111';
+  }
+  function tick(){
+    var now=Date.now();
+    var remaining=pausedRemaining!==null?pausedRemaining:(totalMs-(now-startedAt));
+    if(remaining<=0){
+      clearInterval(interval);interval=null;
+      document.getElementById('qzCountdown').textContent='Time\'s Up';
+      document.getElementById('qzCountdown').style.color='#E24B4A';
+      save({running:false,remaining:0});
+      return;
+    }
+    document.getElementById('qzCountdown').textContent=fmt(remaining);
+    setColor(remaining);
+    save({running:pausedRemaining===null,remaining:remaining});
+  }
+  function save(d){try{localStorage.setItem(TK,JSON.stringify(d));}catch(e){}}
+  function showRunning(){
+    document.getElementById('qzTimerSetup').style.display='none';
+    document.getElementById('qzTimerRunning').style.display='flex';
+  }
+  window.qzStartTimer=function(){
+    var mins=parseInt(document.getElementById('qzTimerInput').value)||20;
+    totalMs=mins*60000;
+    startedAt=Date.now();pausedRemaining=null;
+    clearInterval(interval);
+    interval=setInterval(tick,500);
+    showRunning();
+    document.getElementById('qzCountdown').textContent=fmt(totalMs);
+    setColor(totalMs);
+  };
+  window.qzPauseResume=function(){
+    var btn=document.getElementById('qzPauseBtn');
+    if(pausedRemaining===null){
+      pausedRemaining=totalMs-(Date.now()-startedAt);
+      clearInterval(interval);interval=null;
+      btn.textContent='Resume';
+    } else {
+      startedAt=Date.now()-(totalMs-pausedRemaining);
+      pausedRemaining=null;
+      clearInterval(interval);
+      interval=setInterval(tick,500);
+      btn.textContent='Pause';
+    }
+  };
+  window.qzTimerReset=function(){
+    clearInterval(interval);interval=null;
+    pausedRemaining=null;startedAt=null;
+    document.getElementById('qzTimerSetup').style.display='flex';
+    document.getElementById('qzTimerRunning').style.display='none';
+    document.getElementById('qzCountdown').textContent='';
+    try{localStorage.removeItem(TK);}catch(e){}
+  };
+})();
+</script>
+
+<script>
+/* ===== QUIZ IIFE ===== */
+(function(){
+
+var QUIZ_ID='grant_naver_dict_01';
+var SK='quiz_'+QUIZ_ID+'_v1';
+var AK='quiz_'+QUIZ_ID+'_att_v1';
+
+var ALL_Q=[
+  {w:'fez',def:'a flat-topped conical hat, usually red with a tassel',opts:['a flat-topped conical hat, usually red with a tassel','a small package wrapped for delivery','a type of sturdy water channel built by ancient peoples','an opening section of a literary work'],ci:0},
+  {w:'smug',def:'having an annoying sense of self-satisfaction',opts:['having an annoying sense of self-satisfaction','showing deep warmth and love toward others','ready to do whatever is necessary with determination','having no awareness of what is happening around you'],ci:0},
+  {w:'particularly',def:'to a higher degree than usual; especially',opts:['to a higher degree than usual; especially','relating to the surrounding natural world','continuing to exist or happen despite difficulty','doing something very quickly due to urgency'],ci:0},
+  {w:'ruffled',def:'disturbed or irritated; no longer smooth or calm',opts:['disturbed or irritated; no longer smooth or calm','giving off a bright, glowing light','relating to living or growing in water','chosen as the only one; single'],ci:0},
+  {w:'burden',def:'a heavy load or responsibility that is difficult to bear',opts:['a heavy load or responsibility that is difficult to bear','a low rough sound made in the throat','the act of bouncing back after hitting a surface','an instrument that measures and indicates change'],ci:0},
+  {w:'bearing',def:'the way a person holds or carries themselves; manner',opts:['the way a person holds or carries themselves; manner','an action, especially a notable one','a person employed to carry luggage or goods','a short introductory section of a book or speech'],ci:0},
+  {w:'affectionate',def:'showing warmth and love toward others',opts:['showing warmth and love toward others','physically or mentally weak and lacking strength','continuing without stopping despite obstacles','relating to the natural environment around us'],ci:0},
+  {w:'feeble',def:'lacking physical or mental strength; very weak',opts:['lacking physical or mental strength; very weak','hanging loosely and swinging slightly','a traditional story explaining natural or cultural phenomena','the quality of being morally good and respectable'],ci:0},
+  {w:'dangling',def:'hanging or swinging loosely',opts:['hanging or swinging loosely','lightly touching or scraping the surface of something','a company or large business organization','showing extreme uncontrolled emotion or laughter'],ci:0},
+  {w:'rebound',def:'to bounce back after hitting something; to recover',opts:['to bounce back after hitting something; to recover','to copy someone\'s behavior or actions','to reveal or expose something hidden','to mix or blend together with others'],ci:0},
+  {w:'luminous',def:'giving off or reflecting bright, glowing light',opts:['giving off or reflecting bright, glowing light','relating to or suited for life in water','touching an animal\'s grass lightly while it eats','lacking physical or mental strength; very weak'],ci:0},
+  {w:'grunt',def:'a low, rough sound made in the throat',opts:['a low, rough sound made in the throat','a very loud, deep shout or roar','to stay or live in a particular place','a special right or advantage given to certain people'],ci:0},
+  {w:'unconscious',def:'not aware of or responding to what is happening around you',opts:['not aware of or responding to what is happening around you','disturbed or irritated; no longer calm','hanging loosely and swinging slightly','chosen as the only one; single'],ci:0},
+  {w:'bellow',def:'to shout or roar in a very loud, deep voice',opts:['to shout or roar in a very loud, deep voice','to mix or blend together with other people','to carry or support something to keep it upright','to imitate someone\'s behavior or style'],ci:0},
+  {w:'mingle',def:'to mix or blend together with a group of people',opts:['to mix or blend together with a group of people','to reveal something that was hidden or secret','to stay and live in a particular place','to bounce back after hitting something'],ci:0},
+  {w:'prop',def:'to support or hold something in position; something used as support',opts:['to support or hold something in position; something used as support','to copy and repeat the actions of another','to raise something to a higher level or position','to remove a cover and expose something hidden'],ci:0},
+  {w:'uncover',def:'to reveal or expose something hidden or secret',opts:['to reveal or expose something hidden or secret','to continue existing or happening despite difficulty','to stay and live in a particular place for a long time','to bounce back from a setback or collision'],ci:0},
+  {w:'relative',def:'a person related to another by family; considered in comparison',opts:['a person related to another by family; considered in comparison','a special right granted only to certain people','morally good and meeting proper standards','an extended period with very little or no rainfall'],ci:0},
+  {w:'graze',def:'to lightly touch or scrape a surface; to feed on grass',opts:['to lightly touch or scrape a surface; to feed on grass','to mix with other people at a gathering','to shout loudly in a deep voice','to raise something to a greater height'],ci:0},
+  {w:'dwell',def:'to live in or stay in a place; to think or talk about at length',opts:['to live in or stay in a place; to think or talk about at length','to carry or support something upright','to copy the actions or style of someone else','to reveal something that was kept hidden'],ci:0},
+  {w:'myth',def:'a traditional story that explains natural or cultural phenomena',opts:['a traditional story that explains natural or cultural phenomena','the strength or power of a feeling or force','a work of fiction that tells an invented story','a young person in the early stage of life'],ci:0},
+  {w:'intensity',def:'the quality of being very strong, extreme, or forceful',opts:['the quality of being very strong, extreme, or forceful','a long extended period without any rain','the process of working out or settling a problem','a special right or advantage for certain people'],ci:0},
+  {w:'persist',def:'to continue doing something despite difficulty or opposition',opts:['to continue doing something despite difficulty or opposition','to raise something to a higher level or position','to mix and blend in with a group','to bounce back from hitting something hard'],ci:0},
+  {w:'privilege',def:'a special right or advantage available only to certain people',opts:['a special right or advantage available only to certain people','an action or behavior worthy of honor','a large business organization or company','showing warmth and deep love toward someone'],ci:0},
+  {w:'fortunate',def:'having good luck; lucky',opts:['having good luck; lucky','lacking any strength or energy; very weak','in an extreme or uncontrolled emotional state','morally good and appropriate in behavior'],ci:0},
+  {w:'elevate',def:'to raise something or someone to a higher position or level',opts:['to raise something or someone to a higher position or level','to stay in a place for a long time','to touch or scrape lightly along a surface','to make a low rough sound in the throat'],ci:0},
+  {w:'hysterical',def:'in an extreme, uncontrolled emotional state; wildly funny',opts:['in an extreme, uncontrolled emotional state; wildly funny','done very quickly because of urgency','relating to the surrounding natural environment','lucky or in a favorable situation'],ci:0},
+  {w:'hastily',def:'in a quick, rushed way because of urgency',opts:['in a quick, rushed way because of urgency','in a particularly strong or extreme manner','relating to water-based environments or creatures','without any awareness of surroundings'],ci:0},
+  {w:'drought',def:'a long period of abnormally low rainfall causing water shortage',opts:['a long period of abnormally low rainfall causing water shortage','a system of channels built to carry water over long distances','a person hired to carry luggage at a hotel or station','an opening section before the main part of a work'],ci:0},
+  {w:'sole',def:'being the only one; belonging to one person or group exclusively',opts:['being the only one; belonging to one person or group exclusively','relating to living or growing in water environments','meeting moral or social standards; acceptable','a special right granted to a limited group'],ci:0},
+  {w:'parcel',def:'a package wrapped for sending or carrying',opts:['a package wrapped for sending or carrying','the way a person holds or carries themselves','an instrument used to measure or indicate trends','a traditional story explaining origins or events'],ci:0},
+  {w:'gritty',def:'showing courage and determination; containing or resembling grit',opts:['showing courage and determination; containing or resembling grit','giving off a bright steady glow','very loud and deep in sound','hanging loosely and swinging'],ci:0},
+  {w:'resolve',def:'to settle or find a solution to a problem; firm determination',opts:['to settle or find a solution to a problem; firm determination','to continue doing something despite opposition','to reveal something that was hidden','to raise to a higher level or position'],ci:0},
+  {w:'resolving',def:'the process of finding a solution or settling a problem',opts:['the process of finding a solution or settling a problem','the quality of being extremely strong or forceful','a work of fiction; something new and original','the strength or force behind a feeling or event'],ci:0},
+  {w:'fantasy',def:'the power of imagination; a story involving magic or unrealistic events',opts:['the power of imagination; a story involving magic or unrealistic events','a traditional story explaining natural phenomena','a new, original, and lengthy fictional work','an opening section before the main content of a work'],ci:0},
+  {w:'novel',def:'a long written fictional story; new and original',opts:['a long written fictional story; new and original','a traditional story passed down through generations','a person who is young and in early life','an instrument that shows and measures changing conditions'],ci:0},
+  {w:'barometer',def:'an instrument that measures atmospheric pressure; an indicator of change',opts:['an instrument that measures atmospheric pressure; an indicator of change','a structure built to carry water across a distance','a large organized group, especially a military one','a short introductory section of a book or speech'],ci:0},
+  {w:'prologue',def:'an introductory section at the beginning of a book, play, or speech',opts:['an introductory section at the beginning of a book, play, or speech','a traditional story from a culture\'s distant past','a long period without significant rainfall','the stage in life between childhood and adulthood'],ci:0},
+  {w:'youth',def:'the period of life when a person is young; young people as a group',opts:['the period of life when a person is young; young people as a group','a large business organization with many members','a special right held by a limited number of people','an action considered honorable or notable'],ci:0},
+  {w:'environmental',def:'relating to the natural world and the conditions that affect it',opts:['relating to the natural world and the conditions that affect it','relating to or living in water','belonging to or involving only one person or group','done in a quick and hurried manner'],ci:0},
+  {w:'aquatic',def:'relating to or living in water',opts:['relating to or living in water','showing courage and toughness in difficult situations','giving off a glowing or shining light','relating to the conditions of the surrounding natural world'],ci:0},
+  {w:'corporation',def:'a large company or business organization recognized as a legal entity',opts:['a large company or business organization recognized as a legal entity','an organized military group or unit','a system of channels that carries water from one place to another','a person who is paid to carry bags or open doors'],ci:0},
+  {w:'corps',def:'an organized military unit or a group with a shared purpose',opts:['an organized military unit or a group with a shared purpose','a large company recognized as a legal business entity','a notable act or action worthy of recognition','a man-made channel built to transport water'],ci:0},
+  {w:'aqueduct',def:'a structure or channel built to carry water over a long distance',opts:['a structure or channel built to carry water over a long distance','a large business organization treated as a legal entity','a person who carries luggage or stands at an entrance','an organized group with a shared military or civil purpose'],ci:0},
+  {w:'deed',def:'an action, especially a notable or brave one; a legal document of ownership',opts:['an action, especially a notable or brave one; a legal document of ownership','an expression of approval or admiration for someone','the correct or expected standard of behavior','a flat-topped conical hat traditionally worn in some cultures'],ci:0},
+  {w:'decent',def:'conforming to accepted standards; good enough; respectable',opts:['conforming to accepted standards; good enough; respectable','showing warmth and deep care toward others','lucky and in a favorable situation','showing strong uncontrolled emotion'],ci:0},
+  {w:'porter',def:'a person employed to carry luggage or stand at the entrance of a building',opts:['a person employed to carry luggage or stand at the entrance of a building','a person related to another through family','a person who holds a government or religious office','a young person in the early years of life'],ci:0},
+  {w:'praise',def:'to express strong approval or admiration for someone or something',opts:['to express strong approval or admiration for someone or something','to copy the behavior or manner of someone else','to expose or reveal something that was hidden','to continue despite facing difficulties or opposition'],ci:0},
+  {w:'proper',def:'correct, appropriate, or meeting the required standard',opts:['correct, appropriate, or meeting the required standard','relating to the surrounding natural environment','to a higher degree than usual; especially','physically or mentally lacking in strength'],ci:0},
+  {w:'grazing',def:'the act of animals feeding on grass in a field',opts:['the act of animals feeding on grass in a field','the process of mixing with other people in a social setting','the act of bouncing back from a surface or setback','the action of supporting something to keep it upright'],ci:0},
+  {w:'minister',def:'a person who holds a high government or church office',opts:['a person who holds a high government or church office','a person hired to carry bags at hotels or stations','a person related by family to another','a person who copies the style or behavior of another'],ci:0},
+  {w:'imitate',def:'to copy the actions, behavior, or style of someone or something',opts:['to copy the actions, behavior, or style of someone or something','to mix and blend into a group of people','to reveal or bring to light something hidden','to continue despite facing opposition or hardship'],ci:0}
+];
+
+var TOTAL=ALL_Q.length;
+var ORDER_KEY=SK+'_order_v1';
+function identityOrder(){var a=[];for(var i=0;i<TOTAL;i++)a.push(i);return a;}
+function isValidOrder(arr){
+  if(!Array.isArray(arr)||arr.length!==TOTAL)return false;
+  var seen={};
+  for(var i=0;i<arr.length;i++){
+    if(typeof arr[i]!=="number"||arr[i]<0||arr[i]>=TOTAL||seen[arr[i]])return false;
+    seen[arr[i]]=true;
+  }
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw=localStorage.getItem(ORDER_KEY);
+    if(raw){var arr=JSON.parse(raw);if(isValidOrder(arr))return arr;}
+  }catch(e){}
+  return null;
+}
+function saveOrder(order){try{localStorage.setItem(ORDER_KEY,JSON.stringify(order));}catch(e){}}
+function randomOrder(){
+  var arr=identityOrder();
+  for(var i=arr.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=arr[i];arr[i]=arr[j];arr[j]=t;}
+  return arr;
+}
+var currentOrder=loadOrder()||identityOrder();
+saveOrder(currentOrder);
+var pendingFreshMode='original';
+
+var state={};
+var retryMode=false;
+var retryList=[];
+var modalCb=null;
+var dotPanelOpen=false;
+
+function loadState(){
+  try{
+    var raw=localStorage.getItem(SK);
+    if(!raw)return null;
+    var s=JSON.parse(raw);
+    if(typeof s.cur!=='number'||s.cur<0||s.cur>=ALL_Q.length)return null;
+    if(typeof s.answers!=='object'||typeof s.shuffles!=='object')return null;
+    return s;
+  }catch(e){return null;}
+}
+function saveState(){
+  try{localStorage.setItem(SK,JSON.stringify(state));}catch(e){}
+}
+function getAtt(){
+  try{return parseInt(localStorage.getItem(AK)||'0');}catch(e){return 0;}
+}
+function incAtt(){
+  try{localStorage.setItem(AK,String(getAtt()+1));}catch(e){}
+}
+function updateAttDisplay(){
+  document.getElementById('attCount').textContent=getAtt();
+}
+
+function fisherYates(arr,seed){
+  var a=arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    seed=(seed*1664525+1013904223)&0xffffffff;
+    var j=Math.abs(seed)%(i+1);
+    var t=a[i];a[i]=a[j];a[j]=t;
+  }
+  return a;
+}
+
+function getQuestions(){return retryMode?retryList:ALL_Q;}
+
+function init(){
+  window.qzTimerReset();
+  updateAttDisplay();
+  var saved=loadState();
+  if(saved){
+    state=saved;
+  } else {
+    state={cur:0,answers:{},shuffles:{},showResults:false};
+    saveState();
+  }
+  buildDots();
+  if(state.showResults){
+    showResults();
+  } else {
+    render();
+  }
+}
+
+function buildDots(){
+  var qs=getQuestions();
+  var panel=document.getElementById('dotPanel');
+  panel.innerHTML='';
+  for(var i=0;i<qs.length;i++){
+    (function(idx){
+      var d=document.createElement('button');
+      d.className='dot';
+      d.textContent=idx+1;
+      d.onclick=function(){jumpTo(idx);};
+      panel.appendChild(d);
+    })(i);
+  }
+  var pill=document.getElementById('resultsPill');
+  pill.style.display='none';
+}
+
+function updateDots(){
+  var qs=getQuestions();
+  var panel=document.getElementById('dotPanel');
+  var dots=panel.querySelectorAll('.dot');
+  var allDone=true;
+  for(var i=0;i<qs.length;i++){
+    var ans=state.answers[i];
+    if(ans===undefined){allDone=false;dots[i].className='dot';}
+    else if(ans===true){dots[i].className='dot correct';}
+    else{dots[i].className='dot wrong';}
+  }
+  var answered=Object.keys(state.answers).length;
+  var label=document.getElementById('progressLabel');
+  label.textContent=answered+' / '+qs.length;
+  var fill=document.getElementById('progressFill');
+  fill.style.width=(qs.length>0?(answered/qs.length*100):0)+'%';
+  var pill=document.getElementById('resultsPill');
+  pill.style.display=allDone?'block':'none';
+}
+
+window.toggleDots=function(){
+  dotPanelOpen=!dotPanelOpen;
+  var panel=document.getElementById('dotPanel');
+  panel.style.display=dotPanelOpen?'flex':'none';
+  document.getElementById('jumpToggle').textContent=dotPanelOpen?'Jump ▴':'Jump ▾';
+};
+
+function jumpTo(idx){
+  state.cur=idx;
+  state.showResults=false;
+  saveState();
+  render();
+}
+
+function render(){
+  var qs=getQuestions();
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('resultsArea').style.display='none';
+  updateDots();
+
+  var qi=retryMode?state.cur:currentOrder[state.cur];
+  var q=qs[qi];
+  document.getElementById('qNum').textContent='Question '+(state.cur+1)+' of '+qs.length;
+  document.getElementById('qWord').textContent=q.w;
+
+  // shuffle options
+  if(!state.shuffles[state.cur]){
+    var indices=[0,1,2,3];
+    var shuffled=fisherYates(indices,state.cur*31+7777);
+    state.shuffles[state.cur]=shuffled;
+    saveState();
+  }
+  var order=state.shuffles[state.cur];
+  var answered=state.answers[state.cur];
+  var optsDiv=document.getElementById('optsDiv');
+  optsDiv.innerHTML='';
+  order.forEach(function(oi,pos){
+    var btn=document.createElement('button');
+    btn.className='opt';
+    btn.textContent=q.opts[oi];
+    if(answered!==undefined){
+      if(oi===q.ci){btn.classList.add('correct');}
+      else if(answered===false&&pos===order.indexOf(order[pos])&&oi!==q.ci&&state.selectedOpt!==undefined&&state.selectedOpt[state.cur]===oi){btn.classList.add('wrong');}
+    }
+    btn.onclick=(function(optIdx){return function(){selectOpt(optIdx);};})(oi);
+    optsDiv.appendChild(btn);
+  });
+
+  // restore wrong highlight
+  if(answered===false&&state.selectedOpt&&state.selectedOpt[state.cur]!==undefined){
+    var wrongOi=state.selectedOpt[state.cur];
+    var btns=optsDiv.querySelectorAll('.opt');
+    order.forEach(function(oi,pos){
+      if(oi===wrongOi&&oi!==q.ci){btns[pos].classList.add('wrong');}
+    });
+  }
+
+  // explanation
+  var expl=document.getElementById('explDiv');
+  if(answered===false){
+    expl.style.display='block';
+    expl.innerHTML='<strong>Explanation:</strong> The correct answer is <em>'+q.opts[q.ci]+'</em>. "'+q.w+'" means: '+q.opts[q.ci]+'.';
+  } else {
+    expl.style.display='none';
+  }
+
+  // prev/next
+  document.getElementById('prevBtn').disabled=(state.cur===0);
+  var nextBtn=document.getElementById('nextBtn');
+  var isLast=(state.cur===qs.length-1);
+  nextBtn.textContent=isLast?'See Results \u2192':'Next \u2192';
+}
+
+function selectOpt(optIdx){
+  var qs=getQuestions();
+  var qi=retryMode?state.cur:currentOrder[state.cur];
+  var q=qs[qi];
+  if(state.answers[state.cur]!==undefined)return;
+  var correct=(optIdx===q.ci);
+  state.answers[state.cur]=correct;
+  if(!state.selectedOpt)state.selectedOpt={};
+  state.selectedOpt[state.cur]=optIdx;
+  saveState();
+  render();
+}
+
+window.speakWord=function(){
+  var qs=getQuestions();
+  var qi=retryMode?state.cur:currentOrder[state.cur];
+  var word=qs[qi].w;
+  if(!window.speechSynthesis)return;
+  var u=new SpeechSynthesisUtterance(word);
+  u.lang='en-US';
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+};
+
+window.goNext=function(){
+  var qs=getQuestions();
+  if(state.cur===qs.length-1){
+    goResults();
+  } else {
+    state.cur++;
+    saveState();
+    render();
+  }
+};
+
+window.goPrev=function(){
+  if(state.cur>0){
+    state.cur--;
+    saveState();
+    render();
+  }
+};
+
+window.goResults=function(){
+  if(!retryMode){
+    incAtt();
+  }
+  updateAttDisplay();
+  state.showResults=true;
+  saveState();
+  showResults();
+};
+
+function showResults(){
+  var qs=getQuestions();
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  updateDots();
+  var grid=document.getElementById('summaryGrid');
+  grid.innerHTML='';
+  for(var pos=0;pos<qs.length;pos++){
+    var ans=state.answers[pos];
+    var card=document.createElement('div');
+    card.className='scard '+(ans===true?'correct':ans===false?'wrong':'skipped');
+    card.innerHTML='<div class="sc-num">Q'+(pos+1)+'</div><div>'+(ans===true?'Correct':ans===false?'Wrong':'Skipped')+'</div>';
+    card.onclick=(function(idx){return function(){
+      state.cur=idx;state.showResults=false;saveState();render();
+    };})(pos);
+    grid.appendChild(card);
+  }
+}
+
+window.retryWrong=function(){
+  var qs=getQuestions();
+  var wrong=[];
+  for(var pos=0;pos<qs.length;pos++){
+    var qi=retryMode?pos:currentOrder[pos];
+    if(state.answers[pos]===false)wrong.push(qs[qi]);
+  }
+  if(wrong.length===0){return;}
+  retryMode=true;
+  retryList=wrong;
+  state={cur:0,answers:{},shuffles:{},showResults:false};
+  saveState();
+  buildDots();
+  render();
+};
+
+window.copyResults=function(){
+  var qs=getQuestions();
+  var lines=['[Grant] Naver Dictionary — Results'];
+  for(var pos=0;pos<qs.length;pos++){
+    var qi=retryMode?pos:currentOrder[pos];
+    var q=qs[qi];
+    var ans=state.answers[pos];
+    var status=ans===true?'Correct':ans===false?'Wrong':'Skipped';
+    lines.push('Q'+(pos+1)+' ('+q.w+'): '+status);
+  }
+  var correct=Object.values(state.answers).filter(function(v){return v===true;}).length;
+  lines.push('');
+  lines.push('Score: '+correct+' / '+qs.length);
+  navigator.clipboard&&navigator.clipboard.writeText(lines.join('\n'));
+};
+
+window.askFresh=function(mode){
+  pendingFreshMode=mode;
+  var t=document.getElementById('modalTitle');
+  if(t)t.textContent=mode==='random'?'Start Fresh (Random Order)?':'Start Fresh (Original Order)?';
+  document.getElementById('modalMsg').textContent=mode==='random'?'Questions will be reshuffled into a new random order, and all progress will be reset.':'Questions will return to their original order, and all progress will be reset.';
+  modalCb=function(){
+    retryMode=false;retryList=[];
+    currentOrder=(pendingFreshMode==='random')?randomOrder():identityOrder();
+    saveOrder(currentOrder);
+    try{localStorage.removeItem(SK);}catch(e){}
+    state={cur:0,answers:{},shuffles:{},showResults:false};
+    saveState();
+    buildDots();
+    render();
+  };
+  document.getElementById('modalOverlay').style.display='flex';
+};
+
+window.closeModal=function(){
+  document.getElementById('modalOverlay').style.display='none';
+  modalCb=null;
+};
+window.confirmModal=function(){
+  document.getElementById('modalOverlay').style.display='none';
+  if(modalCb)modalCb();
+  modalCb=null;
+};
+
+window.jumpTo=jumpTo;
+
+init();
+})();
+</script>
+</body>
+</html>

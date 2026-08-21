@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Complete Sentence Quiz</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f7fa; color: #111; }
+
+#quiz-date { text-align:center; font-size:2rem; font-weight:800; color:#185FA5; background:#fff; padding:14px 0 4px; }
+#quiz-title { text-align:center; font-size:1.1rem; font-weight:700; color:#1D9E75; background:#fff; padding:4px 16px 0; }
+#att-display { text-align:center; font-size:0.82rem; color:#555; background:#fff; padding:2px 16px 10px; }
+.instruction { text-align:center; font-size:0.88rem; color:#555; background:#fff; padding:6px 16px 10px; }
+
+#top-nav {
+  background:#fff; border-bottom:1px solid #e0e4ea;
+  padding:8px 16px; position:sticky; top:0; z-index:50;
+}
+.nav-row { display:flex; align-items:center; gap:10px; }
+#answered-count { font-size:0.82rem; color:#555; white-space:nowrap; }
+#prog-track { flex:1; height:6px; background:#d7dde6; border-radius:4px; overflow:hidden; }
+#prog-fill { height:100%; background:#1D9E75; border-radius:4px; width:0%; transition:width 0.25s; }
+#jump-btn {
+  font-size:0.78rem; padding:4px 10px; border-radius:6px;
+  border:1px solid #1D9E75; color:#1D9E75; background:#fff; cursor:pointer; white-space:nowrap;
+}
+#dot-panel {
+  display:none; flex-wrap:wrap; gap:6px; padding:10px 0 4px;
+  max-height:170px; overflow-y:auto;
+}
+.dot {
+  width:26px; height:26px; border-radius:50%; font-size:0.72rem; font-weight:700;
+  display:flex; align-items:center; justify-content:center; cursor:pointer; border:none;
+  background:#d7dde6; color:#555;
+}
+.dot.correct { background:#1D9E75; color:#fff; }
+.dot.wrong   { background:#E24B4A; color:#fff; }
+#results-pill {
+  display:none; font-size:0.78rem; padding:4px 12px; border-radius:12px;
+  background:#1D9E75; color:#fff; cursor:pointer; border:none; margin-top:4px;
+}
+
+#quiz-area { max-width:640px; margin:0 auto; padding:20px 16px 60px; }
+.q-meta { font-size:0.8rem; color:#777; margin-bottom:6px; }
+.q-text { font-size:1.05rem; font-weight:600; line-height:1.55; margin-bottom:18px; }
+
+.options { display:flex; flex-direction:column; gap:10px; }
+.opt-btn {
+  background:#e8edf4; color:#111111; border:2px solid transparent;
+  border-radius:10px; padding:14px 16px; font-size:0.95rem; text-align:left;
+  cursor:pointer; line-height:1.4;
+}
+.opt-btn:disabled { cursor:default; }
+.opt-btn.correct { background:#E1F5EE; border-color:#1D9E75; color:#085041; }
+.opt-btn.wrong   { background:#FCEBEB; border-color:#E24B4A; color:#501313; }
+
+#explain-box {
+  display:none; margin-top:14px; padding:12px 16px;
+  border-radius:8px; font-size:0.88rem; line-height:1.6;
+}
+#explain-box.correct { background:#E1F5EE; border:1px solid #1D9E75; color:#085041; }
+#explain-box.wrong   { background:#FCEBEB; border:1px solid #E24B4A; color:#501313; }
+
+.nav-btns { display:flex; gap:10px; margin-top:22px; }
+#prev-btn, #next-btn {
+  flex:1; padding:12px; border-radius:10px; border:none;
+  font-size:0.95rem; font-weight:700; cursor:pointer;
+}
+#prev-btn { background:#e8edf4; color:#333; }
+#next-btn { background:#1D9E75; color:#fff; }
+#prev-btn:disabled { opacity:0.4; cursor:default; }
+
+#results-area { display:none; max-width:640px; margin:0 auto; padding:20px 16px 60px; }
+#results-area h2 { font-size:1.3rem; font-weight:800; color:#1D9E75; text-align:center; margin-bottom:6px; }
+#score-line { text-align:center; font-size:1rem; color:#444; margin-bottom:18px; }
+
+.res-grid { display:flex; flex-direction:column; gap:8px; margin-bottom:22px; }
+.res-card {
+  background:#f5f7fa; border-radius:8px; padding:12px 14px;
+  border-left:4px solid #d7dde6; font-size:0.88rem; line-height:1.5;
+}
+.res-card.correct { border-left-color:#1D9E75; }
+.res-card.wrong   { border-left-color:#E24B4A; }
+.res-card.skipped { border-left-color:#d7dde6; }
+.res-card .rc-label { font-weight:700; font-size:0.8rem; margin-bottom:3px; }
+.res-card.correct .rc-label { color:#1D9E75; }
+.res-card.wrong   .rc-label { color:#E24B4A; }
+.res-card.skipped .rc-label { color:#888; }
+.res-card .rc-q   { color:#333; margin-bottom:4px; }
+.res-card .rc-ans { font-size:0.82rem; color:#555; }
+.res-card .rc-correct { font-size:0.82rem; color:#1D9E75; font-weight:600; }
+
+.res-btns { display:flex; flex-direction:column; gap:10px; }
+#retry-btn { padding:13px; border-radius:10px; border:none; background:#1D9E75; color:#fff; font-size:0.97rem; font-weight:700; cursor:pointer; }
+#copy-btn  { padding:13px; border-radius:10px; border:none; background:#185FA5; color:#fff; font-size:0.97rem; font-weight:700; cursor:pointer; }
+#fresh-btn, #fresh-btn-random { padding:13px; border-radius:10px; border:none; background:#e8edf4; color:#333; font-size:0.97rem; font-weight:700; cursor:pointer; }
+
+#modal-overlay {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45);
+  z-index:200; align-items:center; justify-content:center;
+}
+#modal-overlay.show { display:flex; }
+#modal-box { background:#fff; border-radius:14px; padding:28px 24px 22px; max-width:320px; width:90%; text-align:center; }
+#modal-box h3 { font-size:1.05rem; margin-bottom:8px; }
+#modal-box p  { font-size:0.88rem; color:#555; margin-bottom:20px; }
+.modal-btns { display:flex; gap:10px; justify-content:center; }
+#modal-cancel  { padding:10px 22px; border-radius:8px; border:none; background:#e8edf4; color:#333; font-size:0.95rem; cursor:pointer; }
+#modal-confirm { padding:10px 22px; border-radius:8px; border:none; background:#E24B4A; color:#fff; font-size:0.95rem; font-weight:700; cursor:pointer; }
+</style>
+</head>
+<body>
+<!-- ===== Universal Quiz Timer (auto-injected) ===== -->
+<style>
+  #qzTimerBar { background: #ffffff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-family: 'Segoe UI', Arial, sans-serif; }
+  #qzTimerSetup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+  #qzTimerSetup label { font-weight: 700; }
+  #qzTimerInput { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+  #qzTimerStartBtn { background: #185FA5; color: #ffffff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  #qzTimerStartBtn:active { opacity: 0.8; }
+  #qzTimerRunning { display: none; align-items: center; gap: 8px; }
+  #qzTimerLabel { font-size: 0.78rem; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 0.02em; }
+  #qzTimerDisplay { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+  #qzTimerDisplay.qz-warn { color: #f5a623; }
+  #qzTimerDisplay.qz-danger { color: #E24B4A; }
+</style>
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label for="qzTimerInput">Set Time Limit:</label>
+    <input type="number" id="qzTimerInput" min="1" max="180" value="20"> min
+    <button id="qzTimerStartBtn" type="button">Start</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span id="qzTimerLabel">Time Left</span>
+    <span id="qzTimerDisplay">20:00</span>
+  </div>
+</div>
+<script>
+(function(){
+  var QZ_KEY = 'qzTimer_' + location.pathname;
+  var qz = { totalSec: null, startedAt: null };
+  try {
+    var raw = localStorage.getItem(QZ_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p.totalSec === 'number' && typeof p.startedAt === 'number') qz = p;
+    }
+  } catch(e) {}
+  var qzInterval = null;
+
+  function qzSave() { try { localStorage.setItem(QZ_KEY, JSON.stringify(qz)); } catch(e) {} }
+  function qzFormat(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60), s = sec % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function qzRender() {
+    var setupEl = document.getElementById('qzTimerSetup');
+    var runEl = document.getElementById('qzTimerRunning');
+    var disp = document.getElementById('qzTimerDisplay');
+    if (!setupEl || !runEl || !disp) return;
+    if (!qz.startedAt) {
+      setupEl.style.display = 'flex';
+      runEl.style.display = 'none';
+      return;
+    }
+    setupEl.style.display = 'none';
+    runEl.style.display = 'flex';
+    var elapsed = (Date.now() - qz.startedAt) / 1000;
+    var remaining = qz.totalSec - elapsed;
+    disp.classList.remove('qz-warn', 'qz-danger');
+    if (remaining <= 0) {
+      disp.textContent = "Time's Up";
+      disp.classList.add('qz-danger');
+      qzStopInterval();
+      return;
+    }
+    disp.textContent = qzFormat(remaining);
+    if (remaining <= qz.totalSec * 0.1) disp.classList.add('qz-danger');
+    else if (remaining <= qz.totalSec * 0.25) disp.classList.add('qz-warn');
+  }
+  function qzStartInterval() {
+    qzStopInterval();
+    qzInterval = setInterval(qzRender, 1000);
+  }
+  function qzStopInterval() {
+    if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+  }
+  function qzStart() {
+    var input = document.getElementById('qzTimerInput');
+    var minutes = parseFloat(input.value);
+    if (!minutes || minutes <= 0) minutes = 20;
+    qz.totalSec = Math.round(minutes * 60);
+    qz.startedAt = Date.now();
+    qzSave();
+    qzRender();
+    qzStartInterval();
+  }
+
+  var btn = document.getElementById('qzTimerStartBtn');
+  if (btn) btn.addEventListener('click', qzStart);
+  qzRender();
+  if (qz.startedAt) qzStartInterval();
+
+  function qzResetTimer() {
+    qz.totalSec = null;
+    qz.startedAt = null;
+    qzSave();
+    qzStopInterval();
+    qzRender();
+  }
+  var qzRetryRe = /retry|restart|reset|start\s*fresh|try\s*again|\uB2E4\uC2DC\s*\uC2DC\uC791|\uCC98\uC74C\uBD80\uD0B0/i;
+  document.addEventListener('click', function(ev) {
+    var el = ev.target, depth = 0;
+    while (el && depth < 4) {
+      if (el.id === 'qzTimerBar' || el.id === 'qzAttemptsBar') return;
+      var isClickable = el.tagName === 'BUTTON' || el.tagName === 'A' ||
+        (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) ||
+        (el.getAttribute && el.getAttribute('role') === 'button');
+      if (isClickable) {
+        var txt = (el.textContent || el.value || '').trim();
+        if (txt.length > 0 && txt.length < 40 && qzRetryRe.test(txt)) {
+          qzResetTimer();
+          return;
+        }
+      }
+      el = el.parentElement;
+      depth++;
+    }
+  }, true);
+})();
+</script>
+<!-- ===== End Universal Quiz Timer ===== -->
+
+
+<div id="quiz-title">[Grant] Complete Sentence</div>
+<div id="att-display">Complete Sentence Quiz | Total Attempts: 0</div>
+<div class="instruction">Identify which of the four choices is a COMPLETE sentence.</div>
+
+<div id="top-nav">
+  <div class="nav-row">
+    <span id="answered-count">0 / 100</span>
+    <div id="prog-track"><div id="prog-fill"></div></div>
+    <button id="jump-btn" onclick="window.toggleDots()">Jump</button>
+  </div>
+  <div id="dot-panel"></div>
+  <button id="results-pill" onclick="window.goResults()">See Results</button>
+</div>
+
+<div id="quiz-area">
+  <div class="q-meta" id="q-meta"></div>
+  <div class="q-text" id="q-text"></div>
+  <span id="qIdentity" style="display:none"></span>
+  <div class="options" id="options"></div>
+  <div id="explain-box"></div>
+  <div class="nav-btns">
+    <button id="prev-btn" onclick="window.goPrev()">Prev</button>
+    <button id="next-btn" onclick="window.nextQ()">Next</button>
+  </div>
+</div>
+
+<div id="results-area">
+  <h2>Results</h2>
+  <div id="score-line"></div>
+  <div class="res-grid" id="res-grid"></div>
+  <div class="res-btns">
+    <button id="retry-btn" onclick="window.retryWrong()">Retry Wrong Ones</button>
+    <button id="copy-btn"  onclick="window.copyResults()">Copy All Results</button>
+    <button id="fresh-btn" onclick="window.openModal('original')">Start Fresh (Original Order)</button>
+    <button id="fresh-btn-random" onclick="window.openModal('random')">Start Fresh (Random Order)</button>
+  </div>
+</div>
+
+<div id="modal-overlay">
+  <div id="modal-box">
+    <h3 id="modalTitle">Start Fresh?</h3>
+    <p id="modalText">All progress will be cleared and the quiz will restart from question 1.</p>
+    <div class="modal-btns">
+      <button id="modal-cancel"  onclick="window.closeModal()">Cancel</button>
+      <button id="modal-confirm" onclick="window.confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+var STORAGE_KEY = 'quiz_grant_completesentence_v1';
+var ATT_KEY     = 'quiz_grant_completesentence_att_v1';
+
+var ALL_Q = [
+  {text:"Which of the following is a COMPLETE sentence?",options:["Because she was late to school.","The dog barked loudly at the mailman.","Running down the hill as fast as possible.","After the long summer vacation ended."],ci:1,explain:"\"The dog barked loudly at the mailman.\" is a complete sentence — subject: 'The dog', predicate: 'barked'. The other three are fragments: a 'Because' dependent clause, an -ing phrase with no subject, and an 'After' dependent clause."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Waiting for the bus in the rain.","Although the test was very difficult.","She finished her homework before dinner.","The tall boy with curly hair."],ci:2,explain:"\"She finished her homework before dinner.\" is a complete sentence — subject: 'She', predicate: 'finished'. The others are fragments: an -ing phrase, an 'Although' clause, and a noun phrase with no verb."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["When the teacher finally arrived.","My favorite pizza with extra cheese.","Jumping over the puddles on the way home.","The cat sat on the warm windowsill."],ci:3,explain:"\"The cat sat on the warm windowsill.\" is a complete sentence — subject: 'The cat', predicate: 'sat'. The others are fragments: a 'When' clause, a noun phrase with no verb, and an -ing phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["During the loud and exciting soccer game.","Birds sing beautifully every morning.","Swimming in the cool lake all afternoon.","If you finish your dinner tonight."],ci:1,explain:"\"Birds sing beautifully every morning.\" is a complete sentence — subject: 'Birds', predicate: 'sing'. The others are fragments: a prepositional phrase, an -ing phrase, and an 'If' dependent clause."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The little girl with the red umbrella.","Whenever it rains heavily outside.","Before the movie started at the theater.","My brother plays basketball after school."],ci:3,explain:"\"My brother plays basketball after school.\" is a complete sentence — subject: 'My brother', predicate: 'plays'. The others are fragments: a noun phrase, a 'Whenever' clause, and a 'Before' clause."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["We visited the science museum on Saturday.","Because the weather was so cold.","Laughing and talking with her best friends.","The old red barn near the river."],ci:0,explain:"\"We visited the science museum on Saturday.\" is a complete sentence — subject: 'We', predicate: 'visited'. The others are fragments: a 'Because' clause, an -ing phrase, and a noun phrase with no verb."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["After eating a big Thanksgiving dinner.","The books on the library shelf.","The snow fell softly through the night.","Wishing for a snow day tomorrow."],ci:2,explain:"\"The snow fell softly through the night.\" is a complete sentence — subject: 'The snow', predicate: 'fell'. The others are fragments: an 'After' phrase, a noun phrase with no verb, and a -ing phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["While the rest of the class was reading.","The new student answered every question.","Excited about the upcoming field trip.","A basket full of ripe red apples."],ci:1,explain:"\"The new student answered every question.\" is a complete sentence — subject: 'The new student', predicate: 'answered'. The others are fragments: a 'While' clause, an adjective phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Riding bikes through the neighborhood park.","Even though she practiced every day.","The old wooden bridge across the creek.","Our team won the championship last year."],ci:3,explain:"\"Our team won the championship last year.\" is a complete sentence — subject: 'Our team', predicate: 'won'. The others are fragments: an -ing phrase, an 'Even though' clause, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The flowers bloomed early this spring.","Running and playing in the backyard.","Before the alarm clock went off.","A jar of homemade strawberry jam."],ci:0,explain:"\"The flowers bloomed early this spring.\" is a complete sentence — subject: 'The flowers', predicate: 'bloomed'. The others are fragments: an -ing phrase, a 'Before' clause, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Across the busy street and through the park.","The baby smiled at her mother.","Crying softly in the corner of the room.","Unless you study hard for the exam."],ci:1,explain:"\"The baby smiled at her mother.\" is a complete sentence — subject: 'The baby', predicate: 'smiled'. The others are fragments: a prepositional phrase, an -ing phrase, and an 'Unless' clause."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Although the sun was shining brightly.","Before the train arrived at the station.","The chef prepared a delicious meal.","Swimming laps in the community pool."],ci:2,explain:"\"The chef prepared a delicious meal.\" is a complete sentence — subject: 'The chef', predicate: 'prepared'. The others are fragments: an 'Although' clause, a 'Before' clause, and an -ing phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The wind blew the leaves off the trees.","Whenever the phone rings loudly.","A pile of old magazines on the floor.","Singing and dancing at the school talent show."],ci:0,explain:"\"The wind blew the leaves off the trees.\" is a complete sentence — subject: 'The wind', predicate: 'blew'. The others are fragments: a 'Whenever' clause, a noun phrase, and an -ing phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["While the children played outside.","The library closes at nine o'clock.","Hidden under the old wooden bed.","If it snows more than six inches."],ci:1,explain:"\"The library closes at nine o'clock.\" is a complete sentence — subject: 'The library', predicate: 'closes'. The others are fragments: a 'While' clause, a participial phrase, and an 'If' clause."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Despite the heavy rain all morning.","After the long flight across the ocean.","The scientists discovered a new planet.","Worried about the upcoming math test."],ci:2,explain:"\"The scientists discovered a new planet.\" is a complete sentence — subject: 'The scientists', predicate: 'discovered'. The others are fragments: a prepositional phrase, an 'After' phrase, and a participial phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Jumping rope with her two best friends.","Even though he tried his hardest.","My grandmother bakes cookies every Sunday.","The red bicycle near the front door."],ci:2,explain:"\"My grandmother bakes cookies every Sunday.\" is a complete sentence — subject: 'My grandmother', predicate: 'bakes'. The others are fragments: an -ing phrase, an 'Even though' clause, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Because the music was too loud.","The players practiced every day after school.","Painted bright yellow with white trim.","On top of the highest mountain peak."],ci:1,explain:"\"The players practiced every day after school.\" is a complete sentence — subject: 'The players', predicate: 'practiced'. The others are fragments: a 'Because' clause, a participial phrase, and a prepositional phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The old man fed the pigeons in the park.","Running through the airport to catch the flight.","Since the store opened last month.","A collection of rare stamps from around the world."],ci:0,explain:"\"The old man fed the pigeons in the park.\" is a complete sentence — subject: 'The old man', predicate: 'fed'. The others are fragments: an -ing phrase, a 'Since' clause, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Without any warning or explanation.","Until the very last second of the game.","My sister graduated from college last spring.","Hoping for a better outcome next time."],ci:2,explain:"\"My sister graduated from college last spring.\" is a complete sentence — subject: 'My sister', predicate: 'graduated'. The others are fragments: a prepositional phrase, an 'Until' clause, and an -ing phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Since she moved to a new city.","The puppy chased its tail around and around.","Scattered all over the bedroom floor.","A tall glass of cold lemonade."],ci:1,explain:"\"The puppy chased its tail around and around.\" is a complete sentence — subject: 'The puppy', predicate: 'chased'. The others are fragments: a 'Since' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Whenever the weather gets cold outside.","The kite soared high above the trees.","Broken into a thousand tiny pieces.","Between the two tall buildings downtown."],ci:1,explain:"\"The kite soared high above the trees.\" is a complete sentence — subject: 'The kite', predicate: 'soared'. The others are fragments: a 'Whenever' clause, a participial phrase, and a prepositional phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The students completed the assignment on time.","After the long weekend was finally over.","Staring out the window at the gray clouds.","A brand new pair of running shoes."],ci:0,explain:"\"The students completed the assignment on time.\" is a complete sentence — subject: 'The students', predicate: 'completed'. The others are fragments: an 'After' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Through the dark forest at midnight.","If the package arrives before noon.","The horse galloped across the open field.","Wearing a bright orange raincoat."],ci:2,explain:"\"The horse galloped across the open field.\" is a complete sentence — subject: 'The horse', predicate: 'galloped'. The others are fragments: a prepositional phrase, an 'If' clause, and a participial phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Although the movie received poor reviews.","The fireflies lit up the summer night.","Packed tightly into a small brown box.","Down the steep hill and across the bridge."],ci:1,explain:"\"The fireflies lit up the summer night.\" is a complete sentence — subject: 'The fireflies', predicate: 'lit'. The others are fragments: an 'Although' clause, a participial phrase, and a prepositional phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Splashing in the puddles after the storm.","A freshly baked loaf of bread on the counter.","Before the curtain rose on opening night.","The astronaut floated in zero gravity."],ci:3,explain:"\"The astronaut floated in zero gravity.\" is a complete sentence — subject: 'The astronaut', predicate: 'floated'. The others are fragments: an -ing phrase, a noun phrase, and a 'Before' clause."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["When the last bell finally rings.","The eagle landed on the highest branch.","Filled with excitement and nervous energy.","Three baskets of freshly picked berries."],ci:1,explain:"\"The eagle landed on the highest branch.\" is a complete sentence — subject: 'The eagle', predicate: 'landed'. The others are fragments: a 'When' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The river flooded the surrounding farmland.","Until the very last drop of water was gone.","Leaping over the fence into the neighbor's yard.","A tiny cabin deep in the snowy woods."],ci:0,explain:"\"The river flooded the surrounding farmland.\" is a complete sentence — subject: 'The river', predicate: 'flooded'. The others are fragments: an 'Until' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Quietly reading a book in the library.","A stack of pancakes with maple syrup.","Because the power went out during the storm.","The dog curled up on the warm rug."],ci:3,explain:"\"The dog curled up on the warm rug.\" is a complete sentence — subject: 'The dog', predicate: 'curled'. The others are fragments: an -ing phrase, a noun phrase, and a 'Because' clause."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Even though the team worked very hard.","Covered in mud from head to toe.","The pilot landed the plane safely.","During the most exciting part of the game."],ci:2,explain:"\"The pilot landed the plane safely.\" is a complete sentence — subject: 'The pilot', predicate: 'landed'. The others are fragments: an 'Even though' clause, a participial phrase, and a prepositional phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The musicians tuned their instruments before the show.","While everyone else was still sleeping.","Dozens of colorful balloons in the sky.","Bouncing down the stairs two at a time."],ci:0,explain:"\"The musicians tuned their instruments before the show.\" is a complete sentence — subject: 'The musicians', predicate: 'tuned'. The others are fragments: a 'While' clause, a noun phrase, and an -ing phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Before the guests arrived for the party.","Sprinkled with powdered sugar on top.","The turtle moved slowly across the road.","A long row of sunflowers along the fence."],ci:2,explain:"\"The turtle moved slowly across the road.\" is a complete sentence — subject: 'The turtle', predicate: 'moved'. The others are fragments: a 'Before' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Since the bus was running late today.","The twins celebrated their birthday together.","Tripping over the loose rug in the hallway.","A worn-out pair of old leather boots."],ci:1,explain:"\"The twins celebrated their birthday together.\" is a complete sentence — subject: 'The twins', predicate: 'celebrated'. The others are fragments: a 'Since' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The thunderstorm woke everyone in the house.","Unless the forecast changes by tomorrow morning.","Hidden behind the tall wooden bookshelf.","Over the rolling hills and through the valley."],ci:0,explain:"\"The thunderstorm woke everyone in the house.\" is a complete sentence — subject: 'The thunderstorm', predicate: 'woke'. The others are fragments: an 'Unless' clause, a participial phrase, and a prepositional phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Reaching the top of the mountain at last.","The carpenter built a beautiful wooden table.","If the experiment works the way we hope.","Several jars of homemade strawberry preserves."],ci:1,explain:"\"The carpenter built a beautiful wooden table.\" is a complete sentence — subject: 'The carpenter', predicate: 'built'. The others are fragments: an -ing phrase, an 'If' clause, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Throughout the entire school year.","Although the instructions were very clear.","The rabbit disappeared into the thick bushes.","Knitting a warm scarf for the winter."],ci:2,explain:"\"The rabbit disappeared into the thick bushes.\" is a complete sentence — subject: 'The rabbit', predicate: 'disappeared'. The others are fragments: a prepositional phrase, an 'Although' clause, and an -ing phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The farmer planted corn in the southern field.","When the snowflakes started falling softly.","Frozen solid in the middle of the pond.","A basket of warm rolls fresh from the oven."],ci:0,explain:"\"The farmer planted corn in the southern field.\" is a complete sentence — subject: 'The farmer', predicate: 'planted'. The others are fragments: a 'When' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Whispering secrets to each other in class.","The kitten knocked the vase off the shelf.","After spending the whole day at the beach.","The biggest pumpkin at the fall festival."],ci:1,explain:"\"The kitten knocked the vase off the shelf.\" is a complete sentence — subject: 'The kitten', predicate: 'knocked'. The others are fragments: an -ing phrase, an 'After' phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Because the last train had already left.","Stumbling through the dark without a flashlight.","The coach encouraged the team at halftime.","Rows of empty seats in the old theater."],ci:2,explain:"\"The coach encouraged the team at halftime.\" is a complete sentence — subject: 'The coach', predicate: 'encouraged'. The others are fragments: a 'Because' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Before the curtain came down on the last act.","The volcano erupted with tremendous force.","Balanced carefully on the edge of the wall.","Somewhere over the rainbow far away."],ci:1,explain:"\"The volcano erupted with tremendous force.\" is a complete sentence — subject: 'The volcano', predicate: 'erupted'. The others are fragments: a 'Before' clause, a participial phrase, and a prepositional phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["While the bread was rising in the oven.","An old map of the city from the 1800s.","The nurse checked the patient's temperature.","Shivering in the cold morning air."],ci:2,explain:"\"The nurse checked the patient's temperature.\" is a complete sentence — subject: 'The nurse', predicate: 'checked'. The others are fragments: a 'While' clause, a noun phrase, and an -ing phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The dolphins leaped out of the sparkling water.","Until the very end of the championship game.","Dressed in a costume for the school play.","A narrow path leading through the forest."],ci:0,explain:"\"The dolphins leaped out of the sparkling water.\" is a complete sentence — subject: 'The dolphins', predicate: 'leaped'. The others are fragments: an 'Until' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Rushing to finish the project before midnight.","Even though the odds were against them.","A bowl of warm soup on a cold night.","The crowd cheered loudly for the home team."],ci:3,explain:"\"The crowd cheered loudly for the home team.\" is a complete sentence — subject: 'The crowd', predicate: 'cheered'. The others are fragments: an -ing phrase, an 'Even though' clause, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["If the roads are clear by morning.","The firefighters rescued the family from the burning building.","Perched on a branch high in the oak tree.","Inside the old cardboard box in the attic."],ci:1,explain:"\"The firefighters rescued the family from the burning building.\" is a complete sentence — subject: 'The firefighters', predicate: 'rescued'. The others are fragments: an 'If' clause, a participial phrase, and a prepositional phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The spider spun a web between the fence posts.","Because the sun set too early in winter.","Laughing at the jokes in the funny movie.","A dozen eggs sitting in the wire basket."],ci:0,explain:"\"The spider spun a web between the fence posts.\" is a complete sentence — subject: 'The spider', predicate: 'spun'. The others are fragments: a 'Because' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Although the concert started two hours late.","A jar of peanut butter in the kitchen cabinet.","The mayor gave a speech at the town hall.","Carrying heavy grocery bags up the stairs."],ci:2,explain:"\"The mayor gave a speech at the town hall.\" is a complete sentence — subject: 'The mayor', predicate: 'gave'. The others are fragments: an 'Although' clause, a noun phrase, and an -ing phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["When the tide comes in at dawn.","Buried beneath layers of sand and rock.","A flock of geese heading south for winter.","The journalist published a front-page article."],ci:3,explain:"\"The journalist published a front-page article.\" is a complete sentence — subject: 'The journalist', predicate: 'published'. The others are fragments: a 'When' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The owl hunted mice in the dark field.","Since the temperature dropped below freezing.","Wrapped in a warm wool blanket by the fire.","The tallest building in the entire downtown area."],ci:0,explain:"\"The owl hunted mice in the dark field.\" is a complete sentence — subject: 'The owl', predicate: 'hunted'. The others are fragments: a 'Since' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Running to catch the school bus in time.","The explorer found ancient ruins in the jungle.","Before the supplies ran completely out.","A pile of colorful autumn leaves by the curb."],ci:1,explain:"\"The explorer found ancient ruins in the jungle.\" is a complete sentence — subject: 'The explorer', predicate: 'found'. The others are fragments: an -ing phrase, a 'Before' clause, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Whenever a new student joins the class.","Between the mountains and the sea.","The baker decorated each cupcake carefully.","Balanced on one foot near the edge."],ci:2,explain:"\"The baker decorated each cupcake carefully.\" is a complete sentence — subject: 'The baker', predicate: 'decorated'. The others are fragments: a 'Whenever' clause, a prepositional phrase, and a participial phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["After the last guest had gone home.","The children built a sandcastle near the shore.","Gasping for air after the long race.","Two tickets to the Saturday evening show."],ci:1,explain:"\"The children built a sandcastle near the shore.\" is a complete sentence — subject: 'The children', predicate: 'built'. The others are fragments: an 'After' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Even though the test was very long.","A notebook full of carefully drawn maps.","The penguin waddled across the ice.","Frozen at the edge of the icy pond."],ci:2,explain:"\"The penguin waddled across the ice.\" is a complete sentence — subject: 'The penguin', predicate: 'waddled'. The others are fragments: an 'Even though' clause, a noun phrase, and a participial phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The mechanic repaired the car engine quickly.","If the garden gets enough water this week.","Climbing the rope in gym class.","A small fish tank with colorful pebbles."],ci:0,explain:"\"The mechanic repaired the car engine quickly.\" is a complete sentence — subject: 'The mechanic', predicate: 'repaired'. The others are fragments: an 'If' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["While the orchestra played the opening piece.","Tucked safely under the front doormat.","Our neighbors planted a vegetable garden this spring.","The last slice of pepperoni pizza."],ci:2,explain:"\"Our neighbors planted a vegetable garden this spring.\" is a complete sentence — subject: 'Our neighbors', predicate: 'planted'. The others are fragments: a 'While' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Until the search party found the missing hiker.","Swinging back and forth on the old rope swing.","The thunder shook the windows of the house.","A cozy reading nook near the fireplace."],ci:2,explain:"\"The thunder shook the windows of the house.\" is a complete sentence — subject: 'The thunder', predicate: 'shook'. The others are fragments: an 'Until' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Because the library book was overdue.","Three long shelves of dusty old books.","The fox crept silently through the underbrush.","Stacked neatly in the corner of the room."],ci:2,explain:"\"The fox crept silently through the underbrush.\" is a complete sentence — subject: 'The fox', predicate: 'crept'. The others are fragments: a 'Because' clause, a noun phrase, and a participial phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["After finishing the last chapter of the book.","The glacier moved slowly toward the sea.","Dreaming of faraway places and adventures.","A mountain range stretching to the horizon."],ci:1,explain:"\"The glacier moved slowly toward the sea.\" is a complete sentence — subject: 'The glacier', predicate: 'moved'. The others are fragments: an 'After' phrase, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The kindergartners finger-painted bright pictures.","When the school year comes to an end.","Decorated with ribbons and tiny paper stars.","The biggest tree at the edge of the meadow."],ci:0,explain:"\"The kindergartners finger-painted bright pictures.\" is a complete sentence — subject: 'The kindergartners', predicate: 'finger-painted'. The others are fragments: a 'When' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Since the new school year started last fall.","Dancing barefoot in the warm summer rain.","The submarine dove beneath the surface.","An old lighthouse on the rocky coast."],ci:2,explain:"\"The submarine dove beneath the surface.\" is a complete sentence — subject: 'The submarine', predicate: 'dove'. The others are fragments: a 'Since' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Although no one expected the outcome.","A gift wrapped in shiny silver paper.","The geese honked as they flew overhead.","Struggling to stay awake during the lecture."],ci:2,explain:"\"The geese honked as they flew overhead.\" is a complete sentence — subject: 'The geese', predicate: 'honked'. The others are fragments: an 'Although' clause, a noun phrase, and an -ing phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Whenever the neighbors' dog barks at night.","Pressed between the pages of an old diary.","My father grills hamburgers every Fourth of July.","A narrow dirt road leading to the farm."],ci:2,explain:"\"My father grills hamburgers every Fourth of July.\" is a complete sentence — subject: 'My father', predicate: 'grills'. The others are fragments: a 'Whenever' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The bees buzzed around the blooming lavender.","If only the rain would stop by morning.","Folded carefully and placed in an envelope.","A row of flickering candles on the windowsill."],ci:0,explain:"\"The bees buzzed around the blooming lavender.\" is a complete sentence — subject: 'The bees', predicate: 'buzzed'. The others are fragments: an 'If only' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Before the parade reached the town square.","Pedaling as fast as her legs could go.","A crowd of excited fans outside the stadium.","The reporter interviewed the winning athlete."],ci:3,explain:"\"The reporter interviewed the winning athlete.\" is a complete sentence — subject: 'The reporter', predicate: 'interviewed'. The others are fragments: a 'Before' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["While waiting for the results to be announced.","The squirrel buried its acorn under the oak tree.","Around the bend in the winding river.","Locked inside the small cedar chest."],ci:1,explain:"\"The squirrel buried its acorn under the oak tree.\" is a complete sentence — subject: 'The squirrel', predicate: 'buried'. The others are fragments: a 'While' clause, a prepositional phrase, and a participial phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The parade float dazzled everyone along the route.","Until the last bit of sunlight disappeared.","Huddled together under a single umbrella.","A long list of things to do before vacation."],ci:0,explain:"\"The parade float dazzled everyone along the route.\" is a complete sentence — subject: 'The parade float', predicate: 'dazzled'. The others are fragments: an 'Until' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Because the bridge was closed for repairs.","Skipping stones across the still lake.","The chef seasoned the soup with fresh herbs.","An enormous pile of autumn leaves in the yard."],ci:2,explain:"\"The chef seasoned the soup with fresh herbs.\" is a complete sentence — subject: 'The chef', predicate: 'seasoned'. The others are fragments: a 'Because' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["A forgotten umbrella at the back of the closet.","Even though the movie had just started.","The bald eagle soared over the canyon.","Climbing carefully to the very top of the tree."],ci:2,explain:"\"The bald eagle soared over the canyon.\" is a complete sentence — subject: 'The bald eagle', predicate: 'soared'. The others are fragments: a noun phrase, an 'Even though' clause, and an -ing phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["When the leaves change color in October.","Mumbling quietly to himself in the hallway.","The mailman delivered a large package today.","A stack of textbooks on the desk."],ci:2,explain:"\"The mailman delivered a large package today.\" is a complete sentence — subject: 'The mailman', predicate: 'delivered'. The others are fragments: a 'When' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Since the power went out last Tuesday.","Lost in the middle of an unfamiliar city.","A friendly golden retriever with a wagging tail.","The scientist published her research findings."],ci:3,explain:"\"The scientist published her research findings.\" is a complete sentence — subject: 'The scientist', predicate: 'published'. The others are fragments: a 'Since' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The polar bear swam through the icy water.","Although the journey took three long days.","Neatly arranged in alphabetical order.","A thick layer of frost on the car windshield."],ci:0,explain:"\"The polar bear swam through the icy water.\" is a complete sentence — subject: 'The polar bear', predicate: 'swam'. The others are fragments: an 'Although' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Before the temperature dropped below zero.","Tossing a coin to decide who goes first.","A shiny new penny on the sidewalk.","The lighthouse keeper guided ships to safety."],ci:3,explain:"\"The lighthouse keeper guided ships to safety.\" is a complete sentence — subject: 'The lighthouse keeper', predicate: 'guided'. The others are fragments: a 'Before' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["If the test scores improve next semester.","The whale surfaced and blew a spout of water.","Hidden in the depths of the ancient cave.","An old clock ticking on the mantelpiece."],ci:1,explain:"\"The whale surfaced and blew a spout of water.\" is a complete sentence — subject: 'The whale', predicate: 'surfaced and blew'. The others are fragments: an 'If' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The ranger spotted a bear near the campsite.","Whenever the wind picks up speed.","Covered in a thick blanket of fresh snow.","A trail of muddy footprints on the floor."],ci:0,explain:"\"The ranger spotted a bear near the campsite.\" is a complete sentence — subject: 'The ranger', predicate: 'spotted'. The others are fragments: a 'Whenever' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["While the river overflowed its banks.","A forgotten melody from long ago.","Dashing through the hallway without stopping.","The architect designed a stunning new bridge."],ci:3,explain:"\"The architect designed a stunning new bridge.\" is a complete sentence — subject: 'The architect', predicate: 'designed'. The others are fragments: a 'While' clause, a noun phrase, and an -ing phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Because the deadline was moved up a week.","The senator spoke for three hours without stopping.","Standing at the edge of the Grand Canyon.","Rows of colorful tulips in the spring garden."],ci:1,explain:"\"The senator spoke for three hours without stopping.\" is a complete sentence — subject: 'The senator', predicate: 'spoke'. The others are fragments: a 'Because' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Until the last patient had been seen.","Searching through every drawer in the kitchen.","A beautiful mosaic on the floor of the museum.","The detective solved the mystery in one afternoon."],ci:3,explain:"\"The detective solved the mystery in one afternoon.\" is a complete sentence — subject: 'The detective', predicate: 'solved'. The others are fragments: an 'Until' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The gymnast landed a perfect dismount.","After the ceremony officially ended.","Rolled into a tight ball under the bed.","A faded photograph in a cracked wooden frame."],ci:0,explain:"\"The gymnast landed a perfect dismount.\" is a complete sentence — subject: 'The gymnast', predicate: 'landed'. The others are fragments: an 'After' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Even though the team lost the final match.","Splashing paint on a blank canvas.","The orchestra performed beautifully at the concert.","A pile of unread letters on the kitchen table."],ci:2,explain:"\"The orchestra performed beautifully at the concert.\" is a complete sentence — subject: 'The orchestra', predicate: 'performed'. The others are fragments: an 'Even though' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["If the conditions are right for planting.","A dozen red roses in a glass vase.","Stumbling over the words in the poem.","The caterpillar spun itself into a cocoon."],ci:3,explain:"\"The caterpillar spun itself into a cocoon.\" is a complete sentence — subject: 'The caterpillar', predicate: 'spun'. The others are fragments: an 'If' clause, a noun phrase, and an -ing phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Since the last update was installed.","The conductor raised his baton and began.","Nailed to the post at the end of the lane.","A small herb garden on the apartment balcony."],ci:1,explain:"\"The conductor raised his baton and began.\" is a complete sentence — subject: 'The conductor', predicate: 'raised and began'. The others are fragments: a 'Since' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["While the sun dipped below the horizon.","The hummingbird hovered near the red flower.","Carefully folded and placed on the chair.","A list of supplies for the camping trip."],ci:1,explain:"\"The hummingbird hovered near the red flower.\" is a complete sentence — subject: 'The hummingbird', predicate: 'hovered'. The others are fragments: a 'While' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Although the book was over five hundred pages.","Three paintings hanging crookedly on the wall.","The committee approved the new budget plan.","Scribbling notes as fast as possible."],ci:2,explain:"\"The committee approved the new budget plan.\" is a complete sentence — subject: 'The committee', predicate: 'approved'. The others are fragments: an 'Although' clause, a noun phrase, and an -ing phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The sparrow built its nest in the rose bush.","Before the ceremony started at noon.","Tied with a bright yellow ribbon.","A tin of homemade shortbread cookies."],ci:0,explain:"\"The sparrow built its nest in the rose bush.\" is a complete sentence — subject: 'The sparrow', predicate: 'built'. The others are fragments: a 'Before' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Whenever there is a full moon outside.","Coiled tightly on the warm flat rock.","An old diary hidden under the floorboards.","The soldier marched in perfect formation."],ci:3,explain:"\"The soldier marched in perfect formation.\" is a complete sentence — subject: 'The soldier', predicate: 'marched'. The others are fragments: a 'Whenever' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Unless the situation changes dramatically.","The inventor filed a patent for her discovery.","Sorting socks into matching pairs.","A large canvas tent in the middle of the field."],ci:1,explain:"\"The inventor filed a patent for her discovery.\" is a complete sentence — subject: 'The inventor', predicate: 'filed'. The others are fragments: an 'Unless' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Until the very last day of summer vacation.","Floating gently down the lazy river.","The museum opened a new wing last month.","A brass telescope pointed toward the stars."],ci:2,explain:"\"The museum opened a new wing last month.\" is a complete sentence — subject: 'The museum', predicate: 'opened'. The others are fragments: an 'Until' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The coyote howled at the rising moon.","Because the ferry was delayed by fog.","Clutching the handrail on the steep staircase.","A bowl of ripe cherries on the kitchen counter."],ci:0,explain:"\"The coyote howled at the rising moon.\" is a complete sentence — subject: 'The coyote', predicate: 'howled'. The others are fragments: a 'Because' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Since the program was canceled last fall.","A single candle burning on the birthday cake.","The senator cast the deciding vote.","Sitting quietly in the last row of the auditorium."],ci:2,explain:"\"The senator cast the deciding vote.\" is a complete sentence — subject: 'The senator', predicate: 'cast'. The others are fragments: a 'Since' clause, a noun phrase, and an -ing phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["If the river rises another two feet.","A lantern swinging from the porch ceiling.","Frozen in place with surprise and shock.","The goldfish swam in lazy circles around the bowl."],ci:3,explain:"\"The goldfish swam in lazy circles around the bowl.\" is a complete sentence — subject: 'The goldfish', predicate: 'swam'. The others are fragments: an 'If' clause, a noun phrase, and a participial phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["While the cake cooled on the wire rack.","The marathon runner crossed the finish line.","Scattered across the kitchen table.","A quilt made from old fabric scraps."],ci:1,explain:"\"The marathon runner crossed the finish line.\" is a complete sentence — subject: 'The marathon runner', predicate: 'crossed'. The others are fragments: a 'While' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Even though they practiced every single day.","Peeking through the keyhole of the locked door.","The harbor seals barked from the rocky ledge.","A shelf full of dusty glass figurines."],ci:2,explain:"\"The harbor seals barked from the rocky ledge.\" is a complete sentence — subject: 'The harbor seals', predicate: 'barked'. The others are fragments: an 'Even though' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["When the power finally came back on.","The volcano spewed ash for several days.","Painted in bold stripes of red and white.","A long wooden dock stretching into the bay."],ci:1,explain:"\"The volcano spewed ash for several days.\" is a complete sentence — subject: 'The volcano', predicate: 'spewed'. The others are fragments: a 'When' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["After the last embers faded in the fireplace.","Balancing a book on top of her head.","The toddler took her first steps yesterday.","A worn path winding through the tall grass."],ci:2,explain:"\"The toddler took her first steps yesterday.\" is a complete sentence — subject: 'The toddler', predicate: 'took'. The others are fragments: an 'After' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Unless the coach changes the starting lineup.","A bronze statue in the center of the plaza.","Buried under three feet of heavy snow.","The lawyer presented the evidence to the jury."],ci:3,explain:"\"The lawyer presented the evidence to the jury.\" is a complete sentence — subject: 'The lawyer', predicate: 'presented'. The others are fragments: an 'Unless' clause, a noun phrase, and a participial phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["The goats climbed the rocky hillside easily.","Because the rehearsal ran over by an hour.","Gnawing on a thick wooden stick.","An empty birdcage hanging by the window."],ci:0,explain:"\"The goats climbed the rocky hillside easily.\" is a complete sentence — subject: 'The goats', predicate: 'climbed'. The others are fragments: a 'Because' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Until the very last vote was tallied.","Twirling in circles on the frozen pond.","A pair of muddy boots by the back door.","The falcon dove at incredible speed."],ci:3,explain:"\"The falcon dove at incredible speed.\" is a complete sentence — subject: 'The falcon', predicate: 'dove'. The others are fragments: an 'Until' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Whenever the grocery store runs a special sale.","Stacked in a towering pile by the back wall.","The sparrows gathered seeds from the feeder.","A row of old bottles on the windowsill."],ci:2,explain:"\"The sparrows gathered seeds from the feeder.\" is a complete sentence — subject: 'The sparrows', predicate: 'gathered'. The others are fragments: a 'Whenever' clause, a participial phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Since the team finished first in the region.","The glacier calved a massive iceberg.","Tiptoeing down the hallway in the dark.","A bundle of fresh wildflowers in a mason jar."],ci:1,explain:"\"The glacier calved a massive iceberg.\" is a complete sentence — subject: 'The glacier', predicate: 'calved'. The others are fragments: a 'Since' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Although the directions were written clearly.","A cobblestone street in the old part of town.","Shivering from the cold and the wet.","The kindergartner recited the whole poem."],ci:3,explain:"\"The kindergartner recited the whole poem.\" is a complete sentence — subject: 'The kindergartner', predicate: 'recited'. The others are fragments: an 'Although' clause, a noun phrase, and a participial phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["Before the fog rolled in off the ocean.","The wolves communicated through howls.","Tumbling down the grassy slope together.","A brand-new bicycle with a shiny bell."],ci:1,explain:"\"The wolves communicated through howls.\" is a complete sentence — subject: 'The wolves', predicate: 'communicated'. The others are fragments: a 'Before' clause, an -ing phrase, and a noun phrase."},
+  {text:"Which of the following is a COMPLETE sentence?",options:["If the situation does not improve soon.","A pile of damp towels on the bathroom floor.","Listening to the sound of the falling rain.","The students wrote letters to the mayor."],ci:3,explain:"\"The students wrote letters to the mayor.\" is a complete sentence — subject: 'The students', predicate: 'wrote'. The others are fragments: an 'If' clause, a noun phrase, and an -ing phrase."}
+];
+
+var TOTAL = ALL_Q.length;
+
+function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+
+var ORDER_KEY = STORAGE_KEY + "_order_v1";
+function identityOrder(){ var a=[]; for(var i=0;i<TOTAL;i++) a.push(i); return a; }
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length!==TOTAL) return false;
+  var seen={};
+  for(var i=0;i<arr.length;i++){
+    var v=arr[i];
+    if(typeof v!=="number" || v<0 || v>=TOTAL || seen[v]) return false;
+    seen[v]=true;
+  }
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw=localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr=JSON.parse(raw);
+    return isValidOrder(arr) ? arr : null;
+  }catch(e){ return null; }
+}
+function saveOrder(order){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(order)); }catch(e){} }
+function shuffleOrder(arr){ return shuffle(arr); }
+var currentOrder = loadOrder() || identityOrder();
+var pendingFreshMode = "original";
+function Q(i){ return ALL_Q[currentOrder[i]]; }
+
+var state={cur:0,answers:{},shuffles:{},showResults:false,retryMode:false,retryList:[]};
+
+function getList(){
+  if(state.retryMode) return state.retryList;
+  var l=[];for(var i=0;i<TOTAL;i++)l.push(i);return l;
+}
+
+function defaultShuffles(){var sh={};for(var i=0;i<TOTAL;i++){sh[i]=shuffle([0,1,2,3]);}return sh;}
+function normalizeShuffles(sh){var out={};for(var i=0;i<TOTAL;i++){var v=sh[i]||sh[String(i)];out[i]=Array.isArray(v)&&v.length===4?v:shuffle([0,1,2,3]);}return out;}
+
+function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){}}
+
+function loadState(){
+  try{
+    var raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw)return false;
+    var s=JSON.parse(raw);
+    var retryMode=!!s.retryMode;
+    var retryList=Array.isArray(s.retryList)?s.retryList:[];
+    var listLen=retryMode?retryList.length:TOTAL;
+    if(typeof s.cur!=='number'||s.cur<0||s.cur>=listLen)return false;
+    if(!s.answers||typeof s.answers!=='object')return false;
+    if(!s.shuffles||typeof s.shuffles!=='object')return false;
+    state=s;state.shuffles=normalizeShuffles(s.shuffles||{});
+    state.retryMode=retryMode;state.retryList=retryList;
+    return true;
+  }catch(e){try{localStorage.removeItem(STORAGE_KEY);}catch(e2){}return false;}
+}
+
+function getAttempts(){try{return parseInt(localStorage.getItem(ATT_KEY)||'0',10)||0;}catch(e){return 0;}}
+function incrementAttempts(){try{localStorage.setItem(ATT_KEY,String(getAttempts()+1));}catch(e){}}
+
+function render(){
+  updateAtt();updateNav();
+  var qa=document.getElementById('quiz-area');
+  var ra=document.getElementById('results-area');
+  if(state.showResults){qa.style.display='none';ra.style.display='block';renderResults();return;}
+  qa.style.display='block';ra.style.display='none';renderQuestion();
+}
+
+function updateAtt(){document.getElementById('att-display').textContent='Complete Sentence Quiz | Total Attempts: '+getAttempts();}
+
+function updateNav(){
+  var list=getList();
+  var answered=0;
+  for(var k=0;k<list.length;k++){if(state.answers[list[k]]!==undefined)answered++;}
+  document.getElementById('answered-count').textContent=answered+' / '+list.length;
+  document.getElementById('prog-fill').style.width=(answered/list.length*100)+'%';
+  var panel=document.getElementById('dot-panel');
+  panel.innerHTML='';
+  for(var pos=0;pos<list.length;pos++){
+    var qi=list[pos];
+    var d=document.createElement('button');
+    d.className='dot';d.textContent=pos+1;
+    (function(p){d.onclick=function(){window.goTo(p);};})(pos);
+    if(state.answers[qi]!==undefined){
+      var sh=state.shuffles[qi];var csi=sh.indexOf(Q(qi).ci);
+      if(state.answers[qi]===csi)d.classList.add('correct');else d.classList.add('wrong');
+    }
+    panel.appendChild(d);
+  }
+  var pill=document.getElementById('results-pill');
+  pill.style.display=answered===list.length?'block':'none';
+}
+
+function renderQuestion(){
+  var list=getList();var pos=state.cur;var qi=list[pos];
+  var q=Q(qi);var sh=state.shuffles[qi];
+  document.getElementById('q-meta').textContent='Question '+(pos+1)+' / '+list.length;
+  document.getElementById('q-text').textContent=q.text;
+  document.getElementById('qIdentity').textContent=String(currentOrder[qi]);
+  var container=document.getElementById('options');container.innerHTML='';
+  var userAns=state.answers[qi];var csi=sh.indexOf(q.ci);
+  sh.forEach(function(origIdx,shuffIdx){
+    var btn=document.createElement('button');btn.className='opt-btn';
+    btn.textContent=q.options[origIdx];
+    if(userAns!==undefined){
+      btn.disabled=true;
+      if(shuffIdx===csi)btn.classList.add('correct');
+      else if(shuffIdx===userAns)btn.classList.add('wrong');
+    }
+    (function(si){btn.onclick=function(){window.selectAnswer(si);};})(shuffIdx);
+    container.appendChild(btn);
+  });
+  var eb=document.getElementById('explain-box');
+  if(userAns!==undefined){
+    eb.style.display='block';
+    eb.className=(userAns===csi)?'correct':'wrong';
+    eb.textContent=q.explain;
+  }else{eb.style.display='none';eb.className='';}
+  document.getElementById('prev-btn').disabled=(pos===0);
+  document.getElementById('next-btn').textContent=(pos===list.length-1)?'See Results':'Next';
+}
+
+function renderResults(){
+  var list=getList();
+  var correct=0,wrong=0,skipped=0;
+  for(var k=0;k<list.length;k++){
+    var qi=list[k];
+    if(state.answers[qi]===undefined){skipped++;continue;}
+    var sh=state.shuffles[qi];var csi=sh.indexOf(Q(qi).ci);
+    if(state.answers[qi]===csi)correct++;else wrong++;
+  }
+  var h2=document.querySelector('#results-area h2');
+  if(h2)h2.textContent=state.retryMode?'Retry Results':'Results';
+  document.getElementById('score-line').textContent=correct+' correct, '+wrong+' wrong, '+skipped+' skipped out of '+list.length;
+  var grid=document.getElementById('res-grid');grid.innerHTML='';
+  for(var k=0;k<list.length;k++){
+    var qi=list[k];
+    var q=Q(qi);var sh=state.shuffles[qi];var csi=sh.indexOf(q.ci);var ua=state.answers[qi];
+    var card=document.createElement('div');var status,label;
+    if(ua===undefined){status='skipped';label='Skipped';}
+    else if(ua===csi){status='correct';label='Correct';}
+    else{status='wrong';label='Wrong';}
+    card.className='res-card '+status;
+    var html='<div class="rc-label">Q'+(k+1)+' - '+label+'</div>';
+    html+='<div class="rc-q">'+q.text+'</div>';
+    if(ua!==undefined){
+      html+='<div class="rc-ans">Your answer: '+q.options[sh[ua]]+'</div>';
+      if(status==='wrong'){html+='<div class="rc-correct">Correct: '+q.options[q.ci]+'</div>';}
+    }
+    card.innerHTML=html;grid.appendChild(card);
+  }
+  document.getElementById('retry-btn').style.display=wrong>0?'block':'none';
+}
+
+window.selectAnswer=function(shuffledIdx){
+  var list=getList();var qi=list[state.cur];if(state.answers[qi]!==undefined)return;
+  state.answers[qi]=shuffledIdx;saveState();render();
+};
+window.goTo=function(pos){
+  var list=getList();
+  if(pos<0||pos>=list.length)return;
+  state.showResults=false;state.cur=pos;saveState();render();
+};
+window.goPrev=function(){window.goTo(state.cur-1);};
+window.nextQ=function(){
+  var list=getList();
+  if(state.cur===list.length-1){if(!state.retryMode)incrementAttempts();state.showResults=true;saveState();render();}
+  else{window.goTo(state.cur+1);}
+};
+window.goResults=function(){if(!state.retryMode)incrementAttempts();state.showResults=true;saveState();render();};
+window.toggleDots=function(){
+  var panel=document.getElementById('dot-panel');var btn=document.getElementById('jump-btn');
+  if(panel.style.display==='flex'){panel.style.display='none';btn.textContent='Jump';}
+  else{panel.style.display='flex';btn.textContent='Hide';}
+};
+window.retryWrong=function(){
+  var list=getList();
+  var wrong=[];
+  for(var k=0;k<list.length;k++){
+    var qi=list[k];
+    var ua=state.answers[qi];if(ua===undefined)continue;
+    var sh=state.shuffles[qi];var csi=sh.indexOf(Q(qi).ci);
+    if(ua!==csi)wrong.push(qi);
+  }
+  if(wrong.length===0)return;
+  wrong.forEach(function(qi){delete state.answers[qi];});
+  state.retryMode=true;
+  state.retryList=wrong;
+  state.cur=0;
+  state.showResults=false;saveState();render();
+};
+window.copyResults=function(){
+  var list=getList();
+  var lines=['[Grant] Complete Sentence Quiz - Results'];
+  for(var k=0;k<list.length;k++){
+    var qi=list[k];
+    var q=Q(qi);var sh=state.shuffles[qi];var csi=sh.indexOf(q.ci);var ua=state.answers[qi];
+    var status=ua===undefined?'Skipped':(ua===csi?'Correct':'Wrong');
+    lines.push('Q'+(k+1)+': '+status);
+    if(ua!==undefined&&ua!==csi){lines.push('  Your: '+q.options[sh[ua]]);lines.push('  Correct: '+q.options[q.ci]);}
+  }
+  try{navigator.clipboard.writeText(lines.join('\n'));}
+  catch(e){var ta=document.createElement('textarea');ta.value=lines.join('\n');document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+};
+window.openModal=function(mode){
+  pendingFreshMode=mode;
+  document.getElementById('modalTitle').textContent = mode==='random' ? 'Start Fresh (Random Order)?' : 'Start Fresh (Original Order)?';
+  document.getElementById('modalText').textContent = mode==='random' ? 'Questions will be reshuffled into a new random order, and all progress will be reset.' : 'Questions will return to their original order, and all progress will be reset.';
+  document.getElementById('modal-overlay').classList.add('show');
+};
+window.closeModal=function(){document.getElementById('modal-overlay').classList.remove('show');};
+window.confirmFresh=function(){
+  window.closeModal();
+  try{localStorage.removeItem(STORAGE_KEY);}catch(e){}
+  currentOrder = (pendingFreshMode==="random") ? shuffleOrder(identityOrder()) : identityOrder();
+  saveOrder(currentOrder);
+  state={cur:0,answers:{},shuffles:normalizeShuffles(defaultShuffles()),showResults:false,retryMode:false,retryList:[]};saveState();render();
+};
+
+var loaded=loadState();
+if(!loaded){state.shuffles=normalizeShuffles(defaultShuffles());saveState();}
+render();
+})();
+</script>
+</body>
+</html>

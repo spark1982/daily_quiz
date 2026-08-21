@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 4 Quiz</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Georgia, serif; background: #f5f6fa; color: #111111; font-size: 1rem; }
+
+/* Timer */
+#qzTimerBar {
+  position: sticky; top: 0; z-index: 100;
+  background: #fff; border-bottom: 2px solid #d7dde6;
+  padding: 8px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+#qzTimerSetup { display: flex; align-items: center; gap: 8px; }
+#qzTimerSetup label { font-size: 0.88rem; color: #555; }
+#qzTimerSetup input { width: 56px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.88rem; }
+#qzTimerStartBtn { background: #1D9E75; color: #fff; border: none; border-radius: 4px; padding: 5px 12px; font-size: 0.88rem; cursor: pointer; }
+#qzTimerRunning { display: none; align-items: center; gap: 10px; }
+#qzTimerRunning span { font-size: 0.88rem; color: #555; }
+#qzCountdown { font-family: monospace; font-size: 1.05rem; font-weight: bold; color: #111; min-width: 56px; }
+#qzPauseBtn { background: #f5a623; color: #fff; border: none; border-radius: 4px; padding: 5px 10px; font-size: 0.82rem; cursor: pointer; }
+#qzResetBtn { background: #e2e8f0; color: #333; border: none; border-radius: 4px; padding: 5px 10px; font-size: 0.82rem; cursor: pointer; }
+
+/* App */
+#appWrap { max-width: 780px; margin: 0 auto; padding: 20px 16px 60px; }
+h1 { font-size: 1.45rem; color: #1D9E75; text-align: center; margin-bottom: 4px; }
+.instruction { text-align: center; font-size: 0.88rem; color: #555; margin-bottom: 10px; }
+#subtitle { text-align: center; font-size: 0.82rem; color: #555; margin-bottom: 14px; }
+
+/* Nav bar */
+#navBar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+#navCount { font-size: 0.88rem; color: #444; white-space: nowrap; }
+#progressBarWrap { flex: 1; height: 7px; background: #d7dde6; border-radius: 4px; min-width: 80px; }
+#progressBarFill { height: 100%; background: #1D9E75; border-radius: 4px; width: 0%; transition: width 0.3s; }
+#jumpToggle { font-size: 0.82rem; color: #185FA5; cursor: pointer; text-decoration: underline; white-space: nowrap; }
+#dotPanel { display: none; max-height: 170px; overflow-y: auto; padding: 8px 0; margin-bottom: 10px; }
+.dotRow { display: flex; flex-wrap: wrap; gap: 5px; }
+.dot {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: #d7dde6; color: #333; font-size: 0.7rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-weight: bold; border: 2px solid transparent;
+}
+.dot.correct { background: #1D9E75; color: #fff; }
+.dot.wrong { background: #E24B4A; color: #fff; }
+#resultsPill { display: none; margin-top: 6px; }
+#resultsPill button { background: #1D9E75; color: #fff; border: none; border-radius: 12px; padding: 4px 14px; font-size: 0.82rem; cursor: pointer; }
+
+/* Quiz area */
+#quizArea { display: none; }
+.qnum { font-size: 0.82rem; color: #888; margin-bottom: 6px; }
+.qtag { display: inline-block; background: #e8edf4; color: #444; border-radius: 10px; padding: 2px 10px; font-size: 0.76rem; margin-bottom: 10px; }
+.qtext { font-size: 1.02rem; line-height: 1.65; margin-bottom: 16px; }
+.qtext .underline { text-decoration: underline; }
+.options { display: flex; flex-direction: column; gap: 9px; margin-bottom: 18px; }
+.opt {
+  background: #e8edf4; color: #111111; border: 2px solid transparent;
+  border-radius: 7px; padding: 10px 14px; cursor: pointer;
+  font-size: 0.97rem; line-height: 1.5; text-align: left; transition: background 0.15s;
+}
+.opt:hover { background: #dce3ee; }
+.opt.correct { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+.opt.wrong { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+.explanation {
+  border: 2px solid #f5a623; background: #fffbf0;
+  border-radius: 7px; padding: 12px 14px; font-size: 0.93rem;
+  line-height: 1.6; margin-bottom: 16px; display: none;
+}
+
+/* Bottom nav */
+#bottomNav { display: flex; justify-content: space-between; margin-top: 10px; }
+#prevBtn { background: #e2e8f0; color: #333; border: none; border-radius: 6px; padding: 9px 20px; font-size: 0.95rem; cursor: pointer; }
+#prevBtn:disabled { opacity: 0.4; cursor: default; }
+#nextBtn { background: #1D9E75; color: #fff; border: none; border-radius: 6px; padding: 9px 22px; font-size: 0.95rem; cursor: pointer; }
+
+/* Results */
+#resultsArea { display: none; }
+#resultsArea h2 { color: #1D9E75; text-align: center; margin-bottom: 18px; font-size: 1.3rem; }
+#summaryGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-bottom: 22px; }
+.sumCard {
+  border-radius: 7px; padding: 10px 8px; text-align: center; cursor: pointer; font-size: 0.82rem;
+}
+.sumCard.correct { background: #E1F5EE; border: 2px solid #1D9E75; color: #085041; }
+.sumCard.wrong { background: #FCEBEB; border: 2px solid #E24B4A; color: #501313; }
+.sumCard.skipped { background: #f5f6fa; border: 2px solid #d7dde6; color: #555; }
+.sumCard .snum { font-weight: bold; font-size: 1rem; }
+#resultsBtns { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+#retryBtn { background: #1D9E75; color: #fff; border: none; border-radius: 6px; padding: 10px 28px; font-size: 1rem; cursor: pointer; }
+#copyBtn { background: #185FA5; color: #fff; border: none; border-radius: 6px; padding: 10px 28px; font-size: 1rem; cursor: pointer; }
+#freshBtnOriginal, #freshBtnRandom { background: #e2e8f0; color: #333; border: none; border-radius: 6px; padding: 10px 28px; font-size: 1rem; cursor: pointer; }
+
+/* Modal */
+#modalOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: center; justify-content: center; }
+#modalOverlay.active { display: flex; }
+#modalBox { background: #fff; border-radius: 10px; padding: 28px 24px; max-width: 360px; width: 90%; text-align: center; }
+#modalBox p { margin-bottom: 20px; font-size: 1rem; line-height: 1.5; }
+#modalBtns { display: flex; gap: 12px; justify-content: center; }
+#modalCancel { background: #e2e8f0; color: #333; border: none; border-radius: 6px; padding: 8px 20px; cursor: pointer; }
+#modalConfirm { background: #E24B4A; color: #fff; border: none; border-radius: 6px; padding: 8px 20px; cursor: pointer; }
+
+/* Fraction display */
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; font-size: 0.9em; line-height: 1.2; margin: 0 2px; }
+.frac .num { border-bottom: 1px solid currentColor; padding: 0 2px; }
+.frac .den { padding: 0 2px; }
+</style>
+</head>
+<body>
+
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label>Timer (min):</label>
+    <input type="number" id="qzMinInput" value="20" min="1" max="120">
+    <button id="qzTimerStartBtn" onclick="window.qzStartTimer()">Start Timer</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span>Time Left:</span>
+    <span id="qzCountdown">20:00</span>
+    <button id="qzPauseBtn" onclick="window.qzTogglePause()">Pause</button>
+    <button id="qzResetBtn" onclick="window.qzTimerReset()">Reset</button>
+  </div>
+</div>
+
+<div id="appWrap">
+  <h1>Chapter 4 Quiz</h1>
+  <p class="instruction">Read each problem carefully and select the best answer.</p>
+  <div id="subtitle">Loading...</div>
+
+  <div id="navBar">
+    <span id="navCount">0 / 27</span>
+    <div id="progressBarWrap"><div id="progressBarFill"></div></div>
+    <span id="jumpToggle" onclick="window.toggleDots()">Jump</span>
+  </div>
+  <div id="dotPanel"><div class="dotRow" id="dotRow"></div><div id="resultsPill"><button onclick="window.goResults()">Results</button></div></div>
+
+  <div id="quizArea"></div>
+
+  <div id="bottomNav">
+    <button id="prevBtn" onclick="window.goPrev()">Prev</button>
+    <button id="nextBtn" onclick="window.goNext()">Next</button>
+  </div>
+
+  <div id="resultsArea">
+    <h2>Results</h2>
+    <div id="summaryGrid"></div>
+    <div id="resultsBtns">
+      <button id="retryBtn" onclick="window.retryWrong()">Retry Wrong Ones</button>
+      <button id="copyBtn" onclick="window.copyResults()">Copy All Results</button>
+      <button id="freshBtnOriginal" onclick="window.openFreshModal('original')">Start Fresh (Original Order)</button>
+      <button id="freshBtnRandom" onclick="window.openFreshModal('random')">Start Fresh (Random Order)</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalOverlay">
+  <div id="modalBox">
+    <h3 id="modalTitle" style="margin-bottom:10px;font-size:1.05rem;">Start Fresh (Original Order)?</h3>
+    <p id="modalMsg">Questions will return to their original order, and all progress will be reset.</p>
+    <div id="modalBtns">
+      <button id="modalCancel" onclick="window.closeModal()">Cancel</button>
+      <button id="modalConfirm" onclick="window.doFresh()">Yes, Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var QUIZ_ID = 'ch4_sion_2026';
+  var SK = 'quiz_' + QUIZ_ID + '_v1';
+  var ATT_KEY = 'quiz_' + QUIZ_ID + '_att_v1';
+
+  // Helper for fractions
+  function frac(n, d) {
+    return '<span class="frac"><span class="num">' + n + '</span><span class="den">' + d + '</span></span>';
+  }
+
+  var questions = [
+    // ===== EXAMPLES (4.1 - 4.7) =====
+    {
+      id: 'e1', section: 'Example 4.1',
+      text: 'The polynomial p(x) satisfies p(&minus;x) = &minus;p(x). When p(x) is divided by x &minus; 3, the remainder is 6. Find the remainder when p(x) is divided by x<sup>2</sup> &minus; 9.',
+      opts: ['2x', 'x + 6', '6', '&minus;2x'],
+      ci: 0,
+      exp: 'Since the remainder when p(x) is divided by x&minus;3 is 6, p(3)=6. Because p is an odd function, p(&minus;3)=&minus;p(3)=&minus;6. The remainder when dividing by x<sup>2</sup>&minus;9=(x&minus;3)(x+3) has the form ax+b, so 3a+b=6 and &minus;3a+b=&minus;6. Adding these gives 2b=0, so b=0, and then a=2. The remainder is 2x.'
+    },
+    {
+      id: 'e2', section: 'Example 4.2',
+      text: 'Find all real roots of<br><br>(2x + 1)(3x + 1)(5x + 1)(30x + 1) = 10.',
+      opts: ['(&minus;4 &plusmn; &radic;31) / 15', '(&minus;4 &plusmn; &radic;31) / 30', '(4 &plusmn; &radic;31) / 15', '(&minus;2 &plusmn; &radic;31) / 15'],
+      ci: 0,
+      exp: 'Group the factors as (2x+1)(30x+1)=60x<sup>2</sup>+32x+1 and (3x+1)(5x+1)=15x<sup>2</sup>+8x+1. Letting u=15x<sup>2</sup>+8x, the first group is 4u+1 and the second is u+1, so (4u+1)(u+1)=10, which gives 4u<sup>2</sup>+5u&minus;9=0, or (4u+9)(u&minus;1)=0. Since u=&minus;9/4 gives 15x<sup>2</sup>+8x+9/4=0 with negative discriminant (no real roots), only u=1 matters: 15x<sup>2</sup>+8x&minus;1=0, so x=(&minus;8&plusmn;&radic;124)/30=(&minus;4&plusmn;&radic;31)/15.'
+    },
+    {
+      id: 'e3', section: 'Example 4.3',
+      text: 'There are positive integers m and n so that x = m + &radic;n is a solution to the equation<br><br>x<sup>2</sup> &minus; 10x + 1 = &radic;x (x + 1).<br><br>Find m + n.',
+      opts: ['43', '61', '55', '48'],
+      ci: 2,
+      exp: 'Let t=&radic;x, so x=t<sup>2</sup>. The equation becomes t<sup>4</sup>&minus;10t<sup>2</sup>+1=t<sup>3</sup>+t, i.e. t<sup>4</sup>&minus;t<sup>3</sup>&minus;10t<sup>2</sup>&minus;t+1=0. Dividing by t<sup>2</sup> and setting w=t+1/t gives w<sup>2</sup>&minus;w&minus;12=0, so w=4 (the only valid root since w&ge;2 for t&gt;0). Then t+1/t=4 gives t<sup>2</sup>&minus;4t+1=0, so t=2&plusmn;&radic;3, and x=t<sup>2</sup>=7&plusmn;4&radic;3. Taking x=7+4&radic;3=7+&radic;48 gives m=7, n=48, so m+n=55.'
+    },
+    {
+      id: 'e4', section: 'Example 4.4',
+      text: 'The solutions of x<sup>3</sup> &minus; 3x<sup>2</sup> + kx + 15 = 0 form an arithmetic sequence. What is the value of k? (MathCounts)',
+      opts: ['-15', '-13', '13', '-9'],
+      ci: 1,
+      exp: 'If the roots form an arithmetic sequence a&minus;d, a, a+d, their sum is 3a, which must equal 3 (from the coefficient of x<sup>2</sup>). So a=1 is a root: 1&minus;3+k+15=0, giving k=&minus;13.'
+    },
+    {
+      id: 'e5', section: 'Example 4.5',
+      text: 'Find all real roots of x<sup>4</sup> + (2 &minus; x)<sup>4</sup> = 34. (HMMT)',
+      opts: ['1 &plusmn; 2', '1 &plusmn; &radic;2', '2 &plusmn; &radic;2', '&radic;2'],
+      ci: 1,
+      exp: 'Let u=x&minus;1, so x=1+u and 2&minus;x=1&minus;u. Then (1+u)<sup>4</sup>+(1&minus;u)<sup>4</sup>=2(1+6u<sup>2</sup>+u<sup>4</sup>)=34, giving u<sup>4</sup>+6u<sup>2</sup>&minus;16=0. Letting v=u<sup>2</sup>, (v+8)(v&minus;2)=0, so v=2 (v=&minus;8 is rejected). Then u=&plusmn;&radic;2, so x=1&plusmn;&radic;2.'
+    },
+    {
+      id: 'e6', section: 'Example 4.6',
+      text: 'Let x, y, and z be three distinct complex numbers satisfying<br><br>x<sup>3</sup> + 5y + 5z = y<sup>3</sup> + 5x + 5z = z<sup>3</sup> + 5x + 5y = 5.<br><br>What is x<sup>2</sup> + y<sup>2</sup> + z<sup>2</sup>?',
+      opts: ['5', '10', '15', '25'],
+      ci: 1,
+      exp: 'Let S=x+y+z. Each equation has the form t<sup>3</sup>+5(S&minus;t)=5, i.e. t<sup>3</sup>&minus;5t+(5S&minus;5)=0, so x, y, z are the three roots of this cubic. Since it has no t<sup>2</sup> term, the sum of its roots is 0, so S=0, and the cubic is t<sup>3</sup>&minus;5t&minus;5=0. Then the sum of pairwise products of the roots is &minus;5, so x<sup>2</sup>+y<sup>2</sup>+z<sup>2</sup>=S<sup>2</sup>&minus;2(&minus;5)=0+10=10.'
+    },
+    {
+      id: 'e7', section: 'Example 4.7',
+      text: '(USAMO) Determine all the roots, real or complex, of the system of simultaneous equations<br><br>x + y + z = 3,<br>x<sup>2</sup> + y<sup>2</sup> + z<sup>2</sup> = 3,<br>x<sup>3</sup> + y<sup>3</sup> + z<sup>3</sup> = 3.',
+      opts: ['x = y = z = 1', 'x = y = z = 3', 'x = 3, y = z = 0', 'x = 1, y = 1, z = &minus;1'],
+      ci: 0,
+      exp: 'From e1=x+y+z=3 and x<sup>2</sup>+y<sup>2</sup>+z<sup>2</sup>=e1<sup>2</sup>&minus;2e2=3, we get e2=3. Newton\'s identity p3=e1p2&minus;e2p1+3e3 gives 3=3(3)&minus;3(3)+3e3, so e3=1. Thus x, y, z are roots of t<sup>3</sup>&minus;3t<sup>2</sup>+3t&minus;1=(t&minus;1)<sup>3</sup>=0, so x=y=z=1.'
+    },
+    // ===== PROBLEMS (4.1 - 4.20) =====
+    {
+      id: 'p1', section: 'Problem 4.1',
+      text: 'If P(x) is a polynomial in x, and<br><br>x<sup>23</sup> + 23x<sup>17</sup> &minus; 18x<sup>16</sup> &minus; 24x<sup>15</sup> + 108x<sup>14</sup> = (x<sup>4</sup> &minus; 3x<sup>2</sup> &minus; 2x + 9) &middot; P(x)<br><br>for all values of x, compute the sum of the coefficients of P(x). (ARML)',
+      opts: ['18', '90', '5', '450'],
+      ci: 0,
+      exp: 'The sum of the coefficients of P(x) equals P(1). Substituting x=1 into the identity: 1+23&minus;18&minus;24+108=90 on the left, and (1&minus;3&minus;2+9)&middot;P(1)=5&middot;P(1) on the right. So 5P(1)=90, giving P(1)=18.'
+    },
+    {
+      id: 'p2', section: 'Problem 4.2',
+      text: 'Find the remainder when x<sup>51</sup> + 51 is divided by x + 1. (AHSME)',
+      opts: ['52', '-50', '1', '50'],
+      ci: 3,
+      exp: 'By the Remainder Theorem, the remainder equals the value of the expression at x=&minus;1: (&minus;1)<sup>51</sup>+51=&minus;1+51=50.'
+    },
+    {
+      id: 'p3', section: 'Problem 4.3',
+      text: 'The polynomial P(x) has remainder 99 when divided by x &minus; 19 and remainder 19 when divided by x &minus; 99. What is the remainder when P(x) is divided by (x &minus; 19)(x &minus; 99)? (AHSME)',
+      opts: ['&minus;x + 118', 'x + 118', '&minus;x + 80', '118'],
+      ci: 0,
+      exp: 'The remainder has the form ax+b. Since P(19)=99, we need 19a+b=99, and since P(99)=19, we need 99a+b=19. Subtracting gives 80a=&minus;80, so a=&minus;1, and then b=118. The remainder is &minus;x+118.'
+    },
+    {
+      id: 'p4', section: 'Problem 4.4',
+      text: 'The polynomial P(x) = x<sup>3</sup> + ax<sup>2</sup> + bx + c has the property that the mean of its zeros, the product of its zeros, and the sum of its coefficients are all equal. The y-intercept of the graph of y = P(x) is 2. What is b? (AMC 12)',
+      opts: ['-11', '-9', '-13', '7'],
+      ci: 0,
+      exp: 'The y-intercept gives c=P(0)=2. For x<sup>3</sup>+ax<sup>2</sup>+bx+c, the product of the zeros is &minus;c=&minus;2, so this common value is &minus;2. The mean of the zeros is &minus;a/3=&minus;2, so a=6. The sum of the coefficients is 1+a+b+c=1+6+b+2=9+b, which must also equal &minus;2, so b=&minus;11.'
+    },
+    {
+      id: 'p5', section: 'Problem 4.5',
+      text: 'Suppose that P(<span class="frac"><span class="num">x</span><span class="den">3</span></span>) = x<sup>2</sup> + x + 1. What is the sum of all values of x for which P(3x) = 7? (AMC 10)',
+      opts: ['&minus;<span class="frac"><span class="num">1</span><span class="den">9</span></span>', '<span class="frac"><span class="num">1</span><span class="den">9</span></span>', '&minus;<span class="frac"><span class="num">1</span><span class="den">3</span></span>', '&minus;<span class="frac"><span class="num">2</span><span class="den">9</span></span>'],
+      ci: 0,
+      exp: 'Since P(x/3)=x<sup>2</sup>+x+1, substituting x=3u shows P(u)=9u<sup>2</sup>+3u+1. So P(3x)=9(3x)<sup>2</sup>+3(3x)+1=81x<sup>2</sup>+9x+1. Setting this equal to 7 gives 81x<sup>2</sup>+9x&minus;6=0, or 27x<sup>2</sup>+3x&minus;2=0. The sum of the roots is &minus;3/27=&minus;1/9.'
+    },
+    {
+      id: 'p6', section: 'Problem 4.6',
+      text: 'For nonzero constants c and d, the equation<br><br>4x<sup>3</sup> &minus; 12x<sup>2</sup> + cx + d = 0<br><br>has two real roots which add to 0. Find <span class="frac"><span class="num">d</span><span class="den">c</span></span>. (MA&Theta;)',
+      opts: ['3', '-3', '12', '-12'],
+      ci: 1,
+      exp: 'Let the roots be p, &minus;p, and q. Their sum is q, which must equal 12/4=3. The sum of pairwise products is (p)(&minus;p)+pq+(&minus;p)q=&minus;p<sup>2</sup>, so c/4=&minus;p<sup>2</sup>, meaning c=&minus;4p<sup>2</sup>. The product of the roots is (p)(&minus;p)(q)=&minus;3p<sup>2</sup>, so &minus;d/4=&minus;3p<sup>2</sup>, meaning d=12p<sup>2</sup>. So d/c=12p<sup>2</sup>/(&minus;4p<sup>2</sup>)=&minus;3.'
+    },
+    {
+      id: 'p7', section: 'Problem 4.7',
+      text: '(MA&Theta;) Let r, s, t be the roots of x<sup>3</sup> &minus; 6x<sup>2</sup> + 5x &minus; 7 = 0. Find<br><br><span class="frac"><span class="num">1</span><span class="den">r<sup>2</sup></span></span> + <span class="frac"><span class="num">1</span><span class="den">s<sup>2</sup></span></span> + <span class="frac"><span class="num">1</span><span class="den">t<sup>2</sup></span></span>.',
+      opts: ['&minus;<span class="frac"><span class="num">109</span><span class="den">49</span></span>', '&minus;<span class="frac"><span class="num">59</span><span class="den">49</span></span>', '<span class="frac"><span class="num">25</span><span class="den">49</span></span>', '<span class="frac"><span class="num">59</span><span class="den">49</span></span>'],
+      ci: 1,
+      exp: 'By Vieta\'s formulas, r+s+t=6, rs+rt+st=5, and rst=7. Then 1/r<sup>2</sup>+1/s<sup>2</sup>+1/t<sup>2</sup>=[(rs+rt+st)<sup>2</sup>&minus;2rst(r+s+t)]/(rst)<sup>2</sup>=(25&minus;2&middot;7&middot;6)/49=(25&minus;84)/49=&minus;59/49.'
+    },
+    {
+      id: 'p8', section: 'Problem 4.8',
+      text: 'Suppose that a and b are integers such that x<sup>2</sup> &minus; x &minus; 1 is a factor of ax<sup>3</sup> + bx<sup>2</sup> + 1. What is b? (AHSME)',
+      opts: ['-2', '2', '-1', '1'],
+      ci: 0,
+      exp: 'Let &phi; be a root of x<sup>2</sup>&minus;x&minus;1=0, so &phi;<sup>2</sup>=&phi;+1 and &phi;<sup>3</sup>=&phi;&middot;&phi;<sup>2</sup>=&phi;(&phi;+1)=2&phi;+1. Substituting into a&phi;<sup>3</sup>+b&phi;<sup>2</sup>+1=0 gives a(2&phi;+1)+b(&phi;+1)+1=0, or (2a+b)&phi;+(a+b+1)=0. Since &phi; is irrational, both coefficients must vanish: 2a+b=0 and a+b+1=0. Solving gives a=1 and b=&minus;2.'
+    },
+    {
+      id: 'p9', section: 'Problem 4.9',
+      text: 'Find the remainder when x<sup>81</sup> + x<sup>49</sup> + x<sup>25</sup> + x<sup>9</sup> + x is divided by x<sup>3</sup> &minus; x.',
+      opts: ['5', '5x', '-5x', 'x'],
+      ci: 1,
+      exp: 'Since x<sup>3</sup>&minus;x=x(x&minus;1)(x+1) has roots 0, 1, &minus;1, the remainder ax<sup>2</sup>+bx+c must agree with the given expression at these points. At x=0, the expression is 0, so c=0. At x=1, it is 5, so a+b=5. At x=&minus;1, it is &minus;1&minus;1&minus;1&minus;1&minus;1=&minus;5, so a&minus;b=&minus;5. Solving gives a=0, b=5, so the remainder is 5x.'
+    },
+    {
+      id: 'p10', section: 'Problem 4.10',
+      text: 'Let r, s, and t be the roots of the polynomial x<sup>3</sup> + ax<sup>2</sup> + bx + c. What is the product of rs + t, st + r, and tr + s in terms of a, b, and c?',
+      opts: ['b<sup>2</sup> &minus; c<sup>2</sup> + a<sup>2</sup>c + 2ac &minus; 2bc + c', 'abc &minus; c', 'a<sup>2</sup>c + b<sup>2</sup> &minus; c<sup>2</sup> &minus; c', 'b<sup>2</sup> + c<sup>2</sup> &minus; a<sup>2</sup>c &minus; 2ac + 2bc &minus; c'],
+      ci: 3,
+      exp: 'By Vieta\'s formulas, r+s+t=&minus;a, rs+rt+st=b, and rst=&minus;c. Expressing (rs+t)(st+r)(tr+s) symmetrically in terms of these elementary symmetric sums and simplifying gives b<sup>2</sup>+c<sup>2</sup>&minus;a<sup>2</sup>c&minus;2ac+2bc&minus;c.'
+    },
+    {
+      id: 'p11', section: 'Problem 4.11',
+      text: 'The product of two of the four zeros of the quartic equation<br><br>x<sup>4</sup> &minus; 18x<sup>3</sup> + kx<sup>2</sup> + 200x &minus; 1984 = 0<br><br>is &minus;32. Find k.',
+      opts: ['56', '86', '30', '62'],
+      ci: 1,
+      exp: 'Write the quartic as (x<sup>2</sup>&minus;mx&minus;32)(x<sup>2</sup>&minus;nx+62), since the two zeros with product &minus;32 satisfy x<sup>2</sup>&minus;mx&minus;32=0 and the other two (with product 1984/(&minus;32)&middot;(&minus;1)=62 for the whole product to be &minus;1984) satisfy x<sup>2</sup>&minus;nx+62=0. Expanding and matching coefficients gives m+n=18 and &minus;62m+32n=200, so m=4 and n=14. Then k=mn+62&minus;32=56+30=86.'
+    },
+    {
+      id: 'p12', section: 'Problem 4.12',
+      text: 'The roots of x<sup>4</sup> &minus; x<sup>3</sup> &minus; x<sup>2</sup> &minus; 1 = 0 are a, b, c, and d. Find<br><br>p(a) + p(b) + p(c) + p(d),<br><br>where p(x) = x<sup>6</sup> &minus; x<sup>5</sup> &minus; x<sup>3</sup> &minus; x<sup>2</sup> &minus; x. (AIME)',
+      opts: ['3', '4', '10', '6'],
+      ci: 3,
+      exp: 'Dividing p(x) by x<sup>4</sup>&minus;x<sup>3</sup>&minus;x<sup>2</sup>&minus;1 gives quotient x<sup>2</sup>+1 and remainder x<sup>2</sup>&minus;x+1. Since each root satisfies the quartic, p(root)=root<sup>2</sup>&minus;root+1. By Vieta\'s formulas, the sum of the roots is 1 and the sum of pairwise products is &minus;1, so the sum of the squares of the roots is 1<sup>2</sup>&minus;2(&minus;1)=3. The total is therefore 3&minus;1+4=6.'
+    },
+    {
+      id: 'p13', section: 'Problem 4.13',
+      text: '(MA&Theta;) If the roots of 3x<sup>3</sup> &minus; 14x<sup>2</sup> + x + 62 = 0 are a, b, and c, determine<br><br><span class="frac"><span class="num">1</span><span class="den">a+3</span></span> + <span class="frac"><span class="num">1</span><span class="den">b+3</span></span> + <span class="frac"><span class="num">1</span><span class="den">c+3</span></span>.',
+      opts: ['<span class="frac"><span class="num">148</span><span class="den">83</span></span>', '<span class="frac"><span class="num">1</span><span class="den">3</span></span>', '<span class="frac"><span class="num">83</span><span class="den">74</span></span>', '<span class="frac"><span class="num">166</span><span class="den">74</span></span>'],
+      ci: 2,
+      exp: 'Substitute x=y&minus;3 into the cubic to get a new cubic in y whose roots are a+3, b+3, c+3: 3y<sup>3</sup>&minus;41y<sup>2</sup>+166y&minus;148=0. The sum of the reciprocals of the roots equals (sum of pairwise products)/(product of roots)=(166/3)/(148/3)=166/148=83/74.'
+    },
+    {
+      id: 'p14', section: 'Problem 4.14',
+      text: 'Let a and b be complex numbers satisfying the following two equations<br><br>a<sup>2</sup> + b<sup>2</sup> = 5,<br>a<sup>3</sup> + b<sup>3</sup> = 7.<br><br>What is the greatest possible value for a + b? (Purple Comet)',
+      opts: ['<span class="frac"><span class="num">&minus;1 + &radic;57</span><span class="den">2</span></span>', '1', '<span class="frac"><span class="num">&minus;1 &minus; &radic;57</span><span class="den">2</span></span>', '<span class="frac"><span class="num">1 + &radic;57</span><span class="den">2</span></span>'],
+      ci: 0,
+      exp: 'Let s=a+b and p=ab. Then s<sup>2</sup>&minus;2p=5 gives p=(s<sup>2</sup>&minus;5)/2, and s<sup>3</sup>&minus;3ps=7 becomes s<sup>3</sup>&minus;15s+14=0 after substituting. This factors as (s&minus;1)(s<sup>2</sup>+s&minus;14)=0, giving s=1 or s=(&minus;1&plusmn;&radic;57)/2. The greatest of these is (&minus;1+&radic;57)/2.'
+    },
+    {
+      id: 'p15', section: 'Problem 4.15',
+      text: 'Let f(x) = x<sup>4</sup> + x<sup>3</sup> + x<sup>2</sup> + x + 1. Find the remainder when f(x<sup>5</sup>) is divided by f(x).',
+      opts: ['0', '5', '1', '25'],
+      ci: 1,
+      exp: 'Let &omega; be any root of f(x)=0, so &omega;<sup>5</sup>=1. Then f(&omega;<sup>5</sup>)=f(1)=1+1+1+1+1=5. Since f(x<sup>5</sup>)&minus;5 vanishes at all four distinct roots of the degree-4 polynomial f(x), and any remainder upon division by f(x) has degree less than 4, the remainder must be the constant 5.'
+    },
+    {
+      id: 'p16', section: 'Problem 4.16',
+      text: 'Find the remainder when x<sup>60</sup> &minus; 1 is divided by x<sup>3</sup> &minus; 2.',
+      opts: ['1048576', '524287', '2097151', '1048575'],
+      ci: 3,
+      exp: 'Since x<sup>60</sup>=(x<sup>3</sup>)<sup>20</sup>, replacing x<sup>3</sup> with 2 (its value modulo x<sup>3</sup>&minus;2) gives x<sup>60</sup>&equiv;2<sup>20</sup>=1048576. So the remainder of x<sup>60</sup>&minus;1 is 1048576&minus;1=1048575.'
+    },
+    {
+      id: 'p17', section: 'Problem 4.17',
+      text: 'There exists an 11<sup>th</sup> degree polynomial p(x) such that<br><br>(x + 1)p(x) = (x &minus; 10)p(x + 1).<br><br>Find the sum of the roots of p(x).',
+      opts: ['45', '66', '55', '110'],
+      ci: 2,
+      exp: 'Setting x=&minus;1 gives 0=&minus;11&middot;p(0), so p(0)=0. Setting x=10 gives 11&middot;p(10)=0, so p(10)=0. In fact p(x)=k&middot;x(x&minus;1)(x&minus;2)&hellip;(x&minus;10) satisfies the functional equation for any constant k, and since this has degree 11, it must be p(x) up to the constant k. The roots are 0, 1, 2, &hellip;, 10, which sum to 55.'
+    },
+    {
+      id: 'p18', section: 'Problem 4.18',
+      text: 'What is the remainder when x<sup>44</sup> + x<sup>33</sup> + x<sup>22</sup> + x<sup>11</sup> + 1 is divided by x<sup>4</sup> + x<sup>3</sup> + x<sup>2</sup> + x + 1? (PMO)',
+      opts: ['5', '1', '0', 'x + 1'],
+      ci: 2,
+      exp: 'Let &omega; be a root of x<sup>4</sup>+x<sup>3</sup>+x<sup>2</sup>+x+1=0, so &omega;<sup>5</sup>=1. Then &omega;<sup>11</sup>=&omega;, &omega;<sup>22</sup>=&omega;<sup>2</sup>, &omega;<sup>33</sup>=&omega;<sup>3</sup>, and &omega;<sup>44</sup>=&omega;<sup>4</sup>, so the expression becomes &omega;<sup>4</sup>+&omega;<sup>3</sup>+&omega;<sup>2</sup>+&omega;+1=0 at every root. Since this holds at all four distinct roots of the degree-4 divisor, the remainder is 0.'
+    },
+    {
+      id: 'p19', section: 'Problem 4.19',
+      text: 'Let p(x) be a polynomial with degree n and<br><br>p(k) = <span class="frac"><span class="num">k</span><span class="den">k+1</span></span>,&nbsp;&nbsp;&nbsp;k = 0, 1, &hellip;, n.<br><br>What is p(n + 1)? (USAMO)',
+      opts: ['<span class="frac"><span class="num">n</span><span class="den">n+2</span></span> for every n', '1 if n is odd, and <span class="frac"><span class="num">n</span><span class="den">n+2</span></span> if n is even', '1 for every n', '<span class="frac"><span class="num">n+2</span><span class="den">n</span></span> if n is even, and <span class="frac"><span class="num">n</span><span class="den">n+2</span></span> if n is odd'],
+      ci: 1,
+      exp: 'Let q(x)=(x+1)p(x)&minus;x. Then q(k)=0 for k=0,1,&hellip;,n, so q(x)=C&middot;x(x&minus;1)&hellip;(x&minus;n). Plugging x=&minus;1 into the definition of q gives q(&minus;1)=1, which determines C=(&minus;1)<sup>n+1</sup>/(n+1)!. Plugging x=n+1 gives (n+2)p(n+1)&minus;(n+1)=C&middot;(n+1)!=(&minus;1)<sup>n+1</sup>. Solving for p(n+1): if n is odd, p(n+1)=1; if n is even, p(n+1)=n/(n+2).'
+    },
+    {
+      id: 'p20', section: 'Problem 4.20',
+      text: 'Let x and y be real numbers satisfying<br><br>(x<sup>2</sup> + x &minus; 1)(x<sup>2</sup> &minus; x + 1) = 2(y<sup>3</sup> &minus; 2&radic;5 &minus; 1)<br><br>and<br><br>(y<sup>2</sup> + y &minus; 1)(y<sup>2</sup> &minus; y + 1) = 2(x<sup>3</sup> + 2&radic;5 &minus; 1).<br><br>Find 8x<sup>2</sup> + 4y<sup>3</sup>. (Purple Comet)',
+      opts: ['10', '20', '40', '0'],
+      ci: 1,
+      exp: 'One real solution is x=(1&minus;&radic;5)/2 and y=(1+&radic;5)/2, both of which satisfy t<sup>2</sup>=t+1. Using x<sup>2</sup>=x+1 gives 8x<sup>2</sup>=8x+8, and using y<sup>3</sup>=2y+1 (which follows from y<sup>2</sup>=y+1) gives 4y<sup>3</sup>=8y+4. Adding: 8x<sup>2</sup>+4y<sup>3</sup>=8(x+y)+12=8(1)+12=20, since x+y=(1&minus;&radic;5)/2+(1+&radic;5)/2=1.'
+    }
+  ];
+
+  var totalQ = questions.length;
+  var ORDER_KEY = SK + '_order_v1';
+  function identityOrder(){var a=[];for(var i=0;i<totalQ;i++)a.push(i);return a;}
+  function isValidOrder(o){if(!Array.isArray(o)||o.length!==totalQ)return false;var seen={};for(var i=0;i<o.length;i++){if(typeof o[i]!=='number'||o[i]<0||o[i]>=totalQ||seen[o[i]])return false;seen[o[i]]=true;}return true;}
+  function loadOrder(){try{var o=JSON.parse(localStorage.getItem(ORDER_KEY)||'null');return isValidOrder(o)?o:null;}catch(e){return null;}}
+  function saveOrder(o){localStorage.setItem(ORDER_KEY,JSON.stringify(o));}
+  function randomOrder(){var a=identityOrder();for(var k=a.length-1;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}return a;}
+  var currentOrder = loadOrder() || identityOrder();
+  saveOrder(currentOrder);
+  var pendingFreshMode = 'original';
+
+  var state = {
+    cur: 0,
+    answers: {},
+    shuffles: {},
+    showResults: false,
+    retryMode: false,
+    retryList: []
+  };
+
+  function getList() {
+    if (state.retryMode) return state.retryList;
+    var l = [];
+    for (var i = 0; i < totalQ; i++) l.push(i);
+    return l;
+  }
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(SK);
+      if (!raw) return;
+      var s = JSON.parse(raw);
+      if (typeof s.answers !== 'object' || typeof s.shuffles !== 'object') return;
+      if (s.retryMode && !Array.isArray(s.retryList)) return;
+      var listLen = s.retryMode ? s.retryList.length : totalQ;
+      if (typeof s.cur !== 'number' || s.cur < 0 || s.cur >= listLen) return;
+      state = s;
+    } catch(e) {
+      localStorage.removeItem(SK);
+    }
+  }
+
+  function saveState() {
+    localStorage.setItem(SK, JSON.stringify(state));
+  }
+
+  function getShuffleFor(idx) {
+    if (state.shuffles[idx]) return state.shuffles[idx];
+    var q = questions[idx];
+    var arr = q.opts.map(function(o, i){ return i; });
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    state.shuffles[idx] = arr;
+    return arr;
+  }
+
+  function answeredCount() {
+    return Object.keys(state.answers).length;
+  }
+
+  function updateNav() {
+    var list = getList();
+    var ac = 0;
+    for (var k = 0; k < list.length; k++) {
+      if (state.answers[currentOrder[list[k]]] !== undefined) ac++;
+    }
+    document.getElementById('navCount').textContent = ac + ' / ' + list.length;
+    document.getElementById('progressBarFill').style.width = (ac / list.length * 100) + '%';
+    // dots
+    var dr = document.getElementById('dotRow');
+    dr.innerHTML = '';
+    for (var i = 0; i < list.length; i++) {
+      var qi = currentOrder[list[i]];
+      var d = document.createElement('span');
+      d.className = 'dot';
+      if (state.answers[qi] !== undefined) {
+        var q = questions[qi];
+        var shuffle = getShuffleFor(qi);
+        var chosen = shuffle[state.answers[qi]];
+        d.className = 'dot ' + (chosen === q.ci ? 'correct' : 'wrong');
+      }
+      d.textContent = i + 1;
+      (function(ii){ d.onclick = function(){ window.jumpTo(ii); }; })(i);
+      dr.appendChild(d);
+    }
+    // show results pill if all answered
+    var rp = document.getElementById('resultsPill');
+    rp.style.display = (ac === list.length) ? 'block' : 'none';
+    // subtitle
+    var att = parseInt(localStorage.getItem(ATT_KEY) || '0');
+    document.getElementById('subtitle').textContent = 'Chapter 4 | Total Attempts: ' + att;
+  }
+
+  function render() {
+    updateNav();
+    if (state.showResults) {
+      showResultsScreen();
+      return;
+    }
+    document.getElementById('resultsArea').style.display = 'none';
+    document.getElementById('quizArea').style.display = 'block';
+
+    var list = getList();
+    var posInOrder = list[state.cur];
+    var idx = currentOrder[posInOrder];
+    var q = questions[idx];
+    var shuffle = getShuffleFor(idx);
+    var answered = state.answers[idx] !== undefined;
+
+    var html = '<div class="qnum">Question ' + (state.cur + 1) + ' of ' + list.length + '</div>';
+    html += '<div class="qtag">' + q.section + '</div>';
+    // Format question text - handle newlines
+    var qtextFormatted = q.text.replace(/\n/g, '<br>');
+    html += '<div class="qtext">' + qtextFormatted + '</div>';
+    html += '<div class="options">';
+    for (var i = 0; i < shuffle.length; i++) {
+      var origIdx = shuffle[i];
+      var cls = 'opt';
+      if (answered) {
+        if (i === state.answers[idx]) {
+          cls += (origIdx === q.ci) ? ' correct' : ' wrong';
+        } else if (origIdx === q.ci) {
+          cls += ' correct';
+        }
+      }
+      var disabled = answered ? 'style="cursor:default"' : '';
+      html += '<button class="' + cls + '" onclick="window.chooseOpt(' + i + ')" ' + disabled + '>' + q.opts[origIdx] + '</button>';
+    }
+    html += '</div>';
+    // explanation: show only on wrong answer (math competition style for all)
+    if (answered) {
+      var chosenOrig = shuffle[state.answers[idx]];
+      var isWrong = chosenOrig !== q.ci;
+      if (isWrong) {
+        html += '<div class="explanation" style="display:block">' + q.exp + '</div>';
+      }
+    }
+    document.getElementById('quizArea').innerHTML = html;
+
+    // Prev/Next
+    document.getElementById('prevBtn').disabled = (state.cur === 0);
+    var isLast = (state.cur === list.length - 1);
+    var nextBtn = document.getElementById('nextBtn');
+    nextBtn.textContent = isLast ? 'See Results →' : 'Next';
+
+    document.getElementById('bottomNav').style.display = 'flex';
+  }
+
+  function showResultsScreen() {
+    document.getElementById('quizArea').style.display = 'none';
+    document.getElementById('bottomNav').style.display = 'none';
+    document.getElementById('resultsArea').style.display = 'block';
+
+    var list = getList();
+    var h2 = document.querySelector('#resultsArea h2');
+    if (h2) h2.textContent = state.retryMode ? 'Retry Results' : 'Results';
+
+    var grid = document.getElementById('summaryGrid');
+    grid.innerHTML = '';
+    for (var i = 0; i < list.length; i++) {
+      var qi = currentOrder[list[i]];
+      var q = questions[qi];
+      var card = document.createElement('div');
+      var shuffle = state.shuffles[qi] || getShuffleFor(qi);
+      if (state.answers[qi] === undefined) {
+        card.className = 'sumCard skipped';
+        card.innerHTML = '<div class="snum">Q' + (i+1) + '</div><div>Skipped</div>';
+      } else {
+        var chosenOrig = shuffle[state.answers[qi]];
+        var correct = chosenOrig === q.ci;
+        card.className = 'sumCard ' + (correct ? 'correct' : 'wrong');
+        card.innerHTML = '<div class="snum">Q' + (i+1) + '</div><div>' + (correct ? 'Correct' : 'Wrong') + '</div>';
+      }
+      (function(ii){ card.onclick = function(){ state.showResults = false; state.cur = ii; render(); }; })(i);
+      grid.appendChild(card);
+    }
+    var att = parseInt(localStorage.getItem(ATT_KEY) || '0');
+    document.getElementById('subtitle').textContent = 'Chapter 4 | Total Attempts: ' + att;
+  }
+
+  window.chooseOpt = function(i) {
+    var list = getList();
+    var posInOrder = list[state.cur];
+    var qi = currentOrder[posInOrder];
+    if (state.answers[qi] !== undefined) return;
+    state.answers[qi] = i;
+    saveState();
+    render();
+  };
+
+  window.goPrev = function() {
+    if (state.cur > 0) { state.cur--; saveState(); render(); }
+  };
+
+  window.goNext = function() {
+    var list = getList();
+    if (state.cur === list.length - 1) {
+      window.goResults();
+    } else {
+      state.cur++;
+      saveState();
+      render();
+    }
+  };
+
+  window.goResults = function() {
+    if (!state.retryMode) {
+      var att = parseInt(localStorage.getItem(ATT_KEY) || '0');
+      localStorage.setItem(ATT_KEY, att + 1);
+    }
+    state.showResults = true;
+    saveState();
+    render();
+  };
+
+  window.jumpTo = function(i) {
+    state.showResults = false;
+    state.cur = i;
+    saveState();
+    render();
+  };
+
+  window.toggleDots = function() {
+    var dp = document.getElementById('dotPanel');
+    dp.style.display = dp.style.display === 'block' ? 'none' : 'block';
+  };
+
+  window.retryWrong = function() {
+    var list = getList();
+    var wrongs = [];
+    for (var k = 0; k < list.length; k++) {
+      var posInOrder = list[k];
+      var qi = currentOrder[posInOrder];
+      var shuffle = state.shuffles[qi] || getShuffleFor(qi);
+      if (state.answers[qi] !== undefined) {
+        var chosenOrig = shuffle[state.answers[qi]];
+        if (chosenOrig !== questions[qi].ci) {
+          wrongs.push(posInOrder);
+        }
+      }
+    }
+    if (wrongs.length === 0) return;
+    for (var j = 0; j < wrongs.length; j++) {
+      var qiWrong = currentOrder[wrongs[j]];
+      delete state.answers[qiWrong];
+      delete state.shuffles[qiWrong];
+    }
+    state.retryMode = true;
+    state.retryList = wrongs;
+    state.showResults = false;
+    state.cur = 0;
+    saveState();
+    render();
+  };
+
+  window.copyResults = function() {
+    var list = getList();
+    var lines = ['Chapter 4 Quiz Results'];
+    var correct = 0;
+    for (var i = 0; i < list.length; i++) {
+      var qi = currentOrder[list[i]];
+      var q = questions[qi];
+      var shuffle = state.shuffles[qi] || getShuffleFor(qi);
+      var status = 'Skipped';
+      if (state.answers[qi] !== undefined) {
+        var chosenOrig = shuffle[state.answers[qi]];
+        status = (chosenOrig === q.ci) ? 'Correct' : 'Wrong';
+        if (status === 'Correct') correct++;
+      }
+      lines.push('Q' + (i+1) + ' (' + q.section + '): ' + status);
+    }
+    lines.push('Score: ' + correct + ' / ' + list.length);
+    navigator.clipboard.writeText(lines.join('\n')).catch(function(){});
+  };
+
+  window.openFreshModal = function(mode) {
+    pendingFreshMode = mode;
+    if (mode === 'random') {
+      document.getElementById('modalTitle').textContent = 'Start Fresh (Random Order)?';
+      document.getElementById('modalMsg').textContent = 'Questions will be reshuffled into a new random order, and all progress will be reset.';
+    } else {
+      document.getElementById('modalTitle').textContent = 'Start Fresh (Original Order)?';
+      document.getElementById('modalMsg').textContent = 'Questions will return to their original order, and all progress will be reset.';
+    }
+    document.getElementById('modalOverlay').classList.add('active');
+  };
+
+  window.doFresh = function() {
+    localStorage.removeItem(SK);
+    currentOrder = (pendingFreshMode === 'random') ? randomOrder() : identityOrder();
+    saveOrder(currentOrder);
+    state = { cur: 0, answers: {}, shuffles: {}, showResults: false, retryMode: false, retryList: [] };
+    window.qzTimerReset();
+    closeModal();
+    render();
+  };
+
+  window.closeModal = function() {
+    document.getElementById('modalOverlay').classList.remove('active');
+  };
+
+  // Init
+  loadState();
+  render();
+})();
+
+// Timer IIFE
+(function(){
+  var TIMER_KEY = 'qzTimer_ch4_sion_2026';
+  var timerInterval = null;
+  var pausedRemaining = null;
+  var startedAt = null;
+  var totalSecs = null;
+
+  function fmt(s) {
+    var m = Math.floor(s / 60);
+    var sec = s % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
+
+  function tick() {
+    var elapsed = Math.floor((Date.now() - startedAt) / 1000);
+    var remaining = totalSecs - elapsed;
+    if (remaining <= 0) {
+      remaining = 0;
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    var el = document.getElementById('qzCountdown');
+    el.textContent = remaining === 0 ? "Time's Up" : fmt(remaining);
+    var pct = remaining / totalSecs;
+    if (pct <= 0.10) { el.style.color = '#E24B4A'; }
+    else if (pct <= 0.25) { el.style.color = '#f5a623'; }
+    else { el.style.color = '#111'; }
+  }
+
+  window.qzStartTimer = function() {
+    var mins = parseInt(document.getElementById('qzMinInput').value) || 20;
+    totalSecs = mins * 60;
+    pausedRemaining = null;
+    startedAt = Date.now();
+    document.getElementById('qzTimerSetup').style.display = 'none';
+    var run = document.getElementById('qzTimerRunning');
+    run.style.display = 'flex';
+    document.getElementById('qzPauseBtn').textContent = 'Pause';
+    clearInterval(timerInterval);
+    tick();
+    timerInterval = setInterval(tick, 500);
+  };
+
+  window.qzTogglePause = function() {
+    var btn = document.getElementById('qzPauseBtn');
+    if (btn.textContent === 'Pause') {
+      // pause
+      clearInterval(timerInterval);
+      timerInterval = null;
+      var elapsed = Math.floor((Date.now() - startedAt) / 1000);
+      pausedRemaining = Math.max(0, totalSecs - elapsed);
+      btn.textContent = 'Resume';
+    } else {
+      // resume
+      startedAt = Date.now() - (totalSecs - pausedRemaining) * 1000;
+      pausedRemaining = null;
+      timerInterval = setInterval(tick, 500);
+      btn.textContent = 'Pause';
+    }
+  };
+
+  window.qzTimerReset = function() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    pausedRemaining = null;
+    startedAt = null;
+    totalSecs = null;
+    document.getElementById('qzCountdown').textContent = '00:00';
+    document.getElementById('qzCountdown').style.color = '#111';
+    document.getElementById('qzTimerRunning').style.display = 'none';
+    document.getElementById('qzTimerSetup').style.display = 'flex';
+    localStorage.removeItem('qzTimer_ch4_sion_2026');
+  };
+})();
+</script>
+</body>
+</html>

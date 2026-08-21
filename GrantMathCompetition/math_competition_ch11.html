@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Competition ch11</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;min-height:100vh;padding-bottom:40px}
+#quiz-title{font-size:1.3rem;font-weight:700;text-align:center;color:#111;background:#fff;padding:14px 16px 2px}
+#att-display{font-size:0.82rem;text-align:center;color:#555;background:#fff;padding:2px 0 6px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:4px 16px 10px}
+#nav-bar{background:#fff;border-bottom:1px solid #dde3ec;padding:8px 14px 4px;position:sticky;top:0;z-index:100}
+#nav-top-row{display:flex;align-items:center;gap:10px}
+#ans-count{font-size:0.8rem;color:#555;white-space:nowrap;min-width:54px}
+#prog-bar-wrap{flex:1;background:#d7dde6;border-radius:6px;height:7px;overflow:hidden}
+#prog-bar-fill{height:7px;background:#1D9E75;border-radius:6px;width:0%;transition:width .3s}
+#jump-btn{font-size:0.78rem;background:#e8edf4;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;white-space:nowrap;color:#333}
+#dot-panel{display:none;flex-wrap:wrap;gap:5px;padding:8px 2px 4px;max-height:170px;overflow-y:auto}
+.nav-dot{width:26px;height:26px;border-radius:50%;border:none;cursor:pointer;font-size:0.72rem;font-weight:700;color:#fff}
+.dot-unanswered{background:#d7dde6;color:#555}
+.dot-correct{background:#1D9E75}
+.dot-wrong{background:#E24B4A}
+#results-pill{display:none;margin-left:6px}
+#results-pill button{background:#1D9E75;color:#fff;border:none;border-radius:12px;padding:4px 13px;font-size:0.78rem;cursor:pointer;font-weight:700}
+
+#quiz-area{display:none;max-width:680px;margin:0 auto;padding:14px 14px 0}
+.q-num{font-size:0.8rem;color:#888;margin-bottom:6px}
+.q-text{font-size:1rem;color:#111;line-height:1.55;margin-bottom:14px;font-weight:500}
+.fr{display:inline-block;vertical-align:middle;text-align:center;font-style:italic;}
+.fr .fn,.fr .fd{display:block;font-size:0.78em;line-height:1.25;padding:0 3px;}
+.fr .fb{display:block;border-top:1.5px solid currentColor;min-width:14px;}
+.opts{display:flex;flex-direction:column;gap:9px}
+.opt-btn{background:#e8edf4;border:2px solid transparent;border-radius:10px;padding:11px 14px;font-size:0.97rem;color:#111111;text-align:left;cursor:pointer;line-height:1.4;transition:background .15s}
+.opt-btn:active{opacity:.85}
+.opt-correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt-wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.opt-reveal{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+#explanation{margin-top:14px;background:#f5f7fa;border-radius:10px;padding:12px 14px;font-size:0.9rem;color:#333;line-height:1.5;display:none}
+#bottom-nav{display:flex;justify-content:space-between;max-width:680px;margin:18px auto 0;padding:0 14px}
+.nav-arrow{background:#e8edf4;border:none;border-radius:10px;padding:11px 22px;font-size:0.97rem;font-weight:700;cursor:pointer;color:#333}
+.nav-arrow:disabled{opacity:.38;cursor:default}
+#next-btn{background:#1D9E75;color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:0.97rem;font-weight:700;cursor:pointer}
+
+#results-screen{display:none;max-width:680px;margin:0 auto;padding:20px 14px}
+#results-screen.show{display:block}
+#results-heading{font-size:1.4rem;font-weight:800;color:#1D9E75;text-align:center;margin-bottom:16px}
+.results-card{background:#f5f7fa;border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.rc-q{font-size:0.88rem;color:#555;margin-bottom:4px}
+.rc-a{font-size:0.95rem;font-weight:700}
+.rc-correct{color:#1D9E75}
+.rc-wrong{color:#E24B4A}
+.rc-expl{font-size:0.85rem;color:#444;margin-top:6px;line-height:1.45}
+#score-line{text-align:center;font-size:1.05rem;font-weight:700;color:#111;margin-bottom:18px}
+#results-btns{display:flex;flex-direction:column;gap:10px;max-width:320px;margin:0 auto}
+#retry-btn{background:#1D9E75;color:#fff;border:none;border-radius:10px;padding:13px;font-size:1rem;font-weight:700;cursor:pointer}
+#copy-btn{background:#185FA5;color:#fff;border:none;border-radius:10px;padding:13px;font-size:1rem;font-weight:700;cursor:pointer}
+#fresh-btn{background:#e8edf4;color:#333;border:none;border-radius:10px;padding:13px;font-size:1rem;font-weight:700;cursor:pointer}
+
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center}
+#modal-overlay.show{display:flex}
+#modal-box{background:#fff;border-radius:14px;padding:26px 22px;max-width:320px;width:90%;text-align:center}
+#modal-title{font-size:1.05rem;font-weight:700;margin-bottom:10px;color:#111}
+#modal-msg{font-size:0.92rem;color:#444;margin-bottom:20px;line-height:1.45}
+#modal-btns{display:flex;gap:10px;justify-content:center}
+#modal-cancel{background:#e8edf4;border:none;border-radius:8px;padding:10px 20px;font-size:0.95rem;font-weight:700;cursor:pointer;color:#333}
+#modal-confirm{background:#E24B4A;border:none;border-radius:8px;padding:10px 20px;font-size:0.95rem;font-weight:700;cursor:pointer;color:#fff}
+</style>
+</head>
+<body>
+<!-- ===== Universal Quiz Timer (auto-injected) ===== -->
+<style>
+  #qzTimerBar { background: #ffffff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-family: 'Segoe UI', Arial, sans-serif; }
+  #qzTimerSetup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+  #qzTimerSetup label { font-weight: 700; }
+  #qzTimerInput { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+  #qzTimerStartBtn { background: #185FA5; color: #ffffff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  #qzTimerStartBtn:active { opacity: 0.8; }
+  #qzTimerRunning { display: none; align-items: center; gap: 8px; }
+  #qzTimerLabel { font-size: 0.78rem; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 0.02em; }
+  #qzTimerDisplay { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+  #qzTimerDisplay.qz-warn { color: #f5a623; }
+  #qzTimerDisplay.qz-danger { color: #E24B4A; }
+</style>
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label for="qzTimerInput">Set Time Limit:</label>
+    <input type="number" id="qzTimerInput" min="1" max="180" value="20"> min
+    <button id="qzTimerStartBtn" type="button">Start</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span id="qzTimerLabel">Time Left</span>
+    <span id="qzTimerDisplay">20:00</span>
+  </div>
+</div>
+<script>
+(function(){
+  var QZ_KEY = 'qzTimer_' + location.pathname;
+  var qz = { totalSec: null, startedAt: null };
+  try {
+    var raw = localStorage.getItem(QZ_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p.totalSec === 'number' && typeof p.startedAt === 'number') qz = p;
+    }
+  } catch(e) {}
+  var qzInterval = null;
+
+  function qzSave() { try { localStorage.setItem(QZ_KEY, JSON.stringify(qz)); } catch(e) {} }
+  function qzFormat(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60), s = sec % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function qzRender() {
+    var setupEl = document.getElementById('qzTimerSetup');
+    var runEl = document.getElementById('qzTimerRunning');
+    var disp = document.getElementById('qzTimerDisplay');
+    if (!setupEl || !runEl || !disp) return;
+    if (!qz.startedAt) {
+      setupEl.style.display = 'flex';
+      runEl.style.display = 'none';
+      return;
+    }
+    setupEl.style.display = 'none';
+    runEl.style.display = 'flex';
+    var elapsed = (Date.now() - qz.startedAt) / 1000;
+    var remaining = qz.totalSec - elapsed;
+    disp.classList.remove('qz-warn', 'qz-danger');
+    if (remaining <= 0) {
+      disp.textContent = "Time's Up";
+      disp.classList.add('qz-danger');
+      qzStopInterval();
+      return;
+    }
+    disp.textContent = qzFormat(remaining);
+    if (remaining <= qz.totalSec * 0.1) disp.classList.add('qz-danger');
+    else if (remaining <= qz.totalSec * 0.25) disp.classList.add('qz-warn');
+  }
+  function qzStartInterval() {
+    qzStopInterval();
+    qzInterval = setInterval(qzRender, 1000);
+  }
+  function qzStopInterval() {
+    if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+  }
+  function qzStart() {
+    var input = document.getElementById('qzTimerInput');
+    var minutes = parseFloat(input.value);
+    if (!minutes || minutes <= 0) minutes = 20;
+    qz.totalSec = Math.round(minutes * 60);
+    qz.startedAt = Date.now();
+    qzSave();
+    qzRender();
+    qzStartInterval();
+  }
+
+  var btn = document.getElementById('qzTimerStartBtn');
+  if (btn) btn.addEventListener('click', qzStart);
+  qzRender();
+  if (qz.startedAt) qzStartInterval();
+
+  function qzResetTimer() {
+    qz.totalSec = null;
+    qz.startedAt = null;
+    qzSave();
+    qzStopInterval();
+    qzRender();
+  }
+  var qzRetryRe = /retry|restart|reset|start\s*fresh|try\s*again|다시\s*시작|처음부터/i;
+  document.addEventListener('click', function(ev) {
+    var el = ev.target, depth = 0;
+    while (el && depth < 4) {
+      if (el.id === 'qzTimerBar' || el.id === 'qzAttemptsBar') return;
+      var isClickable = el.tagName === 'BUTTON' || el.tagName === 'A' ||
+        (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) ||
+        (el.getAttribute && el.getAttribute('role') === 'button');
+      if (isClickable) {
+        var txt = (el.textContent || el.value || '').trim();
+        if (txt.length > 0 && txt.length < 40 && qzRetryRe.test(txt)) {
+          qzResetTimer();
+          return;
+        }
+      }
+      el = el.parentElement;
+      depth++;
+    }
+  }, true);
+})();
+</script>
+<!-- ===== End Universal Quiz Timer ===== -->
+
+<div id="quiz-title">Math Competition ch11</div>
+<div id="att-display">Math Competition | Total Attempts: <span id="att-num">0</span></div>
+<div class="instruction">Choose the correct answer for each problem.</div>
+
+<div id="nav-bar">
+  <div id="nav-top-row">
+    <span id="ans-count">0 / 20</span>
+    <div id="prog-bar-wrap"><div id="prog-bar-fill"></div></div>
+    <button id="jump-btn" onclick="window.toggleDots()">Jump</button>
+    <div id="results-pill"><button onclick="window.goResults()">Results</button></div>
+  </div>
+  <div id="dot-panel"></div>
+</div>
+
+<div id="quiz-area"></div>
+<div id="bottom-nav">
+  <button class="nav-arrow" id="prev-btn" onclick="window.goPrev()" disabled>Prev</button>
+  <button id="next-btn" onclick="window.goNext()">Next</button>
+</div>
+
+<div id="results-screen">
+  <div id="results-heading">Results</div>
+  <div id="score-line"></div>
+  <div id="results-btns">
+    <button id="retry-btn" onclick="window.retryWrong()">Retry Wrong Ones</button>
+    <button id="copy-btn" onclick="window.copyResults()">Copy All Results</button>
+    <button id="fresh-btn" onclick="window.confirmFresh('original')">Start Fresh (Original Order)</button>
+    <button id="fresh-btn-2" onclick="window.confirmFresh('random')">Start Fresh (Random Order)</button>
+  </div>
+  <div id="results-cards" style="margin-top:20px"></div>
+</div>
+
+<div id="modal-overlay">
+  <div id="modal-box">
+    <div id="modal-title">Start Fresh?</div>
+    <div id="modal-msg">This will clear all answers and reset the quiz.</div>
+    <div id="modal-btns">
+      <button id="modal-cancel" onclick="window.closeModal()">Cancel</button>
+      <button id="modal-confirm" onclick="window.doFresh()">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+const SKEY = 'quiz_ch11units_v1';
+const ATT_KEY = 'quiz_ch11units_att_v1';
+
+function fr(n,d){return '<span class="fr"><span class="fn">'+n+'</span><span class="fb"></span><span class="fd">'+d+'</span></span>';}
+
+const RAW_QS = [
+  {
+    q: "An action-figure weighs 8 pounds and 4 ounces. How much does it weigh in ounces?",
+    opts: ["128 oz", "136 oz", "132 oz", "148 oz"],
+    ci: 2,
+    expl: "1 pound = 16 ounces, so 8 pounds = 8 x 16 = 128 ounces. Adding the extra 4 ounces gives 128 + 4 = 132 ounces."
+  },
+  {
+    q: "How many fluid ounces are in 4 gallons of milk?",
+    opts: ["512 fl oz", "500 fl oz", "480 fl oz", "520 fl oz"],
+    ci: 0,
+    expl: "1 gallon = 128 fluid ounces, so 4 gallons = 4 x 128 = 512 fluid ounces."
+  },
+  {
+    q: "If Joe needs 90 square feet of tile to complete his floor, how many square yards does he need to buy?",
+    opts: ["8 square yards", "9 square yards", "10 square yards", "12 square yards"],
+    ci: 2,
+    expl: "1 square yard = 9 square feet, so 90 square feet = 90 / 9 = 10 square yards."
+  },
+  {
+    q: "If there are 12 jegs in a jag, 4 jags in a jug, and 10 jugs in a jog, how many jegs are in a jog?",
+    opts: ["420 jegs", "480 jegs", "440 jegs", "460 jegs"],
+    ci: 1,
+    expl: "Multiply the conversion factors along the chain: 12 jegs per jag x 4 jags per jug x 10 jugs per jog = 480 jegs per jog."
+  },
+  {
+    q: "Pauline rides her bike at an average speed of 15 feet per second. What is her speed in miles per hour? Express your answer as a reduced improper fraction.",
+    opts: [fr("220","22")+" mph", fr("225","24")+" mph", fr("225","22")+" mph", fr("200","22")+" mph"],
+    ci: 2,
+    expl: "Convert using 1 mile = 5280 feet and 1 hour = 3600 seconds: 15 x 3600 / 5280 = 54,000/5,280, which reduces to 225/22 miles per hour."
+  },
+  {
+    q: "If there are 3 kones in a kylinder, 4 kylinders in a kube, and 5 kubes in a kettle, how many kones are in a kone, a kylinder, a kube and a kettle?",
+    opts: ["60 kones", "72 kones", "80 kones", "76 kones"],
+    ci: 3,
+    expl: "A kone by itself is 1 kone. A kylinder is 3 kones. A kube is 4 kylinders, or 4 x 3 = 12 kones. A kettle is 5 kubes, or 5 x 12 = 60 kones. Adding all four together: 1 + 3 + 12 + 60 = 76 kones."
+  },
+  {
+    q: "Alan's family likes to drink water. If they consume 25 gallons, 13 quarts, and 16 pints of water in a week, how many quarts of water did the family consume?",
+    opts: ["117 quarts", "125 quarts", "121 quarts", "129 quarts"],
+    ci: 2,
+    expl: "1 gallon = 4 quarts, so 25 gallons = 100 quarts. 1 pint = 0.5 quart, so 16 pints = 8 quarts. Adding everything together: 100 + 13 + 8 = 121 quarts."
+  },
+  {
+    q: "If a palm tree at the beach stands 2 yards, 4 feet and 5 inches tall, how tall is the tree in inches?",
+    opts: ["115 inches", "125 inches", "120 inches", "130 inches"],
+    ci: 1,
+    expl: "2 yards = 72 inches, and 4 feet = 48 inches. Adding the 5 inches: 72 + 48 + 5 = 125 inches."
+  },
+  {
+    q: "An action movie's feature-length is 2 hours, 34 minutes and 15 seconds long. How long is the movie in seconds?",
+    opts: ["9,195 seconds", "9,315 seconds", "9,255 seconds", "9,215 seconds"],
+    ci: 2,
+    expl: "2 hours = 7200 seconds, and 34 minutes = 2040 seconds. Adding the 15 seconds: 7200 + 2040 + 15 = 9255 seconds."
+  },
+  {
+    q: "If $1.80 = 1 Mars dollar, how much does an item priced at $8.10 cost in Mars dollars?",
+    opts: ["4 Mars dollars", "5 Mars dollars", "4.25 Mars dollars", "4.5 Mars dollars"],
+    ci: 3,
+    expl: "Divide the price by the exchange rate: 8.10 / 1.80 = 4.5 Mars dollars."
+  },
+  {
+    q: "How many cubic inches are in "+fr("3","8")+" of a cubic yard?",
+    opts: ["16,496 cubic inches", "17,496 cubic inches", "17,280 cubic inches", "18,224 cubic inches"],
+    ci: 1,
+    expl: "1 cubic yard = 27 cubic feet, and 1 cubic foot = 1728 cubic inches, so 1 cubic yard = 27 x 1728 = 46,656 cubic inches. Three eighths of that is 46,656 x 3/8 = 17,496 cubic inches."
+  },
+  {
+    q: "The mail carrier drives his truck for 840 miles every week. If he works 8 hours per day from Monday through Friday, what is his average driving speed in miles per hour?",
+    opts: ["18 mph", "24 mph", "21 mph", "26.25 mph"],
+    ci: 2,
+    expl: "Monday through Friday is 5 days, so he works 5 x 8 = 40 hours per week. His average speed is 840 / 40 = 21 miles per hour."
+  },
+  {
+    q: "A machine lifts 9 tons of building materials per hour. How much does it lift in ounces per second?",
+    opts: ["72 ounces per second", "80 ounces per second", "75 ounces per second", "96 ounces per second"],
+    ci: 1,
+    expl: "1 ton = 2000 pounds = 32,000 ounces, so 9 tons = 288,000 ounces per hour. Dividing by 3600 seconds in an hour: 288,000 / 3600 = 80 ounces per second."
+  },
+  {
+    q: "Anna is driving at a speed of 64 miles per hour while Kyle is driving at a speed of 49 miles per hour. How much faster is Anna driving in feet per second?",
+    opts: ["18 feet per second", "24 feet per second", "20 feet per second", "22 feet per second"],
+    ci: 3,
+    expl: "Anna is driving 64 - 49 = 15 miles per hour faster. Converting using 1 mile = 5280 feet and 1 hour = 3600 seconds: 15 x 5280 / 3600 = 22 feet per second."
+  },
+  {
+    q: "Darry mows grass at an average rate of 660 square feet per hour. What is his average speed in square inches per minute?",
+    opts: ["1,440 square inches per minute", "1,584 square inches per minute", "1,650 square inches per minute", "1,728 square inches per minute"],
+    ci: 1,
+    expl: "1 square foot = 144 square inches, so 660 square feet = 660 x 144 = 95,040 square inches per hour. Dividing by 60 minutes in an hour: 95,040 / 60 = 1,584 square inches per minute."
+  },
+  {
+    q: "Review Problem: Convert 5 pounds to ounces.",
+    opts: ["70 ounces", "80 ounces", "75 ounces", "85 ounces"],
+    ci: 1,
+    expl: "1 pound = 16 ounces, so 5 pounds = 5 x 16 = 80 ounces."
+  },
+  {
+    q: "Review Problem: How many hours are in 7 days?",
+    opts: ["168 hours", "144 hours", "156 hours", "180 hours"],
+    ci: 0,
+    expl: "1 day = 24 hours, so 7 days = 7 x 24 = 168 hours."
+  },
+  {
+    q: "Review Problem: How many yards are in a mile?",
+    opts: ["1,700 yards", "1,650 yards", "1,760 yards", "1,800 yards"],
+    ci: 2,
+    expl: "1 mile = 5280 feet, and 1 yard = 3 feet, so 1 mile = 5280 / 3 = 1760 yards."
+  },
+  {
+    q: "Review Problem: How many seconds are in 30 minutes?",
+    opts: ["1,900 seconds", "1,800 seconds", "1,700 seconds", "1,600 seconds"],
+    ci: 1,
+    expl: "1 minute = 60 seconds, so 30 minutes = 30 x 60 = 1800 seconds."
+  },
+  {
+    q: "Review Problem: What is 35 feet in inches?",
+    opts: ["410 inches", "430 inches", "400 inches", "420 inches"],
+    ci: 3,
+    expl: "1 foot = 12 inches, so 35 feet = 35 x 12 = 420 inches."
+  }
+];
+
+// --- Question order (original vs random), persisted independently of quiz progress ---
+const ORDER_KEY = SKEY + '_order_v1';
+function identityOrder(){ return RAW_QS.map((_,i)=>i); }
+function isValidOrder(arr){
+  if(!Array.isArray(arr)||arr.length!==RAW_QS.length) return false;
+  const sorted=[...arr].sort((a,b)=>a-b);
+  for(let i=0;i<sorted.length;i++) if(sorted[i]!==i) return false;
+  return true;
+}
+function loadOrder(){
+  try{
+    const raw=localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    const arr=JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error();
+    return arr;
+  }catch(e){ localStorage.removeItem(ORDER_KEY); return null; }
+}
+function saveOrder(order){ localStorage.setItem(ORDER_KEY, JSON.stringify(order)); }
+function shuffleRandom(arr){
+  const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+let currentOrder = loadOrder() || identityOrder();
+let QS = currentOrder.map(i => RAW_QS[i]);
+
+let state = {cur:0, answers:{}, shuffles:{}, showResults:false, retryMode:false, retryList:[]};
+let attCount = parseInt(localStorage.getItem(ATT_KEY)||'0');
+function getList(){ return state.retryMode ? state.retryList : QS.map((_,i)=>i); }
+
+function saveState(){
+  try{ localStorage.setItem(SKEY, JSON.stringify(state)); } catch(e){}
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(SKEY);
+    if(!raw) return;
+    const s = JSON.parse(raw);
+    if(typeof s.answers!=='object'||typeof s.shuffles!=='object') return;
+    if(s.retryMode && !Array.isArray(s.retryList)) return;
+    const list = s.retryMode ? s.retryList : QS.map((_,i)=>i);
+    if(typeof s.cur!=='number'||s.cur<0||s.cur>=list.length) return;
+    state = s;
+  } catch(e){ localStorage.removeItem(SKEY); }
+}
+function getShuffled(i){
+  if(!state.shuffles[i]){
+    const q=QS[i];
+    const idx=[0,1,2,3];
+    for(let j=idx.length-1;j>0;j--){const r=Math.floor(Math.random()*(j+1));[idx[j],idx[r]]=[idx[r],idx[j]];}
+    const newCi=idx.indexOf(q.ci);
+    state.shuffles[i]={order:idx,ci:newCi};
+    saveState();
+  }
+  return state.shuffles[i];
+}
+
+function render(){
+  const qa=document.getElementById('quiz-area');
+  const rs=document.getElementById('results-screen');
+  const bn=document.getElementById('bottom-nav');
+  if(state.showResults){
+    qa.style.display='none';
+    bn.style.display='none';
+    rs.classList.add('show');
+    showResultsScreen();
+    updateNav();
+    return;
+  }
+  rs.classList.remove('show');
+  qa.style.display='block';
+  bn.style.display='flex';
+  renderQuestion();
+  updateNav();
+}
+
+function renderQuestion(){
+  const list=getList();
+  const i=list[state.cur];
+  const q=QS[i];
+  const sh=getShuffled(i);
+  const answered=state.answers[i]!==undefined;
+  const chosen=state.answers[i];
+
+  let html=`<div class="q-num">Question ${state.cur+1} of ${list.length}</div>`;
+  html+=`<div class="q-text">${i+1}. ${q.q}</div><div class="opts">`;
+  sh.order.forEach((origIdx,pos)=>{
+    let cls='opt-btn';
+    if(answered){
+      if(pos===sh.ci) cls+=' opt-reveal';
+      else if(pos===chosen) cls+=' opt-wrong';
+    }
+    const dis=answered?'disabled':'';
+    html+=`<button class="${cls}" ${dis} onclick="window.pickOpt(${pos})">${q.opts[origIdx]}</button>`;
+  });
+  html+=`</div>`;
+  if(answered){
+    html+=`<div id="explanation" style="display:block">${q.expl}</div>`;
+  } else {
+    html+=`<div id="explanation" style="display:none"></div>`;
+  }
+  document.getElementById('quiz-area').innerHTML=html;
+
+  const nb=document.getElementById('next-btn');
+  const pb=document.getElementById('prev-btn');
+  pb.disabled=(state.cur===0);
+  nb.textContent=(state.cur===list.length-1)?'See Results →':'Next';
+}
+
+function updateNav(){
+  const list=getList();
+  const total=list.length;
+  const ans=list.filter(i=>state.answers[i]!==undefined).length;
+  document.getElementById('ans-count').textContent=`${ans} / ${total}`;
+  document.getElementById('prog-bar-fill').style.width=`${ans/total*100}%`;
+  document.getElementById('att-num').textContent=attCount;
+
+  // dots
+  const dp=document.getElementById('dot-panel');
+  let dhtml='';
+  list.forEach((qi,pos)=>{
+    let cls='nav-dot dot-unanswered';
+    if(state.answers[qi]!==undefined){
+      const sh=state.shuffles[qi];
+      if(sh && state.answers[qi]===sh.ci) cls='nav-dot dot-correct';
+      else cls='nav-dot dot-wrong';
+    }
+    dhtml+=`<button class="${cls}" onclick="window.jumpTo(${pos})">${pos+1}</button>`;
+  });
+  dp.innerHTML=dhtml;
+
+  const allDone=ans===total;
+  document.getElementById('results-pill').style.display=allDone?'inline':'none';
+}
+
+window.pickOpt=function(pos){
+  const list=getList();
+  const i=list[state.cur];
+  if(state.answers[i]!==undefined) return;
+  state.answers[i]=pos;
+  saveState();
+  render();
+  const allDone=list.filter(qi=>state.answers[qi]!==undefined).length===list.length;
+  if(allDone) document.getElementById('results-pill').style.display='inline';
+};
+window.goPrev=function(){
+  if(state.cur>0){state.cur--;saveState();render();}
+};
+window.goNext=function(){
+  const list=getList();
+  if(state.cur===list.length-1){window.goResults();return;}
+  state.cur++;saveState();render();
+};
+window.jumpTo=function(pos){
+  state.cur=pos;saveState();render();
+};
+window.toggleDots=function(){
+  const dp=document.getElementById('dot-panel');
+  dp.style.display=(dp.style.display==='flex')?'none':'flex';
+};
+window.goResults=function(){
+  state.showResults=true;
+  if(!state.retryMode){
+    attCount++;
+    localStorage.setItem(ATT_KEY,String(attCount));
+  }
+  saveState();render();
+};
+
+function showResultsScreen(){
+  const list=getList();
+  const total=list.length;
+  let correct=0;
+  list.forEach(i=>{
+    const sh=state.shuffles[i];
+    if(sh && state.answers[i]===sh.ci) correct++;
+  });
+  document.getElementById('results-heading').textContent = state.retryMode ? 'Retry Results' : 'Results';
+  document.getElementById('score-line').textContent=`Score: ${correct} / ${total}`;
+  let html='';
+  list.forEach((i,pos)=>{
+    const q=QS[i];
+    const sh=state.shuffles[i];
+    const chosen=state.answers[i];
+    const isCorrect=sh&&chosen===sh.ci;
+    const chosenText=(chosen!==undefined&&sh)?q.opts[sh.order[chosen]]:'(no answer)';
+    const correctText=sh?q.opts[sh.order[sh.ci]]:'(no answer)';
+    const rc=isCorrect?'rc-correct':'rc-wrong';
+    html+=`<div class="results-card">
+      <div class="rc-q">Q${pos+1}: ${q.q.substring(0,80)}${q.q.length>80?'&hellip;':''}</div>
+      <div class="rc-a ${rc}">${isCorrect?'Correct':'Wrong'} - Your answer: ${chosenText}${isCorrect?'':' | Correct: '+correctText}</div>
+      <div class="rc-expl">${q.expl}</div>
+    </div>`;
+  });
+  document.getElementById('results-cards').innerHTML=html;
+}
+
+window.retryWrong=function(){
+  const list=getList();
+  const wrong=list.filter(i=>{
+    const sh=state.shuffles[i];
+    return state.answers[i]===undefined||(sh&&state.answers[i]!==sh.ci);
+  });
+  if(!wrong.length) return;
+  wrong.forEach(i=>{delete state.answers[i];});
+  state.retryMode=true;
+  state.retryList=wrong;
+  state.showResults=false;
+  state.cur=0;
+  saveState();render();
+};
+window.copyResults=function(){
+  const list=getList();
+  let txt='Math Competition ch11 Results\n';
+  list.forEach((i,pos)=>{
+    const sh=state.shuffles[i];
+    const isCorrect=sh&&state.answers[i]===sh.ci;
+    txt+=`Q${pos+1}: ${isCorrect?'Correct':'Wrong'}\n`;
+  });
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt);
+    } else {
+      const ta=document.createElement('textarea');
+      ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    }
+  } catch(e){}
+};
+let pendingFreshMode = 'original';
+window.confirmFresh=function(mode){
+  pendingFreshMode = mode;
+  const t = document.getElementById('modal-title');
+  const m = document.getElementById('modal-msg');
+  if(mode==='random'){
+    t.textContent='Start Fresh (Random Order)?';
+    m.textContent='Questions will be reshuffled into a new random order, and all answers will be cleared. This cannot be undone.';
+  } else {
+    t.textContent='Start Fresh (Original Order)?';
+    m.textContent='Questions will return to their original order, and all answers will be cleared. This cannot be undone.';
+  }
+  document.getElementById('modal-overlay').classList.add('show');
+};
+window.closeModal=function(){
+  document.getElementById('modal-overlay').classList.remove('show');
+};
+window.doFresh=function(){
+  currentOrder = (pendingFreshMode==='random') ? shuffleRandom(identityOrder()) : identityOrder();
+  saveOrder(currentOrder);
+  QS = currentOrder.map(i => RAW_QS[i]);
+  localStorage.removeItem(SKEY);
+  state={cur:0,answers:{},shuffles:{},showResults:false,retryMode:false,retryList:[]};
+  document.getElementById('modal-overlay').classList.remove('show');
+  render();
+};
+
+loadState();
+render();
+})();
+</script>
+</body>
+</html>

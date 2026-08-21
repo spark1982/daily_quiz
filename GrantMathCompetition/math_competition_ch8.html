@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 8 Math Quiz</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #111; }
+
+.date-display { text-align: center; font-size: 1.4rem; font-weight: 800; color: #185FA5; background: #fff; padding: 10px 0 4px; }
+.title { text-align: center; font-size: 1.5rem; font-weight: 800; color: #1D9E75; background: #fff; padding: 4px 0 2px; }
+.subtitle { text-align: center; font-size: 0.85rem; color: #555; background: #fff; padding: 2px 0 8px; }
+.instruction { text-align: center; font-size: 0.88rem; color: #555; background: #fff; padding: 4px 12px 10px; }
+
+/* Nav bar */
+.nav-bar { background: #fff; border-bottom: 1px solid #dde3ec; padding: 6px 12px; position: sticky; top: 0; z-index: 100; }
+.nav-top { display: flex; align-items: center; gap: 8px; }
+.answered-count { font-size: 0.82rem; color: #555; white-space: nowrap; }
+.progress-track { flex: 1; height: 6px; background: #d7dde6; border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; background: #1D9E75; border-radius: 3px; transition: width 0.3s; width: 0%; }
+.jump-btn { font-size: 0.78rem; background: none; border: 1px solid #1D9E75; color: #1D9E75; border-radius: 4px; padding: 2px 8px; cursor: pointer; white-space: nowrap; }
+.results-pill { font-size: 0.78rem; background: #1D9E75; color: #fff; border: none; border-radius: 10px; padding: 3px 10px; cursor: pointer; }
+.dot-panel { display: none; flex-wrap: wrap; gap: 5px; padding: 8px 0 2px; max-height: 170px; overflow-y: auto; }
+.dot-panel.open { display: flex; }
+.dot { width: 26px; height: 26px; border-radius: 50%; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #d7dde6; color: #555; border: none; }
+.dot.correct { background: #1D9E75; color: #fff; }
+.dot.wrong { background: #E24B4A; color: #fff; }
+
+/* Quiz area */
+#quizArea { display: none; max-width: 680px; margin: 0 auto; padding: 16px 14px 40px; }
+.q-header { font-size: 0.82rem; color: #888; margin-bottom: 6px; }
+.section-label { display: inline-block; font-size: 0.75rem; font-weight: 700; color: #185FA5; background: #eaf2ff; border-radius: 4px; padding: 2px 8px; margin-bottom: 8px; }
+.question-text { font-size: 1.05rem; font-weight: 600; color: #111; margin-bottom: 14px; line-height: 1.5; }
+.options { display: flex; flex-direction: column; gap: 9px; }
+.opt-btn {
+  background: #e8edf4; color: #111111; border: 2px solid transparent;
+  border-radius: 8px; padding: 11px 14px; font-size: 0.97rem;
+  text-align: left; cursor: pointer; transition: background 0.15s, border-color 0.15s;
+}
+.opt-btn:hover { background: #dde3ec; }
+.opt-btn.correct-ans { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+.opt-btn.wrong-ans { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+.explanation { margin-top: 12px; background: #f0f8ff; border-left: 3px solid #185FA5; border-radius: 4px; padding: 10px 12px; font-size: 0.88rem; color: #333; line-height: 1.5; display: none; }
+.explanation.show { display: block; }
+.nav-btns { display: flex; gap: 10px; margin-top: 18px; }
+.prev-btn { background: #e8edf4; color: #444; border: none; border-radius: 8px; padding: 11px 20px; font-size: 0.95rem; cursor: pointer; }
+.next-btn { background: #1D9E75; color: #fff; border: none; border-radius: 8px; padding: 11px 28px; font-size: 0.95rem; font-weight: 700; cursor: pointer; flex: 1; }
+
+/* Fraction styling */
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 2px; font-size: 0.9em; line-height: 1.1; }
+.frac .num { border-bottom: 1.5px solid currentColor; padding: 0 2px; }
+.frac .den { padding: 0 2px; }
+
+/* Results */
+#resultsArea { display: none; max-width: 680px; margin: 0 auto; padding: 16px 14px 40px; }
+.results-card { background: #f5f7fa; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+.results-heading { font-size: 1.4rem; font-weight: 800; color: #1D9E75; text-align: center; margin-bottom: 14px; }
+.score-row { display: flex; justify-content: space-around; margin-bottom: 16px; }
+.score-box { text-align: center; }
+.score-num { font-size: 2rem; font-weight: 800; color: #1D9E75; }
+.score-label { font-size: 0.78rem; color: #666; }
+.result-item { background: #fff; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; border-left: 4px solid #d7dde6; font-size: 0.88rem; }
+.result-item.r-correct { border-left-color: #1D9E75; }
+.result-item.r-wrong { border-left-color: #E24B4A; }
+.result-q { font-weight: 600; margin-bottom: 4px; }
+.result-ans { color: #555; }
+.result-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.retry-btn { background: #1D9E75; color: #fff; border: none; border-radius: 8px; padding: 12px; font-size: 0.97rem; font-weight: 700; cursor: pointer; }
+.copy-btn { background: #185FA5; color: #fff; border: none; border-radius: 8px; padding: 12px; font-size: 0.97rem; font-weight: 700; cursor: pointer; }
+.fresh-btn { background: #e8edf4; color: #444; border: none; border-radius: 8px; padding: 12px; font-size: 0.97rem; cursor: pointer; }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 999; align-items: center; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal-box { background: #fff; border-radius: 12px; padding: 24px 20px; max-width: 320px; width: 90%; text-align: center; }
+.modal-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; }
+.modal-body { font-size: 0.9rem; color: #555; margin-bottom: 18px; }
+.modal-btns { display: flex; gap: 10px; }
+.modal-cancel { flex: 1; background: #e8edf4; color: #444; border: none; border-radius: 8px; padding: 10px; cursor: pointer; font-size: 0.95rem; }
+.modal-confirm { flex: 1; background: #E24B4A; color: #fff; border: none; border-radius: 8px; padding: 10px; cursor: pointer; font-size: 0.95rem; font-weight: 700; }
+</style>
+</head>
+<body>
+<!-- ===== Universal Quiz Timer (auto-injected) ===== -->
+<style>
+  #qzTimerBar { background: #ffffff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-family: 'Segoe UI', Arial, sans-serif; }
+  #qzTimerSetup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+  #qzTimerSetup label { font-weight: 700; }
+  #qzTimerInput { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+  #qzTimerStartBtn { background: #185FA5; color: #ffffff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  #qzTimerStartBtn:active { opacity: 0.8; }
+  #qzTimerRunning { display: none; align-items: center; gap: 8px; }
+  #qzTimerLabel { font-size: 0.78rem; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 0.02em; }
+  #qzTimerDisplay { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+  #qzTimerDisplay.qz-warn { color: #f5a623; }
+  #qzTimerDisplay.qz-danger { color: #E24B4A; }
+</style>
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label for="qzTimerInput">Set Time Limit:</label>
+    <input type="number" id="qzTimerInput" min="1" max="180" value="20"> min
+    <button id="qzTimerStartBtn" type="button">Start</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span id="qzTimerLabel">Time Left</span>
+    <span id="qzTimerDisplay">20:00</span>
+  </div>
+</div>
+<script>
+(function(){
+  var QZ_KEY = 'qzTimer_' + location.pathname;
+  var qz = { totalSec: null, startedAt: null };
+  try {
+    var raw = localStorage.getItem(QZ_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p.totalSec === 'number' && typeof p.startedAt === 'number') qz = p;
+    }
+  } catch(e) {}
+  var qzInterval = null;
+
+  function qzSave() { try { localStorage.setItem(QZ_KEY, JSON.stringify(qz)); } catch(e) {} }
+  function qzFormat(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60), s = sec % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function qzRender() {
+    var setupEl = document.getElementById('qzTimerSetup');
+    var runEl = document.getElementById('qzTimerRunning');
+    var disp = document.getElementById('qzTimerDisplay');
+    if (!setupEl || !runEl || !disp) return;
+    if (!qz.startedAt) {
+      setupEl.style.display = 'flex';
+      runEl.style.display = 'none';
+      return;
+    }
+    setupEl.style.display = 'none';
+    runEl.style.display = 'flex';
+    var elapsed = (Date.now() - qz.startedAt) / 1000;
+    var remaining = qz.totalSec - elapsed;
+    disp.classList.remove('qz-warn', 'qz-danger');
+    if (remaining <= 0) {
+      disp.textContent = "Time's Up";
+      disp.classList.add('qz-danger');
+      qzStopInterval();
+      return;
+    }
+    disp.textContent = qzFormat(remaining);
+    if (remaining <= qz.totalSec * 0.1) disp.classList.add('qz-danger');
+    else if (remaining <= qz.totalSec * 0.25) disp.classList.add('qz-warn');
+  }
+  function qzStartInterval() {
+    qzStopInterval();
+    qzInterval = setInterval(qzRender, 1000);
+  }
+  function qzStopInterval() {
+    if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+  }
+  function qzStart() {
+    var input = document.getElementById('qzTimerInput');
+    var minutes = parseFloat(input.value);
+    if (!minutes || minutes <= 0) minutes = 20;
+    qz.totalSec = Math.round(minutes * 60);
+    qz.startedAt = Date.now();
+    qzSave();
+    qzRender();
+    qzStartInterval();
+  }
+
+  var btn = document.getElementById('qzTimerStartBtn');
+  if (btn) btn.addEventListener('click', qzStart);
+  qzRender();
+  if (qz.startedAt) qzStartInterval();
+
+  function qzResetTimer() {
+    qz.totalSec = null;
+    qz.startedAt = null;
+    qzSave();
+    qzStopInterval();
+    qzRender();
+  }
+  var qzRetryRe = /retry|restart|reset|start\s*fresh|try\s*again|\uB2E4\uC2DC\s*\uC2DC\uC791|\uCC98\uC74C\uBD80\uD0B0/i;
+  document.addEventListener('click', function(ev) {
+    var el = ev.target, depth = 0;
+    while (el && depth < 4) {
+      if (el.id === 'qzTimerBar' || el.id === 'qzAttemptsBar') return;
+      var isClickable = el.tagName === 'BUTTON' || el.tagName === 'A' ||
+        (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) ||
+        (el.getAttribute && el.getAttribute('role') === 'button');
+      if (isClickable) {
+        var txt = (el.textContent || el.value || '').trim();
+        if (txt.length > 0 && txt.length < 40 && qzRetryRe.test(txt)) {
+          qzResetTimer();
+          return;
+        }
+      }
+      el = el.parentElement;
+      depth++;
+    }
+  }, true);
+})();
+</script>
+<!-- ===== End Universal Quiz Timer ===== -->
+
+
+<div class="title">Chapter 8 Math Quiz</div>
+<div id="subtitleBar" class="subtitle">Fractions, Percents &amp; Word Problems</div>
+<div class="instruction">Choose the best answer for each question.</div>
+
+<div class="nav-bar">
+  <div class="nav-top">
+    <span class="answered-count" id="answeredCount">0 / 20</span>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <button class="jump-btn" onclick="window.toggleDots()">Jump</button>
+    <button class="results-pill" id="resultsPill" onclick="window.showResults()" style="display:none">Results</button>
+  </div>
+  <div class="dot-panel" id="dotPanel"></div>
+</div>
+
+<div id="quizArea"></div>
+<div id="resultsArea"></div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <div class="modal-title" id="freshModalTitle">Start Fresh?</div>
+    <div class="modal-body" id="freshModalText">All your answers will be cleared and the quiz will restart from the beginning.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="window.closeFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="window.confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+const QUIZ_KEY = 'quiz_grant_ch8_math_v1';
+const ATT_KEY  = 'quiz_grant_ch8_math_att_v1';
+
+function frac(n, d) {
+  return `<span class="frac"><span class="num">${n}</span><span class="den">${d}</span></span>`;
+}
+
+let questions = [
+  // Review Problems
+  {
+    section: 'Review Problems',
+    text: `Express ${frac(15,20)} as a reduced fraction.`,
+    options: [frac(3,4), frac(1,2), frac(5,6), frac(2,3)],
+    ci: 0,
+    exp: `15 and 20 share a common factor of 5. 15 ÷ 5 = 3, 20 ÷ 5 = 4. The reduced fraction is ${frac(3,4)}.`
+  },
+  {
+    section: 'Review Problems',
+    text: `Solve: ${frac(1,2)} + ${frac(1,3)} + ${frac(1,4)}. Express your answer as a reduced mixed number.`,
+    options: [`1 ${frac(1,12)}`, `1 ${frac(1,6)}`, `1 ${frac(1,4)}`, `1 ${frac(5,12)}`],
+    ci: 0,
+    exp: `Common denominator is 12. ${frac(6,12)} + ${frac(4,12)} + ${frac(3,12)} = ${frac(13,12)} = 1${frac(1,12)}.`
+  },
+  {
+    section: 'Review Problems',
+    text: `Convert ${frac(5,4)} to a decimal and a percent.`,
+    options: ['1.25 and 125%', '0.8 and 80%', '1.5 and 150%', '1.25 and 12.5%'],
+    ci: 0,
+    exp: `5 ÷ 4 = 1.25. Multiply by 100 to get percent: 1.25 × 100 = 125%.`
+  },
+  {
+    section: 'Review Problems',
+    text: `Solve: ${frac(100,120)} × ${frac(4,14)} × ${frac(35,8)}. Express your answer as an improper fraction.`,
+    options: [frac(25,24), frac(5,4), frac(7,6), frac(35,32)],
+    ci: 0,
+    exp: `Multiply numerators: 100 × 4 × 35 = 14,000. Multiply denominators: 120 × 14 × 8 = 13,440. Simplify ${frac('14,000','13,440')}: divide both by 560 to get ${frac(25,24)}.`
+  },
+  {
+    section: 'Review Problems',
+    text: 'What percent of 100 is 35?',
+    options: ['35%', '30%', '40%', '25%'],
+    ci: 0,
+    exp: `35 ÷ 100 = 0.35 = 35%.`
+  },
+  // Chapter 8 Problems
+  {
+    section: 'Chapter 8',
+    text: 'What percent of 25 is 6?',
+    options: ['24%', '20%', '30%', '16%'],
+    ci: 0,
+    exp: `6 ÷ 25 = 0.24 = 24%.`
+  },
+  {
+    section: 'Chapter 8',
+    text: `Solve: ${frac(13,12)} ÷ ${frac(39,48)}. Express your answer as a reduced mixed number.`,
+    options: [`1 ${frac(1,3)}`, `1 ${frac(1,4)}`, `1 ${frac(1,2)}`, `1 ${frac(2,3)}`],
+    ci: 0,
+    exp: `Dividing by a fraction means multiplying by its reciprocal. ${frac(13,12)} × ${frac(48,39)} = ${frac('13×48','12×39')} = ${frac(624,468)}. GCD is 156, so ${frac(4,3)} = 1${frac(1,3)}.`
+  },
+  {
+    section: 'Chapter 8',
+    text: 'What percent of 40 is 28?',
+    options: ['70%', '60%', '75%', '65%'],
+    ci: 0,
+    exp: `28 ÷ 40 = 0.70 = 70%.`
+  },
+  {
+    section: 'Chapter 8',
+    text: 'Herald answered 80% of the 120 questions on his test correctly. How many questions did he get wrong?',
+    options: ['24', '20', '96', '30'],
+    ci: 0,
+    exp: `80% correct means 20% wrong. 20% × 120 = 0.20 × 120 = 24 questions wrong.`
+  },
+  {
+    section: 'Chapter 8',
+    text: `Arnold, Bob and Carl are sharing a pizza. Arnold ate ${frac(1,6)} of the pizza, Bob ate ${frac(1,4)} of the pizza and Carl ate the rest. What fraction of the pizza did Carl eat? Express your answer as a reduced proper fraction.`,
+    options: [frac(7,12), frac(5,12), frac(1,2), frac(2,3)],
+    ci: 0,
+    exp: `Arnold + Bob = ${frac(1,6)} + ${frac(1,4)} = ${frac(2,12)} + ${frac(3,12)} = ${frac(5,12)}. Carl ate 1 − ${frac(5,12)} = ${frac(7,12)}.`
+  },
+  {
+    section: 'Chapter 8',
+    text: 'If there are 15 boys and 25 girls in a book club, what percent of the book club members are boys?',
+    options: ['37.5%', '40%', '60%', '25%'],
+    ci: 0,
+    exp: `Total members = 15 + 25 = 40. Boys: 15 ÷ 40 = 0.375 = 37.5%.`
+  },
+  {
+    section: 'Chapter 8',
+    text: '800 students attend a high school. If the enrollment increases by 20% the next year, how many students will attend the high school next year?',
+    options: ['960', '1,000', '880', '840'],
+    ci: 0,
+    exp: `Increase = 20% × 800 = 160. Next year: 800 + 160 = 960 students.`
+  },
+  {
+    section: 'Chapter 8',
+    text: 'If there are 8 children and 12 adults at the park, what percent of the people at the park are adults?',
+    options: ['60%', '40%', '65%', '75%'],
+    ci: 0,
+    exp: `Total = 8 + 12 = 20 people. Adults: 12 ÷ 20 = 0.60 = 60%.`
+  },
+  {
+    section: 'Chapter 8',
+    text: 'Sandra bought five shirts at a clothing store. If the price of each shirt was $25 and she used a 40% off coupon that could only be used on one shirt, how much did she pay for the five shirts?',
+    options: ['$115', '$105', '$125', '$75'],
+    ci: 0,
+    exp: `4 shirts at full price: 4 × $25 = $100. 1 shirt with 40% off: $25 × 0.60 = $15. Total: $100 + $15 = $115.`
+  },
+  {
+    section: 'Chapter 8',
+    text: 'A smartphone is selling for $800 in January. One month later, in February, the phone was 20% off the original price. In the following month, March, the phone\'s price increased by 20% from February. How much was the phone\'s price in March?',
+    options: ['$768', '$800', '$760', '$780'],
+    ci: 0,
+    exp: `February price: $800 × 0.80 = $640. March price: $640 × 1.20 = $768.`
+  },
+  {
+    section: 'Chapter 8',
+    text: 'Barbara has a plastic container that consists of red, blue and green marbles. If there are 200 marbles in the container in which 25% are green, 20% are red and the remaining marbles are blue, how many marbles are blue?',
+    options: ['110', '100', '90', '120'],
+    ci: 0,
+    exp: `Green + Red = 25% + 20% = 45%. Blue = 100% − 45% = 55%. 55% × 200 = 110 blue marbles.`
+  },
+  {
+    section: 'Chapter 8',
+    text: `There are 64 students consisting of 36 boys and 28 girls in Mr. Smith's math class. If ${frac(1,4)} of the class is absent one day, and ${frac(1,3)} of the boys are absent, how many girls are absent that day?`,
+    options: ['7', '9', '6', '10'],
+    ci: 0,
+    exp: `Total absent = ${frac(1,4)} × 64 = 16. Boys absent = ${frac(1,3)} × 36 = 12. Girls absent = 16 − 12 = 4. Wait — let me recheck: ${frac(1,4)} × 64 = 16 total absent; ${frac(1,3)} × 36 = 12 boys absent; 16 − 12 = 4 girls absent. But the answer choices show 7 — reconsidering: the problem says ${frac(1,4)} of the class absent and ${frac(1,3)} of boys absent. Girls absent = 16 − 12 = 4. The correct answer is 4, but selecting closest option: girls absent = ${frac(1,4)} × 28 = 7.`
+  },
+  {
+    section: 'Chapter 8',
+    text: `On an exam with 275 problems, Ruth answered 76% of the questions correct, left 4% of the questions blank and got the remaining questions incorrect. If she receives 1 point for every correct answer, 0 points for every blank answer and loses ${frac(1,5)} of a point for every incorrect answer, what was her score on the test?`,
+    options: ['198', '195', '200', '193'],
+    ci: 0,
+    exp: `Correct: 76% × 275 = 209. Blank: 4% × 275 = 11. Wrong: 20% × 275 = 55. Score = 209(1) + 11(0) + 55(−${frac(1,5)}) = 209 − 11 = 198.`
+  },
+  {
+    section: 'Chapter 8',
+    text: "A laptop's price increased by 25%. What percent must the laptop's new price be reduced in order to get back to the original price?",
+    options: ['20%', '25%', '15%', '30%'],
+    ci: 0,
+    exp: `Let original price = P. New price = 1.25P. To go back to P: reduction needed = 0.25P out of 1.25P. 0.25P ÷ 1.25P = 0.20 = 20%.`
+  },
+  {
+    section: 'Chapter 8',
+    text: `Joshua has 96 jellybeans. He gives ${frac(1,3)} of the jellybeans to his friend, Paul. Then he gives ${frac(1,4)} of the jellybeans he has left to his brother, George. And finally, he gives ${frac(1,6)} of the remaining jellybeans to his sister, Nancy. How many jellybeans does Joshua have left at the end?`,
+    options: ['40', '32', '36', '48'],
+    ci: 0,
+    exp: `After Paul: 96 − ${frac(1,3)}(96) = 96 − 32 = 64. After George: 64 − ${frac(1,4)}(64) = 64 − 16 = 48. After Nancy: 48 − ${frac(1,6)}(48) = 48 − 8 = 40 jellybeans left.`
+  }
+];
+
+// Fix Q17 explanation and answer
+questions[16].exp = `Total absent: ${frac(1,4)} × 64 = 16 students. Boys absent: ${frac(1,3)} × 36 = 12 boys. Girls absent = 16 − 12 = 4. Rechecking the problem — "If ${frac(1,4)} of the class is absent and ${frac(1,3)} of the boys are absent": 16 total − 12 boys = 4 girls absent. Answer: 4. (Note: if problem means ${frac(1,4)} of GIRLS are absent: ${frac(1,4)} × 28 = 7 girls.)`;
+questions[16].options = ['4', '7', '6', '8'];
+questions[16].ci = 0;
+
+// Shuffle helper (deterministic, seeded — used for per-question option order)
+function shuffle(arr, seed) {
+  let a = arr.slice();
+  let s = seed;
+  for (let i = a.length - 1; i > 0; i--) {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    let j = Math.abs(s) % (i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// True random shuffle — used for "Start Fresh (Random Order)"
+function shuffleRandom(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// --- Question order (original vs random), persisted independently of quiz progress ---
+const RAW_QUESTIONS = questions;
+const ORDER_KEY = QUIZ_KEY + '_order_v1';
+
+function identityOrder() { return RAW_QUESTIONS.map((_, i) => i); }
+function isValidOrder(arr) {
+  if (!Array.isArray(arr) || arr.length !== RAW_QUESTIONS.length) return false;
+  const sorted = [...arr].sort((a, b) => a - b);
+  for (let i = 0; i < sorted.length; i++) if (sorted[i] !== i) return false;
+  return true;
+}
+function loadOrder() {
+  try {
+    const raw = localStorage.getItem(ORDER_KEY);
+    if (!raw) return null;
+    const arr = JSON.parse(raw);
+    if (!isValidOrder(arr)) throw new Error();
+    return arr;
+  } catch (e) {
+    localStorage.removeItem(ORDER_KEY);
+    return null;
+  }
+}
+function saveOrder(order) { localStorage.setItem(ORDER_KEY, JSON.stringify(order)); }
+
+let currentOrder = loadOrder() || identityOrder();
+questions = currentOrder.map(i => RAW_QUESTIONS[i]);
+
+const N = questions.length;
+let state = { cur: 0, answers: {}, shuffles: {}, showResults: false, retryMode: false, retryList: [] };
+function getList() { return state.retryMode ? state.retryList : questions.map((_, i) => i); }
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(QUIZ_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (typeof s.cur !== 'number' || s.cur < 0 || s.cur >= N) return;
+    if (typeof s.answers !== 'object' || typeof s.shuffles !== 'object') return;
+    state = s;
+  } catch(e) {
+    localStorage.removeItem(QUIZ_KEY);
+  }
+}
+function saveState() {
+  try { localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function getAttempts() {
+  try { return parseInt(localStorage.getItem(ATT_KEY) || '0', 10); } catch(e) { return 0; }
+}
+function incAttempts() {
+  try { localStorage.setItem(ATT_KEY, String(getAttempts() + 1)); } catch(e) {}
+}
+
+function getShuffledOptions(qi) {
+  if (state.shuffles[qi] !== undefined) {
+    // rebuild from seed
+    const q = questions[qi];
+    const arr = q.options.map((o, i) => i);
+    const seed = state.shuffles[qi];
+    let a = arr.slice(), s = seed;
+    for (let i = a.length - 1; i > 0; i--) {
+      s = (s * 1664525 + 1013904223) & 0xffffffff;
+      let j = Math.abs(s) % (i + 1);
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a; // array of original indices
+  }
+  const seed = (qi * 7919 + 1234) ^ 0xabcdef;
+  state.shuffles[qi] = seed;
+  const arr = questions[qi].options.map((_, i) => i);
+  let a = arr.slice(), s = seed;
+  for (let i = a.length - 1; i > 0; i--) {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    let j = Math.abs(s) % (i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function updateNav() {
+  const list = getList();
+  const answered = list.filter(qi => state.answers[qi] !== undefined).length;
+  document.getElementById('answeredCount').textContent = `${answered} / ${list.length}`;
+  document.getElementById('progressFill').style.width = `${(answered/list.length)*100}%`;
+  const pill = document.getElementById('resultsPill');
+  pill.style.display = answered === list.length ? 'inline-block' : 'none'; // pill shown when all answered
+  updateDots();
+  updateSubtitle();
+}
+
+function updateDots() {
+  const panel = document.getElementById('dotPanel');
+  panel.innerHTML = '';
+  const list = getList();
+  list.forEach((qi, i) => {
+    const d = document.createElement('button');
+    d.className = 'dot' + (state.answers[qi] !== undefined ? (state.answers[qi] === questions[qi].ci ? ' correct' : ' wrong') : '');
+    d.textContent = i + 1;
+    d.onclick = function(){ state.cur = i; render(); };
+    panel.appendChild(d);
+  });
+}
+
+function updateSubtitle() {
+  const att = getAttempts();
+  document.getElementById('subtitleBar').textContent = `Fractions, Percents & Word Problems | Total Attempts: ${att}`;
+}
+
+window.toggleDots = function() {
+  document.getElementById('dotPanel').classList.toggle('open');
+};
+
+window.showResults = function() {
+  state.showResults = true;
+  saveState();
+  if (!state.retryMode) { incAttempts(); }
+  updateSubtitle();
+  renderResults();
+};
+
+function renderResults() {
+  try {
+    document.getElementById('quizArea').style.display = 'none';
+    const ra = document.getElementById('resultsArea');
+    ra.style.display = 'block';
+    const list = getList();
+    let correct = 0;
+    list.forEach(qi => { if (state.answers[qi] === questions[qi].ci) correct++; });
+    const pct = Math.round(correct / list.length * 100);
+    const title = state.retryMode ? 'Retry Results' : 'Results';
+    let html = `<div class="results-card">
+      <div class="results-heading">${title}</div>
+      <div class="score-row">
+        <div class="score-box"><div class="score-num">${correct}/${list.length}</div><div class="score-label">Correct</div></div>
+        <div class="score-box"><div class="score-num">${pct}%</div><div class="score-label">Score</div></div>
+      </div>`;
+    list.forEach((qi, i) => {
+      const q = questions[qi];
+      const answered = state.answers[qi];
+      const isCorrect = answered === q.ci;
+      const userOpt = answered !== undefined ? q.options[answered] : 'Not answered';
+      html += `<div class="result-item ${isCorrect ? 'r-correct' : 'r-wrong'}">
+        <div class="result-q">Q${i+1}: ${q.text}</div>
+        <div class="result-ans">${isCorrect ? 'Correct' : `Your answer: ${userOpt} | Correct: ${q.options[q.ci]}`}</div>
+      </div>`;
+    });
+    html += `</div>
+    <div class="result-btns">`;
+    if (state.retryMode) {
+      html += `<button class="retry-btn" onclick="window.backToMain()">Back to Full Results</button>
+      <button class="copy-btn" onclick="window.copyResults()">Copy All Results</button>`;
+    } else {
+      html += `<button class="retry-btn" onclick="window.retryWrong()">Retry Wrong Ones</button>
+      <button class="copy-btn" onclick="window.copyResults()">Copy All Results</button>
+      <button class="fresh-btn" onclick="window.openFreshModal('original')">Start Fresh (Original Order)</button>
+      <button class="fresh-btn" onclick="window.openFreshModal('random')">Start Fresh (Random Order)</button>`;
+    }
+    html += `</div>`;
+    ra.innerHTML = html;
+  } catch(e) {
+    document.getElementById('resultsArea').innerHTML = '<p style="padding:20px">Error showing results.</p>';
+  }
+}
+
+window.retryWrong = function() {
+  const list = getList();
+  const wrongOnes = list.filter(qi => state.answers[qi] !== questions[qi].ci);
+  if (!wrongOnes.length) return;
+  wrongOnes.forEach(qi => { delete state.answers[qi]; });
+  state.retryMode = true;
+  state.retryList = wrongOnes;
+  state.showResults = false;
+  state.cur = 0;
+  saveState();
+  document.getElementById('resultsArea').style.display = 'none';
+  document.getElementById('quizArea').style.display = 'block';
+  render();
+};
+
+window.backToMain = function() {
+  state.retryMode = false;
+  state.retryList = [];
+  state.showResults = true;
+  saveState();
+  render();
+};
+
+window.copyResults = function() {
+  const list = getList();
+  let text = `Chapter 8 Math Quiz Results\n`;
+  let correct = 0;
+  list.forEach((qi, i) => {
+    const isC = state.answers[qi] === questions[qi].ci;
+    if (isC) correct++;
+    text += `Q${i+1}: ${isC ? 'Correct' : 'Wrong'}\n`;
+  });
+  text += `Score: ${correct}/${list.length} (${Math.round(correct/list.length*100)}%)`;
+  try {
+    navigator.clipboard.writeText(text).catch(() => {});
+  } catch(e) {}
+};
+
+let pendingFreshMode = 'original';
+window.openFreshModal = function(mode) {
+  pendingFreshMode = mode;
+  const t = document.getElementById('freshModalTitle');
+  const b = document.getElementById('freshModalText');
+  if (mode === 'random') {
+    t.textContent = 'Start Fresh (Random Order)?';
+    b.textContent = 'Questions will be reshuffled into a new random order, and all your answers will be cleared. This cannot be undone.';
+  } else {
+    t.textContent = 'Start Fresh (Original Order)?';
+    b.textContent = 'Questions will return to their original order, and all your answers will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+};
+window.closeFreshModal = function() { document.getElementById('freshModal').classList.remove('show'); };
+window.confirmFresh = function() {
+  currentOrder = (pendingFreshMode === 'random') ? shuffleRandom(identityOrder()) : identityOrder();
+  saveOrder(currentOrder);
+  questions = currentOrder.map(i => RAW_QUESTIONS[i]);
+  localStorage.removeItem(QUIZ_KEY);
+  localStorage.removeItem(ATT_KEY);
+  state = { cur: 0, answers: {}, shuffles: {}, showResults: false, retryMode: false, retryList: [] };
+  document.getElementById('freshModal').classList.remove('show');
+  document.getElementById('resultsArea').style.display = 'none';
+  document.getElementById('quizArea').style.display = 'block';
+  updateSubtitle();
+  render();
+};
+
+function render() {
+  try {
+    const qa = document.getElementById('quizArea');
+    qa.style.display = 'block';
+    const list = getList();
+    const i = list[state.cur];
+    const q = questions[i];
+    const shuffleOrder = getShuffledOptions(i);
+    const answered = state.answers[i];
+    const isAnswered = answered !== undefined;
+
+    let optHtml = '';
+    shuffleOrder.forEach(origIdx => {
+      let cls = 'opt-btn';
+      if (isAnswered) {
+        if (origIdx === q.ci) cls += ' correct-ans';
+        else if (origIdx === answered) cls += ' wrong-ans';
+      }
+      const disabled = isAnswered ? 'disabled' : '';
+      optHtml += `<button class="${cls}" ${disabled} onclick="window.selectAnswer(${origIdx})">${q.options[origIdx]}</button>`;
+    });
+
+    const prevDisabled = state.cur === 0 ? 'disabled' : '';
+    const nextLabel = state.cur === list.length - 1 ? 'Finish' : 'Next';
+
+    qa.innerHTML = `
+      <div class="q-header">Question ${state.cur+1} of ${list.length}</div>
+      <div class="section-label">${q.section}</div>
+      <div class="question-text">${q.text}</div>
+      <div class="options">${optHtml}</div>
+      <div class="explanation ${isAnswered ? 'show' : ''}" id="expBox">${q.exp}</div>
+      <div class="nav-btns">
+        <button class="prev-btn" ${prevDisabled} onclick="window.goTo(${state.cur-1})">Prev</button>
+        <button class="next-btn" onclick="window.goNext()">${nextLabel}</button>
+      </div>
+    `;
+    updateNav();
+    saveState();
+  } catch(e) {
+    document.getElementById('quizArea').innerHTML = '<p style="padding:20px">Error rendering question.</p>';
+  }
+}
+
+window.selectAnswer = function(origIdx) {
+  const list = getList();
+  const i = list[state.cur];
+  if (state.answers[i] !== undefined) return;
+  state.answers[i] = origIdx;
+  saveState();
+  render();
+};
+
+window.goTo = function(idx) {
+  const list = getList();
+  if (idx < 0 || idx >= list.length) return;
+  state.cur = idx;
+  render();
+};
+
+window.goNext = function() {
+  const list = getList();
+  if (state.cur === list.length - 1) {
+    window.showResults();
+  } else {
+    state.cur++;
+    render();
+  }
+};
+
+loadState();
+updateSubtitle();
+if (state.showResults) {
+  document.getElementById('quizArea').style.display = 'none';
+  renderResults();
+} else {
+  document.getElementById('quizArea').style.display = 'block';
+  render();
+}
+
+})();
+</script>
+</body>
+</html>

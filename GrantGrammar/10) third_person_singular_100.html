@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Third Person Singular Quiz</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; color: #1a1a2e; min-height: 100vh; }
+  #dueDate { background: #fff; text-align: center; padding: 10px; font-size: 2rem; font-weight: 800; color: #185FA5; border-bottom: 2px solid #dce3ef; }
+  #quizTitle { text-align: center; padding: 14px 16px 6px; font-size: 1.3rem; font-weight: 700; color: #1a1a2e; }
+  #quizSubtitle { text-align: center; font-size: 0.85rem; color: #666; padding-bottom: 10px; }
+  #quizArea { display: none; max-width: 680px; margin: 0 auto; padding: 16px; }
+  .type-badge { display: inline-block; background: #185FA5; color: #fff; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-bottom: 10px; letter-spacing: 0.03em; }
+  #qNum { font-size: 0.82rem; color: #888; margin-bottom: 4px; }
+  #qText { font-size: 1.1rem; font-weight: 500; line-height: 1.7; margin-bottom: 16px; color: #1a1a2e; }
+  #qText u { font-weight: 800; text-decoration: underline; text-decoration-color: #185FA5; text-underline-offset: 3px; }
+  .option-btn { display: block; width: 100%; margin-bottom: 10px; padding: 13px 16px; border-radius: 10px; border: 2px solid transparent; background: #e8edf4; color: #111111; font-size: 1rem; font-weight: 500; cursor: pointer; text-align: left; transition: all 0.15s; }
+  .option-btn:hover:not(:disabled) { background: #d5dff0; }
+  .option-btn.correct { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .option-btn.wrong { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+  .option-btn.reveal { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  #explanation { display: none; background: #fff8e1; border-left: 4px solid #f0a500; border-radius: 8px; padding: 12px 14px; font-size: 0.9rem; color: #5a3e00; margin-bottom: 14px; line-height: 1.5; }
+  #navRow { display: flex; gap: 10px; margin-top: 6px; }
+  .nav-btn { flex: 1; padding: 12px; border-radius: 10px; border: none; font-size: 0.95rem; font-weight: 700; cursor: pointer; background: #185FA5; color: #fff; transition: background 0.15s; }
+  .nav-btn:hover { background: #134d8a; }
+  #prevBtn { background: #e8edf4; color: #333; }
+  #prevBtn:hover { background: #d0d8e8; }
+  #resultsArea { display: none; max-width: 680px; margin: 0 auto; padding: 16px; }
+  #resultsScore { text-align: center; font-size: 1.4rem; font-weight: 800; color: #185FA5; margin-bottom: 16px; }
+  #resultsGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .result-card { border-radius: 10px; padding: 10px 12px; cursor: pointer; border: 2px solid transparent; }
+  .result-card.correct { background: #E1F5EE; border-color: #1D9E75; }
+  .result-card.wrong { background: #FCEBEB; border-color: #E24B4A; }
+  .result-card.skipped { background: #f3f3f3; border-color: #ccc; }
+  .result-card .rc-num { font-size: 0.75rem; font-weight: 700; color: #888; }
+  .result-card .rc-status { font-size: 0.8rem; font-weight: 700; margin: 2px 0; }
+  .result-card.correct .rc-status { color: #085041; }
+  .result-card.wrong .rc-status { color: #501313; }
+  .result-card .rc-answer { font-size: 0.75rem; color: #444; margin-top: 3px; }
+  #copyBtn { display: block; width: 100%; padding: 13px; background: #185FA5; color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-bottom: 12px; }
+  #startFreshBtn { display: block; width: 100%; padding: 13px; background: #fff; color: #E24B4A; border: 2px solid #E24B4A; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+  #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 999; align-items: center; justify-content: center; }
+  #modal.active { display: flex; }
+  #modalBox { background: #fff; border-radius: 16px; padding: 28px 24px; max-width: 340px; width: 90%; text-align: center; }
+  #modalBox h3 { font-size: 1.1rem; margin-bottom: 10px; }
+  #modalBox p { font-size: 0.9rem; color: #555; margin-bottom: 20px; }
+  #modalBtns { display: flex; gap: 10px; }
+  #modalCancel { flex: 1; padding: 11px; border-radius: 8px; border: 2px solid #ccc; background: #fff; font-weight: 700; cursor: pointer; }
+  #modalConfirm { flex: 1; padding: 11px; border-radius: 8px; border: none; background: #E24B4A; color: #fff; font-weight: 700; cursor: pointer; }
+  #navBar     { display:flex; align-items:center; gap:8px; padding:10px 12px; background:#fff; border-bottom:1px solid #dce3ef; position:sticky; top:0; z-index:100; }
+  .prog-track { background:#d7dde6; border-radius:3px; height:6px; flex:1; margin:0 8px; min-width:0; }
+  .prog-fill  { background:#185FA5; border-radius:3px; height:6px; width:0%; transition:width 0.2s; }
+  #nav-count  { font-size:13px; white-space:nowrap; color:#555; font-weight:700; }
+  #jump-btn   { font-size:12px; padding:4px 10px; border:1px solid #185FA5; border-radius:14px; background:#fff; color:#185FA5; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+  #dot-panel  { padding:8px 12px; background:#f5f7fa; border-bottom:1px solid #dce3ef; display:none; max-height:170px; overflow-y:auto; text-align:center; position:sticky; top:41px; z-index:99; }
+  .dot        { width:26px; height:26px; border-radius:50%; border:2px solid transparent; background:#d7dde6; font-size:11px; font-weight:700; color:#555; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; margin:2px; transition:all 0.15s; flex-shrink:0; }
+  .dot.correct      { background:#185FA5; border-color:#185FA5; color:#fff; }
+  .dot.wrong        { background:#E24B4A; border-color:#E24B4A; color:#fff; }
+  .dot.current      { outline:3px solid #185FA5; outline-offset:2px; }
+  .dot.results-pill { width:auto; padding:0 10px; border-radius:15px; background:#185FA5; color:#fff; border-color:#185FA5; font-size:11px; }
+  #retryWrongBtn    { display:block; width:100%; padding:13px; background:#1D9E75; color:#fff; border:none; border-radius:10px; font-size:1rem; font-weight:700; cursor:pointer; margin-bottom:12px; }
+</style>
+</head>
+<body>
+<!-- ===== Universal Quiz Timer (auto-injected) ===== -->
+<style>
+  #qzTimerBar { background: #ffffff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-family: 'Segoe UI', Arial, sans-serif; }
+  #qzTimerSetup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+  #qzTimerSetup label { font-weight: 700; }
+  #qzTimerInput { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+  #qzTimerStartBtn { background: #185FA5; color: #ffffff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  #qzTimerStartBtn:active { opacity: 0.8; }
+  #qzTimerRunning { display: none; align-items: center; gap: 8px; }
+  #qzTimerLabel { font-size: 0.78rem; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 0.02em; }
+  #qzTimerDisplay { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+  #qzTimerDisplay.qz-warn { color: #f5a623; }
+  #qzTimerDisplay.qz-danger { color: #E24B4A; }
+</style>
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label for="qzTimerInput">Set Time Limit:</label>
+    <input type="number" id="qzTimerInput" min="1" max="180" value="20"> min
+    <button id="qzTimerStartBtn" type="button">Start</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span id="qzTimerLabel">Time Left</span>
+    <span id="qzTimerDisplay">20:00</span>
+  </div>
+</div>
+<script>
+(function(){
+  var QZ_KEY = 'qzTimer_' + location.pathname;
+  var qz = { totalSec: null, startedAt: null };
+  try {
+    var raw = localStorage.getItem(QZ_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p.totalSec === 'number' && typeof p.startedAt === 'number') qz = p;
+    }
+  } catch(e) {}
+  var qzInterval = null;
+
+  function qzSave() { try { localStorage.setItem(QZ_KEY, JSON.stringify(qz)); } catch(e) {} }
+  function qzFormat(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60), s = sec % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function qzRender() {
+    var setupEl = document.getElementById('qzTimerSetup');
+    var runEl = document.getElementById('qzTimerRunning');
+    var disp = document.getElementById('qzTimerDisplay');
+    if (!setupEl || !runEl || !disp) return;
+    if (!qz.startedAt) {
+      setupEl.style.display = 'flex';
+      runEl.style.display = 'none';
+      return;
+    }
+    setupEl.style.display = 'none';
+    runEl.style.display = 'flex';
+    var elapsed = (Date.now() - qz.startedAt) / 1000;
+    var remaining = qz.totalSec - elapsed;
+    disp.classList.remove('qz-warn', 'qz-danger');
+    if (remaining <= 0) {
+      disp.textContent = "Time's Up";
+      disp.classList.add('qz-danger');
+      qzStopInterval();
+      return;
+    }
+    disp.textContent = qzFormat(remaining);
+    if (remaining <= qz.totalSec * 0.1) disp.classList.add('qz-danger');
+    else if (remaining <= qz.totalSec * 0.25) disp.classList.add('qz-warn');
+  }
+  function qzStartInterval() {
+    qzStopInterval();
+    qzInterval = setInterval(qzRender, 1000);
+  }
+  function qzStopInterval() {
+    if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+  }
+  function qzStart() {
+    var input = document.getElementById('qzTimerInput');
+    var minutes = parseFloat(input.value);
+    if (!minutes || minutes <= 0) minutes = 20;
+    qz.totalSec = Math.round(minutes * 60);
+    qz.startedAt = Date.now();
+    qzSave();
+    qzRender();
+    qzStartInterval();
+  }
+
+  var btn = document.getElementById('qzTimerStartBtn');
+  if (btn) btn.addEventListener('click', qzStart);
+  qzRender();
+  if (qz.startedAt) qzStartInterval();
+
+  function qzResetTimer() {
+    qz.totalSec = null;
+    qz.startedAt = null;
+    qzSave();
+    qzStopInterval();
+    qzRender();
+  }
+  var qzRetryRe = /retry|restart|reset|start\s*fresh|try\s*again|\uB2E4\uC2DC\s*\uC2DC\uC791|\uCC98\uC74C\uBD80\uD0B0/i;
+  document.addEventListener('click', function(ev) {
+    var el = ev.target, depth = 0;
+    while (el && depth < 4) {
+      if (el.id === 'qzTimerBar' || el.id === 'qzAttemptsBar') return;
+      var isClickable = el.tagName === 'BUTTON' || el.tagName === 'A' ||
+        (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) ||
+        (el.getAttribute && el.getAttribute('role') === 'button');
+      if (isClickable) {
+        var txt = (el.textContent || el.value || '').trim();
+        if (txt.length > 0 && txt.length < 40 && qzRetryRe.test(txt)) {
+          qzResetTimer();
+          return;
+        }
+      }
+      el = el.parentElement;
+      depth++;
+    }
+  }, true);
+})();
+</script>
+<!-- ===== End Universal Quiz Timer ===== -->
+<!-- ===== Universal Total Attempts Counter (auto-injected) ===== -->
+<style>
+  #qzAttemptsBar { background: #f5f8fc; border-bottom: 1px solid #d0dce8; padding: 6px 12px; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', Arial, sans-serif; font-size: 0.82rem; color: #4a6fa5; font-weight: 700; letter-spacing: 0.01em; }
+  #qzAttemptsBar span { color: #185FA5; font-weight: 900; margin-left: 4px; }
+</style>
+<div id="qzAttemptsBar">Total Attempts:<span id="qzAttemptsCount">0</span></div>
+<script>
+(function(){
+  var QA_KEY = 'qzAttempts_' + location.pathname;
+  function qaGet(){ try { return parseInt(localStorage.getItem(QA_KEY)||'0',10) || 0; } catch(e){ return 0; } }
+  function qaSet(n){ try { localStorage.setItem(QA_KEY, String(n)); } catch(e){} }
+  function qaRenderCount(){
+    var el = document.getElementById('qzAttemptsCount');
+    if (el) el.textContent = qaGet();
+  }
+  function qaIsVisible(el){
+    if (!el) return false;
+    var r = el.getBoundingClientRect();
+    if (r.width < 80 || r.height < 30) return false;
+    var cs = window.getComputedStyle(el);
+    return cs.display !== 'none' && cs.visibility !== 'hidden';
+  }
+  function qaResultsShowing(){
+    var els = document.querySelectorAll('[id*="result" i],[class*="result" i],[id*="score" i],[class*="score" i]');
+    for (var i=0;i<els.length;i++){ if (qaIsVisible(els[i])) return true; }
+    return false;
+  }
+  var qaWasShowing = false;
+  function qaCheck(){
+    var showing = qaResultsShowing();
+    if (showing && !qaWasShowing) {
+      qaSet(qaGet()+1);
+      qaRenderCount();
+    }
+    qaWasShowing = showing;
+  }
+  qaRenderCount();
+  setInterval(qaCheck, 800);
+  function qaObserve(){
+    if (!document.body) return;
+    var mo = new MutationObserver(function(){ qaCheck(); });
+    mo.observe(document.body, { attributes: true, childList: true, subtree: true });
+  }
+  if (document.body) qaObserve();
+  else document.addEventListener('DOMContentLoaded', qaObserve);
+  setTimeout(qaCheck, 1500);
+})();
+</script>
+<!-- ===== End Universal Total Attempts Counter ===== -->
+
+
+<div id="quizTitle">Third Person Singular</div>
+<div id="quizSubtitle">100 Questions · He / She / It + verb</div>
+<div id="navBar">
+  <span id="nav-count">0 / 0</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button id="jump-btn" onclick="toggleJump()">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+<div id="quizArea"></div>
+<div id="resultsArea"></div>
+<div id="modal">
+  <div id="modalBox">
+    <h3 id="modalTitle">Start Fresh?</h3>
+    <p id="modalText">All your answers will be cleared and the quiz will restart.</p>
+    <div id="modalBtns">
+      <button id="modalCancel">Cancel</button>
+      <button id="modalConfirm">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>
+// o[0] = correct answer (always index 0 before shuffle)
+// sentence uses <u>base</u> to show the underlined verb
+const QUESTIONS_RAW = [
+  // ── TRULY IRREGULAR (3) ─────────────────────────────────────────────────
+  {g:"Irregular", b:"have",
+   s:"She <u>have</u> a big dog.",
+   o:["has","haves","have","haved"],
+   exp:"have → has (irregular; the only correct 3rd-person singular form)"},
+  {g:"Irregular", b:"be",
+   s:"He <u>be</u> very happy today.",
+   o:["is","bes","be","beis"],
+   exp:"be → is (irregular; 'is' is the 3rd-person singular present form of 'be')"},
+  {g:"Irregular", b:"do",
+   s:"She <u>do</u> her homework every night.",
+   o:["does","dos","do","doed"],
+   exp:"do → does (irregular; pronounced 'duz', not 'doos')"},
+
+  // ── -ES group: ends in -sh, -ch, -x, -s, -z (20) ──────────────────────
+  {g:"Add -es", b:"watch",
+   s:"He <u>watch</u> TV after dinner.",
+   o:["watches","watchs","watchies","watcheds"],
+   exp:"watch → watches (ends in -ch, so add -es)"},
+  {g:"Add -es", b:"teach",
+   s:"She <u>teach</u> math at a middle school.",
+   o:["teaches","teachs","teachies","teacheds"],
+   exp:"teach → teaches (ends in -ch, so add -es)"},
+  {g:"Add -es", b:"reach",
+   s:"He <u>reach</u> the top shelf easily.",
+   o:["reaches","reachs","reachies","reacheds"],
+   exp:"reach → reaches (ends in -ch, so add -es)"},
+  {g:"Add -es", b:"catch",
+   s:"She <u>catch</u> the ball every time.",
+   o:["catches","catchs","catchies","catcheds"],
+   exp:"catch → catches (ends in -ch, so add -es)"},
+  {g:"Add -es", b:"push",
+   s:"He <u>push</u> the door open.",
+   o:["pushes","pushs","pushies","pusheds"],
+   exp:"push → pushes (ends in -sh, so add -es)"},
+  {g:"Add -es", b:"wash",
+   s:"She <u>wash</u> the dishes after lunch.",
+   o:["washes","washs","washies","washeds"],
+   exp:"wash → washes (ends in -sh, so add -es)"},
+  {g:"Add -es", b:"brush",
+   s:"He <u>brush</u> his teeth twice a day.",
+   o:["brushes","brushs","brushies","brusheds"],
+   exp:"brush → brushes (ends in -sh, so add -es)"},
+  {g:"Add -es", b:"finish",
+   s:"She <u>finish</u> her work early.",
+   o:["finishes","finishs","finishies","finisheds"],
+   exp:"finish → finishes (ends in -sh, so add -es)"},
+  {g:"Add -es", b:"fix",
+   s:"He <u>fix</u> broken bikes on weekends.",
+   o:["fixes","fixs","fixies","fixeds"],
+   exp:"fix → fixes (ends in -x, so add -es)"},
+  {g:"Add -es", b:"mix",
+   s:"She <u>mix</u> the batter carefully.",
+   o:["mixes","mixs","mixies","mixeds"],
+   exp:"mix → mixes (ends in -x, so add -es)"},
+  {g:"Add -es", b:"box",
+   s:"He <u>box</u> at the gym every Saturday.",
+   o:["boxes","boxs","boxies","boxeds"],
+   exp:"box → boxes (ends in -x, so add -es)"},
+  {g:"Add -es", b:"relax",
+   s:"She <u>relax</u> by reading books.",
+   o:["relaxes","relaxs","relaxies","relaxeds"],
+   exp:"relax → relaxes (ends in -x, so add -es)"},
+  {g:"Add -es", b:"pass",
+   s:"He <u>pass</u> the ball to his teammate.",
+   o:["passes","passs","passies","passeds"],
+   exp:"pass → passes (ends in -ss, so add -es)"},
+  {g:"Add -es", b:"miss",
+   s:"She <u>miss</u> her friends when she travels.",
+   o:["misses","misss","missies","misseds"],
+   exp:"miss → misses (ends in -ss, so add -es)"},
+  {g:"Add -es", b:"kiss",
+   s:"He <u>kiss</u> his dog on the nose.",
+   o:["kisses","kisss","kissies","kisseds"],
+   exp:"kiss → kisses (ends in -ss, so add -es)"},
+  {g:"Add -es", b:"buzz",
+   s:"The bee <u>buzz</u> around the flowers.",
+   o:["buzzes","buzzs","buzzies","buzzeds"],
+   exp:"buzz → buzzes (ends in -zz, so add -es)"},
+  {g:"Add -es", b:"go",
+   s:"He <u>go</u> to school by bus.",
+   o:["goes","gos","goies","goeds"],
+   exp:"go → goes (ends in -o after a consonant, so add -es)"},
+  {g:"Add -es", b:"do",
+   s:"She <u>do</u> yoga every morning.",
+   o:["does","dos","doies","doeds"],
+   exp:"do → does (irregular spelling — pronounced 'duz')"},
+  {g:"Add -es", b:"echo",
+   s:"His voice <u>echo</u> through the cave.",
+   o:["echoes","echos","echoies","echoed"],
+   exp:"echo → echoes (ends in -o after a consonant, so add -es)"},
+  {g:"Add -es", b:"veto",
+   s:"The president <u>veto</u> the new law.",
+   o:["vetoes","vetos","vetoies","vetoed"],
+   exp:"veto → vetoes (ends in -o after a consonant, so add -es)"},
+
+  // ── -IES group: consonant + y → -ies (20) ──────────────────────────────
+  {g:"y → ies", b:"fly",
+   s:"The eagle <u>fly</u> high above the mountains.",
+   o:["flies","flys","flyes","flyies"],
+   exp:"fly → flies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"carry",
+   s:"She <u>carry</u> her backpack to school.",
+   o:["carries","carrys","carres","carryes"],
+   exp:"carry → carries (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"study",
+   s:"He <u>study</u> for two hours every evening.",
+   o:["studies","studys","studs","studyes"],
+   exp:"study → studies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"try",
+   s:"She always <u>try</u> her best.",
+   o:["tries","trys","tryes","tryies"],
+   exp:"try → tries (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"cry",
+   s:"The baby <u>cry</u> when it is hungry.",
+   o:["cries","crys","cryes","cryies"],
+   exp:"cry → cries (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"fry",
+   s:"He <u>fry</u> eggs for breakfast.",
+   o:["fries","frys","fryes","fryies"],
+   exp:"fry → fries (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"dry",
+   s:"She <u>dry</u> her hair with a towel.",
+   o:["dries","drys","dryes","dryies"],
+   exp:"dry → dries (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"spy",
+   s:"The cat <u>spy</u> on the birds from the window.",
+   o:["spies","spys","spyes","spyies"],
+   exp:"spy → spies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"apply",
+   s:"She <u>apply</u> for a new job every week.",
+   o:["applies","applys","apples","applyes"],
+   exp:"apply → applies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"reply",
+   s:"He always <u>reply</u> to emails quickly.",
+   o:["replies","replys","reples","replyes"],
+   exp:"reply → replies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"deny",
+   s:"She <u>deny</u> breaking the window.",
+   o:["denies","denys","denes","denyes"],
+   exp:"deny → denies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"rely",
+   s:"He <u>rely</u> on his friends for help.",
+   o:["relies","relys","reles","relyes"],
+   exp:"rely → relies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"supply",
+   s:"The factory <u>supply</u> parts to many companies.",
+   o:["supplies","supplys","supples","supplyes"],
+   exp:"supply → supplies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"multiply",
+   s:"She <u>multiply</u> numbers quickly in her head.",
+   o:["multiplies","multiplys","multiples","multiplyes"],
+   exp:"multiply → multiplies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"justify",
+   s:"He always <u>justify</u> his decisions.",
+   o:["justifies","justifys","justifes","justifyes"],
+   exp:"justify → justifies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"identify",
+   s:"She <u>identify</u> the problem right away.",
+   o:["identifies","identifys","identifes","identifyes"],
+   exp:"identify → identifies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"classify",
+   s:"The scientist <u>classify</u> new insects every year.",
+   o:["classifies","classifys","classifes","classifyes"],
+   exp:"classify → classifies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"satisfy",
+   s:"He <u>satisfy</u> his hunger with a big lunch.",
+   o:["satisfies","satisfys","satisfes","satisfyes"],
+   exp:"satisfy → satisfies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"notify",
+   s:"She <u>notify</u> the teacher when she is absent.",
+   o:["notifies","notifys","notifes","notifyes"],
+   exp:"notify → notifies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"hurry",
+   s:"He always <u>hurry</u> to catch the bus.",
+   o:["hurries","hurrys","hurres","hurryes"],
+   exp:"hurry → hurries (consonant + y: drop -y, add -ies)"},
+
+  // ── vowel + y → just add -s (stays -ys) (7) ────────────────────────────
+  {g:"Vowel + y → add -s", b:"play",
+   s:"She <u>play</u> the piano every afternoon.",
+   o:["plays","playes","plais","plies"],
+   exp:"play → plays (vowel + y: just add -s, do NOT change to -ies)"},
+  {g:"Vowel + y → add -s", b:"stay",
+   s:"He <u>stay</u> after school to practice.",
+   o:["stays","stayes","stais","sties"],
+   exp:"stay → stays (vowel + y: just add -s)"},
+  {g:"Vowel + y → add -s", b:"say",
+   s:"She always <u>say</u> thank you.",
+   o:["says","sayes","sais","sies"],
+   exp:"say → says (vowel + y: just add -s)"},
+  {g:"Vowel + y → add -s", b:"pay",
+   s:"He <u>pay</u> for lunch every day.",
+   o:["pays","payes","pais","pies"],
+   exp:"pay → pays (vowel + y: just add -s)"},
+  {g:"Vowel + y → add -s", b:"enjoy",
+   s:"She <u>enjoy</u> hiking on weekends.",
+   o:["enjoys","enjoyes","enjois","enjoies"],
+   exp:"enjoy → enjoys (vowel + y: just add -s)"},
+  {g:"Vowel + y → add -s", b:"destroy",
+   s:"The storm <u>destroy</u> several buildings.",
+   o:["destroys","destroyes","destrois","destroies"],
+   exp:"destroy → destroys (vowel + y: just add -s)"},
+  {g:"Vowel + y → add -s", b:"display",
+   s:"The museum <u>display</u> ancient artifacts.",
+   o:["displays","displayes","displais","displies"],
+   exp:"display → displays (vowel + y: just add -s)"},
+
+  // ── plain add -s (20) ───────────────────────────────────────────────────
+  {g:"Add -s", b:"run",
+   s:"He <u>run</u> five miles every morning.",
+   o:["runs","runes","runnes","runsed"],
+   exp:"run → runs (just add -s)"},
+  {g:"Add -s", b:"eat",
+   s:"She <u>eat</u> a salad for lunch.",
+   o:["eats","eates","eattes","eatsed"],
+   exp:"eat → eats (just add -s)"},
+  {g:"Add -s", b:"sleep",
+   s:"The baby <u>sleep</u> for ten hours.",
+   o:["sleeps","sleepes","sleeppes","sleepsed"],
+   exp:"sleep → sleeps (just add -s)"},
+  {g:"Add -s", b:"drink",
+   s:"He <u>drink</u> orange juice every morning.",
+   o:["drinks","drinkes","drinkkes","drinksed"],
+   exp:"drink → drinks (just add -s)"},
+  {g:"Add -s", b:"swim",
+   s:"She <u>swim</u> at the pool on Tuesdays.",
+   o:["swims","swimes","swimmes","swimsed"],
+   exp:"swim → swims (just add -s)"},
+  {g:"Add -s", b:"read",
+   s:"He <u>read</u> a chapter before bedtime.",
+   o:["reads","reades","readdes","readsed"],
+   exp:"read → reads (just add -s)"},
+  {g:"Add -s", b:"write",
+   s:"She <u>write</u> in her journal every night.",
+   o:["writes","writees","writtens","writesed"],
+   exp:"write → writes (just add -s)"},
+  {g:"Add -s", b:"sing",
+   s:"He <u>sing</u> in the school choir.",
+   o:["sings","singes","singges","singsed"],
+   exp:"sing → sings (just add -s)"},
+  {g:"Add -s", b:"think",
+   s:"She <u>think</u> carefully before answering.",
+   o:["thinks","thinkes","thinkkes","thinksed"],
+   exp:"think → thinks (just add -s)"},
+  {g:"Add -s", b:"know",
+   s:"He <u>know</u> all the answers.",
+   o:["knows","knowes","knowwes","knowsed"],
+   exp:"know → knows (just add -s)"},
+  {g:"Add -s", b:"speak",
+   s:"She <u>speak</u> three languages.",
+   o:["speaks","speakes","speakkes","speaksed"],
+   exp:"speak → speaks (just add -s)"},
+  {g:"Add -s", b:"drive",
+   s:"He <u>drive</u> to work every day.",
+   o:["drives","drivees","drivves","drivesed"],
+   exp:"drive → drives (just add -s)"},
+  {g:"Add -s", b:"ride",
+   s:"She <u>ride</u> her bike to school.",
+   o:["rides","ridees","riddes","ridesed"],
+   exp:"ride → rides (just add -s)"},
+  {g:"Add -s", b:"give",
+   s:"He always <u>give</u> great advice.",
+   o:["gives","givees","givves","givesed"],
+   exp:"give → gives (just add -s)"},
+  {g:"Add -s", b:"take",
+   s:"She <u>take</u> the dog for a walk.",
+   o:["takes","takees","takkes","takesed"],
+   exp:"take → takes (just add -s)"},
+  {g:"Add -s", b:"make",
+   s:"He <u>make</u> pancakes on Sundays.",
+   o:["makes","makees","makkes","makesed"],
+   exp:"make → makes (just add -s)"},
+  {g:"Add -s", b:"break",
+   s:"She <u>break</u> a record at every competition.",
+   o:["breaks","breakes","breakkes","breaksed"],
+   exp:"break → breaks (just add -s)"},
+  {g:"Add -s", b:"keep",
+   s:"He <u>keep</u> his room very tidy.",
+   o:["keeps","keepes","keeppes","keepsed"],
+   exp:"keep → keeps (just add -s)"},
+  {g:"Add -s", b:"feel",
+   s:"She <u>feel</u> excited about the trip.",
+   o:["feels","feeles","feelies","feelsed"],
+   exp:"feel → feels (just add -s)"},
+  {g:"Add -s", b:"grow",
+   s:"He <u>grow</u> vegetables in his backyard.",
+   o:["grows","growes","growwes","growsed"],
+   exp:"grow → grows (just add -s)"},
+
+  // ── more -ES (to reach 80 irregular/special total) ──────────────────────
+  {g:"Add -es", b:"search",
+   s:"She <u>search</u> for information online.",
+   o:["searches","searchs","searchies","searcheds"],
+   exp:"search → searches (ends in -ch, so add -es)"},
+  {g:"Add -es", b:"switch",
+   s:"He <u>switch</u> off the lights before bed.",
+   o:["switches","switchs","switchies","switcheds"],
+   exp:"switch → switches (ends in -ch, so add -es)"},
+  {g:"Add -es", b:"match",
+   s:"She <u>match</u> the socks after doing laundry.",
+   o:["matches","matchs","matchies","matcheds"],
+   exp:"match → matches (ends in -ch, so add -es)"},
+  {g:"Add -es", b:"attach",
+   s:"He <u>attach</u> a photo to every email.",
+   o:["attaches","attachs","attachies","attacheds"],
+   exp:"attach → attaches (ends in -ch, so add -es)"},
+  {g:"Add -es", b:"launch",
+   s:"The company <u>launch</u> a new product every year.",
+   o:["launches","launchs","launchies","launcheds"],
+   exp:"launch → launches (ends in -ch, so add -es)"},
+  {g:"Add -es", b:"crash",
+   s:"The computer <u>crash</u> when he opens too many tabs.",
+   o:["crashes","crashs","crashies","crasheds"],
+   exp:"crash → crashes (ends in -sh, so add -es)"},
+  {g:"Add -es", b:"flash",
+   s:"The lightning <u>flash</u> across the sky.",
+   o:["flashes","flashs","flashies","flasheds"],
+   exp:"flash → flashes (ends in -sh, so add -es)"},
+  {g:"Add -es", b:"rush",
+   s:"She always <u>rush</u> to finish her homework.",
+   o:["rushes","rushs","rushies","rusheds"],
+   exp:"rush → rushes (ends in -sh, so add -es)"},
+  {g:"Add -es", b:"smash",
+   s:"He <u>smash</u> the ball over the net.",
+   o:["smashes","smashs","smashies","smasheds"],
+   exp:"smash → smashes (ends in -sh, so add -es)"},
+  {g:"Add -es", b:"splash",
+   s:"The duck <u>splash</u> in the pond.",
+   o:["splashes","splashs","splashies","splasheds"],
+   exp:"splash → splashes (ends in -sh, so add -es)"},
+  {g:"Add -es", b:"tax",
+   s:"The government <u>tax</u> imported goods.",
+   o:["taxes","taxs","taxies","taxeds"],
+   exp:"tax → taxes (ends in -x, so add -es)"},
+  {g:"Add -es", b:"wax",
+   s:"He <u>wax</u> his car every spring.",
+   o:["waxes","waxs","waxies","waxeds"],
+   exp:"wax → waxes (ends in -x, so add -es)"},
+  {g:"Add -es", b:"press",
+   s:"She <u>press</u> the button to start the machine.",
+   o:["presses","presss","pressies","presseds"],
+   exp:"press → presses (ends in -ss, so add -es)"},
+  {g:"Add -es", b:"guess",
+   s:"He always <u>guess</u> the right answer.",
+   o:["guesses","guesss","guessies","guesseds"],
+   exp:"guess → guesses (ends in -ss, so add -es)"},
+  {g:"Add -es", b:"cross",
+   s:"She <u>cross</u> the street carefully.",
+   o:["crosses","crosss","crossies","crosseds"],
+   exp:"cross → crosses (ends in -ss, so add -es)"},
+  {g:"Add -es", b:"toss",
+   s:"He <u>toss</u> the coin before the game.",
+   o:["tosses","tosss","tossies","tosseds"],
+   exp:"toss → tosses (ends in -ss, so add -es)"},
+  {g:"Add -es", b:"reach",
+   s:"The vine <u>reach</u> all the way to the roof.",
+   o:["reaches","reachs","reachies","reacheds"],
+   exp:"reach → reaches (ends in -ch, so add -es)"},
+  {g:"Add -es", b:"bleach",
+   s:"She <u>bleach</u> the white shirts every month.",
+   o:["bleaches","bleachs","bleachies","bleacheds"],
+   exp:"bleach → bleaches (ends in -ch, so add -es)"},
+  {g:"Add -es", b:"fizz",
+   s:"The soda <u>fizz</u> when you open the can.",
+   o:["fizzes","fizzs","fizzies","fizzeds"],
+   exp:"fizz → fizzes (ends in -zz, so add -es)"},
+  {g:"Add -es", b:"jazz",
+   s:"The band <u>jazz</u> up every performance.",
+   o:["jazzes","jazzs","jazzies","jazzeds"],
+   exp:"jazz → jazzes (ends in -zz, so add -es)"},
+
+  // ── more -IES (to complete the set) ────────────────────────────────────
+  {g:"y → ies", b:"worry",
+   s:"She <u>worry</u> about her test results.",
+   o:["worries","worrys","worres","worryes"],
+   exp:"worry → worries (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"copy",
+   s:"He <u>copy</u> the notes from the board.",
+   o:["copies","copys","copes","copyes"],
+   exp:"copy → copies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"empty",
+   s:"She <u>empty</u> the trash every morning.",
+   o:["empties","emptys","emptes","emptyes"],
+   exp:"empty → empties (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"occupy",
+   s:"He <u>occupy</u> the corner office.",
+   o:["occupies","occupys","occupes","occupyes"],
+   exp:"occupy → occupies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"verify",
+   s:"She <u>verify</u> every fact before publishing.",
+   o:["verifies","verifys","verifes","verifyes"],
+   exp:"verify → verifies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"simplify",
+   s:"He <u>simplify</u> every explanation.",
+   o:["simplifies","simplifys","simplifes","simplifyes"],
+   exp:"simplify → simplifies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"magnify",
+   s:"The lens <u>magnify</u> small objects.",
+   o:["magnifies","magnifys","magnifes","magnifyes"],
+   exp:"magnify → magnifies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"terrify",
+   s:"The loud thunder <u>terrify</u> the little dog.",
+   o:["terrifies","terrifys","terrifes","terrifyes"],
+   exp:"terrify → terrifies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"tidy",
+   s:"She <u>tidy</u> her room before guests arrive.",
+   o:["tidies","tidys","tides","tidyes"],
+   exp:"tidy → tidies (consonant + y: drop -y, add -ies)"},
+  {g:"y → ies", b:"embody",
+   s:"He <u>embody</u> the spirit of teamwork.",
+   o:["embodies","embodys","embodes","embodyes"],
+   exp:"embody → embodies (consonant + y: drop -y, add -ies)"},
+];
+
+const STORAGE_KEY = 'quiz_3rd_person_100_v1';
+let state = { cur: 0, answers: {}, shuffles: {}, showResults: false, retryMode: false, retryList: [] };
+let QUESTIONS = [];
+
+function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {} }
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    const bound = (s.retryMode ? (s.retryList||[]).length : QUESTIONS_RAW.length);
+    if (typeof s.cur !== 'number' || s.cur < 0 || s.cur >= bound) throw new Error();
+    if (typeof s.answers !== 'object' || typeof s.shuffles !== 'object') throw new Error();
+    state = s;
+    if (typeof state.retryMode !== 'boolean') state.retryMode = false;
+    if (!Array.isArray(state.retryList)) state.retryList = [];
+  } catch(e) {
+    localStorage.removeItem(STORAGE_KEY);
+    state = { cur: 0, answers: {}, shuffles: {}, showResults: false, retryMode: false, retryList: [] };
+  }
+}
+
+const ORDER_KEY = STORAGE_KEY + '_order_v1';
+function identityOrder() { return Array.from({length: QUESTIONS_RAW.length}, (_, i) => i); }
+function isValidOrder(arr) {
+  if (!Array.isArray(arr) || arr.length !== QUESTIONS_RAW.length) return false;
+  const seen = new Set();
+  for (const v of arr) {
+    if (typeof v !== 'number' || v < 0 || v >= QUESTIONS_RAW.length || seen.has(v)) return false;
+    seen.add(v);
+  }
+  return true;
+}
+function loadOrder() {
+  try {
+    const raw = localStorage.getItem(ORDER_KEY);
+    if (!raw) return null;
+    const arr = JSON.parse(raw);
+    return isValidOrder(arr) ? arr : null;
+  } catch(e) { return null; }
+}
+function saveOrder(order) { try { localStorage.setItem(ORDER_KEY, JSON.stringify(order)); } catch(e) {} }
+function shuffleOrder(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+let currentOrder = loadOrder() || identityOrder();
+let pendingFreshMode = 'original';
+function getList() { return state.retryMode ? state.retryList : QUESTIONS.map(function(_, i) { return i; }); }
+
+function buildQuestions() {
+  return currentOrder.map(ri => {
+    const r = QUESTIONS_RAW[ri];
+    return { g: r.g, b: r.b, s: r.s, options: r.o, ci: 0, exp: r.exp };
+  });
+}
+
+function getShuffle(qi) {
+  if (!state.shuffles[qi]) {
+    const n = QUESTIONS[qi].options.length;
+    let arr = Array.from({length: n}, (_, i) => i);
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    state.shuffles[qi] = arr;
+    saveState();
+  }
+  return state.shuffles[qi];
+}
+
+function buildDotNav() {
+  // ── progress bar & count ──
+  const list = getList();
+  const _answered = list.filter(qi => state.answers[qi] !== undefined).length;
+  const _total = list.length;
+  document.getElementById('nav-count').textContent = _answered + ' / ' + _total;
+  document.getElementById('prog-fill').style.width = (_total > 0 ? (_answered/_total*100).toFixed(1) : 0) + '%';
+  const nav = document.getElementById('dot-panel');
+  if (nav.style.display !== 'block') return;
+  nav.innerHTML = '';
+  list.forEach((qi, i) => {
+    const d = document.createElement('button');
+    d.className = 'dot';
+    d.textContent = i + 1;
+    if (state.answers[qi] !== undefined) {
+      const shuffle = getShuffle(qi);
+      d.classList.add(state.answers[qi] === shuffle.indexOf(0) ? 'correct' : 'wrong');
+    }
+    if (!state.showResults && i === state.cur) d.classList.add('current');
+    d.addEventListener('click', () => { state.showResults = false; state.cur = i; saveState(); render(); });
+    nav.appendChild(d);
+  });
+  if (state.showResults) {
+    const pill = document.createElement('button');
+    pill.className = 'dot results-pill';
+    pill.textContent = 'Results';
+    pill.addEventListener('click', () => { state.showResults = true; saveState(); render(); });
+    nav.appendChild(pill);
+  }
+}
+
+function render() {
+  try {
+    buildDotNav();
+    const qa = document.getElementById('quizArea');
+    const ra = document.getElementById('resultsArea');
+    if (state.showResults) {
+      qa.style.display = 'none';
+      ra.style.display = 'block';
+      showResults();
+    } else {
+      ra.style.display = 'none';
+      qa.style.display = 'block';
+      showQuestion();
+    }
+  } catch(e) {
+    document.getElementById('quizArea').style.display = 'block';
+    document.getElementById('quizArea').innerHTML = '<p style="color:red;padding:20px;">An error occurred. Please refresh.</p>';
+  }
+}
+
+function showQuestion() {
+  const list = getList();
+  const qi = list[state.cur];
+  const q = QUESTIONS[qi];
+  const shuffle = getShuffle(qi);
+  const answered = state.answers[qi] !== undefined;
+  const chosenIdx = state.answers[qi];
+  const correctShuffledIdx = shuffle.indexOf(0);
+  const isLast = state.cur === list.length - 1;
+
+  let optHtml = '';
+  shuffle.forEach((origIdx, shuffledIdx) => {
+    let cls = '';
+    if (answered) {
+      if (shuffledIdx === chosenIdx) cls = shuffledIdx === correctShuffledIdx ? 'correct' : 'wrong';
+      else if (shuffledIdx === correctShuffledIdx) cls = 'reveal';
+    }
+    optHtml += `<button class="option-btn ${cls}" onclick="choose(${shuffledIdx})" ${answered ? 'disabled' : ''}>${q.options[origIdx]}</button>`;
+  });
+
+  const expDisplay = (answered && chosenIdx !== correctShuffledIdx) ? 'block' : 'none';
+
+  document.getElementById('quizArea').innerHTML = `
+    <div class="type-badge">${q.g}</div>
+    <div id="qNum">Question ${state.cur + 1} / ${list.length}</div>
+    <div id="qText">${q.s}</div>
+    <div id="options">${optHtml}</div>
+    <div id="explanation" style="display:${expDisplay}">${q.exp}</div>
+    <div id="navRow">
+      <button class="nav-btn" id="prevBtn" onclick="go(-1)" ${state.cur === 0 ? 'disabled style="opacity:0.4"' : ''}>← Prev</button>
+      <button class="nav-btn" id="nextBtn" onclick="go(1)">${isLast ? 'See Results →' : 'Next →'}</button>
+    </div>
+  `;
+}
+
+function choose(shuffledIdx) {
+  const qi = getList()[state.cur];
+  if (state.answers[qi] !== undefined) return;
+  state.answers[qi] = shuffledIdx;
+  saveState();
+  render();
+}
+
+function go(dir) {
+  const list = getList();
+  const next = state.cur + dir;
+  if (next < 0) return;
+  if (next >= list.length) { state.showResults = true; saveState(); render(); return; }
+  state.cur = next;
+  saveState();
+  render();
+}
+
+function showResults() {
+  const list = getList();
+  let correct = 0;
+  list.forEach(qi => {
+    const ans = state.answers[qi];
+    if (ans === undefined) return;
+    if (ans === getShuffle(qi).indexOf(0)) correct++;
+  });
+  let gridHtml = '';
+  list.forEach((qi, i) => {
+    const ans = state.answers[qi];
+    const q = QUESTIONS[qi];
+    let status, cls, correctText = '';
+    if (ans === undefined) { status = 'Skipped'; cls = 'skipped'; correctText = q.options[0]; }
+    else if (ans === getShuffle(qi).indexOf(0)) { status = 'Correct ✓'; cls = 'correct'; }
+    else { status = 'Wrong ✗'; cls = 'wrong'; correctText = q.options[0]; }
+    gridHtml += `<div class="result-card ${cls}" onclick="jumpTo(${i})">
+      <div class="rc-num">Q${i+1}: ${q.b}</div>
+      <div class="rc-status">${status}</div>
+      ${correctText ? `<div class="rc-answer">✔ ${correctText}</div>` : ''}
+    </div>`;
+  });
+  document.getElementById('resultsArea').innerHTML = `
+    <div id="resultsScore">${correct} / ${list.length} Correct</div>
+    <div id="resultsGrid">${gridHtml}</div>
+    <button id="copyBtn" onclick="copyResults()">Copy All Results</button>
+    <button id="retryWrongBtn" onclick="retryWrong()">Retry Wrong Ones</button>
+    <button id="startFreshBtn" onclick="openModal('original')" style="margin-bottom:10px;">Start Fresh (Original Order)</button>
+    <button id="startFreshRandomBtn" onclick="openModal('random')" style="display:block; width:100%; padding:13px; background:#fff; color:#E24B4A; border:2px solid #E24B4A; border-radius:10px; font-size:1rem; font-weight:700; cursor:pointer;">Start Fresh (Random Order)</button>
+  `;
+}
+
+function jumpTo(i) { state.cur = i; state.showResults = false; saveState(); render(); }
+
+function copyResults() {
+  const list = getList();
+  let text = 'Third Person Singular Quiz\n', correct = 0;
+  list.forEach((qi, i) => {
+    const ans = state.answers[qi];
+    const q = QUESTIONS[qi];
+    let status;
+    if (ans === undefined) status = 'Skipped';
+    else if (ans === getShuffle(qi).indexOf(0)) { correct++; status = 'Correct'; }
+    else status = 'Wrong (Correct: ' + q.options[0] + ')';
+    text += `Q${i+1} ${q.b}: ${status}\n`;
+  });
+  text += `\nScore: ${correct} / ${list.length}`;
+  try { navigator.clipboard.writeText(text).then(() => alert('Copied!')); }
+  catch(e) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert('Copied!'); }
+}
+
+function openModal(mode) {
+  pendingFreshMode = mode;
+  document.getElementById('modalTitle').textContent = mode === 'random' ? 'Start Fresh (Random Order)?' : 'Start Fresh (Original Order)?';
+  document.getElementById('modalText').textContent = mode === 'random'
+    ? 'Questions will be reshuffled into a new random order, and all progress will be reset.'
+    : 'Questions will return to their original order, and all progress will be reset.';
+  document.getElementById('modal').classList.add('active');
+}
+document.getElementById('modalCancel').addEventListener('click', () => document.getElementById('modal').classList.remove('active'));
+document.getElementById('modalConfirm').addEventListener('click', () => {
+  document.getElementById('modal').classList.remove('active');
+  localStorage.removeItem(STORAGE_KEY);
+  state = { cur: 0, answers: {}, shuffles: {}, showResults: false, retryMode: false, retryList: [] };
+  saveState();
+  currentOrder = pendingFreshMode === 'random' ? shuffleOrder(identityOrder()) : identityOrder();
+  saveOrder(currentOrder);
+  QUESTIONS = buildQuestions();
+  render();
+});
+
+loadState();
+QUESTIONS = buildQuestions();
+render();
+
+function retryWrong() {
+  var list = getList();
+  var wrong = [];
+  for (var i = 0; i < list.length; i++) {
+    var qi = list[i];
+    if (state.answers[qi] !== undefined && state.answers[qi] !== getShuffle(qi).indexOf(0)) {
+      wrong.push(qi);
+    }
+  }
+  if (wrong.length === 0) return;
+  wrong.forEach(function(qi) { delete state.answers[qi]; });
+  state.retryMode = true;
+  state.retryList = wrong;
+  state.cur = 0;
+  state.showResults = false;
+  saveState();
+  render();
+}
+
+function toggleJump() {
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if (panel.style.display !== 'block') {
+    panel.style.display = 'block';
+    btn.textContent = 'Hide ▴';
+    buildDotNav();
+  } else {
+    panel.style.display = 'none';
+    btn.textContent = 'Jump ▾';
+  }
+}
+window.toggleJump = toggleJump;
+window.retryWrong = retryWrong;
+
+</script>
+</body>
+</html>

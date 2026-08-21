@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Math Competition</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, 'Segoe UI', Arial, sans-serif; background:#ffffff; color:#111111; }
+  .dateBar { font-size:2rem; font-weight:800; text-align:center; color:#185FA5; background:#ffffff; padding:14px 10px 0 10px; }
+  .titleBar { font-size:1.4rem; font-weight:800; text-align:center; color:#185FA5; padding:6px 10px; }
+  .attemptsBar { text-align:center; font-size:0.95rem; color:#185FA5; padding-bottom:8px; }
+  .navBar { display:flex; align-items:center; gap:8px; max-width:760px; margin:0 auto; padding:0 14px 8px; }
+  .navCount { font-size:0.82rem; color:#185FA5; white-space:nowrap; }
+  .progTrack { flex:1; height:6px; background:#e1e7ef; border-radius:3px; overflow:hidden; }
+  .progFill { height:100%; width:0%; background:#185FA5; border-radius:3px; transition:width 0.2s; }
+  .jumpBtn { font-size:0.78rem; padding:4px 12px; border:1px solid #185FA5; border-radius:14px; background:#ffffff; color:#185FA5; cursor:pointer; white-space:nowrap; }
+  .dots { display:none; flex-wrap:wrap; justify-content:center; gap:6px; padding:8px; max-width:760px; margin:0 auto; }
+  .dot { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.78rem; font-weight:700; cursor:pointer; color:#ffffff; background:#9aa4af; border:2px solid transparent; }
+  .dot.correct { background:#185FA5; }
+  .dot.wrong { background:#E24B4A; }
+  .dot.results { background:#185FA5; border-radius:14px; width:auto; padding:0 12px; }
+  .container { max-width:760px; margin:0 auto; padding:14px; }
+  .tag { display:inline-block; background:#185FA5; color:#ffffff; border-radius:999px; padding:4px 14px; font-size:0.8rem; font-weight:700; margin-bottom:10px; }
+  .qBox { background:#f4f7fb; border-radius:14px; padding:22px; font-size:1.25rem; font-weight:700; line-height:1.6; min-height:60px; display:flex; align-items:center; justify-content:center; text-align:center; }
+  .options { display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+  .opt { background:#e8edf4; color:#111111; border:2px solid transparent; border-radius:12px; padding:14px 16px; font-size:1rem; text-align:left; cursor:pointer; }
+  .opt.correctOpt { background:#E1F5EE; border-color:#1D9E75; color:#085041; }
+  .opt.wrongOpt { background:#FCEBEB; border-color:#E24B4A; color:#501313; }
+  .explain { margin-top:14px; background:#FCEBEB; border:2px solid #E24B4A; color:#501313; border-radius:12px; padding:14px 16px; font-size:0.95rem; line-height:1.5; display:none; }
+  .navRow { display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .navBtn { flex:1; background:#185FA5; color:#ffffff; border:none; border-radius:12px; padding:14px; font-size:1rem; font-weight:700; cursor:pointer; }
+  .navBtn:disabled { background:#b7c6d8; cursor:default; }
+  .counter { text-align:center; margin-top:10px; font-size:0.95rem; color:#185FA5; font-weight:700; }
+  .summaryGrid { display:grid; grid-template-columns: repeat(auto-fill, minmax(54px,1fr)); gap:8px; margin:14px 0; }
+  .sumCard { border-radius:10px; padding:10px 4px; text-align:center; font-weight:700; cursor:pointer; font-size:0.82rem; color:#ffffff; }
+  .sumCard.c { background:#1D9E75; }
+  .sumCard.w { background:#E24B4A; }
+  .sumCard.s { background:#9aa4af; }
+  .resultBtns { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .resultBtn { background:#185FA5; color:#ffffff; border:none; border-radius:12px; padding:14px; font-size:1rem; font-weight:700; cursor:pointer; }
+  .resultBtn.secondary { background:#e8edf4; color:#111111; }
+  .modalOverlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; z-index:50; }
+  .modalBox { background:#ffffff; border-radius:14px; padding:22px; max-width:340px; width:88%; text-align:center; }
+  .modalBtns { display:flex; gap:10px; margin-top:16px; }
+  .modalBtns button { flex:1; border:none; border-radius:10px; padding:12px; font-size:0.95rem; font-weight:700; cursor:pointer; }
+  .mCancel { background:#e8edf4; color:#111111; }
+  .mConfirm { background:#E24B4A; color:#ffffff; }
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#185FA5; color:#ffffff; padding:10px 20px; border-radius:10px; font-size:0.9rem; display:none; }
+  @media (max-width:480px){ .dateBar{font-size:1.5rem;} .titleBar{font-size:1.15rem;} .qBox{font-size:1.05rem;} }
+</style>
+</head>
+<body>
+  <div class="titleBar">[Sion] Math Competition</div>
+  <div class="attemptsBar" id="attemptsBar">Total Attempts: 0</div>
+  <div class="navBar" id="navBar">
+    <span class="navCount" id="navCount"></span>
+    <div class="progTrack"><div class="progFill" id="progFill"></div></div>
+    <button class="jumpBtn" id="jumpBtn">Jump &#9662;</button>
+  </div>
+  <div class="dots" id="dots"></div>
+  <div class="container">
+    <div id="quizArea" style="display:none;">
+      <span class="tag" id="typeTag">Invariant</span>
+      <div class="qBox" id="qBox"></div>
+      <div class="options" id="options"></div>
+      <div class="explain" id="explain"></div>
+      <div class="navRow">
+        <button class="navBtn" id="prevBtn">Prev</button>
+        <button class="navBtn" id="nextBtn">Next</button>
+      </div>
+      <div class="counter" id="counter"></div>
+    </div>
+    <div id="resultsArea" style="display:none;">
+      <h2 style="color:#185FA5;">Results</h2>
+      <div class="counter" id="resultSummary"></div>
+      <div class="summaryGrid" id="summaryGrid"></div>
+      <div class="resultBtns">
+        <button class="resultBtn" id="copyBtn">Copy All Results</button>
+        <button class="resultBtn" id="retryBtn">Retry Wrong Questions</button>
+        <button class="resultBtn secondary" id="freshBtnOriginal">Start Fresh (Original Order)</button>
+        <button class="resultBtn secondary" id="freshBtnRandom">Start Fresh (Random Order)</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modalOverlay" id="modalOverlay">
+    <div class="modalBox">
+      <h3 id="modalTitle" style="margin:0 0 10px;color:#185FA5;">Start Fresh (Original Order)?</h3>
+      <p id="modalText" style="font-size:1.05rem; font-weight:700; color:#111111;">Questions will return to their original order, and all progress will be reset.</p>
+      <div class="modalBtns">
+        <button class="mCancel" id="modalCancel">Cancel</button>
+        <button class="mConfirm" id="modalConfirm">Start Fresh</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+(function(){
+  var TOPIC = 'sionmathprinciples';
+  var QCOUNT = 5;
+  var STATE_KEY = 'quiz_' + TOPIC + '_' + QCOUNT + '_v1';
+  var ATTEMPTS_KEY = 'quiz_' + TOPIC + '_attempts_v1';
+
+  var QUESTIONS = [
+    { tag:'Invariant', q:'Three baskets contain 12, 15, and 18 oranges. In one move, you choose two baskets and shift one orange from each of those two into the third basket. After several such moves, can every basket end up with 15 oranges?',
+      options:[
+        'Yes — for example: (12,15,18) → (11,17,17) → (13,16,16) → (15,15,15)',
+        'No — the total number of oranges is not a multiple of 3',
+        'No — each move keeps one basket fixed, so the three baskets can never become equal',
+        'Yes, but only if the total number of moves is even'
+      ],
+      correct:'Yes — for example: (12,15,18) → (11,17,17) → (13,16,16) → (15,15,15)',
+      explain:'Each move changes the three baskets by (−1, −1, +2) in some order, and −1, −1, and +2 are all ≡ −1 (mod 3). So the difference between any two baskets never changes modulo 3 — it is an invariant. Since 12, 15, and 18 are all multiples of 3, every difference starts at 0 (mod 3), exactly matching the all-equal target (15,15,15), where every difference is 0. The total 12+15+18 = 45 = 3 × 15 also confirms that equal piles of 15 are numerically possible, and a short sequence of moves reaches it directly: (12,15,18) → (11,17,17) → (13,16,16) → (15,15,15).' },
+
+    { tag:'Parity', q:'A frog starts at 0 on a number line. Its 1st hop covers 1 cm, its 2nd hop covers 2 cm, its 3rd hop covers 3 cm, and so on — its nth hop covers n cm — and each hop can go left or right. Is it possible for the frog to land back on 0 after exactly 2024 hops?',
+      options:[
+        'Yes — because 1+2+⋯+2024 is an even number, the hops can be split into two equal-sized "left" and "right" groups',
+        'No — because 1+2+⋯+2024 is an odd number, the frog can never return to 0',
+        'No — after an even number of hops the frog always ends up to the right of 0',
+        'Yes, but only if each hop goes in the opposite direction from the one before it'
+      ],
+      correct:'Yes — because 1+2+⋯+2024 is an even number, the hops can be split into two equal-sized "left" and "right" groups',
+      explain:'The total distance 1+2+⋯+2024 = 2024 × 2025 ÷ 2 = 2,049,300, which is even. Flipping the direction of a single hop of length k shifts the landing spot by 2k — always an even amount — so the parity (odd/even-ness) of the final position is fixed by the parity of the total sum and can never change, no matter how the hops are arranged. Checking small cases confirms the pattern exactly: whenever 1+2+⋯+n is even (n = 3, 4, 7, 8, 11, 12, …) the frog can return to 0, and whenever it is odd (n = 1, 2, 5, 6, 9, 10, …) it cannot. Since the total for n = 2024 is even, the hops can indeed be split into two groups with equal sums — one group sent left, the other right — landing the frog right back on 0.' },
+
+    { tag:'Pigeonhole', q:'A jar holds plenty of red, green, and blue marbles. Without looking, what is the smallest number of marbles you must pull out to be guaranteed at least 7 red, or at least 5 green, or at least 10 blue?',
+      options:['20','19','21','22'],
+      correct:'20',
+      explain:'To avoid the guarantee entirely, you could pull out at most 6 red, 4 green, and 9 blue marbles — that totals 6 + 4 + 9 = 19 marbles without meeting any of the three conditions. The very next marble (the 20th) must push at least one color past its limit, forcing at least 7 red, at least 5 green, or at least 10 blue. So the smallest guaranteed number is 19 + 1 = 20.' },
+
+    { tag:'Extremal', q:'The ages of 33 students add up to exactly 430 years. Must it always be possible to choose 20 of these students whose ages add up to more than 260 years?',
+      options:[
+        'Yes — the 20 oldest students always have a combined age of at least 261',
+        'No — if the ages are spread out unevenly, the 20 oldest could total 260 or less',
+        'Yes, but only if at least one student is older than 20',
+        'No — without knowing each exact age, nothing can be guaranteed'
+      ],
+      correct:'Yes — the 20 oldest students always have a combined age of at least 261',
+      explain:'Line the students up from oldest to youngest. The average age of the 20 oldest can never be less than the overall average — the overall average is just a blend of the "top 20" average and the "bottom 13" average, and the top group, being the larger ages, can only pull that blend up, not down. The overall average is 430 ÷ 33 ≈ 13.03, so the 20 oldest must total at least 20 × 430 ÷ 33 ≈ 260.6 years. Ages are whole numbers, so their sum is a whole number too — meaning it must be at least 261, which is already more than 260. (Checking the most "balanced" possible split — thirty-two 13-year-olds and one 14-year-old — gives a top-20 sum of 13×19 + 14 = 261, confirming 261 really is the smallest this sum can ever be.)' },
+
+    { tag:'Game Theory', q:'A pile has 75 stones. Two players alternate turns, and on each turn a player removes between 1 and 4 stones. Whoever removes the last stone wins. With perfect play, who is guaranteed to win?',
+      options:[
+        'The second player',
+        'The first player',
+        'Whoever moves first can choose to lose on purpose, so it depends on them',
+        'Neither — the game could go on forever'
+      ],
+      correct:'The second player',
+      explain:'A pile size is a "losing position" for the player about to move exactly when it is a multiple of 5: from a multiple of 5, any move of 1–4 stones leaves a number that is not a multiple of 5 (handing the advantage to the opponent), while from a number that is not a multiple of 5, there is always a move of 1–4 stones that brings the pile back down to a multiple of 5. Checking small piles confirms it: 0, 5, 10, 15, 20, … are all losing positions for whoever must move from them. Since 75 = 5 × 15 is a multiple of 5, the first player starts in a losing position no matter what they do. The second player simply always removes 5 minus whatever the first player just took, keeping the pile at a multiple of 5 after every one of their turns — guaranteeing they take the final stone.' }
+  ];
+
+  var TOTAL = QUESTIONS.length;
+  var ORDER_KEY = STATE_KEY + '_order_v1';
+  function identityOrder(){ var a=[]; for(var i=0;i<TOTAL;i++) a.push(i); return a; }
+  function isValidOrder(o){ if(!Array.isArray(o) || o.length!==TOTAL) return false; var seen={}; for(var i=0;i<o.length;i++){ if(typeof o[i]!=='number'||o[i]<0||o[i]>=TOTAL||seen[o[i]]) return false; seen[o[i]]=true; } return true; }
+  function loadOrder(){ try { var o = JSON.parse(localStorage.getItem(ORDER_KEY)||'null'); return isValidOrder(o)?o:null; } catch(e){ return null; } }
+  function saveOrder(o){ try { localStorage.setItem(ORDER_KEY, JSON.stringify(o)); } catch(e){} }
+  function randomOrder(){ var a=identityOrder(); for(var k=a.length-1;k>0;k--){ var j=Math.floor(Math.random()*(k+1)); var t=a[k]; a[k]=a[j]; a[j]=t; } return a; }
+  var currentOrder = loadOrder() || identityOrder();
+  saveOrder(currentOrder);
+  var pendingFreshMode = 'original';
+
+  function defaultState(){ return { cur:0, answers:{}, shuffles:{}, showResults:false }; }
+  function loadState(){
+    try {
+      var raw = localStorage.getItem(STATE_KEY);
+      if(!raw) return defaultState();
+      var s = JSON.parse(raw);
+      if(typeof s.cur !== 'number' || s.cur < 0 || s.cur >= QUESTIONS.length) throw new Error('bad cur');
+      if(typeof s.answers !== 'object' || s.answers === null) throw new Error('bad answers');
+      if(typeof s.shuffles !== 'object' || s.shuffles === null) throw new Error('bad shuffles');
+      if(typeof s.showResults !== 'boolean') s.showResults = false;
+      return s;
+    } catch(e){
+      try { localStorage.removeItem(STATE_KEY); } catch(e2){}
+      return defaultState();
+    }
+  }
+  function saveState(){ try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch(e){} }
+
+  function getAttempts(){ try { return parseInt(localStorage.getItem(ATTEMPTS_KEY) || '0', 10) || 0; } catch(e){ return 0; } }
+  function incAttempts(){
+    var n = getAttempts() + 1;
+    try { localStorage.setItem(ATTEMPTS_KEY, String(n)); } catch(e){}
+    document.getElementById('attemptsBar').textContent = 'Total Attempts: ' + n;
+  }
+
+  function shuffleIndices(n){
+    var arr = [];
+    for(var i=0;i<n;i++) arr.push(i);
+    for(var i=arr.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=arr[i]; arr[i]=arr[j]; arr[j]=t; }
+    return arr;
+  }
+  function getShuffleFor(qIndex){
+    var key = String(qIndex);
+    if(!state.shuffles[key]){ state.shuffles[key] = shuffleIndices(QUESTIONS[qIndex].options.length); saveState(); }
+    return state.shuffles[key];
+  }
+
+  var dotsEl, quizArea, resultsArea, qBox, optionsEl, explainEl, typeTag, counterEl, prevBtn, nextBtn;
+  var navBarEl, navCountEl, progFillEl, jumpBtnEl;
+  var state;
+
+  function updateNavBar(){
+    var answered = 0;
+    for(var i=0;i<QUESTIONS.length;i++){ if(state.answers[i]) answered++; }
+    navCountEl.textContent = answered + ' / ' + QUESTIONS.length;
+    progFillEl.style.width = (QUESTIONS.length ? Math.round(answered/QUESTIONS.length*100) : 0) + '%';
+  }
+  function toggleJump(){
+    if(dotsEl.style.display === 'flex'){ dotsEl.style.display = 'none'; jumpBtnEl.innerHTML = 'Jump &#9662;'; }
+    else { dotsEl.style.display = 'flex'; jumpBtnEl.innerHTML = 'Hide &#9652;'; }
+  }
+
+  function buildDots(){
+    dotsEl.innerHTML = '';
+    for(var i=0;i<QUESTIONS.length;i++){
+      var d = document.createElement('div');
+      d.className = 'dot';
+      d.textContent = String(i+1);
+      d.addEventListener('click', (function(idx){ return function(){ goTo(idx); }; })(i));
+      dotsEl.appendChild(d);
+    }
+    var rd = document.createElement('div');
+    rd.className = 'dot results';
+    rd.id = 'resultsDot';
+    rd.textContent = 'Results';
+    rd.addEventListener('click', function(){ if(state.showResults){ showResultsScreen(); } });
+    dotsEl.appendChild(rd);
+  }
+  function refreshDots(){
+    for(var i=0;i<QUESTIONS.length;i++){
+      var d = dotsEl.children[i];
+      d.classList.remove('correct','wrong');
+      var qi = currentOrder[i];
+      var rec = state.answers[qi];
+      if(rec){
+        if(QUESTIONS[qi].options[rec.choiceIndex] === QUESTIONS[qi].correct) d.classList.add('correct');
+        else d.classList.add('wrong');
+      }
+    }
+    document.getElementById('resultsDot').style.display = state.showResults ? 'flex' : 'none';
+    updateNavBar();
+  }
+
+  function render(){
+    try {
+      if(state.showResults){ showResultsScreen(); return; }
+      quizArea.style.display = 'block';
+      resultsArea.style.display = 'none';
+      var pos = state.cur;
+      var idx = currentOrder[pos];
+      var question = QUESTIONS[idx];
+      typeTag.textContent = question.tag;
+      qBox.innerHTML = question.q;
+      optionsEl.innerHTML = '';
+      explainEl.style.display = 'none';
+      explainEl.innerHTML = '';
+
+      var order = getShuffleFor(idx);
+      var rec = state.answers[idx];
+      for(var k=0;k<order.length;k++){
+        var optIdx = order[k];
+        var btn = document.createElement('button');
+        btn.className = 'opt';
+        btn.innerHTML = question.options[optIdx];
+        (function(optIdx){ btn.addEventListener('click', function(){ selectAnswer(idx, optIdx); }); })(optIdx);
+        optionsEl.appendChild(btn);
+      }
+      if(rec) applyAnswerStyles(idx);
+
+      prevBtn.disabled = (pos === 0);
+      nextBtn.textContent = (pos === QUESTIONS.length - 1) ? 'See Results →' : 'Next';
+      counterEl.textContent = (pos+1) + ' / ' + QUESTIONS.length;
+      refreshDots();
+      saveState();
+    } catch(e){
+      quizArea.innerHTML = '<p style="color:#E24B4A;">Something went wrong loading this question. Please use the dots above to navigate.</p>';
+      quizArea.style.display = 'block';
+    }
+  }
+
+  function applyAnswerStyles(qIdx){
+    var question = QUESTIONS[qIdx];
+    var rec = state.answers[qIdx];
+    var order = getShuffleFor(qIdx);
+    var correctIndex = -1;
+    for(var i=0;i<question.options.length;i++){ if(question.options[i] === question.correct){ correctIndex = i; break; } }
+    var btns = optionsEl.children;
+    for(var k=0;k<order.length;k++){
+      var optIdx = order[k];
+      btns[k].classList.remove('correctOpt','wrongOpt');
+      if(optIdx === correctIndex) btns[k].classList.add('correctOpt');
+      else if(optIdx === rec.choiceIndex && optIdx !== correctIndex) btns[k].classList.add('wrongOpt');
+      btns[k].disabled = true;
+    }
+    if(rec.choiceIndex !== correctIndex){
+      explainEl.innerHTML = question.explain;
+      explainEl.style.display = 'block';
+    }
+  }
+
+  function selectAnswer(qIdx, optIdx){
+    if(state.answers[qIdx]) return;
+    state.answers[qIdx] = { choiceIndex: optIdx };
+    saveState();
+    render();
+  }
+  function goTo(idx){ state.cur = idx; state.showResults = false; saveState(); render(); }
+  function next(){
+    if(state.cur === QUESTIONS.length - 1){
+      state.showResults = true;
+      incAttempts();
+      saveState();
+      render();
+    } else { state.cur += 1; saveState(); render(); }
+  }
+  function prev(){ if(state.cur > 0){ state.cur -= 1; saveState(); render(); } }
+
+  function showResultsScreen(){
+    quizArea.style.display = 'none';
+    resultsArea.style.display = 'block';
+    var correct=0, wrong=0, skipped=0;
+    var grid = document.getElementById('summaryGrid');
+    grid.innerHTML = '';
+    for(var i=0;i<QUESTIONS.length;i++){
+      var qi = currentOrder[i];
+      var rec = state.answers[qi];
+      var card = document.createElement('div');
+      card.textContent = String(i+1);
+      if(!rec){ card.className='sumCard s'; skipped++; }
+      else if(QUESTIONS[qi].options[rec.choiceIndex] === QUESTIONS[qi].correct){ card.className='sumCard c'; correct++; }
+      else { card.className='sumCard w'; wrong++; }
+      card.addEventListener('click', (function(idx){ return function(){ state.showResults=false; state.cur=idx; saveState(); render(); }; })(i));
+      grid.appendChild(card);
+    }
+    document.getElementById('resultSummary').textContent =
+      'Correct: ' + correct + '   Wrong: ' + wrong + '   Skipped: ' + skipped + '   (' + correct + ' / ' + QUESTIONS.length + ')';
+    refreshDots();
+  }
+
+  function copyResults(){
+    var correct=0, wrong=0, skipped=0;
+    for(var i=0;i<QUESTIONS.length;i++){
+      var qi = currentOrder[i];
+      var rec = state.answers[qi];
+      if(!rec) skipped++;
+      else if(QUESTIONS[qi].options[rec.choiceIndex] === QUESTIONS[qi].correct) correct++;
+      else wrong++;
+    }
+    var text = '[Sion] Math Competition — June 7, 2026\nScore: ' + correct + ' / ' + QUESTIONS.length +
+      '\nCorrect: ' + correct + '   Wrong: ' + wrong + '   Skipped: ' + skipped;
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try {
+      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text);
+      else document.execCommand('copy');
+    } catch(e){ try { document.execCommand('copy'); } catch(e2){} }
+    document.body.removeChild(ta);
+    var toast = document.getElementById('toast');
+    toast.style.display = 'block';
+    setTimeout(function(){ toast.style.display = 'none'; }, 1800);
+  }
+
+  var retrySession = null;
+  function startRetry(){
+    var wrongIdx = [];
+    for(var i=0;i<QUESTIONS.length;i++){
+      var qi = currentOrder[i];
+      var rec = state.answers[qi];
+      if(!rec || QUESTIONS[qi].options[rec.choiceIndex] !== QUESTIONS[qi].correct) wrongIdx.push(qi);
+    }
+    if(wrongIdx.length === 0){ alertModalText('No wrong or skipped questions to retry.'); return; }
+    retrySession = { indices: wrongIdx, cur: 0, answers: {}, shuffles: {} };
+    renderRetry();
+  }
+  function renderRetry(){
+    quizArea.style.display = 'block';
+    resultsArea.style.display = 'none';
+    dotsEl.style.display = 'none';
+    navBarEl.style.display = 'none';
+    var pos = retrySession.cur;
+    var qIdx = retrySession.indices[pos];
+    var question = QUESTIONS[qIdx];
+    typeTag.textContent = question.tag + ' (Retry)';
+    qBox.innerHTML = question.q;
+    optionsEl.innerHTML = '';
+    explainEl.style.display = 'none';
+    explainEl.innerHTML = '';
+
+    if(!retrySession.shuffles[pos]) retrySession.shuffles[pos] = shuffleIndices(question.options.length);
+    var order = retrySession.shuffles[pos];
+    var rec = retrySession.answers[pos];
+    var correctIndex = -1;
+    for(var i=0;i<question.options.length;i++){ if(question.options[i] === question.correct){ correctIndex = i; break; } }
+
+    for(var k=0;k<order.length;k++){
+      var optIdx = order[k];
+      var btn = document.createElement('button');
+      btn.className = 'opt';
+      btn.innerHTML = question.options[optIdx];
+      if(rec){
+        btn.disabled = true;
+        if(optIdx === correctIndex) btn.classList.add('correctOpt');
+        else if(optIdx === rec.choiceIndex) btn.classList.add('wrongOpt');
+      } else {
+        (function(optIdx){ btn.addEventListener('click', function(){ retrySession.answers[pos] = { choiceIndex: optIdx }; renderRetry(); }); })(optIdx);
+      }
+      optionsEl.appendChild(btn);
+    }
+    if(rec && rec.choiceIndex !== correctIndex){ explainEl.innerHTML = question.explain; explainEl.style.display = 'block'; }
+    prevBtn.disabled = (pos === 0);
+    nextBtn.textContent = (pos === retrySession.indices.length - 1) ? 'See Results →' : 'Next';
+    counterEl.textContent = 'Retry ' + (pos+1) + ' / ' + retrySession.indices.length;
+    nextBtn.onclick = function(){
+      if(pos === retrySession.indices.length - 1) showRetryMiniResults();
+      else { retrySession.cur += 1; renderRetry(); }
+    };
+    prevBtn.onclick = function(){ if(pos > 0){ retrySession.cur -= 1; renderRetry(); } };
+  }
+  function showRetryMiniResults(){
+    var c=0, w=0;
+    for(var i=0;i<retrySession.indices.length;i++){
+      var rec = retrySession.answers[i];
+      var qIdx = retrySession.indices[i];
+      if(rec && QUESTIONS[qIdx].options[rec.choiceIndex] === QUESTIONS[qIdx].correct) c++; else w++;
+    }
+    quizArea.style.display = 'none';
+    resultsArea.style.display = 'block';
+    document.getElementById('summaryGrid').innerHTML = '';
+    document.getElementById('resultSummary').textContent =
+      'Retry session finished — Correct: ' + c + '   Still wrong: ' + w + '   (' + c + ' / ' + retrySession.indices.length + ')';
+    var backBtn = document.createElement('button');
+    backBtn.className = 'resultBtn';
+    backBtn.textContent = 'Back to Full Results';
+    backBtn.addEventListener('click', function(){
+      retrySession = null;
+      navBarEl.style.display = 'flex';
+      restoreMainNav();
+      showResultsScreen();
+    });
+    document.querySelector('.resultBtns').insertBefore(backBtn, document.querySelector('.resultBtns').firstChild);
+  }
+  function restoreMainNav(){ nextBtn.onclick = next; prevBtn.onclick = prev; }
+
+  function alertModalText(msg){
+    var overlay = document.getElementById('modalOverlay');
+    var box = overlay.querySelector('.modalBox');
+    box.innerHTML = '<p style="font-size:1.05rem; font-weight:700; color:#111111;">' + msg + '</p><div class="modalBtns"><button class="mConfirm" id="modalOk" style="flex:1;">OK</button></div>';
+    overlay.style.display = 'flex';
+    document.getElementById('modalOk').addEventListener('click', function(){ overlay.style.display = 'none'; });
+  }
+
+  function openFreshModal(mode){
+    pendingFreshMode = mode;
+    var title = document.getElementById('modalTitle');
+    var text = document.getElementById('modalText');
+    if(mode === 'random'){
+      title.textContent = 'Start Fresh (Random Order)?';
+      text.textContent = 'Questions will be reshuffled into a new random order, and all progress will be reset.';
+    } else {
+      title.textContent = 'Start Fresh (Original Order)?';
+      text.textContent = 'Questions will return to their original order, and all progress will be reset.';
+    }
+    document.getElementById('modalOverlay').style.display = 'flex';
+  }
+
+  function startFresh(){
+    try { localStorage.removeItem(STATE_KEY); } catch(e){}
+    currentOrder = (pendingFreshMode === 'random') ? randomOrder() : identityOrder();
+    saveOrder(currentOrder);
+    state = defaultState();
+    retrySession = null;
+    dotsEl.style.display = 'none';
+    jumpBtnEl.innerHTML = 'Jump &#9662;';
+    navBarEl.style.display = 'flex';
+    restoreMainNav();
+    saveState();
+    render();
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    dotsEl = document.getElementById('dots');
+    quizArea = document.getElementById('quizArea');
+    resultsArea = document.getElementById('resultsArea');
+    qBox = document.getElementById('qBox');
+    optionsEl = document.getElementById('options');
+    explainEl = document.getElementById('explain');
+    typeTag = document.getElementById('typeTag');
+    counterEl = document.getElementById('counter');
+    prevBtn = document.getElementById('prevBtn');
+    nextBtn = document.getElementById('nextBtn');
+    navBarEl = document.getElementById('navBar');
+    navCountEl = document.getElementById('navCount');
+    progFillEl = document.getElementById('progFill');
+    jumpBtnEl = document.getElementById('jumpBtn');
+
+    document.getElementById('attemptsBar').textContent = 'Total Attempts: ' + getAttempts();
+
+    buildDots();
+    state = loadState();
+    restoreMainNav();
+    updateNavBar();
+
+    jumpBtnEl.addEventListener('click', toggleJump);
+    document.getElementById('copyBtn').addEventListener('click', copyResults);
+    document.getElementById('retryBtn').addEventListener('click', startRetry);
+    document.getElementById('freshBtnOriginal').addEventListener('click', function(){ openFreshModal('original'); });
+    document.getElementById('freshBtnRandom').addEventListener('click', function(){ openFreshModal('random'); });
+    document.getElementById('modalCancel').addEventListener('click', function(){ document.getElementById('modalOverlay').style.display = 'none'; });
+    document.getElementById('modalConfirm').addEventListener('click', function(){ document.getElementById('modalOverlay').style.display = 'none'; startFresh(); });
+
+    render();
+  });
+})();
+</script>
+</body>
+</html>

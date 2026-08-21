@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Irregular Verbs Quiz</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; color: #1a1a2e; min-height: 100vh; }
+  #dueDate { background: #fff; text-align: center; padding: 10px; font-size: 2rem; font-weight: 800; color: #185FA5; border-bottom: 2px solid #dce3ef; }
+  #quizTitle { text-align: center; padding: 14px 16px 6px; font-size: 1.3rem; font-weight: 700; color: #1a1a2e; }
+  #quizSubtitle { text-align: center; font-size: 0.85rem; color: #666; padding-bottom: 10px; }
+  #quizArea { display: none; max-width: 680px; margin: 0 auto; padding: 16px; }
+  .type-badge { display: inline-block; background: #185FA5; color: #fff; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-bottom: 10px; letter-spacing: 0.03em; }
+  #qNum { font-size: 0.82rem; color: #888; margin-bottom: 4px; }
+  #qText { font-size: 1.15rem; font-weight: 600; line-height: 1.5; margin-bottom: 16px; color: #1a1a2e; }
+  .option-btn { display: block; width: 100%; margin-bottom: 10px; padding: 13px 16px; border-radius: 10px; border: 2px solid transparent; background: #e8edf4; color: #111111; font-size: 1rem; font-weight: 500; cursor: pointer; text-align: left; transition: all 0.15s; }
+  .option-btn:hover:not(:disabled) { background: #d5dff0; }
+  .option-btn.correct { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .option-btn.wrong { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+  .option-btn.reveal { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  #explanation { display: none; background: #fff8e1; border-left: 4px solid #f0a500; border-radius: 8px; padding: 12px 14px; font-size: 0.9rem; color: #5a3e00; margin-bottom: 14px; line-height: 1.5; }
+  #navRow { display: flex; gap: 10px; margin-top: 6px; }
+  .nav-btn { flex: 1; padding: 12px; border-radius: 10px; border: none; font-size: 0.95rem; font-weight: 700; cursor: pointer; background: #185FA5; color: #fff; transition: background 0.15s; }
+  .nav-btn:hover { background: #134d8a; }
+  #prevBtn { background: #e8edf4; color: #333; }
+  #prevBtn:hover { background: #d0d8e8; }
+  #resultsArea { display: none; max-width: 680px; margin: 0 auto; padding: 16px; }
+  #resultsScore { text-align: center; font-size: 1.4rem; font-weight: 800; color: #185FA5; margin-bottom: 16px; }
+  #resultsGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .result-card { border-radius: 10px; padding: 10px 12px; cursor: pointer; border: 2px solid transparent; }
+  .result-card.correct { background: #E1F5EE; border-color: #1D9E75; }
+  .result-card.wrong { background: #FCEBEB; border-color: #E24B4A; }
+  .result-card.skipped { background: #f3f3f3; border-color: #ccc; }
+  .result-card .rc-num { font-size: 0.75rem; font-weight: 700; color: #888; }
+  .result-card .rc-status { font-size: 0.8rem; font-weight: 700; margin: 2px 0; }
+  .result-card.correct .rc-status { color: #085041; }
+  .result-card.wrong .rc-status { color: #501313; }
+  .result-card .rc-answer { font-size: 0.75rem; color: #444; margin-top: 3px; }
+  #copyBtn { display: block; width: 100%; padding: 13px; background: #185FA5; color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-bottom: 12px; }
+  #startFreshBtn { display: block; width: 100%; padding: 13px; background: #fff; color: #E24B4A; border: 2px solid #E24B4A; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+  #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 999; align-items: center; justify-content: center; }
+  #modal.active { display: flex; }
+  #modalBox { background: #fff; border-radius: 16px; padding: 28px 24px; max-width: 340px; width: 90%; text-align: center; }
+  #modalBox h3 { font-size: 1.1rem; margin-bottom: 10px; }
+  #modalBox p { font-size: 0.9rem; color: #555; margin-bottom: 20px; }
+  #modalBtns { display: flex; gap: 10px; }
+  #modalCancel { flex: 1; padding: 11px; border-radius: 8px; border: 2px solid #ccc; background: #fff; font-weight: 700; cursor: pointer; }
+  #modalConfirm { flex: 1; padding: 11px; border-radius: 8px; border: none; background: #E24B4A; color: #fff; font-weight: 700; cursor: pointer; }
+  #navBar     { display:flex; align-items:center; gap:8px; padding:10px 12px; background:#fff; border-bottom:1px solid #dce3ef; position:sticky; top:0; z-index:100; }
+  .prog-track { background:#d7dde6; border-radius:3px; height:6px; flex:1; margin:0 8px; min-width:0; }
+  .prog-fill  { background:#185FA5; border-radius:3px; height:6px; width:0%; transition:width 0.2s; }
+  #nav-count  { font-size:13px; white-space:nowrap; color:#555; font-weight:700; }
+  #jump-btn   { font-size:12px; padding:4px 10px; border:1px solid #185FA5; border-radius:14px; background:#fff; color:#185FA5; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+  #dot-panel  { padding:8px 12px; background:#f5f7fa; border-bottom:1px solid #dce3ef; display:none; max-height:170px; overflow-y:auto; text-align:center; position:sticky; top:41px; z-index:99; }
+  .dot        { width:26px; height:26px; border-radius:50%; border:2px solid transparent; background:#d7dde6; font-size:11px; font-weight:700; color:#555; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; margin:2px; transition:all 0.15s; flex-shrink:0; }
+  .dot.correct      { background:#185FA5; border-color:#185FA5; color:#fff; }
+  .dot.wrong        { background:#E24B4A; border-color:#E24B4A; color:#fff; }
+  .dot.current      { outline:3px solid #185FA5; outline-offset:2px; }
+  .dot.results-pill { width:auto; padding:0 10px; border-radius:15px; background:#185FA5; color:#fff; border-color:#185FA5; font-size:11px; }
+  #retryWrongBtn    { display:block; width:100%; padding:13px; background:#1D9E75; color:#fff; border:none; border-radius:10px; font-size:1rem; font-weight:700; cursor:pointer; margin-bottom:12px; }
+</style>
+</head>
+<body>
+<!-- ===== Universal Quiz Timer (auto-injected) ===== -->
+<style>
+  #qzTimerBar { background: #ffffff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-family: 'Segoe UI', Arial, sans-serif; }
+  #qzTimerSetup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+  #qzTimerSetup label { font-weight: 700; }
+  #qzTimerInput { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+  #qzTimerStartBtn { background: #185FA5; color: #ffffff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  #qzTimerStartBtn:active { opacity: 0.8; }
+  #qzTimerRunning { display: none; align-items: center; gap: 8px; }
+  #qzTimerLabel { font-size: 0.78rem; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 0.02em; }
+  #qzTimerDisplay { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+  #qzTimerDisplay.qz-warn { color: #f5a623; }
+  #qzTimerDisplay.qz-danger { color: #E24B4A; }
+</style>
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label for="qzTimerInput">Set Time Limit:</label>
+    <input type="number" id="qzTimerInput" min="1" max="180" value="20"> min
+    <button id="qzTimerStartBtn" type="button">Start</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span id="qzTimerLabel">Time Left</span>
+    <span id="qzTimerDisplay">20:00</span>
+  </div>
+</div>
+<script>
+(function(){
+  var QZ_KEY = 'qzTimer_' + location.pathname;
+  var qz = { totalSec: null, startedAt: null };
+  try {
+    var raw = localStorage.getItem(QZ_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p.totalSec === 'number' && typeof p.startedAt === 'number') qz = p;
+    }
+  } catch(e) {}
+  var qzInterval = null;
+
+  function qzSave() { try { localStorage.setItem(QZ_KEY, JSON.stringify(qz)); } catch(e) {} }
+  function qzFormat(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60), s = sec % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function qzRender() {
+    var setupEl = document.getElementById('qzTimerSetup');
+    var runEl = document.getElementById('qzTimerRunning');
+    var disp = document.getElementById('qzTimerDisplay');
+    if (!setupEl || !runEl || !disp) return;
+    if (!qz.startedAt) {
+      setupEl.style.display = 'flex';
+      runEl.style.display = 'none';
+      return;
+    }
+    setupEl.style.display = 'none';
+    runEl.style.display = 'flex';
+    var elapsed = (Date.now() - qz.startedAt) / 1000;
+    var remaining = qz.totalSec - elapsed;
+    disp.classList.remove('qz-warn', 'qz-danger');
+    if (remaining <= 0) {
+      disp.textContent = "Time's Up";
+      disp.classList.add('qz-danger');
+      qzStopInterval();
+      return;
+    }
+    disp.textContent = qzFormat(remaining);
+    if (remaining <= qz.totalSec * 0.1) disp.classList.add('qz-danger');
+    else if (remaining <= qz.totalSec * 0.25) disp.classList.add('qz-warn');
+  }
+  function qzStartInterval() {
+    qzStopInterval();
+    qzInterval = setInterval(qzRender, 1000);
+  }
+  function qzStopInterval() {
+    if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+  }
+  function qzStart() {
+    var input = document.getElementById('qzTimerInput');
+    var minutes = parseFloat(input.value);
+    if (!minutes || minutes <= 0) minutes = 20;
+    qz.totalSec = Math.round(minutes * 60);
+    qz.startedAt = Date.now();
+    qzSave();
+    qzRender();
+    qzStartInterval();
+  }
+
+  var btn = document.getElementById('qzTimerStartBtn');
+  if (btn) btn.addEventListener('click', qzStart);
+  qzRender();
+  if (qz.startedAt) qzStartInterval();
+
+  function qzResetTimer() {
+    qz.totalSec = null;
+    qz.startedAt = null;
+    qzSave();
+    qzStopInterval();
+    qzRender();
+  }
+  var qzRetryRe = /retry|restart|reset|start\s*fresh|try\s*again|\uB2E4\uC2DC\s*\uC2DC\uC791|\uCC98\uC74C\uBD80\uD0B0/i;
+  document.addEventListener('click', function(ev) {
+    var el = ev.target, depth = 0;
+    while (el && depth < 4) {
+      if (el.id === 'qzTimerBar' || el.id === 'qzAttemptsBar') return;
+      var isClickable = el.tagName === 'BUTTON' || el.tagName === 'A' ||
+        (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) ||
+        (el.getAttribute && el.getAttribute('role') === 'button');
+      if (isClickable) {
+        var txt = (el.textContent || el.value || '').trim();
+        if (txt.length > 0 && txt.length < 40 && qzRetryRe.test(txt)) {
+          qzResetTimer();
+          return;
+        }
+      }
+      el = el.parentElement;
+      depth++;
+    }
+  }, true);
+})();
+</script>
+<!-- ===== End Universal Quiz Timer ===== -->
+<!-- ===== Universal Total Attempts Counter (auto-injected) ===== -->
+<style>
+  #qzAttemptsBar { background: #f5f8fc; border-bottom: 1px solid #d0dce8; padding: 6px 12px; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', Arial, sans-serif; font-size: 0.82rem; color: #4a6fa5; font-weight: 700; letter-spacing: 0.01em; }
+  #qzAttemptsBar span { color: #185FA5; font-weight: 900; margin-left: 4px; }
+</style>
+<div id="qzAttemptsBar">Total Attempts:<span id="qzAttemptsCount">0</span></div>
+<script>
+(function(){
+  var QA_KEY = 'qzAttempts_' + location.pathname;
+  function qaGet(){ try { return parseInt(localStorage.getItem(QA_KEY)||'0',10) || 0; } catch(e){ return 0; } }
+  function qaSet(n){ try { localStorage.setItem(QA_KEY, String(n)); } catch(e){} }
+  function qaRenderCount(){
+    var el = document.getElementById('qzAttemptsCount');
+    if (el) el.textContent = qaGet();
+  }
+  function qaIsVisible(el){
+    if (!el) return false;
+    var r = el.getBoundingClientRect();
+    if (r.width < 80 || r.height < 30) return false;
+    var cs = window.getComputedStyle(el);
+    return cs.display !== 'none' && cs.visibility !== 'hidden';
+  }
+  function qaResultsShowing(){
+    var els = document.querySelectorAll('[id*="result" i],[class*="result" i],[id*="score" i],[class*="score" i]');
+    for (var i=0;i<els.length;i++){ if (qaIsVisible(els[i])) return true; }
+    return false;
+  }
+  var qaWasShowing = false;
+  function qaCheck(){
+    var showing = qaResultsShowing();
+    if (showing && !qaWasShowing) {
+      qaSet(qaGet()+1);
+      qaRenderCount();
+    }
+    qaWasShowing = showing;
+  }
+  qaRenderCount();
+  setInterval(qaCheck, 800);
+  function qaObserve(){
+    if (!document.body) return;
+    var mo = new MutationObserver(function(){ qaCheck(); });
+    mo.observe(document.body, { attributes: true, childList: true, subtree: true });
+  }
+  if (document.body) qaObserve();
+  else document.addEventListener('DOMContentLoaded', qaObserve);
+  setTimeout(qaCheck, 1500);
+})();
+</script>
+<!-- ===== End Universal Total Attempts Counter ===== -->
+
+
+<div id="quizTitle">Irregular Verbs — Past Tense</div>
+<div id="quizSubtitle">100 Questions</div>
+<div id="navBar">
+  <span id="nav-count">0 / 0</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button id="jump-btn" onclick="toggleJump()">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+<div id="quizArea"></div>
+<div id="resultsArea"></div>
+<div id="modal">
+  <div id="modalBox">
+    <h3 id="modalTitle">Start Fresh?</h3>
+    <p id="modalText">All your answers will be cleared and the quiz will restart.</p>
+    <div id="modalBtns">
+      <button id="modalCancel">Cancel</button>
+      <button id="modalConfirm">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>
+// Each entry: base, past (correct, always index 0), then 3 plausible wrong forms
+const VERBS = [
+  // Group A — No Change
+  {g:"Group A: No Change", b:"cut",    o:["cut","cutted","cuted","cutt"]},
+  {g:"Group A: No Change", b:"put",    o:["put","putted","puted","putt"]},
+  {g:"Group A: No Change", b:"hit",    o:["hit","hitted","hited","hitten"]},
+  {g:"Group A: No Change", b:"let",    o:["let","letted","leted","letten"]},
+  {g:"Group A: No Change", b:"hurt",   o:["hurt","hurted","hurten","hurtt"]},
+  {g:"Group A: No Change", b:"shut",   o:["shut","shutted","shuted","shutten"]},
+  {g:"Group A: No Change", b:"set",    o:["set","setted","seted","sett"]},
+  {g:"Group A: No Change", b:"cost",   o:["cost","costed","costen","costt"]},
+  // Group B — Vowel Shift
+  {g:"Group B: Vowel Shift", b:"come",    o:["came","comed","come","camed"]},
+  {g:"Group B: Vowel Shift", b:"become",  o:["became","becomed","become","becamed"]},
+  {g:"Group B: Vowel Shift", b:"run",     o:["ran","runned","ranned","runed"]},
+  {g:"Group B: Vowel Shift", b:"eat",     o:["ate","eated","eaten","aten"]},
+  {g:"Group B: Vowel Shift", b:"give",    o:["gave","gived","given","gaven"]},
+  {g:"Group B: Vowel Shift", b:"fall",    o:["fell","falled","fallen","fellen"]},
+  {g:"Group B: Vowel Shift", b:"grow",    o:["grew","growed","grown","grewed"]},
+  {g:"Group B: Vowel Shift", b:"know",    o:["knew","knowed","known","knewed"]},
+  {g:"Group B: Vowel Shift", b:"throw",   o:["threw","throwed","thrown","threwed"]},
+  {g:"Group B: Vowel Shift", b:"blow",    o:["blew","blowed","blown","blewed"]},
+  {g:"Group B: Vowel Shift", b:"fly",     o:["flew","flied","flyed","flown"]},
+  {g:"Group B: Vowel Shift", b:"draw",    o:["drew","drawed","drawn","drewed"]},
+  {g:"Group B: Vowel Shift", b:"drive",   o:["drove","drived","driven","droved"]},
+  {g:"Group B: Vowel Shift", b:"ride",    o:["rode","rided","ridden","roded"]},
+  {g:"Group B: Vowel Shift", b:"rise",    o:["rose","rised","risen","rosed"]},
+  {g:"Group B: Vowel Shift", b:"write",   o:["wrote","writed","written","wroted"]},
+  {g:"Group B: Vowel Shift", b:"speak",   o:["spoke","speaked","spoken","spoked"]},
+  // Group C — i → a
+  {g:"Group C: i → a", b:"begin",  o:["began","beginned","begined","beganned"]},
+  {g:"Group C: i → a", b:"drink",  o:["drank","drinked","drunk","drinkted"]},
+  {g:"Group C: i → a", b:"sing",   o:["sang","singed","sung","singted"]},
+  {g:"Group C: i → a", b:"swim",   o:["swam","swimmed","swum","swimed"]},
+  {g:"Group C: i → a", b:"ring",   o:["rang","ringed","rung","ringted"]},
+  {g:"Group C: i → a", b:"sink",   o:["sank","sinked","sunk","sankted"]},
+  {g:"Group C: i → a", b:"spring", o:["sprang","springed","sprung","sprangen"]},
+  {g:"Group C: i → a", b:"shrink", o:["shrank","shrinked","shrunk","shranken"]},
+  // Group D — ends in -d/-t
+  {g:"Group D: Ends in -d / -t", b:"say",    o:["said","sayed","saied","sayed"]},
+  {g:"Group D: Ends in -d / -t", b:"make",   o:["made","maked","maken","maded"]},
+  {g:"Group D: Ends in -d / -t", b:"have",   o:["had","haved","haven","hadd"]},
+  {g:"Group D: Ends in -d / -t", b:"hear",   o:["heard","heared","hearen","hearrd"]},
+  {g:"Group D: Ends in -d / -t", b:"leave",  o:["left","leaved","leaven","lefted"]},
+  {g:"Group D: Ends in -d / -t", b:"feel",   o:["felt","feeled","feelt","felled"]},
+  {g:"Group D: Ends in -d / -t", b:"keep",   o:["kept","keeped","keepen","keepted"]},
+  {g:"Group D: Ends in -d / -t", b:"sleep",  o:["slept","sleeped","sleepen","sleepd"]},
+  {g:"Group D: Ends in -d / -t", b:"sweep",  o:["swept","sweeped","sweepen","sweepd"]},
+  {g:"Group D: Ends in -d / -t", b:"mean",   o:["meant","meaned","meanted","meand"]},
+  {g:"Group D: Ends in -d / -t", b:"deal",   o:["dealt","dealed","dealt","dealted"]},
+  {g:"Group D: Ends in -d / -t", b:"build",  o:["built","builded","builden","buildted"]},
+  {g:"Group D: Ends in -d / -t", b:"send",   o:["sent","sended","senten","sendt"]},
+  {g:"Group D: Ends in -d / -t", b:"spend",  o:["spent","spended","spenten","spendt"]},
+  {g:"Group D: Ends in -d / -t", b:"lend",   o:["lent","lended","lenten","lendt"]},
+  {g:"Group D: Ends in -d / -t", b:"bend",   o:["bent","bended","benten","bendt"]},
+  {g:"Group D: Ends in -d / -t", b:"lose",   o:["lost","losed","losen","losted"]},
+  {g:"Group D: Ends in -d / -t", b:"sell",   o:["sold","selled","seld","selld"]},
+  // Group E — Vowel Change
+  {g:"Group E: Vowel Change", b:"get",    o:["got","getted","goten","gett"]},
+  {g:"Group E: Vowel Change", b:"sit",    o:["sat","sitted","sited","sitten"]},
+  {g:"Group E: Vowel Change", b:"win",    o:["won","winned","wined","winn"]},
+  {g:"Group E: Vowel Change", b:"dig",    o:["dug","digged","diged","dugg"]},
+  {g:"Group E: Vowel Change", b:"spin",   o:["spun","spinned","spined","spinn"]},
+  {g:"Group E: Vowel Change", b:"hang",   o:["hung","hanged","hangd","hangg"]},
+  {g:"Group E: Vowel Change", b:"stick",  o:["stuck","sticked","stickt","sticken"]},
+  {g:"Group E: Vowel Change", b:"strike", o:["struck","striked","striken","strucked"]},
+  {g:"Group E: Vowel Change", b:"sting",  o:["stung","stinged","stingt","stungen"]},
+  {g:"Group E: Vowel Change", b:"swing",  o:["swung","swinged","swingt","swungen"]},
+  {g:"Group E: Vowel Change", b:"fling",  o:["flung","flinged","flingt","flungen"]},
+  {g:"Group E: Vowel Change", b:"cling",  o:["clung","clinged","clingt","clungen"]},
+  {g:"Group E: Vowel Change", b:"bind",   o:["bound","binded","binded","binned"]},
+  {g:"Group E: Vowel Change", b:"find",   o:["found","finded","finded","finned"]},
+  {g:"Group E: Vowel Change", b:"grind",  o:["ground","grinded","grindted","grinned"]},
+  {g:"Group E: Vowel Change", b:"wind",   o:["wound","winded","windted","winned"]},
+  {g:"Group E: Vowel Change", b:"hold",   o:["held","holded","holden","holdted"]},
+  // Group F — Big Change
+  {g:"Group F: Big Change", b:"go",          o:["went","goed","goned","goned"]},
+  {g:"Group F: Big Change", b:"be",          o:["was/were","beed","been","beed"]},
+  {g:"Group F: Big Change", b:"do",          o:["did","doed","done","dided"]},
+  {g:"Group F: Big Change", b:"see",         o:["saw","seed","seen","sawed"]},
+  {g:"Group F: Big Change", b:"take",        o:["took","taked","taken","tooked"]},
+  {g:"Group F: Big Change", b:"bring",       o:["brought","bringed","brung","bringt"]},
+  {g:"Group F: Big Change", b:"think",       o:["thought","thinked","thinkt","thunk"]},
+  {g:"Group F: Big Change", b:"buy",         o:["bought","buyed","buied","buyd"]},
+  {g:"Group F: Big Change", b:"catch",       o:["caught","catched","catcht","caughted"]},
+  {g:"Group F: Big Change", b:"teach",       o:["taught","teached","teacht","taughted"]},
+  {g:"Group F: Big Change", b:"fight",       o:["fought","fighted","foughted","fightted"]},
+  {g:"Group F: Big Change", b:"seek",        o:["sought","seeked","seeked","seeken"]},
+  {g:"Group F: Big Change", b:"stand",       o:["stood","standed","standen","standted"]},
+  {g:"Group F: Big Change", b:"understand",  o:["understood","understanded","understandted","understanden"]},
+  {g:"Group F: Big Change", b:"tell",        o:["told","telled","telld","telt"]},
+  {g:"Group F: Big Change", b:"wear",        o:["wore","weared","worn","weard"]},
+  // Group G — Other Essentials
+  {g:"Group G: Other Essentials", b:"break",  o:["broke","breaked","broken","broked"]},
+  {g:"Group G: Other Essentials", b:"wake",   o:["woke","waked","woken","wokened"]},
+  {g:"Group G: Other Essentials", b:"choose", o:["chose","choosed","chosen","chosed"]},
+  {g:"Group G: Other Essentials", b:"freeze", o:["froze","freezed","frozen","frozed"]},
+  {g:"Group G: Other Essentials", b:"steal",  o:["stole","stealed","stolen","stoled"]},
+  {g:"Group G: Other Essentials", b:"meet",   o:["met","meeted","meted","mett"]},
+  {g:"Group G: Other Essentials", b:"feed",   o:["fed","feeded","feedted","fedd"]},
+  {g:"Group G: Other Essentials", b:"lead",   o:["led","leaded","leadted","ledd"]},
+  {g:"Group G: Other Essentials", b:"read",   o:["read","readed","reded","readded"]},
+  {g:"Group G: Other Essentials", b:"bite",   o:["bit","bited","bitten","bitted"]},
+  {g:"Group G: Other Essentials", b:"hide",   o:["hid","hided","hidden","hidded"]},
+  {g:"Group G: Other Essentials", b:"slide",  o:["slid","slided","slidden","slidded"]},
+  {g:"Group G: Other Essentials", b:"shoot",  o:["shot","shooted","shotten","shootted"]},
+  {g:"Group G: Other Essentials", b:"forget", o:["forgot","forgeted","forgotten","forgetted"]},
+  {g:"Group G: Other Essentials", b:"shake",  o:["shook","shaked","shaken","shookted"]},
+  {g:"Group G: Other Essentials", b:"tear",   o:["tore","teared","torn","tored"]},
+];
+
+const STORAGE_KEY = 'quiz_irregular_verbs_100_v1';
+let state = { cur: 0, answers: {}, shuffles: {}, showResults: false, retryMode: false, retryList: [] };
+let QUESTIONS = [];
+function getList() { return state.retryMode ? state.retryList : QUESTIONS.map((_, i) => i); }
+
+function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {} }
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (typeof s.answers !== 'object' || typeof s.shuffles !== 'object') throw new Error();
+    if (s.retryMode && !Array.isArray(s.retryList)) throw new Error();
+    const listLen = s.retryMode ? s.retryList.length : VERBS.length;
+    if (typeof s.cur !== 'number' || s.cur < 0 || s.cur >= listLen) throw new Error();
+    state = s;
+  } catch(e) {
+    localStorage.removeItem(STORAGE_KEY);
+    state = { cur: 0, answers: {}, shuffles: {}, showResults: false, retryMode: false, retryList: [] };
+  }
+}
+
+const ORDER_KEY = STORAGE_KEY + '_order_v1';
+function identityOrder() { return Array.from({length: VERBS.length}, (_, i) => i); }
+function isValidOrder(arr) {
+  if (!Array.isArray(arr) || arr.length !== VERBS.length) return false;
+  const sorted = arr.slice().sort((a, b) => a - b);
+  for (let i = 0; i < sorted.length; i++) if (sorted[i] !== i) return false;
+  return true;
+}
+function loadOrder() {
+  try {
+    const raw = localStorage.getItem(ORDER_KEY);
+    if (!raw) return null;
+    const arr = JSON.parse(raw);
+    if (!isValidOrder(arr)) throw new Error('bad order');
+    return arr;
+  } catch(e) { localStorage.removeItem(ORDER_KEY); return null; }
+}
+function saveOrder(order) { try { localStorage.setItem(ORDER_KEY, JSON.stringify(order)); } catch(e) {} }
+function shuffleOrder(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+let currentOrder = loadOrder() || identityOrder();
+let pendingFreshMode = 'original';
+
+function buildQuestions() {
+  return currentOrder.map(vi => {
+    const v = VERBS[vi];
+    // o[0] = correct, o[1..3] = wrong; ci always 0 before shuffle
+    return { g: v.g, b: v.b, options: v.o, ci: 0 };
+  });
+}
+
+function getShuffle(qi) {
+  if (!state.shuffles[qi]) {
+    const n = QUESTIONS[qi].options.length;
+    let arr = Array.from({length: n}, (_, i) => i);
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    state.shuffles[qi] = arr;
+    saveState();
+  }
+  return state.shuffles[qi];
+}
+
+function buildDotNav() {
+  // ── progress bar & count ──
+  const list = getList();
+  const _answered = list.filter(i => state.answers[i] !== undefined).length;
+  const _total = list.length;
+  document.getElementById('nav-count').textContent = _answered + ' / ' + _total;
+  document.getElementById('prog-fill').style.width = (_total > 0 ? (_answered/_total*100).toFixed(1) : 0) + '%';
+  const nav = document.getElementById('dot-panel');
+  if (nav.style.display !== 'block') return;
+  nav.innerHTML = '';
+  for (let pos = 0; pos < list.length; pos++) {
+    const i = list[pos];
+    const d = document.createElement('button');
+    d.className = 'dot';
+    d.textContent = pos + 1;
+    if (state.answers[i] !== undefined) {
+      const shuffle = getShuffle(i);
+      d.classList.add(state.answers[i] === shuffle.indexOf(QUESTIONS[i].ci) ? 'correct' : 'wrong');
+    }
+    if (!state.showResults && pos === state.cur) d.classList.add('current');
+    d.addEventListener('click', () => { state.showResults = false; state.cur = pos; saveState(); render(); });
+    nav.appendChild(d);
+  }
+  if (state.showResults) {
+    const pill = document.createElement('button');
+    pill.className = 'dot results-pill';
+    pill.textContent = 'Results';
+    pill.addEventListener('click', () => { state.showResults = true; saveState(); render(); });
+    nav.appendChild(pill);
+  }
+}
+
+function render() {
+  try {
+    buildDotNav();
+    const qa = document.getElementById('quizArea');
+    const ra = document.getElementById('resultsArea');
+    if (state.showResults) {
+      qa.style.display = 'none';
+      ra.style.display = 'block';
+      showResults();
+    } else {
+      ra.style.display = 'none';
+      qa.style.display = 'block';
+      showQuestion();
+    }
+  } catch(e) {
+    document.getElementById('quizArea').style.display = 'block';
+    document.getElementById('quizArea').innerHTML = '<p style="color:red;padding:20px;">An error occurred. Please refresh.</p>';
+  }
+}
+
+function showQuestion() {
+  const list = getList();
+  const pos = state.cur;
+  const qi = list[pos];
+  const q = QUESTIONS[qi];
+  const shuffle = getShuffle(qi);
+  const answered = state.answers[qi] !== undefined;
+  const chosenIdx = state.answers[qi];
+  const correctShuffledIdx = shuffle.indexOf(q.ci);
+  const isLast = pos === list.length - 1;
+
+  let optHtml = '';
+  shuffle.forEach((origIdx, shuffledIdx) => {
+    let cls = '';
+    if (answered) {
+      if (shuffledIdx === chosenIdx) cls = shuffledIdx === correctShuffledIdx ? 'correct' : 'wrong';
+      else if (shuffledIdx === correctShuffledIdx) cls = 'reveal';
+    }
+    optHtml += `<button class="option-btn ${cls}" onclick="choose(${shuffledIdx})" ${answered ? 'disabled' : ''}>${q.options[origIdx]}</button>`;
+  });
+
+  const expDisplay = (answered && chosenIdx !== correctShuffledIdx) ? 'block' : 'none';
+
+  document.getElementById('quizArea').innerHTML = `
+    <div class="type-badge">${q.g}</div>
+    <div id="qNum">Question ${pos + 1} / ${list.length}</div>
+    <div id="qText">What is the past tense of <b>${q.b}</b>?</div>
+    <div id="options">${optHtml}</div>
+    <div id="explanation" style="display:${expDisplay}">The past tense of <b>${q.b}</b> is <b>${q.options[0]}</b>.</div>
+    <div id="navRow">
+      <button class="nav-btn" id="prevBtn" onclick="go(-1)" ${pos === 0 ? 'disabled style="opacity:0.4"' : ''}>← Prev</button>
+      <button class="nav-btn" id="nextBtn" onclick="go(1)">${isLast ? 'See Results →' : 'Next →'}</button>
+    </div>
+  `;
+}
+
+function choose(shuffledIdx) {
+  const list = getList();
+  const qi = list[state.cur];
+  if (state.answers[qi] !== undefined) return;
+  state.answers[qi] = shuffledIdx;
+  saveState();
+  render();
+}
+
+function go(dir) {
+  const list = getList();
+  const next = state.cur + dir;
+  if (next < 0) return;
+  if (next >= list.length) { state.showResults = true; saveState(); render(); return; }
+  state.cur = next;
+  saveState();
+  render();
+}
+
+function showResults() {
+  const list = getList();
+  let correct = 0;
+  for (let pos = 0; pos < list.length; pos++) {
+    const i = list[pos];
+    const ans = state.answers[i];
+    if (ans === undefined) continue;
+    if (ans === getShuffle(i).indexOf(QUESTIONS[i].ci)) correct++;
+  }
+  let gridHtml = '';
+  for (let pos = 0; pos < list.length; pos++) {
+    const i = list[pos];
+    const ans = state.answers[i];
+    const q = QUESTIONS[i];
+    const correctAns = q.options[0];
+    let status, cls, correctText = '';
+    if (ans === undefined) { status = 'Skipped'; cls = 'skipped'; correctText = correctAns; }
+    else if (ans === getShuffle(i).indexOf(q.ci)) { status = 'Correct ✓'; cls = 'correct'; }
+    else { status = 'Wrong ✗'; cls = 'wrong'; correctText = correctAns; }
+    gridHtml += `<div class="result-card ${cls}" onclick="jumpTo(${pos})">
+      <div class="rc-num">Q${pos+1}: ${q.b}</div>
+      <div class="rc-status">${status}</div>
+      ${correctText ? `<div class="rc-answer">✔ ${correctText}</div>` : ''}
+    </div>`;
+  }
+  document.getElementById('resultsArea').innerHTML = `
+    <div id="resultsTitle" style="text-align:center;font-weight:800;font-size:1.2rem;margin-bottom:6px;">${state.retryMode ? 'Retry Results' : 'Results'}</div>
+    <div id="resultsScore">${correct} / ${list.length} Correct</div>
+    <div id="resultsGrid">${gridHtml}</div>
+    <button id="copyBtn" onclick="copyResults()">Copy All Results</button>
+    <button id="retryWrongBtn" onclick="retryWrong()">Retry Wrong Ones</button>
+    <button id="startFreshBtn" onclick="openModal('original')" style="margin-bottom:12px;">Start Fresh (Original Order)</button>
+    <button id="startFreshRandomBtn" onclick="openModal('random')" style="display:block;width:100%;padding:13px;background:#fff;color:#E24B4A;border:2px solid #E24B4A;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;">Start Fresh (Random Order)</button>
+  `;
+}
+
+function jumpTo(pos) { state.cur = pos; state.showResults = false; saveState(); render(); }
+
+function copyResults() {
+  const list = getList();
+  let text = 'Irregular Verbs Past Tense Quiz\n', correct = 0;
+  for (let pos = 0; pos < list.length; pos++) {
+    const i = list[pos];
+    const ans = state.answers[i];
+    const q = QUESTIONS[i];
+    let status;
+    if (ans === undefined) status = 'Skipped';
+    else if (ans === getShuffle(i).indexOf(q.ci)) { correct++; status = 'Correct'; }
+    else status = 'Wrong (Correct: ' + q.options[0] + ')';
+    text += `Q${pos+1} ${q.b}: ${status}\n`;
+  }
+  text += `\nScore: ${correct} / ${list.length}`;
+  try { navigator.clipboard.writeText(text).then(() => alert('Copied!')); }
+  catch(e) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert('Copied!'); }
+}
+
+function openModal(mode) {
+  pendingFreshMode = mode;
+  document.getElementById('modalTitle').textContent = mode === 'random' ? 'Start Fresh (Random Order)?' : 'Start Fresh (Original Order)?';
+  document.getElementById('modalText').textContent = mode === 'random'
+    ? 'Questions will be reshuffled into a new random order, and all progress will be reset.'
+    : 'Questions will return to their original order, and all progress will be reset.';
+  document.getElementById('modal').classList.add('active');
+}
+document.getElementById('modalCancel').addEventListener('click', () => document.getElementById('modal').classList.remove('active'));
+document.getElementById('modalConfirm').addEventListener('click', () => {
+  document.getElementById('modal').classList.remove('active');
+  currentOrder = (pendingFreshMode === 'random') ? shuffleOrder(identityOrder()) : identityOrder();
+  saveOrder(currentOrder);
+  localStorage.removeItem(STORAGE_KEY);
+  state = { cur: 0, answers: {}, shuffles: {}, showResults: false, retryMode: false, retryList: [] };
+  saveState();
+  QUESTIONS = buildQuestions();
+  render();
+});
+
+loadState();
+QUESTIONS = buildQuestions();
+render();
+
+function retryWrong() {
+  var list = getList();
+  var wrong = [];
+  for (var pos = 0; pos < list.length; pos++) {
+    var i = list[pos];
+    if (state.answers[i] !== undefined && state.answers[i] !== getShuffle(i).indexOf(QUESTIONS[i].ci)) {
+      wrong.push(i);
+    }
+  }
+  if (wrong.length === 0) return;
+  wrong.forEach(function(i) { delete state.answers[i]; });
+  state.retryMode = true;
+  state.retryList = wrong;
+  state.cur = 0;
+  state.showResults = false;
+  saveState();
+  render();
+}
+
+function toggleJump() {
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if (panel.style.display !== 'block') {
+    panel.style.display = 'block';
+    btn.textContent = 'Hide ▴';
+    buildDotNav();
+  } else {
+    panel.style.display = 'none';
+    btn.textContent = 'Jump ▾';
+  }
+}
+window.toggleJump = toggleJump;
+window.retryWrong = retryWrong;
+
+</script>
+</body>
+</html>

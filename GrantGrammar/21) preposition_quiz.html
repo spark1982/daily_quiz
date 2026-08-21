@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Prepositions Quiz</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #111; min-height: 100vh; }
+
+#date-display { text-align: center; font-size: 2rem; font-weight: 800; color: #185FA5; background: #fff; padding: 18px 0 6px; }
+#quiz-title { text-align: center; font-size: 1.25rem; font-weight: 700; color: #1D9E75; background: #fff; padding: 4px 0 2px; }
+#att-display { text-align: center; font-size: 0.82rem; color: #555; background: #fff; padding: 2px 0 8px; }
+.instruction { text-align: center; font-size: 0.88rem; color: #555; background: #fff; padding: 6px 16px 12px; }
+
+#top-nav { background: #fff; border-bottom: 1px solid #e0e5ee; padding: 8px 16px; position: sticky; top: 0; z-index: 100; }
+#nav-row { display: flex; align-items: center; gap: 10px; }
+#answered-count { font-size: 0.82rem; color: #555; white-space: nowrap; min-width: 54px; }
+#progress-track { flex: 1; height: 7px; background: #d7dde6; border-radius: 4px; overflow: hidden; }
+#progress-fill { height: 100%; background: #1D9E75; border-radius: 4px; transition: width 0.3s; width: 0%; }
+#jump-toggle { font-size: 0.78rem; background: #fff; border: 1.5px solid #1D9E75; color: #1D9E75; border-radius: 6px; padding: 3px 10px; cursor: pointer; white-space: nowrap; }
+#dot-panel { padding: 8px 4px 4px; max-height: 170px; overflow-y: auto; display: none; flex-wrap: wrap; gap: 5px; }
+#dot-panel.open { display: flex; }
+.dot { width: 28px; height: 28px; border-radius: 50%; background: #d7dde6; color: #fff; font-size: 0.72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; flex-shrink: 0; }
+.dot.correct { background: #1D9E75; }
+.dot.wrong { background: #E24B4A; }
+.dot.results-pill { width: auto; border-radius: 14px; padding: 0 12px; background: #185FA5; font-size: 0.75rem; }
+
+#quiz-screen { display: none; max-width: 680px; margin: 0 auto; padding: 16px; }
+#q-label { font-size: 0.78rem; color: #888; margin-bottom: 6px; }
+#q-text { font-size: 1.05rem; font-weight: 600; color: #111; margin-bottom: 18px; line-height: 1.6; }
+.opt-btn { display: block; width: 100%; text-align: left; background: #e8edf4; color: #111111; border: 2px solid transparent; border-radius: 10px; padding: 13px 16px; margin-bottom: 10px; font-size: 0.97rem; cursor: pointer; transition: background 0.15s, border 0.15s; }
+.opt-btn.correct-sel { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+.opt-btn.wrong-sel { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+.opt-btn.reveal-correct { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+.opt-btn:disabled { cursor: default; }
+
+#explanation-box { display: none; background: #fffbe6; border-left: 4px solid #f5a623; border-radius: 8px; padding: 12px 14px; margin-top: 14px; font-size: 0.9rem; line-height: 1.6; color: #333; }
+
+#bottom-nav { display: flex; gap: 10px; margin-top: 22px; }
+#bottom-nav button { flex: 1; padding: 13px; border-radius: 10px; font-size: 1rem; font-weight: 700; border: none; cursor: pointer; }
+
+#results-screen { display: none; max-width: 680px; margin: 0 auto; padding: 20px 16px; }
+#results-heading { text-align: center; font-size: 1.3rem; font-weight: 800; color: #1D9E75; margin-bottom: 4px; }
+#results-score { text-align: center; font-size: 1rem; color: #555; margin-bottom: 18px; }
+#results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; margin-bottom: 20px; }
+.res-card { background: #f5f7fa; border-radius: 8px; padding: 10px 6px; text-align: center; font-size: 0.82rem; cursor: pointer; border: 2px solid transparent; }
+.res-card .q-num { font-weight: 700; color: #555; font-size: 0.78rem; }
+.res-card .q-result { font-weight: 700; font-size: 0.85rem; margin-top: 2px; }
+.res-card.correct { border-color: #1D9E75; }
+.res-card.correct .q-result { color: #1D9E75; }
+.res-card.wrong { border-color: #E24B4A; }
+.res-card.wrong .q-result { color: #E24B4A; }
+.res-card.skipped { border-color: #aaa; }
+.res-card.skipped .q-result { color: #888; }
+#results-btns { display: flex; flex-direction: column; gap: 10px; }
+#results-btns button { width: 100%; padding: 14px; border-radius: 10px; font-size: 1rem; font-weight: 700; border: none; cursor: pointer; }
+#btn-retry-wrong { background: #1D9E75; color: #fff; }
+#btn-copy { background: #185FA5; color: #fff; }
+#btn-fresh, #btn-fresh-random { background: #e0e4ec; color: #333; }
+
+#modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 999; align-items: center; justify-content: center; }
+#modal-overlay.open { display: flex; }
+#modal-box { background: #fff; border-radius: 14px; padding: 26px 22px; max-width: 320px; width: 90%; text-align: center; }
+#modal-box p { font-size: 0.97rem; color: #333; margin-bottom: 20px; line-height: 1.5; }
+#modal-btns { display: flex; gap: 10px; }
+#modal-cancel { flex: 1; padding: 11px; background: #e0e4ec; color: #333; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+#modal-confirm { flex: 1; padding: 11px; background: #E24B4A; color: #fff; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+</style>
+</head>
+<body>
+<!-- ===== Universal Quiz Timer (auto-injected) ===== -->
+<style>
+  #qzTimerBar { background: #ffffff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-family: 'Segoe UI', Arial, sans-serif; }
+  #qzTimerSetup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+  #qzTimerSetup label { font-weight: 700; }
+  #qzTimerInput { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+  #qzTimerStartBtn { background: #185FA5; color: #ffffff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  #qzTimerStartBtn:active { opacity: 0.8; }
+  #qzTimerRunning { display: none; align-items: center; gap: 8px; }
+  #qzTimerLabel { font-size: 0.78rem; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 0.02em; }
+  #qzTimerDisplay { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+  #qzTimerDisplay.qz-warn { color: #f5a623; }
+  #qzTimerDisplay.qz-danger { color: #E24B4A; }
+</style>
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label for="qzTimerInput">Set Time Limit:</label>
+    <input type="number" id="qzTimerInput" min="1" max="180" value="20"> min
+    <button id="qzTimerStartBtn" type="button">Start</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span id="qzTimerLabel">Time Left</span>
+    <span id="qzTimerDisplay">20:00</span>
+  </div>
+</div>
+<script>
+(function(){
+  var QZ_KEY = 'qzTimer_' + location.pathname;
+  var qz = { totalSec: null, startedAt: null };
+  try {
+    var raw = localStorage.getItem(QZ_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p.totalSec === 'number' && typeof p.startedAt === 'number') qz = p;
+    }
+  } catch(e) {}
+  var qzInterval = null;
+
+  function qzSave() { try { localStorage.setItem(QZ_KEY, JSON.stringify(qz)); } catch(e) {} }
+  function qzFormat(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60), s = sec % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function qzRender() {
+    var setupEl = document.getElementById('qzTimerSetup');
+    var runEl = document.getElementById('qzTimerRunning');
+    var disp = document.getElementById('qzTimerDisplay');
+    if (!setupEl || !runEl || !disp) return;
+    if (!qz.startedAt) {
+      setupEl.style.display = 'flex';
+      runEl.style.display = 'none';
+      return;
+    }
+    setupEl.style.display = 'none';
+    runEl.style.display = 'flex';
+    var elapsed = (Date.now() - qz.startedAt) / 1000;
+    var remaining = qz.totalSec - elapsed;
+    disp.classList.remove('qz-warn', 'qz-danger');
+    if (remaining <= 0) {
+      disp.textContent = "Time's Up";
+      disp.classList.add('qz-danger');
+      qzStopInterval();
+      return;
+    }
+    disp.textContent = qzFormat(remaining);
+    if (remaining <= qz.totalSec * 0.1) disp.classList.add('qz-danger');
+    else if (remaining <= qz.totalSec * 0.25) disp.classList.add('qz-warn');
+  }
+  function qzStartInterval() {
+    qzStopInterval();
+    qzInterval = setInterval(qzRender, 1000);
+  }
+  function qzStopInterval() {
+    if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+  }
+  function qzStart() {
+    var input = document.getElementById('qzTimerInput');
+    var minutes = parseFloat(input.value);
+    if (!minutes || minutes <= 0) minutes = 20;
+    qz.totalSec = Math.round(minutes * 60);
+    qz.startedAt = Date.now();
+    qzSave();
+    qzRender();
+    qzStartInterval();
+  }
+
+  var btn = document.getElementById('qzTimerStartBtn');
+  if (btn) btn.addEventListener('click', qzStart);
+  qzRender();
+  if (qz.startedAt) qzStartInterval();
+
+  function qzResetTimer() {
+    qz.totalSec = null;
+    qz.startedAt = null;
+    qzSave();
+    qzStopInterval();
+    qzRender();
+  }
+  var qzRetryRe = /retry|restart|reset|start\s*fresh|try\s*again|\uB2E4\uC2DC\s*\uC2DC\uC791|\uCC98\uC74C\uBD80\uD0B0/i;
+  document.addEventListener('click', function(ev) {
+    var el = ev.target, depth = 0;
+    while (el && depth < 4) {
+      if (el.id === 'qzTimerBar' || el.id === 'qzAttemptsBar') return;
+      var isClickable = el.tagName === 'BUTTON' || el.tagName === 'A' ||
+        (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) ||
+        (el.getAttribute && el.getAttribute('role') === 'button');
+      if (isClickable) {
+        var txt = (el.textContent || el.value || '').trim();
+        if (txt.length > 0 && txt.length < 40 && qzRetryRe.test(txt)) {
+          qzResetTimer();
+          return;
+        }
+      }
+      el = el.parentElement;
+      depth++;
+    }
+  }, true);
+})();
+</script>
+<!-- ===== End Universal Quiz Timer ===== -->
+
+
+<div id="quiz-title">[Grant] Prepositions</div>
+<div id="att-display">Fill in the Blank | Total Attempts: 0</div>
+<div class="instruction">Choose the correct preposition to complete each sentence.</div>
+
+<div id="top-nav">
+  <div id="nav-row">
+    <span id="answered-count">0 / 100</span>
+    <div id="progress-track"><div id="progress-fill"></div></div>
+    <button id="jump-toggle" onclick="window.toggleDots()">Jump</button>
+  </div>
+  <div id="dot-panel"></div>
+</div>
+
+<div id="quiz-screen">
+  <div id="q-label"></div>
+  <div id="q-text"></div>
+  <div id="options-list"></div>
+  <div id="explanation-box"></div>
+  <div id="bottom-nav"></div>
+</div>
+
+<div id="results-screen">
+  <div id="results-heading">Quiz Complete!</div>
+  <div id="results-score"></div>
+  <div id="results-grid"></div>
+  <div id="results-btns">
+    <button id="btn-retry-wrong" onclick="window.retryWrong()">Retry Wrong Questions</button>
+    <button id="btn-copy" onclick="window.copyResults()">Copy All Results</button>
+    <button id="btn-fresh" onclick="window.askFresh('original')">Start Fresh (Original Order)</button>
+    <button id="btn-fresh-random" onclick="window.askFresh('random')">Start Fresh (Random Order)</button>
+  </div>
+</div>
+
+<div id="modal-overlay">
+  <div id="modal-box">
+    <h2 id="modalTitle" style="font-size:1.1rem;font-weight:800;color:#111;margin-bottom:8px;">Start Fresh?</h2>
+    <p id="modalText">Start fresh? This will clear all your answers and progress.</p>
+    <div id="modal-btns">
+      <button id="modal-cancel" onclick="window.closeModal()">Cancel</button>
+      <button id="modal-confirm" onclick="window.confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var STORAGE_KEY = 'quiz_grant_prep100_20260618_v1';
+  var ATT_KEY = 'quiz_grant_prep100_20260618_att_v1';
+  var QUESTIONS = [{"q": "The students gathered _____ the gymnasium to watch the annual science fair presentations.", "opts": ["inside", "at", "between", "below"], "ci": 0, "exp": "\"Inside\" means within the space of a building or container. The students are gathered within the gymnasium, so \"inside\" is the most precise preposition here. \"At\" is too vague, and the others do not fit the context."}, {"q": "She finished her homework _____ dinner so she could watch a movie afterward.", "opts": ["during", "before", "beneath", "among"], "ci": 1, "exp": "\"Before\" shows that finishing homework happened earlier in time than dinner. \"During\" would mean she did homework at the same time as eating, which changes the meaning. \"Beneath\" and \"among\" do not relate to time."}, {"q": "The explorers traveled _____ dense forests and wide rivers to reach the ancient ruins.", "opts": ["through", "onto", "within", "beside"], "ci": 0, "exp": "\"Through\" indicates movement from one side to the other of something. The explorers moved across and within the forests and rivers, so \"through\" fits perfectly. \"Onto\" implies moving on top of a surface."}, {"q": "My grandfather keeps a small photograph of his hometown _____ his wallet wherever he goes.", "opts": ["along", "against", "inside", "toward"], "ci": 2, "exp": "\"Inside\" shows that the photograph is contained within the wallet. \"Along\" means beside or accompanying movement, and \"against\" means pressing on a surface — neither fits a wallet."}, {"q": "The children divided the candy equally _____ all six of them after the Halloween parade.", "opts": ["between", "among", "around", "across"], "ci": 1, "exp": "\"Among\" is used when something is shared with more than two people. \"Between\" is typically used for exactly two. Since there are six children, \"among\" is the correct choice."}, {"q": "The package was delivered _____ the front door early in the morning before anyone woke up.", "opts": ["beyond", "to", "off", "past"], "ci": 1, "exp": "\"To\" shows the destination or endpoint of delivery. The package arrived at the front door. \"Past\" means it went further than the door, and \"beyond\" means even farther away."}, {"q": "She sat _____ her two best friends during the graduation ceremony so they could take photos together.", "opts": ["between", "among", "below", "beside"], "ci": 0, "exp": "\"Between\" is used when referring to a position relative to exactly two people or things. She has one friend on each side. \"Among\" is used for groups of three or more."}, {"q": "The rescue team searched _____ several hours without stopping until they found the missing hiker.", "opts": ["within", "for", "since", "by"], "ci": 1, "exp": "\"For\" indicates a duration of time, such as several hours. \"Since\" requires a specific starting point (e.g., since noon). \"Within\" would mean before the period ended, which changes the meaning."}, {"q": "The old bridge stretches _____ the wide river and connects the two small villages on either side.", "opts": ["over", "along", "off", "past"], "ci": 0, "exp": "\"Over\" indicates the bridge spans from one side to the other across the river. \"Along\" would mean going in the same direction as the river, not crossing it."}, {"q": "Despite the heavy rain, the soccer team practiced _____ the field for the entire afternoon.", "opts": ["across", "at", "on", "beneath"], "ci": 2, "exp": "\"On\" is used with surfaces such as a field, floor, or road. The team practiced on the surface of the field. \"At\" is more general, and \"across\" implies movement from side to side."}, {"q": "The little boy hid _____ the bed when he heard the thunder rumbling outside his window.", "opts": ["under", "past", "over", "along"], "ci": 0, "exp": "\"Under\" means below or beneath something. The boy hid in the space below the bed. \"Over\" means above, which is the opposite direction."}, {"q": "The teacher walked _____ the rows of desks to hand back the graded tests to each student.", "opts": ["between", "among", "along", "through"], "ci": 2, "exp": "\"Along\" means moving forward following a path or line. Walking along rows means moving beside them in a line. \"Through\" would suggest passing within or inside the rows."}, {"q": "Please place the completed permission slips _____ the red folder on the teacher's desk.", "opts": ["inside", "onto", "against", "across"], "ci": 0, "exp": "\"Inside\" means within the folder, which is where permission slips belong. \"Onto\" means placing something on top of a surface, not within it."}, {"q": "The eagle soared _____ the mountains as it searched for prey in the valley below.", "opts": ["above", "among", "past", "beside"], "ci": 0, "exp": "\"Above\" means at a higher level than something. The eagle is flying at a level higher than the mountains. \"Past\" would mean it flew by the mountains, not over them."}, {"q": "He ran _____ the finish line with his arms raised high in celebration of winning.", "opts": ["along", "across", "through", "past"], "ci": 3, "exp": "\"Past\" means moving beyond a point, which fits running past (beyond) the finish line. \"Across\" would mean moving from one side to the other of the line."}, {"q": "The notes she needed for her presentation were scattered _____ her desk in no particular order.", "opts": ["above", "across", "within", "off"], "ci": 1, "exp": "\"Across\" means spread over a surface from side to side. The notes are spread across the desk surface. \"Above\" would mean the notes are floating in the air over the desk."}, {"q": "The museum has been _____ renovation for three months and will reopen to the public next week.", "opts": ["under", "above", "beside", "beyond"], "ci": 0, "exp": "\"Under renovation\" is a fixed phrase meaning something is being repaired or improved. \"Above\" or \"beside\" do not form a natural phrase with \"renovation.\""}, {"q": "The library is located just _____ the park, so many visitors stop by after their walk.", "opts": ["beyond", "beside", "among", "off"], "ci": 1, "exp": "\"Beside\" means next to or at the side of something. The library is next to the park. \"Beyond\" means farther away on the other side."}, {"q": "She peeked _____ the curtain to see if her friends had arrived for the surprise party yet.", "opts": ["through", "over", "across", "off"], "ci": 0, "exp": "\"Through\" indicates looking within or into something, such as a gap in a curtain. \"Over\" would mean she looked above the curtain, which changes the image."}, {"q": "The students must return all library books _____ Friday or they will receive a late fine.", "opts": ["since", "for", "by", "until"], "ci": 2, "exp": "\"By\" indicates a deadline — the books must be returned no later than Friday. \"Until\" would mean the books can be kept right up to Friday but not returned on it. \"By\" sets the firm deadline."}, {"q": "The cat jumped _____ the fence and landed softly on the grass in the neighbor's yard.", "opts": ["over", "across", "under", "beside"], "ci": 0, "exp": "\"Over\" means passing above and to the other side of something. The cat cleared the height of the fence. \"Across\" would mean moving horizontally from side to side."}, {"q": "He has been living _____ that small apartment near downtown ever since he graduated from college.", "opts": ["at", "in", "on", "by"], "ci": 1, "exp": "\"In\" is used with enclosed spaces such as apartments, rooms, or buildings. \"At\" is used for general locations or addresses, not the interior of a place."}, {"q": "The scientist discovered a rare fossil buried deep _____ the layers of rock in the canyon.", "opts": ["between", "within", "beyond", "below"], "ci": 3, "exp": "\"Below\" means at a lower level or position. The fossil was buried at a level below the surface layers of rock. \"Within\" could work loosely, but \"below\" more precisely describes the depth."}, {"q": "The two countries agreed to cooperate _____ each other to address the growing climate challenges.", "opts": ["against", "with", "beside", "among"], "ci": 1, "exp": "\"With\" indicates working together in partnership. \"Against\" means opposition, which is the opposite meaning. \"Cooperate with\" is the standard English phrase."}, {"q": "The river flows _____ the valley and eventually empties into the ocean many miles away.", "opts": ["along", "across", "through", "past"], "ci": 2, "exp": "\"Through\" means the river passes within the valley, moving from one end to the other. \"Along\" would mean beside the valley, and \"across\" would mean from side to side only."}, {"q": "She learned how to bake bread _____ her grandmother, who was a professional baker for decades.", "opts": ["by", "from", "with", "under"], "ci": 1, "exp": "\"From\" indicates the source of learning. She received knowledge from her grandmother. \"By\" would imply a method, not a person as the source."}, {"q": "The new playground equipment was installed _____ the old oak tree at the center of the park.", "opts": ["beside", "among", "below", "against"], "ci": 0, "exp": "\"Beside\" means next to, at the side of. The playground equipment was placed next to the tree. \"Among\" would imply it was surrounded by multiple trees."}, {"q": "He apologized _____ arriving late to the meeting and explained that his train had been delayed.", "opts": ["for", "about", "from", "with"], "ci": 0, "exp": "\"Apologize for\" is the standard phrase in English. You apologize for an action or mistake. \"About\" is less natural in this fixed expression."}, {"q": "The sunlight shone _____ the window and cast long shadows across the wooden floor.", "opts": ["through", "over", "past", "beneath"], "ci": 0, "exp": "\"Through\" means the light passed within and across the window opening. \"Over\" would mean the light went above the window rather than entering through it."}, {"q": "The team was nervous _____ the championship game because they had never played in such a big stadium.", "opts": ["about", "for", "with", "from"], "ci": 0, "exp": "\"Nervous about\" is the standard English phrase for feeling anxiety toward a specific event. \"For\" can also work loosely, but \"about\" is the most natural preposition with \"nervous.\""}, {"q": "She placed the heavy box _____ the shelf so it would not fall and break on the floor.", "opts": ["onto", "into", "along", "past"], "ci": 0, "exp": "\"Onto\" means moving something to a position on top of a surface. She lifted the box and placed it on the shelf. \"Into\" would mean inside the shelf."}, {"q": "The hikers stopped to rest _____ the shade of a large tree before continuing up the mountain trail.", "opts": ["in", "under", "beside", "within"], "ci": 0, "exp": "\"In the shade\" is a fixed English expression meaning within the shaded area. \"Under\" also works, but \"in the shade\" is the standard idiomatic phrase."}, {"q": "The firefighters arrived _____ minutes of receiving the emergency call and quickly put out the flames.", "opts": ["within", "by", "for", "among"], "ci": 0, "exp": "\"Within minutes\" means before a few minutes had passed — it indicates how quickly something happened. \"By\" sets a deadline, and \"for\" indicates a duration."}, {"q": "The students complained _____ the amount of homework assigned over the long holiday weekend.", "opts": ["about", "for", "from", "against"], "ci": 0, "exp": "\"Complain about\" is the standard phrase. You express dissatisfaction about something. \"Against\" would imply formal opposition, not simple complaining."}, {"q": "The path _____ the forest is clearly marked with red signs to help hikers find their way.", "opts": ["through", "across", "around", "along"], "ci": 0, "exp": "\"Through\" means the path passes within and across the forest. \"Along\" would mean the path runs beside the forest without entering it."}, {"q": "The swimmer dived _____ the water and held her breath as she glided to the other side.", "opts": ["into", "onto", "over", "across"], "ci": 0, "exp": "\"Into\" indicates entering the interior of something. She entered the water by diving. \"Onto\" means on top of a surface, not entering beneath it."}, {"q": "The family drove _____ the tunnel to get to the city on the other side of the mountain.", "opts": ["through", "along", "across", "over"], "ci": 0, "exp": "\"Through\" means passing within and out the other side of an enclosed space like a tunnel. \"Over\" would mean going above the tunnel or mountain."}, {"q": "He was proud _____ his brother for winning the spelling bee in front of the entire school.", "opts": ["of", "for", "about", "with"], "ci": 0, "exp": "\"Proud of\" is the standard English phrase for feeling pride toward someone. \"Proud for\" and \"proud about\" are not natural English expressions."}, {"q": "The book was written _____ a famous author who grew up in a small town in rural Kansas.", "opts": ["by", "from", "with", "for"], "ci": 0, "exp": "\"By\" in passive constructions shows who performed the action. The book was created by the author. \"From\" would incorrectly suggest the book originated from the author's location."}, {"q": "The children were excited _____ their upcoming trip to the national park next summer.", "opts": ["about", "of", "for", "from"], "ci": 0, "exp": "\"Excited about\" is the standard expression for feeling enthusiasm toward an event or thing. \"For\" is sometimes used but \"about\" is the most natural preposition here."}, {"q": "The two friends argued _____ which movie to watch and finally agreed on an action film.", "opts": ["about", "for", "with", "against"], "ci": 0, "exp": "\"Argue about\" means to have a disagreement over a topic. \"Against\" implies opposition to a person, not a topic of discussion."}, {"q": "The new student sat _____ the class for the first time and introduced herself to her classmates.", "opts": ["in front of", "in", "beside", "across"], "ci": 1, "exp": "\"Sat in the class\" means she was present as part of the group within the classroom. \"In front of\" would mean she stood facing the class, which changes the situation."}, {"q": "The coach asked the players to run three laps _____ the entire track before warming up further.", "opts": ["along", "over", "around", "across"], "ci": 2, "exp": "\"Around\" means moving in a circular or looping path enclosing the track. Running laps means going around the track repeatedly. \"Along\" would mean running in a straight line beside the track."}, {"q": "The dog waited patiently _____ the door for its owner to come home from work every evening.", "opts": ["beside", "at", "near", "by"], "ci": 1, "exp": "\"At the door\" is a fixed English expression meaning right next to or just outside the door. \"Beside\" also works, but \"at the door\" is the most natural and common phrase."}, {"q": "The newspaper report was based _____ eyewitness accounts from people who saw the accident happen.", "opts": ["on", "from", "with", "by"], "ci": 0, "exp": "\"Based on\" is a fixed phrase meaning something was built on or derived from a source. The report used the accounts as its foundation."}, {"q": "She looked _____ the window and noticed that dark clouds were gathering on the horizon.", "opts": ["out of", "through", "over", "past"], "ci": 0, "exp": "\"Look out of the window\" is the standard English phrase for looking from the inside to the outside through a window opening. \"Through\" also works but is less idiomatic here."}, {"q": "The baby fell asleep _____ the sound of soft music playing quietly in the corner of the room.", "opts": ["at", "by", "to", "with"], "ci": 2, "exp": "\"Fall asleep to\" something means the sound or music was playing as a kind of accompaniment. \"To\" here shows the thing that served as a backdrop for falling asleep."}, {"q": "The hikers were warned not to wander _____ the marked trail because the terrain was very dangerous.", "opts": ["beyond", "above", "past", "over"], "ci": 0, "exp": "\"Beyond\" means past the limits or boundaries of something. Wandering beyond the trail means going further than the trail's boundary. \"Past\" also has this meaning but \"beyond\" is the more natural fit here."}, {"q": "She disagreed _____ her teacher about the interpretation of the poem and explained her own view.", "opts": ["with", "against", "from", "about"], "ci": 0, "exp": "\"Disagree with\" is the standard English expression for having a different opinion from a person. \"Against\" implies more forceful opposition, not simple disagreement."}, {"q": "The plane flew _____ the clouds and the passengers enjoyed the clear blue sky above them.", "opts": ["above", "past", "through", "over"], "ci": 2, "exp": "\"Through the clouds\" means the plane passed within or across the clouds. \"Above\" would mean the plane stayed completely over the clouds without entering them."}, {"q": "The firefighter climbed _____ the ladder quickly to reach the open window on the third floor.", "opts": ["up", "over", "along", "across"], "ci": 0, "exp": "\"Up the ladder\" means moving in an upward direction along the rungs of the ladder. \"Over\" would mean crossing above the ladder entirely."}, {"q": "The teachers talked _____ the principal about the new grading system at the monthly staff meeting.", "opts": ["with", "to", "from", "by"], "ci": 1, "exp": "\"Talk to\" someone means directing conversation toward a person. \"With\" implies a more mutual two-way discussion, but \"talk to the principal\" is the most natural phrase in this context."}, {"q": "She was responsible _____ organizing the school fundraiser and had been planning it for two months.", "opts": ["for", "of", "with", "about"], "ci": 0, "exp": "\"Responsible for\" is the standard phrase meaning in charge of or accountable for something. \"Responsible of\" is not a correct English expression."}, {"q": "The old castle sits on top _____ the hill and can be seen from miles away in every direction.", "opts": ["of", "from", "over", "above"], "ci": 0, "exp": "\"On top of\" is a fixed phrase meaning at the highest point of something. It is always followed by \"of.\" \"On top from\" and \"on top above\" are not correct phrases."}, {"q": "She has improved a great deal _____ the last year and is now one of the best players on the team.", "opts": ["over", "since", "within", "during"], "ci": 0, "exp": "\"Over the last year\" means across the span of the past twelve months. \"Since\" would need a specific starting point (e.g., since last January). \"During\" is similar but less natural with \"a year\" in this context."}, {"q": "The scientist relies _____ data collected from satellites to track changes in the ocean temperature.", "opts": ["on", "from", "with", "by"], "ci": 0, "exp": "\"Rely on\" is the standard expression meaning to depend on something. \"Rely from\" or \"rely with\" are not correct English expressions."}, {"q": "The detective looked carefully _____ every piece of evidence before drawing any conclusions about the case.", "opts": ["at", "on", "in", "through"], "ci": 0, "exp": "\"Look at\" means directing your eyes toward something to examine it. \"Look through\" can mean skim or browse, but \"look at each piece\" is more precise when examining carefully."}, {"q": "The kitten peeked out _____ the box and looked around the room with wide, curious eyes.", "opts": ["from", "of", "through", "inside"], "ci": 0, "exp": "\"Out from\" indicates coming out from within something. The kitten looked outward from inside the box. \"Out of\" also works, but \"out from\" is equally correct here."}, {"q": "He was surprised _____ the news that his favorite band would be performing in his city next month.", "opts": ["at", "about", "by", "with"], "ci": 2, "exp": "\"Surprised by\" is the most natural preposition in passive surprise contexts — a piece of news surprises you. \"Surprised at\" also works but is more common in active contexts."}, {"q": "The volunteers cleaned up the litter _____ the entire park before the community celebration began.", "opts": ["around", "across", "throughout", "over"], "ci": 2, "exp": "\"Throughout\" means in every part of something. They cleaned every section of the park. \"Across\" implies one direction, and \"around\" suggests only the edges."}, {"q": "The children laughed _____ the funny clown who was making balloon animals at the birthday party.", "opts": ["at", "about", "with", "for"], "ci": 0, "exp": "\"Laugh at\" means directing laughter toward a person or thing as the source of humor. \"Laugh about\" means talking or thinking about something funny later."}, {"q": "She asked her teacher _____ permission to leave the classroom early for her dentist appointment.", "opts": ["for", "about", "of", "from"], "ci": 0, "exp": "\"Ask for\" means to request something. She requested permission. \"Ask about\" means to inquire for information, not to make a request."}, {"q": "The train passed _____ the tunnel in under two minutes, emerging on the other side of the mountain.", "opts": ["through", "across", "over", "along"], "ci": 0, "exp": "\"Through\" indicates movement from one end to the other of an enclosed space like a tunnel. \"Over\" would mean above the tunnel, and \"across\" would mean from side to side of an open space."}, {"q": "The team was ahead _____ the other school by ten points when the final buzzer sounded.", "opts": ["of", "from", "over", "against"], "ci": 0, "exp": "\"Ahead of\" is the fixed expression meaning in a leading position relative to another. \"Ahead from\" and \"ahead over\" are not correct English phrases."}, {"q": "She was tired _____ doing the same type of math exercises every day and asked for new challenges.", "opts": ["of", "from", "about", "with"], "ci": 0, "exp": "\"Tired of\" means feeling boredom or frustration from something repeated too often. \"Tired from\" means physically exhausted after doing something, which changes the meaning."}, {"q": "The coach congratulated the players _____ their hard work and dedication throughout the entire season.", "opts": ["on", "for", "about", "with"], "ci": 0, "exp": "\"Congratulate on\" is the standard phrase when recognizing a specific achievement or action. \"Congratulate for\" is also acceptable, but \"on\" is more formal and precise."}, {"q": "The kitten hid _____ the couch cushions and only came out when she heard the sound of a treat bag.", "opts": ["between", "under", "beside", "among"], "ci": 1, "exp": "\"Under\" means below the cushions. The kitten hid in the space beneath the couch cushions. \"Between\" would mean in the gap between two cushions specifically."}, {"q": "She walked _____ the street to the grocery store because there was no crosswalk at that corner.", "opts": ["across", "through", "along", "over"], "ci": 0, "exp": "\"Across\" means moving from one side to the other of a road or open space. \"Along\" would mean moving in the same direction as the street, not crossing it."}, {"q": "The art teacher was impressed _____ the detailed drawings the students had created over the weekend.", "opts": ["by", "with", "about", "at"], "ci": 0, "exp": "\"Impressed by\" is used when something or someone creates the impression. \"Impressed with\" is also acceptable, but \"impressed by\" is more natural in formal contexts."}, {"q": "He has been working _____ the same company ever since he graduated from university ten years ago.", "opts": ["at", "in", "for", "with"], "ci": 2, "exp": "\"Work for\" a company means being employed by that organization. \"Work at\" refers to a location. Since the sentence emphasizes the company as the employer, \"for\" is the best choice."}, {"q": "The children ran _____ the park after school, chasing each other and laughing loudly in the afternoon sun.", "opts": ["across", "through", "around", "over"], "ci": 2, "exp": "\"Around the park\" means moving in a looping or circular path within or along the edges of the park. \"Through\" would mean passing directly from one end to the other."}, {"q": "The letter was addressed _____ the school principal, who was asked to respond within a week.", "opts": ["to", "for", "toward", "at"], "ci": 0, "exp": "\"Addressed to\" a person is the standard expression for directing written communication to a specific recipient. \"Addressed for\" is not correct English."}, {"q": "The store sells many items _____ one dollar, which makes it popular with families on a tight budget.", "opts": ["under", "below", "beneath", "within"], "ci": 0, "exp": "\"Under one dollar\" is the standard expression for items costing less than a stated amount. \"Below\" is also possible, but \"under\" is the most natural in price contexts."}, {"q": "She graduated _____ honors after four years of dedication and hard work at her university.", "opts": ["with", "in", "by", "for"], "ci": 0, "exp": "\"Graduate with honors\" is a fixed expression meaning to finish school having earned a special distinction. \"With\" is always the correct preposition in this phrase."}, {"q": "The old lighthouse stands _____ the rocky cliff and guides ships safely into the harbor at night.", "opts": ["on", "above", "beside", "over"], "ci": 0, "exp": "\"On the cliff\" means the lighthouse is positioned on top of the cliff's surface. \"Above\" would mean it is floating in the air over the cliff, which is not physically accurate."}, {"q": "She thanked her friend _____ helping her move all the heavy furniture into her new apartment.", "opts": ["for", "about", "with", "to"], "ci": 0, "exp": "\"Thank someone for\" doing something is the standard English phrase. \"For\" introduces the reason for the gratitude. \"Thank someone about\" is not a natural expression."}, {"q": "The students are required to stay _____ campus during lunch unless they have a signed permission form.", "opts": ["on", "in", "at", "within"], "ci": 0, "exp": "\"On campus\" is a fixed phrase meaning within the grounds of the school. \"In campus\" is not standard English. \"On\" is always used with campus."}, {"q": "The ball rolled _____ the couch and stopped just before hitting the wall on the other side.", "opts": ["under", "beneath", "below", "through"], "ci": 0, "exp": "\"Under\" means moving into or through the space beneath something. The ball rolled into the space under the couch. \"Beneath\" is also possible but \"under\" is more commonly used for movement."}, {"q": "The teacher is very strict _____ punctuality and expects every student to arrive before the bell rings.", "opts": ["about", "with", "on", "for"], "ci": 0, "exp": "\"Strict about\" something means having firm standards regarding that thing. \"Strict with\" usually refers to being strict with a person, not a concept like punctuality."}, {"q": "The instructions say to mix the ingredients _____ order, starting with the dry ones first.", "opts": ["in", "by", "with", "into"], "ci": 0, "exp": "\"In order\" is a fixed phrase meaning following a specific sequence. \"By order\" is sometimes used but is less natural in cooking or assembly instructions."}, {"q": "She compared her results _____ those of her classmates to see how well she had performed on the test.", "opts": ["with", "to", "against", "from"], "ci": 1, "exp": "\"Compare to\" is used when showing similarities or measuring against something. Here, comparing test results to others uses \"to\" in a measurement sense. \"Compare with\" examines differences in more detail."}, {"q": "The children were warned to stay away _____ the pond because the ice was not thick enough yet.", "opts": ["from", "of", "off", "by"], "ci": 0, "exp": "\"Stay away from\" is the standard phrase meaning to keep a distance from something. \"Stay away of\" and \"stay away off\" are not correct English expressions."}, {"q": "The boy jumped _____ the puddle and landed safely on the dry pavement on the other side.", "opts": ["over", "above", "across", "through"], "ci": 0, "exp": "\"Over\" means moving above and to the other side of something. He jumped above the puddle and cleared it. \"Across\" could also work but implies a wider gap, which is less natural for a puddle."}, {"q": "The city is famous _____ its colorful festivals that attract thousands of visitors every summer.", "opts": ["for", "of", "about", "by"], "ci": 0, "exp": "\"Famous for\" is the standard English phrase when describing what makes something well known. \"Famous of\" is not a correct English expression."}, {"q": "She was absent _____ school for three days because she had a severe cold and a high fever.", "opts": ["from", "in", "at", "of"], "ci": 0, "exp": "\"Absent from\" is the correct phrase when describing not being present at a place. \"Absent in\" and \"absent at\" are not standard English expressions."}, {"q": "The reporter asked the mayor questions _____ the new plan to build a public library downtown.", "opts": ["about", "for", "on", "over"], "ci": 0, "exp": "\"Questions about\" something means inquiring regarding a topic. \"Questions on\" is also acceptable in formal contexts, but \"about\" is the most natural choice here."}, {"q": "He was chosen _____ all the other candidates because of his outstanding communication and leadership skills.", "opts": ["among", "from", "over", "out of"], "ci": 3, "exp": "\"Chosen out of\" means selected from within a group. \"Out of all the candidates\" emphasizes the total pool. \"Among\" could work but is slightly less precise for a selection context."}, {"q": "The flag was raised _____ the rooftop of the building as part of the national holiday ceremony.", "opts": ["on", "above", "over", "onto"], "ci": 0, "exp": "\"On the rooftop\" means the flag was raised while positioned on the roof's surface. \"Above\" would mean the flag is floating in the air over the roof, not attached to it."}, {"q": "The artist is known _____ her bold use of color and unique painting style that sets her apart.", "opts": ["for", "by", "about", "with"], "ci": 0, "exp": "\"Known for\" is the standard expression when describing what makes someone recognized or celebrated. \"Known by\" would indicate a name or alias used to identify someone."}, {"q": "The children were not allowed to go swimming _____ a lifeguard being present at the pool.", "opts": ["without", "unless", "except", "beyond"], "ci": 0, "exp": "\"Without\" is a preposition meaning in the absence of something. They could not swim in the absence of a lifeguard. \"Unless\" is a conjunction, not a preposition, so it cannot directly precede a noun phrase here."}, {"q": "The results of the experiment were consistent _____ what the scientists had predicted in their hypothesis.", "opts": ["with", "to", "by", "from"], "ci": 0, "exp": "\"Consistent with\" means matching or agreeing with something. The results aligned with the prediction. \"Consistent to\" is not a standard English expression."}, {"q": "She worked hard _____ her own and did not ask for any help from her classmates or teacher.", "opts": ["on", "by", "in", "for"], "ci": 0, "exp": "\"On her own\" is a fixed phrase meaning alone, without assistance. \"By herself\" also works, but \"on her own\" and \"on one's own\" are the standard idiomatic forms."}, {"q": "The dog ran _____ the park fence and disappeared into the woods before anyone could catch it.", "opts": ["along", "beside", "past", "across"], "ci": 2, "exp": "\"Past\" means moving beyond or by a specific point. The dog ran by and beyond the fence. \"Along\" would mean running while following the fence without passing it."}, {"q": "The two brothers argued _____ each other about who had eaten the last piece of pizza in the fridge.", "opts": ["with", "against", "between", "among"], "ci": 0, "exp": "\"Argue with\" someone means having a disagreement directly with that person. \"Against\" implies formal opposition or legal conflict, not a casual sibling argument."}, {"q": "The guests arrived _____ time for dinner, and the host was relieved that no one had missed the meal.", "opts": ["on", "in", "at", "by"], "ci": 0, "exp": "\"On time\" is a fixed phrase meaning punctual, arriving at the expected moment. \"In time\" means before a deadline, which could also work, but \"on time\" is more precisely about punctuality."}, {"q": "The science fair project was divided _____ three sections: research, experiment, and conclusion.", "opts": ["into", "in", "among", "between"], "ci": 0, "exp": "\"Divided into\" means split to form distinct parts or sections. \"Divided in\" is not natural English. \"Into\" is always used when something is separated to form new categories."}, {"q": "She listened carefully _____ the directions before starting the test to avoid making unnecessary mistakes.", "opts": ["to", "at", "for", "with"], "ci": 0, "exp": "\"Listen to\" is the standard phrase for receiving and paying attention to sound or instructions. \"Listen at\" refers to listening near a surface, like a door, which changes the meaning."}, {"q": "The temperature dropped _____ freezing overnight, causing ice to form on the roads and sidewalks.", "opts": ["below", "under", "beneath", "past"], "ci": 0, "exp": "\"Below freezing\" is the standard expression for temperatures lower than 0 degrees Celsius. \"Under freezing\" is less natural for temperature contexts, though \"below\" and \"under\" are sometimes interchangeable."}, {"q": "The class was divided _____ small groups and each group was given a different topic to research.", "opts": ["into", "among", "between", "in"], "ci": 0, "exp": "\"Divided into\" means separated to form distinct new groups. \"Among\" would mean the class was distributed among existing groups, which changes the meaning."}, {"q": "She has been interested _____ marine biology ever since she saw a documentary about deep-sea creatures.", "opts": ["in", "about", "for", "with"], "ci": 0, "exp": "\"Interested in\" is the standard English phrase for having curiosity or enthusiasm about a subject. \"Interested about\" is not a natural expression in English."}];
+  var TOTAL = QUESTIONS.length;
+
+  var ORDER_KEY = STORAGE_KEY + '_order_v1';
+  function identityOrder() {
+    var arr = [];
+    for (var i = 0; i < TOTAL; i++) arr.push(i);
+    return arr;
+  }
+  function isValidOrder(arr) {
+    if (!Array.isArray(arr) || arr.length !== TOTAL) return false;
+    var seen = {};
+    for (var i = 0; i < arr.length; i++) {
+      var v = arr[i];
+      if (typeof v !== 'number' || v < 0 || v >= TOTAL || seen[v]) return false;
+      seen[v] = true;
+    }
+    return true;
+  }
+  function loadOrder() {
+    try {
+      var raw = localStorage.getItem(ORDER_KEY);
+      if (!raw) return null;
+      var arr = JSON.parse(raw);
+      return isValidOrder(arr) ? arr : null;
+    } catch(e) { return null; }
+  }
+  function saveOrder(order) {
+    try { localStorage.setItem(ORDER_KEY, JSON.stringify(order)); } catch(e) {}
+  }
+  function randomOrder() { return shuffle(identityOrder()); }
+  var currentOrder = loadOrder() || identityOrder();
+  saveOrder(currentOrder);
+  var pendingFreshMode = 'original';
+  function Q(i) { return QUESTIONS[currentOrder[i]]; }
+
+  function defaultState() {
+    return { cur: 0, answers: {}, shuffles: {}, showResults: false, retryMode: false, retryList: [] };
+  }
+  function getList() {
+    if (state.retryMode) return state.retryList;
+    var l = []; for (var i = 0; i < TOTAL; i++) l.push(i); return l;
+  }
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return defaultState();
+      var s = JSON.parse(raw);
+      var retryMode = !!s.retryMode;
+      var retryList = Array.isArray(s.retryList) ? s.retryList : [];
+      var listLen = retryMode ? retryList.length : TOTAL;
+      if (typeof s.cur !== 'number' || s.cur < 0 || s.cur >= listLen) throw new Error();
+      if (typeof s.answers !== 'object') throw new Error();
+      if (typeof s.shuffles !== 'object') throw new Error();
+      s.retryMode = retryMode;
+      s.retryList = retryList;
+      return s;
+    } catch(e) {
+      localStorage.removeItem(STORAGE_KEY);
+      return defaultState();
+    }
+  }
+
+  function saveState() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+  }
+
+  function getAtt() { return parseInt(localStorage.getItem(ATT_KEY) || '0', 10); }
+  function incAtt() { var n = getAtt()+1; localStorage.setItem(ATT_KEY, String(n)); return n; }
+
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length-1; i > 0; i--) {
+      var j = Math.floor(Math.random()*(i+1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function getShuffleFor(qi) {
+    var k = String(qi);
+    if (!state.shuffles[k]) {
+      var idxs = Q(qi).opts.map(function(_,i){ return i; });
+      state.shuffles[k] = shuffle(idxs);
+    }
+    return state.shuffles[k];
+  }
+
+  function countAnswered() { return Object.keys(state.answers).length; }
+
+  function updateNavBar() {
+    var list = getList();
+    var answered = 0; for (var k = 0; k < list.length; k++) { if (state.answers[String(list[k])] !== undefined) answered++; }
+    document.getElementById('answered-count').textContent = answered + ' / ' + list.length;
+    document.getElementById('progress-fill').style.width = Math.round(answered/list.length*100)+'%';
+    var dp = document.getElementById('dot-panel');
+    var html = '';
+    for (var pos = 0; pos < list.length; pos++) {
+      var i = list[pos];
+      var cls = 'dot';
+      var a = state.answers[String(i)];
+      if (a !== undefined) cls += (a === Q(i).ci) ? ' correct' : ' wrong';
+      html += '<button class="'+cls+'" onclick="window.jumpTo('+pos+')">'+(pos+1)+'</button>';
+    }
+    html += '<button id="results-pill" class="dot results-pill" style="'+(answered===list.length?'':'display:none;')+'" onclick="window.goResults()">Results</button>';
+    dp.innerHTML = html;
+  }
+
+  function updateBottomNav() {
+    var list = getList();
+    var pos = state.cur;
+    var qi = list[pos];
+    var isLast = (pos === list.length-1);
+    var prevDis = (pos === 0);
+    var prevStyle = 'background:#e0e4ec;color:#333;'+(prevDis?'opacity:0.45;cursor:default;':'');
+    var nextHtml;
+    if (isLast) {
+      var lastAns = state.answers[String(qi)] !== undefined;
+      if (lastAns) nextHtml = '<button style="background:#1D9E75;color:#fff;" onclick="window.goResults()">See Results</button>';
+      else nextHtml = '<button style="background:#1D9E75;color:#fff;opacity:0.45;cursor:default;" disabled>See Results</button>';
+    } else {
+      nextHtml = '<button style="background:#1D9E75;color:#fff;" onclick="window.goNext()">Next</button>';
+    }
+    document.getElementById('bottom-nav').innerHTML =
+      '<button '+(prevDis?'disabled':'')+' style="'+prevStyle+'" onclick="window.goPrev()">Prev</button>' + nextHtml;
+  }
+
+  function render() {
+    var qs = document.getElementById('quiz-screen');
+    var rs = document.getElementById('results-screen');
+    if (state.showResults) {
+      qs.style.display = 'none';
+      rs.style.display = 'block';
+      renderResults();
+      return;
+    }
+    rs.style.display = 'none';
+    qs.style.display = 'block';
+    var list = getList();
+    var pos = state.cur;
+    var qi = list[pos];
+    var q = Q(qi);
+    var order = getShuffleFor(qi);
+    document.getElementById('q-label').textContent = 'Question '+(pos+1)+' of '+list.length;
+    document.getElementById('q-text').textContent = q.q;
+    var answered = state.answers[String(qi)] !== undefined;
+    var chosen = state.answers[String(qi)];
+    var html = '';
+    for (var i = 0; i < order.length; i++) {
+      var oi = order[i];
+      var cls = 'opt-btn';
+      var dis = '';
+      if (answered) {
+        dis = 'disabled';
+        if (oi === chosen) cls += (chosen === q.ci) ? ' correct-sel' : ' wrong-sel';
+        else if (oi === q.ci) cls += ' reveal-correct';
+      }
+      html += '<button class="'+cls+'" '+dis+' onclick="window.pickAnswer('+oi+')">'+q.opts[oi]+'</button>';
+    }
+    document.getElementById('options-list').innerHTML = html;
+    var eb = document.getElementById('explanation-box');
+    if (answered && chosen !== q.ci) {
+      eb.style.display = 'block';
+      eb.innerHTML = '<strong>Explanation:</strong> ' + q.exp;
+    } else {
+      eb.style.display = 'none';
+    }
+    updateNavBar();
+    updateBottomNav();
+    document.getElementById('att-display').textContent = 'Fill in the Blank | Total Attempts: ' + getAtt();
+  }
+
+  function renderResults() {
+    var list = getList();
+    var correct = 0;
+    for (var k = 0; k < list.length; k++) {
+      var i = list[k];
+      if (state.answers[String(i)] === Q(i).ci) correct++;
+    }
+    var heading = document.getElementById('results-heading');
+    if (heading) heading.textContent = state.retryMode ? 'Retry Results' : 'Quiz Complete!';
+    document.getElementById('results-score').textContent = correct + ' out of ' + list.length + ' correct';
+    var html = '';
+    for (var k = 0; k < list.length; k++) {
+      var i = list[k];
+      var a = state.answers[String(i)];
+      var cls, lbl;
+      if (a === undefined) { cls='skipped'; lbl='Skipped'; }
+      else if (a === Q(i).ci) { cls='correct'; lbl='Correct'; }
+      else { cls='wrong'; lbl='Wrong'; }
+      html += '<div class="res-card '+cls+'" onclick="window.jumpToFromResults('+k+')"><div class="q-num">Q'+(k+1)+'</div><div class="q-result">'+lbl+'</div></div>';
+    }
+    document.getElementById('results-grid').innerHTML = html;
+    updateNavBar();
+    document.getElementById('att-display').textContent = 'Fill in the Blank | Total Attempts: ' + getAtt();
+  }
+
+  window.pickAnswer = function(oi) {
+    var list = getList();
+    var qi = list[state.cur];
+    if (state.answers[String(qi)] !== undefined) return;
+    state.answers[String(qi)] = oi;
+    saveState();
+    render();
+  };
+
+  window.goNext = function() {
+    var list = getList();
+    if (state.cur < list.length-1) { state.cur++; saveState(); render(); window.scrollTo(0,0); }
+  };
+
+  window.goPrev = function() {
+    if (state.cur > 0) { state.cur--; saveState(); render(); window.scrollTo(0,0); }
+  };
+
+  window.goResults = function() {
+    state.showResults = true;
+    if (!state.retryMode) { incAtt(); }
+    saveState();
+    render();
+    window.scrollTo(0,0);
+  };
+
+  window.jumpTo = function(pos) {
+    state.cur = pos; state.showResults = false; saveState(); render(); window.scrollTo(0,0);
+  };
+
+  window.jumpToFromResults = function(pos) {
+    state.cur = pos; state.showResults = false; saveState(); render(); window.scrollTo(0,0);
+  };
+
+  window.toggleDots = function() {
+    var dp = document.getElementById('dot-panel');
+    var btn = document.getElementById('jump-toggle');
+    var open = dp.classList.contains('open');
+    if (open) { dp.classList.remove('open'); btn.textContent = 'Jump'; }
+    else { dp.classList.add('open'); btn.textContent = 'Hide'; }
+  };
+
+  window.retryWrong = function() {
+    var list = getList();
+    var wrong = [];
+    for (var k = 0; k < list.length; k++) {
+      var i = list[k];
+      var a = state.answers[String(i)];
+      if (a === undefined || a !== Q(i).ci) wrong.push(i);
+    }
+    if (!wrong.length) return;
+    wrong.forEach(function(i){ delete state.answers[String(i)]; });
+    state.retryMode = true; state.retryList = wrong; state.cur = 0;
+    state.showResults = false;
+    saveState(); render(); window.scrollTo(0,0);
+  };
+
+  window.copyResults = function() {
+    var list = getList();
+    var correct = 0;
+    var lines = ['[Grant] Prepositions - June 18, 2026'];
+    for (var k = 0; k < list.length; k++) {
+      var i = list[k];
+      var a = state.answers[String(i)];
+      var lbl;
+      if (a === undefined) lbl = 'Skipped';
+      else if (a === Q(i).ci) { lbl = 'Correct'; correct++; }
+      else lbl = 'Wrong';
+      lines.push('Q'+(k+1)+': '+lbl);
+    }
+    lines.push('Score: '+correct+' / '+list.length);
+    try { navigator.clipboard.writeText(lines.join('\n')); } catch(e) {}
+  };
+
+  window.askFresh = function(mode) {
+    pendingFreshMode = mode;
+    document.getElementById('modalTitle').textContent = mode === 'random' ? 'Start Fresh (Random Order)?' : 'Start Fresh (Original Order)?';
+    document.getElementById('modalText').textContent = mode === 'random' ? 'Questions will be reshuffled into a new random order, and all progress will be reset.' : 'Questions will return to their original order, and all progress will be reset.';
+    document.getElementById('modal-overlay').classList.add('open');
+  };
+
+  window.closeModal = function() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  };
+
+  window.confirmFresh = function() {
+    localStorage.removeItem(STORAGE_KEY);
+    currentOrder = (pendingFreshMode === 'random') ? randomOrder() : identityOrder();
+    saveOrder(currentOrder);
+    state = defaultState();
+    saveState();
+    document.getElementById('modal-overlay').classList.remove('open');
+    render(); window.scrollTo(0,0);
+  };
+
+  var state = loadState();
+  render();
+})();
+</script>
+</body>
+</html>

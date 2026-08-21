@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Math Competition</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh;padding:16px}
+.date-label{font-size:2rem;font-weight:800;text-align:center;color:#185FA5;background:#fff;padding:10px 0 2px}
+.title{text-align:center;font-size:1.4rem;font-weight:700;color:#185FA5;background:#fff;padding:2px 0 4px}
+.attempts{text-align:center;font-size:0.9rem;color:#555;background:#fff;padding:2px 0 10px}
+.container{max-width:700px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.1);overflow:hidden}
+.nav-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#f7f9fc;border-bottom:1px solid #e0e6ef}
+.nav-count{font-size:0.8rem;color:#185FA5;font-weight:600;white-space:nowrap}
+.prog-track{flex:1;height:6px;background:#e1e7ef;border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;width:0%;background:#185FA5;border-radius:3px;transition:width .2s}
+.jump-btn{font-size:0.78rem;padding:4px 12px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap}
+.dot-nav{display:none;flex-wrap:wrap;gap:5px;padding:12px 14px;background:#f7f9fc;border-bottom:1px solid #e0e6ef;justify-content:center}
+.dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;cursor:pointer;border:2px solid #c5d2e0;background:#e8edf4;color:#333}
+.dot.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.dot.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.dot.active{border-color:#185FA5;background:#d0e4f7;color:#185FA5}
+.results-pill{background:#185FA5;color:#fff;border-radius:20px;padding:4px 14px;font-size:0.8rem;font-weight:600}
+#quizArea{display:none;padding:20px 20px 10px}
+.tag-badge{display:inline-block;background:#185FA5;color:#fff;border-radius:20px;padding:3px 12px;font-size:0.75rem;font-weight:600;margin-bottom:10px}
+.q-counter{font-size:0.85rem;color:#666;margin-bottom:6px}
+.q-text{font-size:1.05rem;line-height:1.75;color:#111;margin-bottom:16px}
+.options{display:grid;gap:10px}
+.opt-btn{width:100%;text-align:left;padding:12px 16px;border-radius:8px;border:2px solid transparent;background:#e8edf4;color:#111111;font-size:0.97rem;cursor:pointer;transition:.15s;line-height:1.55}
+.opt-btn:hover{border-color:#185FA5}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.opt-btn.reveal{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.explain{margin-top:14px;padding:12px;background:#f0f5ff;border-left:4px solid #185FA5;border-radius:4px;font-size:0.9rem;color:#222;line-height:1.6}
+.nav-btns{display:flex;gap:10px;margin-top:18px;padding-bottom:10px}
+.btn{padding:10px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer}
+.btn-blue{background:#185FA5;color:#fff}.btn-gray{background:#e8edf4;color:#333}
+#resultsArea{display:none;padding:20px}
+.res-header{font-size:1.2rem;font-weight:700;color:#185FA5;margin-bottom:14px;text-align:center}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:7px;margin-bottom:18px}
+.res-card{padding:8px;border-radius:8px;background:#f0f4f8;cursor:pointer;text-align:center;font-size:0.82rem;font-weight:600;border:2px solid transparent}
+.res-card.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.res-card.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.res-card.skipped{background:#fff3cd;border-color:#e6a817;color:#7a5500}
+.res-actions{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:12px;padding:28px;max-width:340px;width:90%;text-align:center}
+.modal h3{margin-bottom:10px;color:#185FA5}.modal p{margin-bottom:18px;color:#444;font-size:.95rem}
+.modal-btns{display:flex;gap:10px;justify-content:center}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="title">[Sion] Math Competition</div>
+<div class="attempts" id="attemptsLabel">Total Attempts: 0</div>
+<div class="nav-bar" id="navBar">
+  <span class="nav-count" id="navCount"></span>
+  <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+  <button class="jump-btn" id="jumpBtn" onclick="toggleJump()">Jump &#9662;</button>
+</div>
+<div class="dot-nav" id="dotNav"></div>
+<div id="quizArea"></div>
+<div id="resultsArea"></div>
+</div>
+<div class="modal-overlay" id="freshModal">
+<div class="modal"><h3 id="modalTitle">Start Fresh (Original Order)?</h3><p id="modalText">Questions will return to their original order, and all progress will be reset.</p>
+<div class="modal-btns"><button class="btn btn-blue" id="modalConfirmBtn" onclick="doFresh()">Reset</button><button class="btn btn-gray" onclick="closeFreshModal()">Cancel</button></div></div>
+</div>
+<script>
+(function(){
+const KEY='quiz_sionmathcomp_7_20260611_v1';
+const ATT_KEY='quiz_sionmathcomp_attempts_20260611_v1';
+var qs=[
+// Q1: Invariant - parity
+{tag:'Invariant',
+ q:'The integers 1, 2, 3, ..., 2025 are written on a blackboard. In each move, two numbers <em>a</em> and <em>b</em> are erased and |<em>a</em> &minus; <em>b</em>| is written in their place. After 2024 moves, exactly one number remains. Which of the following values is <strong>IMPOSSIBLE</strong> as the final result?',
+ opts:['3','0','1','5'],ci:1,
+ exp:'The sum 1+2+&hellip;+2025 = 2025&times;1013 = 2,051,325, which is odd. Each move replaces (a, b) with |a&minus;b|, changing the total sum by &minus;2&middot;min(a,b) &mdash; an even change. So the parity of the sum is invariant: it stays odd throughout. The last remaining number must therefore be odd. Since 0 is even, it is impossible.'},
+// Q2: Invariant - mod 3
+{tag:'Invariant',
+ q:'Starting from the number 2, a player may repeatedly apply one of two operations: (i) double the current number, or (ii) add 3. Can the player ever reach <strong>9</strong> using any sequence of operations?',
+ opts:['Yes','Yes, with the right sequence of operations','No','Cannot be determined'],ci:2,
+ exp:'Check residues mod 3. Start: 2 &equiv; 2. Doubling: 2&times;2=4&equiv;1, 2&times;1=2. Adding 3 keeps the residue unchanged. So reachable residues cycle between 1 and 2 only; residue 0 is never reachable. Since 9 &equiv; 0 (mod 3), we can never reach 9.'},
+// Q3: Parity
+{tag:'Parity',
+ q:'A class has 30 students. Each student belongs to exactly 1, 2, or 3 clubs. The total number of (student, club) memberships is 53. Is it possible that <strong>exactly 10</strong> students each belong to exactly 2 clubs?',
+ opts:['No','Yes','Yes, if the clubs have the right sizes','Cannot be determined'],ci:0,
+ exp:'Let a, b, c = students in 1, 2, 3 clubs. Then a+b+c=30 and a+2b+3c=53. Subtracting: b+2c=23. If b=10, then 2c=13, so c=6.5 &mdash; not an integer. There is no valid integer assignment with exactly 10 students in 2 clubs.'},
+// Q4: Pigeonhole 1
+{tag:'Pigeonhole',
+ q:'A drawer contains socks in 9 different colors. What is the <strong>minimum</strong> number of socks you must draw (without looking) to <strong>guarantee</strong> that at least two socks are the same color?',
+ opts:['5','9','18','10'],ci:3,
+ exp:'By the Pigeonhole Principle: if you draw 9 socks, it is possible (in the worst case) to have exactly one sock of each color. Drawing one more &mdash; the 10th sock &mdash; guarantees that at least two must share a color. Minimum: 10.'},
+// Q5: Pigeonhole 2
+{tag:'Pigeonhole',
+ q:'A math test has integer scores from 0 to 100 (101 distinct possible scores). What is the <strong>minimum</strong> number of students who must take the test to guarantee that at least 3 students received the <strong>exact same</strong> score?',
+ opts:['101','203','102','202'],ci:1,
+ exp:'By the generalized Pigeonhole Principle: with 101 possible scores and at most 2 students per score, at most 2&times;101=202 students can all have distinct or paired scores. The 203rd student must share a score with 2 others. Minimum: 203.'},
+// Q6: Extremal - subset counting
+{tag:'Extremal',
+ q:'How many subsets of {1, 2, 3, 4, 5, 6} contain <strong>no two consecutive integers</strong>? (Include the empty set.)',
+ opts:['18','20','16','21'],ci:3,
+ exp:'Let f(n) = number of subsets of {1,...,n} with no two consecutive elements. f(1)=2, f(2)=3, and f(n)=f(n&minus;1)+f(n&minus;2) (either n is not in the subset, or n is in and n&minus;1 is not). This gives: f(3)=5, f(4)=8, f(5)=13, f(6)=21. These are Fibonacci numbers! Answer: 21.'},
+// Q7: Game Theory - Nim
+{tag:'Game Theory',
+ q:'Alice and Bob alternate removing stones from a pile of 23. Each turn, a player may remove <strong>1, 2, or 3</strong> stones. The player who takes the <strong>last</strong> stone <strong>wins</strong>. Alice goes first. With optimal play, who wins, and what should Alice\'s first move be?',
+ opts:['Bob wins','Alice wins, but only if she takes 1 stone first','Alice wins','Neither player has a guaranteed winning strategy'],ci:2,
+ exp:'Losing positions are multiples of 4 (0, 4, 8, 12, ..., 20). Since 23 = 4&times;5 + 3, Alice should take 3 stones, leaving 20 (a multiple of 4). From any multiple of 4, whatever Bob takes (1, 2, or 3), Alice takes (3, 2, or 1) to restore the next multiple of 4. The sequence: 20 &rarr; 16 &rarr; 12 &rarr; 8 &rarr; 4 &rarr; 0. Bob faces 0 stones and loses.'}
+];
+
+var TOTAL=qs.length;
+var ORDER_KEY=KEY+'_order_v1';
+function identityOrder(){var a=[];for(var i=0;i<TOTAL;i++)a.push(i);return a;}
+function isValidOrder(o){if(!Array.isArray(o)||o.length!==TOTAL)return false;var seen={};for(var i=0;i<o.length;i++){if(typeof o[i]!=='number'||o[i]<0||o[i]>=TOTAL||seen[o[i]])return false;seen[o[i]]=true;}return true;}
+function loadOrder(){try{var o=JSON.parse(localStorage.getItem(ORDER_KEY)||'null');return isValidOrder(o)?o:null;}catch(e){return null;}}
+function saveOrder(o){localStorage.setItem(ORDER_KEY,JSON.stringify(o));}
+function randomOrder(){var a=identityOrder();for(var k=a.length-1;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}return a;}
+var currentOrder=loadOrder()||identityOrder();
+saveOrder(currentOrder);
+var pendingFreshMode='original';
+var state={cur:0,answers:{},shuffles:{},showResults:false,retryMode:false,retryList:[]};
+function getList(){return state.retryMode?state.retryList:identityOrder();}
+function loadState(){try{var s=localStorage.getItem(KEY);if(!s)return;var p=JSON.parse(s);if(typeof p.cur!=='number'||typeof p.answers!=='object'||typeof p.shuffles!=='object')throw 0;if(p.retryMode&&!Array.isArray(p.retryList))throw 0;var listLen=p.retryMode?p.retryList.length:qs.length;if(p.cur<0||p.cur>=listLen)p.cur=0;state=p;}catch(e){localStorage.removeItem(KEY);}}
+function saveState(){localStorage.setItem(KEY,JSON.stringify(state));}
+function getAttempts(){return parseInt(localStorage.getItem(ATT_KEY)||'0');}
+function incAttempts(){localStorage.setItem(ATT_KEY,String(getAttempts()+1));}
+function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function getShuffled(qi){if(!state.shuffles[qi]){state.shuffles[qi]=shuffle([0,1,2,3]);saveState();}return state.shuffles[qi];}
+function render(){document.getElementById('attemptsLabel').textContent='Total Attempts: '+getAttempts();buildDots();if(state.showResults){showResults();return;}showQuestion();}
+function updateNavBar(){var list=getList();var answered=0;for(var k=0;k<list.length;k++){var qi=currentOrder[list[k]];if(state.answers[qi]!==undefined)answered++;}document.getElementById('navCount').textContent=answered+' / '+list.length;document.getElementById('progFill').style.width=(list.length?Math.round(answered/list.length*100):0)+'%';}
+function toggleJump(){var nav=document.getElementById('dotNav'),jb=document.getElementById('jumpBtn');if(nav.style.display==='flex'){nav.style.display='none';jb.innerHTML='Jump &#9662;';}else{nav.style.display='flex';jb.innerHTML='Hide &#9652;';}}
+function buildDots(){updateNavBar();var nav=document.getElementById('dotNav');var html='';var list=getList();for(var i=0;i<list.length;i++){var qi=currentOrder[list[i]];var cls='dot';if(state.answers[qi]===undefined){}else if(state.answers[qi]===qs[qi].ci)cls+=' correct';else cls+=' wrong';if(i===state.cur&&!state.showResults)cls+=' active';html+='<div class="'+cls+'" onclick="goToQ('+i+')">'+(i+1)+'</div>';}if(state.showResults)html+='<span class="results-pill">Results</span>';nav.innerHTML=html;}
+function showQuestion(){var qa=document.getElementById('quizArea');document.getElementById('resultsArea').style.display='none';qa.style.display='block';var list=getList();var pos=state.cur,i=currentOrder[list[pos]],q=qs[i];var order=getShuffled(i);var ans=state.answers[i];var answered=(ans!==undefined);
+var html='<div class="tag-badge">'+q.tag+'</div><div class="q-counter">'+(pos+1)+' / '+list.length+'</div><div class="q-text">'+q.q+'</div><div class="options">';
+for(var k=0;k<4;k++){var oi=order[k];var cls='opt-btn';if(answered){if(oi===q.ci)cls+=' reveal';if(oi===ans&&ans!==q.ci)cls+=' wrong';}html+='<button class="'+cls+'" onclick="pick('+oi+')">'+q.opts[oi]+'</button>';}html+='</div>';
+if(answered&&ans!==q.ci)html+='<div class="explain"><strong>Solution:</strong> '+q.exp+'</div>';
+html+='<div class="nav-btns">';if(pos>0)html+='<button class="btn btn-gray" id="prev-btn" onclick="go(-1)">Prev</button>';if(pos<list.length-1)html+='<button class="btn btn-blue" id="next-btn" onclick="go(1)">Next</button>';else html+='<button class="btn btn-blue" id="next-btn" onclick="finishQuiz()">See Results &#8594;</button>';html+='</div>';
+qa.innerHTML=html;}
+function pick(oi){var list=getList();var i=currentOrder[list[state.cur]];if(state.answers[i]!==undefined)return;state.answers[i]=oi;saveState();showQuestion();}
+function go(d){var list=getList();state.cur+=d;if(state.cur<0)state.cur=0;if(state.cur>=list.length)state.cur=list.length-1;saveState();showQuestion();}
+function goToQ(i){if(state.showResults){state.showResults=false;state.cur=i;saveState();render();return;}state.cur=i;saveState();showQuestion();buildDots();}
+function finishQuiz(){if(!state.retryMode){incAttempts();}state.showResults=true;saveState();render();}
+function showResults(){var qa=document.getElementById('quizArea');var ra=document.getElementById('resultsArea');qa.style.display='none';ra.style.display='block';var list=getList();var c=0;for(var k=0;k<list.length;k++){var qi=currentOrder[list[k]];var a=state.answers[qi];if(a===qs[qi].ci)c++;}var heading=state.retryMode?'Retry Results':'Results';var html='<div class="res-header">'+heading+': '+c+' / '+list.length+'</div><div class="res-grid">';for(var i=0;i<list.length;i++){var qi=currentOrder[list[i]];var a=state.answers[qi];var cls='res-card ';var lbl='';if(a===undefined){cls+='skipped';lbl='Skipped';}else if(a===qs[qi].ci){cls+='correct';lbl='Correct';}else{cls+='wrong';lbl='Wrong';}html+='<div class="'+cls+'" onclick="goToQ('+i+')">Q'+(i+1)+': '+lbl+'</div>';}html+='</div><div class="res-actions">';if(state.retryMode){html+='<button class="btn btn-blue" onclick="backToMain()">Back to Full Results</button><button class="btn btn-gray" onclick="copyRes()">Copy All Results</button>';}else{html+='<button class="btn btn-blue" onclick="startRetry()">Retry Wrong Questions</button><button class="btn btn-gray" onclick="copyRes()">Copy All Results</button><button class="btn btn-gray" id="freshBtnOriginal" onclick="openFreshModal(\'original\')">Start Fresh (Original Order)</button><button class="btn btn-gray" id="freshBtnRandom" onclick="openFreshModal(\'random\')">Start Fresh (Random Order)</button>';}html+='</div>';ra.innerHTML=html;buildDots();}
+function startRetry(){var list=getList();var wrong=[];for(var k=0;k<list.length;k++){var pos=list[k];var qi=currentOrder[pos];if(state.answers[qi]!==undefined&&state.answers[qi]!==qs[qi].ci)wrong.push(pos);}if(!wrong.length){alert('No wrong questions!');return;}for(var j=0;j<wrong.length;j++){var qiWrong=currentOrder[wrong[j]];delete state.answers[qiWrong];delete state.shuffles[qiWrong];}state.retryMode=true;state.retryList=wrong;state.cur=0;state.showResults=false;saveState();render();}
+function backToMain(){state.retryMode=false;state.retryList=[];state.showResults=true;saveState();render();}
+function copyRes(){var list=getList();var lines=['[Sion] Math Competition 2026-06-11'];var c=0;for(var i=0;i<list.length;i++){var qi=currentOrder[list[i]];var a=state.answers[qi];if(a===undefined){lines.push('Q'+(i+1)+': Skipped');}else if(a===qs[qi].ci){c++;lines.push('Q'+(i+1)+': Correct');}else{lines.push('Q'+(i+1)+': Wrong');}}lines.splice(1,0,'Score: '+c+'/'+list.length);var txt=lines.join('\n');if(navigator.clipboard)navigator.clipboard.writeText(txt);else{var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}}
+function openFreshModal(mode){pendingFreshMode=mode;var title=document.getElementById('modalTitle'),text=document.getElementById('modalText');if(mode==='random'){title.textContent='Start Fresh (Random Order)?';text.textContent='Questions will be reshuffled into a new random order, and all progress will be reset.';}else{title.textContent='Start Fresh (Original Order)?';text.textContent='Questions will return to their original order, and all progress will be reset.';}document.getElementById('freshModal').classList.add('show');}
+function closeFreshModal(){document.getElementById('freshModal').classList.remove('show');}
+function doFresh(){localStorage.removeItem(KEY);currentOrder=(pendingFreshMode==='random')?randomOrder():identityOrder();saveOrder(currentOrder);state={cur:0,answers:{},shuffles:{},showResults:false,retryMode:false,retryList:[]};closeFreshModal();render();}
+window.pick=pick;window.go=go;window.finishQuiz=finishQuiz;window.goToQ=goToQ;
+window.startRetry=startRetry;window.copyRes=copyRes;window.openFreshModal=openFreshModal;
+window.closeFreshModal=closeFreshModal;window.doFresh=doFresh;
+window.backToMain=backToMain;window.toggleJump=toggleJump;
+loadState();render();
+})();
+</script>
+</body>
+</html>

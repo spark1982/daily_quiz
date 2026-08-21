@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4th Pattern: Indirect & Direct Object Quiz</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; background: #f5f7fa; color: #111; min-height: 100vh; }
+  #dueDate { text-align: center; font-size: 2rem; font-weight: 800; color: #185FA5; background: #fff; padding: 12px 0 8px; }
+  h1 { text-align: center; font-size: 1.4rem; font-weight: 700; color: #185FA5; background: #fff; padding: 0 16px 14px; border-bottom: 2px solid #e0e7f0; }
+  #quizArea { display: none; max-width: 680px; margin: 0 auto; padding: 20px 16px 80px; }
+  .q-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .type-badge { background: #185FA5; color: #fff; font-size: 0.72rem; font-weight: 700; border-radius: 20px; padding: 3px 12px; }
+  .q-num { font-size: 0.9rem; color: #555; }
+  .sentence-box { background: #fff; border: 2px solid #d0daea; border-radius: 12px; padding: 22px 20px; font-size: 1.35rem; font-weight: 600; text-align: center; margin-bottom: 10px; line-height: 1.6; }
+  .question-prompt { text-align: center; font-size: 0.95rem; color: #333; margin-bottom: 16px; font-style: italic; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .opt-btn { background: #e8edf4; color: #111111; border: 2px solid transparent; border-radius: 10px; padding: 14px 18px; font-size: 1.05rem; font-weight: 600; cursor: pointer; text-align: left; transition: background 0.12s; }
+  .opt-btn:hover:not(:disabled) { background: #dce3ee; }
+  .opt-btn.correct-ans { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .opt-btn.wrong-ans   { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+  .opt-btn.reveal-ans  { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .explanation { margin-top: 12px; background: #fff8ec; border-left: 4px solid #f0a500; border-radius: 6px; padding: 10px 14px; font-size: 0.9rem; color: #444; line-height: 1.5; display: none; }
+  .nav-row { display: flex; justify-content: space-between; align-items: center; margin-top: 22px; }
+  .nav-btn { background: #185FA5; color: #fff; border: none; border-radius: 8px; padding: 11px 24px; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+  .nav-btn:disabled { background: #bbb; cursor: default; }
+  .counter { font-size: 0.9rem; color: #555; }
+  #resultsArea { display: none; max-width: 680px; margin: 0 auto; padding: 20px 16px 80px; }
+  #resultsArea h2 { font-size: 1.3rem; color: #185FA5; margin-bottom: 16px; text-align: center; }
+  .score-box { background: #fff; border: 2px solid #d0daea; border-radius: 12px; padding: 18px; text-align: center; margin-bottom: 18px; font-size: 1.5rem; font-weight: 800; color: #185FA5; }
+  .result-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-bottom: 18px; }
+  .result-card { border-radius: 10px; padding: 10px 8px; text-align: center; cursor: pointer; font-size: 0.82rem; font-weight: 600; border: 2px solid transparent; }
+  .result-card.correct { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .result-card.wrong   { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+  .result-card.skipped { background: #f0f0f0; border-color: #bbb; color: #555; }
+  .result-card .rc-q  { font-size: 0.72rem; margin-bottom: 3px; }
+  .result-card .rc-ans { font-size: 0.78rem; margin-top: 4px; }
+  .bottom-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .copy-btn  { background: #185FA5; color: #fff; border: none; border-radius: 8px; padding: 11px 22px; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+  .fresh-btn { background: #E24B4A; color: #fff; border: none; border-radius: 8px; padding: 11px 22px; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+  #modalOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 999; align-items: center; justify-content: center; }
+  #modalOverlay.open { display: flex; }
+  #modalBox { background: #fff; border-radius: 14px; padding: 28px 24px; max-width: 340px; width: 90%; text-align: center; }
+  #modalBox h3 { font-size: 1.1rem; margin-bottom: 10px; color: #222; }
+  #modalBox p  { font-size: 0.9rem; color: #555; margin-bottom: 20px; }
+  .modal-btns { display: flex; gap: 12px; justify-content: center; }
+  .modal-cancel  { background: #e0e0e0; color: #333; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+  .modal-confirm { background: #E24B4A; color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+  #navBar     { display:flex; align-items:center; gap:8px; padding:10px 12px; background:#fff; border-bottom:1px solid #dce3ef; position:sticky; top:0; z-index:100; }
+  .prog-track { background:#d7dde6; border-radius:3px; height:6px; flex:1; margin:0 8px; min-width:0; }
+  .prog-fill  { background:#185FA5; border-radius:3px; height:6px; width:0%; transition:width 0.2s; }
+  #nav-count  { font-size:13px; white-space:nowrap; color:#555; font-weight:700; }
+  #jump-btn   { font-size:12px; padding:4px 10px; border:1px solid #185FA5; border-radius:14px; background:#fff; color:#185FA5; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+  #dot-panel  { padding:8px 12px; background:#f5f7fa; border-bottom:1px solid #dce3ef; display:none; max-height:170px; overflow-y:auto; text-align:center; position:sticky; top:41px; z-index:99; }
+  .dot        { width:26px; height:26px; border-radius:50%; border:2px solid transparent; background:#d7dde6; font-size:11px; font-weight:700; color:#555; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; margin:2px; transition:all 0.15s; flex-shrink:0; }
+  .dot.correct      { background:#185FA5; border-color:#185FA5; color:#fff; }
+  .dot.wrong        { background:#E24B4A; border-color:#E24B4A; color:#fff; }
+  .dot.current      { outline:3px solid #185FA5; outline-offset:2px; }
+  .dot.results-pill { width:auto; padding:0 10px; border-radius:15px; background:#185FA5; color:#fff; border-color:#185FA5; font-size:11px; }
+  #retryWrongBtn    { display:block; width:100%; padding:13px; background:#1D9E75; color:#fff; border:none; border-radius:10px; font-size:1rem; font-weight:700; cursor:pointer; margin-bottom:12px; }
+</style>
+</head>
+<body>
+<!-- ===== Universal Quiz Timer (auto-injected) ===== -->
+<style>
+  #qzTimerBar { background: #ffffff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-family: 'Segoe UI', Arial, sans-serif; }
+  #qzTimerSetup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+  #qzTimerSetup label { font-weight: 700; }
+  #qzTimerInput { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+  #qzTimerStartBtn { background: #185FA5; color: #ffffff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  #qzTimerStartBtn:active { opacity: 0.8; }
+  #qzTimerRunning { display: none; align-items: center; gap: 8px; }
+  #qzTimerLabel { font-size: 0.78rem; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 0.02em; }
+  #qzTimerDisplay { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+  #qzTimerDisplay.qz-warn { color: #f5a623; }
+  #qzTimerDisplay.qz-danger { color: #E24B4A; }
+</style>
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label for="qzTimerInput">Set Time Limit:</label>
+    <input type="number" id="qzTimerInput" min="1" max="180" value="20"> min
+    <button id="qzTimerStartBtn" type="button">Start</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span id="qzTimerLabel">Time Left</span>
+    <span id="qzTimerDisplay">20:00</span>
+  </div>
+</div>
+<script>
+(function(){
+  var QZ_KEY = 'qzTimer_' + location.pathname;
+  var qz = { totalSec: null, startedAt: null };
+  try {
+    var raw = localStorage.getItem(QZ_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p.totalSec === 'number' && typeof p.startedAt === 'number') qz = p;
+    }
+  } catch(e) {}
+  var qzInterval = null;
+
+  function qzSave() { try { localStorage.setItem(QZ_KEY, JSON.stringify(qz)); } catch(e) {} }
+  function qzFormat(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60), s = sec % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function qzRender() {
+    var setupEl = document.getElementById('qzTimerSetup');
+    var runEl = document.getElementById('qzTimerRunning');
+    var disp = document.getElementById('qzTimerDisplay');
+    if (!setupEl || !runEl || !disp) return;
+    if (!qz.startedAt) {
+      setupEl.style.display = 'flex';
+      runEl.style.display = 'none';
+      return;
+    }
+    setupEl.style.display = 'none';
+    runEl.style.display = 'flex';
+    var elapsed = (Date.now() - qz.startedAt) / 1000;
+    var remaining = qz.totalSec - elapsed;
+    disp.classList.remove('qz-warn', 'qz-danger');
+    if (remaining <= 0) {
+      disp.textContent = "Time's Up";
+      disp.classList.add('qz-danger');
+      qzStopInterval();
+      return;
+    }
+    disp.textContent = qzFormat(remaining);
+    if (remaining <= qz.totalSec * 0.1) disp.classList.add('qz-danger');
+    else if (remaining <= qz.totalSec * 0.25) disp.classList.add('qz-warn');
+  }
+  function qzStartInterval() {
+    qzStopInterval();
+    qzInterval = setInterval(qzRender, 1000);
+  }
+  function qzStopInterval() {
+    if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+  }
+  function qzStart() {
+    var input = document.getElementById('qzTimerInput');
+    var minutes = parseFloat(input.value);
+    if (!minutes || minutes <= 0) minutes = 20;
+    qz.totalSec = Math.round(minutes * 60);
+    qz.startedAt = Date.now();
+    qzSave();
+    qzRender();
+    qzStartInterval();
+  }
+
+  var btn = document.getElementById('qzTimerStartBtn');
+  if (btn) btn.addEventListener('click', qzStart);
+  qzRender();
+  if (qz.startedAt) qzStartInterval();
+
+  function qzResetTimer() {
+    qz.totalSec = null;
+    qz.startedAt = null;
+    qzSave();
+    qzStopInterval();
+    qzRender();
+  }
+  var qzRetryRe = /retry|restart|reset|start\s*fresh|try\s*again|\uB2E4\uC2DC\s*\uC2DC\uC791|\uCC98\uC74C\uBD80\uD0B0/i;
+  document.addEventListener('click', function(ev) {
+    var el = ev.target, depth = 0;
+    while (el && depth < 4) {
+      if (el.id === 'qzTimerBar' || el.id === 'qzAttemptsBar') return;
+      var isClickable = el.tagName === 'BUTTON' || el.tagName === 'A' ||
+        (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) ||
+        (el.getAttribute && el.getAttribute('role') === 'button');
+      if (isClickable) {
+        var txt = (el.textContent || el.value || '').trim();
+        if (txt.length > 0 && txt.length < 40 && qzRetryRe.test(txt)) {
+          qzResetTimer();
+          return;
+        }
+      }
+      el = el.parentElement;
+      depth++;
+    }
+  }, true);
+})();
+</script>
+<!-- ===== End Universal Quiz Timer ===== -->
+<!-- ===== Universal Total Attempts Counter (auto-injected) ===== -->
+<style>
+  #qzAttemptsBar { background: #f5f8fc; border-bottom: 1px solid #d0dce8; padding: 6px 12px; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', Arial, sans-serif; font-size: 0.82rem; color: #4a6fa5; font-weight: 700; letter-spacing: 0.01em; }
+  #qzAttemptsBar span { color: #185FA5; font-weight: 900; margin-left: 4px; }
+</style>
+<div id="qzAttemptsBar">Total Attempts:<span id="qzAttemptsCount">0</span></div>
+<script>
+(function(){
+  var QA_KEY = 'qzAttempts_' + location.pathname;
+  function qaGet(){ try { return parseInt(localStorage.getItem(QA_KEY)||'0',10) || 0; } catch(e){ return 0; } }
+  function qaSet(n){ try { localStorage.setItem(QA_KEY, String(n)); } catch(e){} }
+  function qaRenderCount(){
+    var el = document.getElementById('qzAttemptsCount');
+    if (el) el.textContent = qaGet();
+  }
+  function qaIsVisible(el){
+    if (!el) return false;
+    var r = el.getBoundingClientRect();
+    if (r.width < 80 || r.height < 30) return false;
+    var cs = window.getComputedStyle(el);
+    return cs.display !== 'none' && cs.visibility !== 'hidden';
+  }
+  function qaResultsShowing(){
+    var els = document.querySelectorAll('[id*="result" i],[class*="result" i],[id*="score" i],[class*="score" i]');
+    for (var i=0;i<els.length;i++){ if (qaIsVisible(els[i])) return true; }
+    return false;
+  }
+  var qaWasShowing = false;
+  function qaCheck(){
+    var showing = qaResultsShowing();
+    if (showing && !qaWasShowing) {
+      qaSet(qaGet()+1);
+      qaRenderCount();
+    }
+    qaWasShowing = showing;
+  }
+  qaRenderCount();
+  setInterval(qaCheck, 800);
+  function qaObserve(){
+    if (!document.body) return;
+    var mo = new MutationObserver(function(){ qaCheck(); });
+    mo.observe(document.body, { attributes: true, childList: true, subtree: true });
+  }
+  if (document.body) qaObserve();
+  else document.addEventListener('DOMContentLoaded', qaObserve);
+  setTimeout(qaCheck, 1500);
+})();
+</script>
+<!-- ===== End Universal Total Attempts Counter ===== -->
+
+
+
+<h1>4th Pattern: Indirect &amp; Direct Object</h1>
+<div id="navBar">
+  <span id="nav-count">0 / 0</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button id="jump-btn" onclick="toggleJump()">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+<div id="quizArea"></div>
+<div id="resultsArea"></div>
+
+<div id="modalOverlay">
+  <div id="modalBox">
+    <h3 id="modalTitle">Start Fresh?</h3>
+    <p id="modalText">All your progress will be erased.</p>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-confirm" id="modalConfirm" onclick="confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'quiz_4thpattern_io_do_30_v1';
+
+// sentence: plain (no underline) — answer choices are the two objects
+// ask: 'indirect' | 'direct'
+// options[0] = correct answer, options[1] = distractor
+// ci = 0 always before shuffle; shuffle remaps it
+const QUESTIONS_RAW = [
+  { sentence: 'She gave me a book.',         ask: 'indirect', options: ['me', 'a book'],     ci: 0, explanation: '"Me" is the indirect object (who received it). "A book" is the direct object (what was given).' },
+  { sentence: 'She gave me a book.',         ask: 'direct',   options: ['a book', 'me'],      ci: 0, explanation: '"A book" is the direct object (what was given). "Me" is the indirect object (who received it).' },
+  { sentence: 'He sent her a letter.',       ask: 'indirect', options: ['her', 'a letter'],   ci: 0, explanation: '"Her" is the indirect object (who received it). "A letter" is the direct object (what was sent).' },
+  { sentence: 'He sent her a letter.',       ask: 'direct',   options: ['a letter', 'her'],   ci: 0, explanation: '"A letter" is the direct object (what was sent). "Her" is the indirect object (who received it).' },
+  { sentence: 'Mom bought him new shoes.',   ask: 'indirect', options: ['him', 'new shoes'],  ci: 0, explanation: '"Him" is the indirect object (who received them). "New shoes" is the direct object (what was bought).' },
+  { sentence: 'Mom bought him new shoes.',   ask: 'direct',   options: ['new shoes', 'him'],  ci: 0, explanation: '"New shoes" is the direct object (what was bought). "Him" is the indirect object (who received them).' },
+  { sentence: 'The teacher told us a story.',ask: 'indirect', options: ['us', 'a story'],     ci: 0, explanation: '"Us" is the indirect object (who heard it). "A story" is the direct object (what was told).' },
+  { sentence: 'The teacher told us a story.',ask: 'direct',   options: ['a story', 'us'],     ci: 0, explanation: '"A story" is the direct object (what was told). "Us" is the indirect object (who heard it).' },
+  { sentence: 'I showed them my photos.',    ask: 'indirect', options: ['them', 'my photos'], ci: 0, explanation: '"Them" is the indirect object (who saw them). "My photos" is the direct object (what was shown).' },
+  { sentence: 'I showed them my photos.',    ask: 'direct',   options: ['my photos', 'them'], ci: 0, explanation: '"My photos" is the direct object (what was shown). "Them" is the indirect object (who saw them).' },
+  { sentence: 'Dad cooked us dinner.',       ask: 'indirect', options: ['us', 'dinner'],      ci: 0, explanation: '"Us" is the indirect object (who received it). "Dinner" is the direct object (what was cooked).' },
+  { sentence: 'Dad cooked us dinner.',       ask: 'direct',   options: ['dinner', 'us'],      ci: 0, explanation: '"Dinner" is the direct object (what was cooked). "Us" is the indirect object (who received it).' },
+  { sentence: 'She lent me her bike.',       ask: 'indirect', options: ['me', 'her bike'],    ci: 0, explanation: '"Me" is the indirect object (who borrowed it). "Her bike" is the direct object (what was lent).' },
+  { sentence: 'She lent me her bike.',       ask: 'direct',   options: ['her bike', 'me'],    ci: 0, explanation: '"Her bike" is the direct object (what was lent). "Me" is the indirect object (who borrowed it).' },
+  { sentence: 'He taught her math.',         ask: 'indirect', options: ['her', 'math'],       ci: 0, explanation: '"Her" is the indirect object (who was taught). "Math" is the direct object (what was taught).' },
+  { sentence: 'He taught her math.',         ask: 'direct',   options: ['math', 'her'],       ci: 0, explanation: '"Math" is the direct object (what was taught). "Her" is the indirect object (who was taught).' },
+  { sentence: 'They offered him a job.',     ask: 'indirect', options: ['him', 'a job'],      ci: 0, explanation: '"Him" is the indirect object (who received the offer). "A job" is the direct object (what was offered).' },
+  { sentence: 'They offered him a job.',     ask: 'direct',   options: ['a job', 'him'],      ci: 0, explanation: '"A job" is the direct object (what was offered). "Him" is the indirect object (who received it).' },
+  { sentence: 'I wrote her a poem.',         ask: 'indirect', options: ['her', 'a poem'],     ci: 0, explanation: '"Her" is the indirect object (who received it). "A poem" is the direct object (what was written).' },
+  { sentence: 'I wrote her a poem.',         ask: 'direct',   options: ['a poem', 'her'],     ci: 0, explanation: '"A poem" is the direct object (what was written). "Her" is the indirect object (who received it).' },
+  { sentence: 'She made him a sandwich.',    ask: 'indirect', options: ['him', 'a sandwich'], ci: 0, explanation: '"Him" is the indirect object (who received it). "A sandwich" is the direct object (what was made).' },
+  { sentence: 'She made him a sandwich.',    ask: 'direct',   options: ['a sandwich', 'him'], ci: 0, explanation: '"A sandwich" is the direct object (what was made). "Him" is the indirect object (who received it).' },
+  { sentence: 'He passed me the ball.',      ask: 'indirect', options: ['me', 'the ball'],    ci: 0, explanation: '"Me" is the indirect object (who received it). "The ball" is the direct object (what was passed).' },
+  { sentence: 'He passed me the ball.',      ask: 'direct',   options: ['the ball', 'me'],    ci: 0, explanation: '"The ball" is the direct object (what was passed). "Me" is the indirect object (who received it).' },
+  { sentence: 'They sent us a package.',     ask: 'indirect', options: ['us', 'a package'],   ci: 0, explanation: '"Us" is the indirect object (who received it). "A package" is the direct object (what was sent).' },
+  { sentence: 'They sent us a package.',     ask: 'direct',   options: ['a package', 'us'],   ci: 0, explanation: '"A package" is the direct object (what was sent). "Us" is the indirect object (who received it).' },
+  { sentence: 'My friend gave me advice.',   ask: 'indirect', options: ['me', 'advice'],      ci: 0, explanation: '"Me" is the indirect object (who received it). "Advice" is the direct object (what was given).' },
+  { sentence: 'My friend gave me advice.',   ask: 'direct',   options: ['advice', 'me'],      ci: 0, explanation: '"Advice" is the direct object (what was given). "Me" is the indirect object (who received it).' },
+  { sentence: 'The coach showed them a new move.', ask: 'indirect', options: ['them', 'a new move'], ci: 0, explanation: '"Them" is the indirect object (who was shown). "A new move" is the direct object (what was shown).' },
+  { sentence: 'The coach showed them a new move.', ask: 'direct',   options: ['a new move', 'them'], ci: 0, explanation: '"A new move" is the direct object (what was shown). "Them" is the indirect object (who was shown).' },
+];
+
+function seededShuffle(arr, seed) {
+  let a = [...arr], s = seed;
+  for (let i = a.length - 1; i > 0; i--) {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    let j = Math.abs(s) % (i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getShuffled(qi, seed) {
+  const q = QUESTIONS[qi];
+  const idxMap = seededShuffle([0, 1], seed + qi * 37);
+  return { labels: idxMap.map(i => q.options[i]), ci: idxMap.indexOf(q.ci) };
+}
+
+let state = { cur: 0, answers: {}, shuffles: {}, showResults: false, retryMode: false, retryList: [] };
+function getList() { return state.retryMode ? state.retryList : QUESTIONS.map((_, i) => i); }
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (typeof s.answers !== 'object' || s.answers === null ||
+        typeof s.shuffles !== 'object' || s.shuffles === null ||
+        (s.retryMode && !Array.isArray(s.retryList))) {
+      localStorage.removeItem(STORAGE_KEY); return;
+    }
+    const listLen = s.retryMode ? s.retryList.length : QUESTIONS_RAW.length;
+    if (typeof s.cur !== 'number' || s.cur < 0 || s.cur >= listLen) {
+      localStorage.removeItem(STORAGE_KEY); return;
+    }
+    state = s;
+  } catch(e) { localStorage.removeItem(STORAGE_KEY); }
+}
+
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+const ORDER_KEY = STORAGE_KEY + '_order_v1';
+function identityOrder() { return Array.from({length: QUESTIONS_RAW.length}, (_, i) => i); }
+function isValidOrder(arr) {
+  if (!Array.isArray(arr) || arr.length !== QUESTIONS_RAW.length) return false;
+  const seen = new Set();
+  for (const v of arr) {
+    if (typeof v !== 'number' || v < 0 || v >= QUESTIONS_RAW.length || seen.has(v)) return false;
+    seen.add(v);
+  }
+  return true;
+}
+function loadOrder() {
+  try {
+    const raw = localStorage.getItem(ORDER_KEY);
+    if (!raw) return null;
+    const arr = JSON.parse(raw);
+    return isValidOrder(arr) ? arr : null;
+  } catch(e) { return null; }
+}
+function saveOrder(order) { try { localStorage.setItem(ORDER_KEY, JSON.stringify(order)); } catch(e) {} }
+function shuffleOrder(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+let currentOrder = loadOrder() || identityOrder();
+let pendingFreshMode = 'original';
+let QUESTIONS = [];
+function buildQuestions() {
+  return currentOrder.map(ri => {
+    const r = QUESTIONS_RAW[ri];
+    return { sentence: r.sentence, ask: r.ask, options: r.options, ci: r.ci, explanation: r.explanation };
+  });
+}
+
+function getSeed(qi) {
+  if (!state.shuffles[qi]) state.shuffles[qi] = Math.floor(Math.random() * 900000) + 100000;
+  return state.shuffles[qi];
+}
+
+function renderDotNav() {
+  // ── progress bar & count ──
+  const list = getList();
+  const _answered = list.filter(i => state.answers[i] !== undefined).length;
+  const _total = list.length;
+  document.getElementById('nav-count').textContent = _answered + ' / ' + _total;
+  document.getElementById('prog-fill').style.width = (_total > 0 ? (_answered/_total*100).toFixed(1) : 0) + '%';
+  const nav = document.getElementById('dot-panel');
+  if (nav.style.display !== 'block') return;
+  nav.innerHTML = '';
+  for (let pos = 0; pos < list.length; pos++) {
+    const i = list[pos];
+    const d = document.createElement('button');
+    d.className = 'dot';
+    d.textContent = pos + 1;
+    if (state.answers[i] !== undefined) {
+      const { ci } = getShuffled(i, getSeed(i));
+      d.classList.add(state.answers[i] === ci ? 'correct' : 'wrong');
+    }
+    if (!state.showResults && pos === state.cur) d.classList.add('current');
+    d.onclick = () => { state.showResults = false; state.cur = pos; saveState(); render(); };
+    nav.appendChild(d);
+  }
+  if (state.showResults) {
+    const pill = document.createElement('button');
+    pill.className = 'dot results-pill';
+    pill.textContent = 'Results';
+    pill.onclick = () => { state.showResults = true; saveState(); render(); };
+    nav.appendChild(pill);
+  }
+}
+
+function render() {
+  try {
+    renderDotNav();
+    const qa = document.getElementById('quizArea');
+    const ra = document.getElementById('resultsArea');
+    if (state.showResults) {
+      qa.style.display = 'none'; ra.style.display = 'block'; renderResults();
+    } else {
+      qa.style.display = 'block'; ra.style.display = 'none'; renderQuestion();
+    }
+  } catch(e) {
+    document.getElementById('quizArea').style.display = 'block';
+    document.getElementById('quizArea').innerHTML = '<p style="color:red;padding:20px">Error rendering quiz. Please refresh.</p>';
+  }
+}
+
+function renderQuestion() {
+  const list = getList();
+  const pos = state.cur;
+  const qi = list[pos];
+  const q = QUESTIONS[qi];
+  const { labels, ci } = getShuffled(qi, getSeed(qi));
+  const answered = state.answers[qi] !== undefined;
+  const selectedIdx = state.answers[qi];
+  const isLast = pos === list.length - 1;
+  const askLabel = q.ask === 'indirect' ? 'indirect object' : 'direct object';
+
+  let btnsHtml = labels.map((label, idx) => {
+    let cls = 'opt-btn';
+    if (answered) {
+      if (idx === selectedIdx && idx === ci) cls += ' correct-ans';
+      else if (idx === selectedIdx && idx !== ci) cls += ' wrong-ans';
+      else if (idx !== selectedIdx && idx === ci) cls += ' reveal-ans';
+    }
+    return `<button class="${cls}" onclick="selectAnswer(${qi},${idx})" ${answered ? 'disabled' : ''}>${label}</button>`;
+  }).join('');
+
+  const expStyle = (answered && selectedIdx !== ci) ? 'display:block' : 'display:none';
+
+  document.getElementById('quizArea').innerHTML = `
+    <div class="q-header">
+      <span class="type-badge">4th Pattern</span>
+      <span class="q-num">Q${pos + 1} / ${list.length}</span>
+    </div>
+    <div class="sentence-box">${q.sentence}</div>
+    <p class="question-prompt">What is the <b>${askLabel}</b> in this sentence?</p>
+    <div class="options">${btnsHtml}</div>
+    <div class="explanation" style="${expStyle}">${q.explanation}</div>
+    <div class="nav-row">
+      <button class="nav-btn" onclick="goTo(${pos-1})" ${pos===0?'disabled':''}>← Prev</button>
+      <span class="counter">${list.filter(i => state.answers[i] !== undefined).length} / ${list.length} answered</span>
+      ${isLast
+        ? `<button class="nav-btn" onclick="showResults()">See Results →</button>`
+        : `<button class="nav-btn" onclick="goTo(${pos+1})">Next →</button>`}
+    </div>
+    <div style="text-align:center;margin-top:16px">
+      <button style="background:#888;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:0.85rem;font-weight:700;cursor:pointer;" onclick="openModal('original')">Start Fresh (Original Order)</button>
+      <button style="background:#888;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:0.85rem;font-weight:700;cursor:pointer;" onclick="openModal('random')">Start Fresh (Random Order)</button>
+    </div>
+  `;
+}
+
+function selectAnswer(qi, idx) {
+  if (state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx; saveState(); render();
+}
+
+function goTo(pos) {
+  const list = getList();
+  if (pos < 0 || pos >= list.length) return;
+  state.cur = pos; state.showResults = false; saveState(); render();
+}
+
+function showResults() { state.showResults = true; saveState(); render(); }
+
+function renderResults() {
+  const list = getList();
+  let correct = 0;
+  for (let pos = 0; pos < list.length; pos++) {
+    const i = list[pos];
+    if (state.answers[i] === undefined) continue;
+    const { ci } = getShuffled(i, getSeed(i));
+    if (state.answers[i] === ci) correct++;
+  }
+
+  let gridHtml = '';
+  for (let pos = 0; pos < list.length; pos++) {
+    const i = list[pos];
+    const { ci } = getShuffled(i, getSeed(i));
+    let cls, statusText, ansText = '';
+    if (state.answers[i] === undefined) {
+      cls = 'skipped'; statusText = 'Skipped'; ansText = `✔ ${QUESTIONS[i].options[0]}`;
+    } else if (state.answers[i] === ci) {
+      cls = 'correct'; statusText = 'Correct';
+    } else {
+      cls = 'wrong'; statusText = 'Wrong'; ansText = `✔ ${QUESTIONS[i].options[0]}`;
+    }
+    gridHtml += `<div class="result-card ${cls}" onclick="jumpTo(${pos})">
+      <div class="rc-q">Q${pos+1}</div>
+      <div>${statusText}</div>
+      ${ansText ? `<div class="rc-ans">${ansText}</div>` : ''}
+    </div>`;
+  }
+
+  document.getElementById('resultsArea').innerHTML = `
+    <h2>${state.retryMode ? 'Retry Results' : 'Results'}</h2>
+    <div class="score-box">${correct} / ${list.length} Correct</div>
+    <div class="result-grid">${gridHtml}</div>
+    <div class="bottom-btns">
+      <button class="copy-btn" onclick="copyResults()">Copy All Results</button>
+      <button id="retryWrongBtn" onclick="retryWrong()">Retry Wrong Ones</button>
+      <button class="fresh-btn" id="startFreshBtn" onclick="openModal('original')">Start Fresh (Original Order)</button>
+      <button class="fresh-btn" id="startFreshRandomBtn" onclick="openModal('random')">Start Fresh (Random Order)</button>
+    </div>
+  `;
+}
+
+function jumpTo(pos) { state.cur = pos; state.showResults = false; saveState(); render(); }
+
+function copyResults() {
+  const list = getList();
+  let lines = ['4th Pattern: Indirect & Direct Object Quiz\n'];
+  for (let pos = 0; pos < list.length; pos++) {
+    const i = list[pos];
+    const { ci } = getShuffled(i, getSeed(i));
+    const status = state.answers[i] === undefined ? 'Skipped' : state.answers[i] === ci ? 'Correct' : 'Wrong';
+    lines.push(`Q${pos+1}: ${status} (Answer: ${QUESTIONS[i].options[0]})`);
+  }
+  navigator.clipboard.writeText(lines.join('\n')).catch(()=>{});
+}
+
+function openModal(mode) {
+  pendingFreshMode = mode;
+  document.getElementById('modalTitle').textContent = mode === 'random' ? 'Start Fresh (Random Order)?' : 'Start Fresh (Original Order)?';
+  document.getElementById('modalText').textContent = mode === 'random'
+    ? 'Questions will be reshuffled into a new random order, and all progress will be reset.'
+    : 'Questions will return to their original order, and all progress will be reset.';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+function confirmFresh() {
+  localStorage.removeItem(STORAGE_KEY);
+  state = { cur: 0, answers: {}, shuffles: {}, showResults: false, retryMode: false, retryList: [] };
+  currentOrder = (pendingFreshMode === 'random') ? shuffleOrder(identityOrder()) : identityOrder();
+  saveOrder(currentOrder);
+  QUESTIONS = buildQuestions();
+  closeModal(); render();
+}
+
+loadState();
+QUESTIONS = buildQuestions();
+render();
+
+function retryWrong() {
+  var list = getList();
+  var wrong = [];
+  for (var pos = 0; pos < list.length; pos++) {
+    var i = list[pos];
+    if (state.answers[i] !== undefined && state.answers[i] !== getShuffled(i, getSeed(i)).ci) {
+      wrong.push(i);
+    }
+  }
+  if (wrong.length === 0) return;
+  wrong.forEach(function(i) { delete state.answers[i]; });
+  state.retryMode = true;
+  state.retryList = wrong;
+  state.cur = 0;
+  state.showResults = false;
+  saveState();
+  render();
+}
+
+function toggleJump() {
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if (panel.style.display !== 'block') {
+    panel.style.display = 'block';
+    btn.textContent = 'Hide ▴';
+    renderDotNav();
+  } else {
+    panel.style.display = 'none';
+    btn.textContent = 'Jump ▾';
+  }
+}
+window.toggleJump = toggleJump;
+window.retryWrong = retryWrong;
+
+</script>
+</body>
+</html>

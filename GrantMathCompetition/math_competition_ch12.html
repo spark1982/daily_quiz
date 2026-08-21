@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Competition ch12</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;min-height:100vh;padding-bottom:40px}
+#quiz-title{font-size:1.3rem;font-weight:700;text-align:center;color:#111;background:#fff;padding:14px 16px 2px}
+#att-display{font-size:0.82rem;text-align:center;color:#555;background:#fff;padding:2px 0 6px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:4px 16px 10px}
+#nav-bar{background:#fff;border-bottom:1px solid #dde3ec;padding:8px 14px 4px;position:sticky;top:0;z-index:100}
+#nav-top-row{display:flex;align-items:center;gap:10px}
+#ans-count{font-size:0.8rem;color:#555;white-space:nowrap;min-width:54px}
+#prog-bar-wrap{flex:1;background:#d7dde6;border-radius:6px;height:7px;overflow:hidden}
+#prog-bar-fill{height:7px;background:#1D9E75;border-radius:6px;width:0%;transition:width .3s}
+#jump-btn{font-size:0.78rem;background:#e8edf4;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;white-space:nowrap;color:#333}
+#dot-panel{display:none;flex-wrap:wrap;gap:5px;padding:8px 2px 4px;max-height:170px;overflow-y:auto}
+.nav-dot{width:26px;height:26px;border-radius:50%;border:none;cursor:pointer;font-size:0.72rem;font-weight:700;color:#fff}
+.dot-unanswered{background:#d7dde6;color:#555}
+.dot-correct{background:#1D9E75}
+.dot-wrong{background:#E24B4A}
+#results-pill{display:none;margin-left:6px}
+#results-pill button{background:#1D9E75;color:#fff;border:none;border-radius:12px;padding:4px 13px;font-size:0.78rem;cursor:pointer;font-weight:700}
+
+#quiz-area{display:none;max-width:680px;margin:0 auto;padding:14px 14px 0}
+.q-num{font-size:0.8rem;color:#888;margin-bottom:6px}
+.q-text{font-size:1rem;color:#111;line-height:1.55;margin-bottom:14px;font-weight:500}
+.fr{display:inline-block;vertical-align:middle;text-align:center;font-style:italic;}
+.fr .fn,.fr .fd{display:block;font-size:0.78em;line-height:1.25;padding:0 3px;}
+.fr .fb{display:block;border-top:1.5px solid currentColor;min-width:14px;}
+.opts{display:flex;flex-direction:column;gap:9px}
+.opt-btn{background:#e8edf4;border:2px solid transparent;border-radius:10px;padding:11px 14px;font-size:0.97rem;color:#111111;text-align:left;cursor:pointer;line-height:1.4;transition:background .15s}
+.opt-btn:active{opacity:.85}
+.opt-correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt-wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.opt-reveal{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+#explanation{margin-top:14px;background:#f5f7fa;border-radius:10px;padding:12px 14px;font-size:0.9rem;color:#333;line-height:1.5;display:none}
+#bottom-nav{display:flex;justify-content:space-between;max-width:680px;margin:18px auto 0;padding:0 14px}
+.nav-arrow{background:#e8edf4;border:none;border-radius:10px;padding:11px 22px;font-size:0.97rem;font-weight:700;cursor:pointer;color:#333}
+.nav-arrow:disabled{opacity:.38;cursor:default}
+#next-btn{background:#1D9E75;color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:0.97rem;font-weight:700;cursor:pointer}
+
+#results-screen{display:none;max-width:680px;margin:0 auto;padding:20px 14px}
+#results-screen.show{display:block}
+#results-heading{font-size:1.4rem;font-weight:800;color:#1D9E75;text-align:center;margin-bottom:16px}
+.results-card{background:#f5f7fa;border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.rc-q{font-size:0.88rem;color:#555;margin-bottom:4px}
+.rc-a{font-size:0.95rem;font-weight:700}
+.rc-correct{color:#1D9E75}
+.rc-wrong{color:#E24B4A}
+.rc-expl{font-size:0.85rem;color:#444;margin-top:6px;line-height:1.45}
+#score-line{text-align:center;font-size:1.05rem;font-weight:700;color:#111;margin-bottom:18px}
+#results-btns{display:flex;flex-direction:column;gap:10px;max-width:320px;margin:0 auto}
+#retry-btn{background:#1D9E75;color:#fff;border:none;border-radius:10px;padding:13px;font-size:1rem;font-weight:700;cursor:pointer}
+#copy-btn{background:#185FA5;color:#fff;border:none;border-radius:10px;padding:13px;font-size:1rem;font-weight:700;cursor:pointer}
+#fresh-btn{background:#e8edf4;color:#333;border:none;border-radius:10px;padding:13px;font-size:1rem;font-weight:700;cursor:pointer}
+
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center}
+#modal-overlay.show{display:flex}
+#modal-box{background:#fff;border-radius:14px;padding:26px 22px;max-width:320px;width:90%;text-align:center}
+#modal-title{font-size:1.05rem;font-weight:700;margin-bottom:10px;color:#111}
+#modal-msg{font-size:0.92rem;color:#444;margin-bottom:20px;line-height:1.45}
+#modal-btns{display:flex;gap:10px;justify-content:center}
+#modal-cancel{background:#e8edf4;border:none;border-radius:8px;padding:10px 20px;font-size:0.95rem;font-weight:700;cursor:pointer;color:#333}
+#modal-confirm{background:#E24B4A;border:none;border-radius:8px;padding:10px 20px;font-size:0.95rem;font-weight:700;cursor:pointer;color:#fff}
+</style>
+</head>
+<body>
+<!-- ===== Universal Quiz Timer (auto-injected) ===== -->
+<style>
+  #qzTimerBar { background: #ffffff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-family: 'Segoe UI', Arial, sans-serif; }
+  #qzTimerSetup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+  #qzTimerSetup label { font-weight: 700; }
+  #qzTimerInput { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+  #qzTimerStartBtn { background: #185FA5; color: #ffffff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  #qzTimerStartBtn:active { opacity: 0.8; }
+  #qzTimerRunning { display: none; align-items: center; gap: 8px; }
+  #qzTimerLabel { font-size: 0.78rem; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 0.02em; }
+  #qzTimerDisplay { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+  #qzTimerDisplay.qz-warn { color: #f5a623; }
+  #qzTimerDisplay.qz-danger { color: #E24B4A; }
+</style>
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label for="qzTimerInput">Set Time Limit:</label>
+    <input type="number" id="qzTimerInput" min="1" max="180" value="20"> min
+    <button id="qzTimerStartBtn" type="button">Start</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span id="qzTimerLabel">Time Left</span>
+    <span id="qzTimerDisplay">20:00</span>
+  </div>
+</div>
+<script>
+(function(){
+  var QZ_KEY = 'qzTimer_' + location.pathname;
+  var qz = { totalSec: null, startedAt: null };
+  try {
+    var raw = localStorage.getItem(QZ_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p.totalSec === 'number' && typeof p.startedAt === 'number') qz = p;
+    }
+  } catch(e) {}
+  var qzInterval = null;
+
+  function qzSave() { try { localStorage.setItem(QZ_KEY, JSON.stringify(qz)); } catch(e) {} }
+  function qzFormat(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60), s = sec % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function qzRender() {
+    var setupEl = document.getElementById('qzTimerSetup');
+    var runEl = document.getElementById('qzTimerRunning');
+    var disp = document.getElementById('qzTimerDisplay');
+    if (!setupEl || !runEl || !disp) return;
+    if (!qz.startedAt) {
+      setupEl.style.display = 'flex';
+      runEl.style.display = 'none';
+      return;
+    }
+    setupEl.style.display = 'none';
+    runEl.style.display = 'flex';
+    var elapsed = (Date.now() - qz.startedAt) / 1000;
+    var remaining = qz.totalSec - elapsed;
+    disp.classList.remove('qz-warn', 'qz-danger');
+    if (remaining <= 0) {
+      disp.textContent = "Time's Up";
+      disp.classList.add('qz-danger');
+      qzStopInterval();
+      return;
+    }
+    disp.textContent = qzFormat(remaining);
+    if (remaining <= qz.totalSec * 0.1) disp.classList.add('qz-danger');
+    else if (remaining <= qz.totalSec * 0.25) disp.classList.add('qz-warn');
+  }
+  function qzStartInterval() {
+    qzStopInterval();
+    qzInterval = setInterval(qzRender, 1000);
+  }
+  function qzStopInterval() {
+    if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+  }
+  function qzStart() {
+    var input = document.getElementById('qzTimerInput');
+    var minutes = parseFloat(input.value);
+    if (!minutes || minutes <= 0) minutes = 20;
+    qz.totalSec = Math.round(minutes * 60);
+    qz.startedAt = Date.now();
+    qzSave();
+    qzRender();
+    qzStartInterval();
+  }
+
+  var btn = document.getElementById('qzTimerStartBtn');
+  if (btn) btn.addEventListener('click', qzStart);
+  qzRender();
+  if (qz.startedAt) qzStartInterval();
+
+  function qzResetTimer() {
+    qz.totalSec = null;
+    qz.startedAt = null;
+    qzSave();
+    qzStopInterval();
+    qzRender();
+  }
+  var qzRetryRe = /retry|restart|reset|start\s*fresh|try\s*again|다시\s*시작|처음부터/i;
+  document.addEventListener('click', function(ev) {
+    var el = ev.target, depth = 0;
+    while (el && depth < 4) {
+      if (el.id === 'qzTimerBar' || el.id === 'qzAttemptsBar') return;
+      var isClickable = el.tagName === 'BUTTON' || el.tagName === 'A' ||
+        (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) ||
+        (el.getAttribute && el.getAttribute('role') === 'button');
+      if (isClickable) {
+        var txt = (el.textContent || el.value || '').trim();
+        if (txt.length > 0 && txt.length < 40 && qzRetryRe.test(txt)) {
+          qzResetTimer();
+          return;
+        }
+      }
+      el = el.parentElement;
+      depth++;
+    }
+  }, true);
+})();
+</script>
+<!-- ===== End Universal Quiz Timer ===== -->
+
+<div id="quiz-title">Math Competition ch12</div>
+<div id="att-display">Math Competition | Total Attempts: <span id="att-num">0</span></div>
+<div class="instruction">Choose the correct answer for each problem.</div>
+
+<div id="nav-bar">
+  <div id="nav-top-row">
+    <span id="ans-count">0 / 20</span>
+    <div id="prog-bar-wrap"><div id="prog-bar-fill"></div></div>
+    <button id="jump-btn" onclick="window.toggleDots()">Jump</button>
+    <div id="results-pill"><button onclick="window.goResults()">Results</button></div>
+  </div>
+  <div id="dot-panel"></div>
+</div>
+
+<div id="quiz-area"></div>
+<div id="bottom-nav">
+  <button class="nav-arrow" id="prev-btn" onclick="window.goPrev()" disabled>Prev</button>
+  <button id="next-btn" onclick="window.goNext()">Next</button>
+</div>
+
+<div id="results-screen">
+  <div id="results-heading">Results</div>
+  <div id="score-line"></div>
+  <div id="results-btns">
+    <button id="retry-btn" onclick="window.retryWrong()">Retry Wrong Ones</button>
+    <button id="copy-btn" onclick="window.copyResults()">Copy All Results</button>
+    <button id="fresh-btn" onclick="window.confirmFresh('original')">Start Fresh (Original Order)</button>
+    <button id="fresh-btn-2" onclick="window.confirmFresh('random')">Start Fresh (Random Order)</button>
+  </div>
+  <div id="results-cards" style="margin-top:20px"></div>
+</div>
+
+<div id="modal-overlay">
+  <div id="modal-box">
+    <div id="modal-title">Start Fresh?</div>
+    <div id="modal-msg">This will clear all answers and reset the quiz.</div>
+    <div id="modal-btns">
+      <button id="modal-cancel" onclick="window.closeModal()">Cancel</button>
+      <button id="modal-confirm" onclick="window.doFresh()">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+const SKEY = 'quiz_ch12rates_v1';
+const ATT_KEY = 'quiz_ch12rates_att_v1';
+
+function fr(n,d){return '<span class="fr"><span class="fn">'+n+'</span><span class="fb"></span><span class="fd">'+d+'</span></span>';}
+
+const RAW_QS = [
+  {
+    q: 'Joey drove his car at a constant speed of 40 miles per hour for 30 minutes. How far did he travel? Express your answer in miles.',
+    opts: ['1,200 miles', '12 miles', '20 miles', '40 miles'],
+    ci: 2,
+    expl: '30 minutes is half an hour. Distance = speed &times; time = 40 &times; 0.5 = 20 miles.'
+  },
+  {
+    q: 'Bob drives 24 miles from his house to work. If it takes him 40 minutes to arrive at his destination, what is his average driving speed in miles per hour?',
+    opts: ['60 mph', '36 mph', '16 mph', '24 mph'],
+    ci: 1,
+    expl: '40 minutes is 2/3 of an hour. Speed = distance / time = 24 / (2/3) = 24 &times; 3/2 = 36 mph.'
+  },
+  {
+    q: 'Leo works at a toy factory. If he makes toys at a constant rate of 12 toys every hour, how many toys would he make in 8 hours?',
+    opts: ['12 toys', '20 toys', '84 toys', '96 toys'],
+    ci: 3,
+    expl: 'Total toys = rate &times; time = 12 &times; 8 = 96 toys.'
+  },
+  {
+    q: 'Jarvis bikes at a constant rate and traveled 5 miles in 20 minutes. How many hours would it take him to bike 45 miles?',
+    opts: ['3 hours', '9 hours', '0.75 hours', '15 hours'],
+    ci: 0,
+    expl: 'His rate is 5 miles per 20 minutes, which is 15 miles per hour (since 20 minutes = 1/3 hour, 5 &divide; (1/3) = 15). Time to bike 45 miles = 45 / 15 = 3 hours.'
+  },
+  {
+    q: 'Kyle sewed 525 shirts in 75 hours. What was his average rate of shirts sewed per hour?',
+    opts: ['7 shirts per hour', '6 shirts per hour', '75 shirts per hour', '450 shirts per hour'],
+    ci: 0,
+    expl: 'Rate = total shirts / total hours = 525 / 75 = 7 shirts per hour.'
+  },
+  {
+    q: 'A plane travels a distance of 1125 miles at an average speed of 540 miles per hour. How many minutes does the trip take?',
+    opts: ['125 minutes', '208 minutes', '135 minutes', '2.5 minutes'],
+    ci: 0,
+    expl: 'Time in hours = distance / speed = 1125 / 540 = 25/12 hours. Converting to minutes: 25/12 &times; 60 = 125 minutes.'
+  },
+  {
+    q: 'During a road trip, Jonathan drives at a rate of 45 miles per hour for the first two hours, a rate of 60 miles per hour for the next five hours and a rate of 30 miles per hour for the final three hours. What is his average speed in miles per hour for the whole road trip?',
+    opts: ['45 mph', '50 mph', '48 mph', '40 mph'],
+    ci: 2,
+    expl: 'Total distance = 45(2) + 60(5) + 30(3) = 90 + 300 + 90 = 480 miles. Total time = 2 + 5 + 3 = 10 hours. Average speed = 480 / 10 = 48 mph.'
+  },
+  {
+    q: 'Carl can solve 14 math problems per hour. If his older brother can solve twice as many math problems per hour as Carl, how many hours will it take them to solve 336 math problems if they work together?',
+    opts: ['8 hours', '24 hours', '12 hours', '16 hours'],
+    ci: 0,
+    expl: 'Carl\'s brother solves 2 &times; 14 = 28 problems per hour. Working together, their combined rate is 14 + 28 = 42 problems per hour. Time = 336 / 42 = 8 hours.'
+  },
+  {
+    q: 'Three workers can build 72 microwaves in 8 hours. How many microwaves can one worker build in one hour? Hint: It is equivalent to the rate.',
+    opts: ['9 microwaves', '3 microwaves', '24 microwaves', '6 microwaves'],
+    ci: 1,
+    expl: 'The three workers together build 72 / 8 = 9 microwaves per hour. One worker builds 9 / 3 = 3 microwaves per hour.'
+  },
+  {
+    q: 'Julian lives 120 miles from his mom. If he travels at an average speed of 40 miles per hour going to his mom&#39;s house and 24 miles per hour on the return trip, what is his average speed in miles per hour for the entire trip?',
+    opts: ['30 mph', '32 mph', '40 mph', '24 mph'],
+    ci: 0,
+    expl: 'Time going = 120/40 = 3 hours, and time returning = 120/24 = 5 hours, for a total of 8 hours over a total distance of 240 miles. Average speed = 240 / 8 = 30 mph.'
+  },
+  {
+    q: '6 workers can build 378 chairs in 7 hours. How many chairs can 4 workers build in 5 hours?',
+    opts: ['180 chairs', '270 chairs', '216 chairs', '135 chairs'],
+    ci: 0,
+    expl: 'One worker builds 378 / (6 &times; 7) = 9 chairs per hour. Four workers working for 5 hours build 4 &times; 5 &times; 9 = 180 chairs.'
+  },
+  {
+    q: 'A giant water fountain dispenses 40 quarts of water every minute. How many hours would it take to dispense 960 gallons of water? Express your answer as a mixed number.',
+    opts: ['1<span class="fr"><span class="fn">1</span><span class="fb"></span><span class="fd">2</span></span> hours', '2 hours', '96 hours', '1<span class="fr"><span class="fn">3</span><span class="fb"></span><span class="fd">5</span></span> hours'],
+    ci: 3,
+    expl: '960 gallons = 960 &times; 4 = 3,840 quarts. At 40 quarts per minute, this takes 3,840 / 40 = 96 minutes, which is 96/60 = 1<span class="fr"><span class="fn">3</span><span class="fb"></span><span class="fd">5</span></span> hours.'
+  },
+  {
+    q: 'James has three lawns where each lawn has 1800 square feet of area. If he can mow at a constant rate of 720 square inches per minute, how many hours will it take him to finish mowing his three lawns?',
+    opts: ['6 hours', '7.5 hours', '54 hours', '18 hours'],
+    ci: 3,
+    expl: 'The total area is 1,800 &times; 3 = 5,400 square feet, which equals 5,400 &times; 144 = 777,600 square inches. At 720 square inches per minute, this takes 777,600 / 720 = 1,080 minutes, which is 1,080 / 60 = 18 hours.'
+  },
+  {
+    q: '12 workers can make 1440 DVD\'s in 15 hours. If each worker works at the same constant rate, 21 workers can make 840 DVD\'s in X minutes. What is X?',
+    opts: ['X = 300', 'X = 315', 'X = 280', 'X = 250'],
+    ci: 0,
+    expl: '12 workers make 1,440 DVD\'s in 15 hours = 900 minutes, so one worker\'s rate is 1,440 / (12 &times; 900) = 2/15 DVD\'s per minute. With 21 workers, the combined rate is 21 &times; 2/15 = 14/5 DVD\'s per minute. Time to make 840 DVD\'s: X = 840 / (14/5) = 300 minutes.'
+  },
+  {
+    q: 'Angela can feed 7 cows every hour, Bessie can feed 8 cows every hour and Cassie can feed 10 cows every hour. If they all work together, how many hours would it take them to feed 300 cows?',
+    opts: ['36 hours', '12 hours', '25 hours', '20 hours'],
+    ci: 1,
+    expl: 'Their combined rate is 7 + 8 + 10 = 25 cows per hour. Time = 300 / 25 = 12 hours.'
+  },
+  {
+    q: 'Robin is driving ahead of Will by 20 miles traveling in the same direction. If Robin is driving at a constant speed of 39 miles per hour and Will is driving at a constant speed of 51 miles per hour, how many minutes will it take Will to catch up to Robin?',
+    opts: ['100 minutes', '60 minutes', '240 minutes', '20 minutes'],
+    ci: 0,
+    expl: 'Will closes the gap at a rate of 51 &minus; 39 = 12 miles per hour. Time to close the 20-mile gap = 20 / 12 = 5/3 hours, which is 5/3 &times; 60 = 100 minutes.'
+  },
+  {
+    q: 'Wally can make 6 pens in one hour. Jay can make 10 pens in half an hour. Barry can make 12 pens in 45 minutes. How many pens can they make together in 2 hours?',
+    opts: ['76 pens', '64 pens', '96 pens', '84 pens'],
+    ci: 3,
+    expl: 'Wally\'s rate is 6 pens per hour. Jay\'s rate is 10 pens per 0.5 hour = 20 pens per hour. Barry\'s rate is 12 pens per 0.75 hour = 16 pens per hour. Combined rate = 6 + 20 + 16 = 42 pens per hour. In 2 hours: 42 &times; 2 = 84 pens.'
+  },
+  {
+    q: 'Gerald can print 2 shirts every 5 minutes. Identical twins Lucy and Lucas can each print 7 shirts every 10 minutes. How many minutes would it take for the three of them working together to print 378 shirts?',
+    opts: ['210 minutes', '189 minutes', '225 minutes', '180 minutes'],
+    ci: 0,
+    expl: 'Gerald\'s rate is 2/5 shirts per minute. Lucy and Lucas each print 7/10 shirts per minute, so together they print 14/10 = 7/5 shirts per minute. Combined with Gerald: 2/5 + 7/5 = 9/5 shirts per minute. Time = 378 / (9/5) = 378 &times; 5/9 = 210 minutes.'
+  },
+  {
+    q: 'Abby can make a button every 10 seconds, Beatrice can make a button every 15 seconds and Cassandra can make a button every 30 seconds. If they work together, how many minutes would it take them to make 408 buttons?',
+    opts: ['34 minutes', '30 minutes', '40 minutes', '20.4 minutes'],
+    ci: 0,
+    expl: 'Abby\'s rate is 1/10 button per second, Beatrice\'s is 1/15 button per second, and Cassandra\'s is 1/30 button per second. Combined: 1/10 + 1/15 + 1/30 = 3/30 + 2/30 + 1/30 = 6/30 = 1/5 button per second. Time = 408 / (1/5) = 2,040 seconds, which is 2,040 / 60 = 34 minutes.'
+  },
+  {
+    q: 'Jack and Jill are 1080 miles apart. They drive at different speeds toward each other to meet up. If Jack drives at an average speed of 37 mph and Jill drives at an average speed of 53 mph, how many hours will it take them to meet up?',
+    opts: ['10 hours', '12 hours', '20 hours', '29.2 hours'],
+    ci: 1,
+    expl: 'Since they are driving toward each other, their speeds add together: 37 + 53 = 90 mph. Time to close the 1,080-mile gap = 1,080 / 90 = 12 hours.'
+  }
+];
+
+// --- Question order (original vs random), persisted independently of quiz progress ---
+const ORDER_KEY = SKEY + '_order_v1';
+function identityOrder(){ return RAW_QS.map((_,i)=>i); }
+function isValidOrder(arr){
+  if(!Array.isArray(arr)||arr.length!==RAW_QS.length) return false;
+  const sorted=[...arr].sort((a,b)=>a-b);
+  for(let i=0;i<sorted.length;i++) if(sorted[i]!==i) return false;
+  return true;
+}
+function loadOrder(){
+  try{
+    const raw=localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    const arr=JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error();
+    return arr;
+  }catch(e){ localStorage.removeItem(ORDER_KEY); return null; }
+}
+function saveOrder(order){ localStorage.setItem(ORDER_KEY, JSON.stringify(order)); }
+function shuffleRandom(arr){
+  const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+let currentOrder = loadOrder() || identityOrder();
+let QS = currentOrder.map(i => RAW_QS[i]);
+
+let state = {cur:0, answers:{}, shuffles:{}, showResults:false, retryMode:false, retryList:[]};
+let attCount = parseInt(localStorage.getItem(ATT_KEY)||'0');
+function getList(){ return state.retryMode ? state.retryList : QS.map((_,i)=>i); }
+
+function saveState(){
+  try{ localStorage.setItem(SKEY, JSON.stringify(state)); } catch(e){}
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(SKEY);
+    if(!raw) return;
+    const s = JSON.parse(raw);
+    if(typeof s.answers!=='object'||typeof s.shuffles!=='object') return;
+    if(s.retryMode && !Array.isArray(s.retryList)) return;
+    const list = s.retryMode ? s.retryList : QS.map((_,i)=>i);
+    if(typeof s.cur!=='number'||s.cur<0||s.cur>=list.length) return;
+    state = s;
+  } catch(e){ localStorage.removeItem(SKEY); }
+}
+function getShuffled(i){
+  if(!state.shuffles[i]){
+    const q=QS[i];
+    const idx=[0,1,2,3];
+    for(let j=idx.length-1;j>0;j--){const r=Math.floor(Math.random()*(j+1));[idx[j],idx[r]]=[idx[r],idx[j]];}
+    const newCi=idx.indexOf(q.ci);
+    state.shuffles[i]={order:idx,ci:newCi};
+    saveState();
+  }
+  return state.shuffles[i];
+}
+
+function render(){
+  const qa=document.getElementById('quiz-area');
+  const rs=document.getElementById('results-screen');
+  const bn=document.getElementById('bottom-nav');
+  if(state.showResults){
+    qa.style.display='none';
+    bn.style.display='none';
+    rs.classList.add('show');
+    showResultsScreen();
+    updateNav();
+    return;
+  }
+  rs.classList.remove('show');
+  qa.style.display='block';
+  bn.style.display='flex';
+  renderQuestion();
+  updateNav();
+}
+
+function renderQuestion(){
+  const list=getList();
+  const i=list[state.cur];
+  const q=QS[i];
+  const sh=getShuffled(i);
+  const answered=state.answers[i]!==undefined;
+  const chosen=state.answers[i];
+
+  let html=`<div class="q-num">Question ${state.cur+1} of ${list.length}</div>`;
+  html+=`<div class="q-text">${i+1}. ${q.q}</div><div class="opts">`;
+  sh.order.forEach((origIdx,pos)=>{
+    let cls='opt-btn';
+    if(answered){
+      if(pos===sh.ci) cls+=' opt-reveal';
+      else if(pos===chosen) cls+=' opt-wrong';
+    }
+    const dis=answered?'disabled':'';
+    html+=`<button class="${cls}" ${dis} onclick="window.pickOpt(${pos})">${q.opts[origIdx]}</button>`;
+  });
+  html+=`</div>`;
+  if(answered){
+    html+=`<div id="explanation" style="display:block">${q.expl}</div>`;
+  } else {
+    html+=`<div id="explanation" style="display:none"></div>`;
+  }
+  document.getElementById('quiz-area').innerHTML=html;
+
+  const nb=document.getElementById('next-btn');
+  const pb=document.getElementById('prev-btn');
+  pb.disabled=(state.cur===0);
+  nb.textContent=(state.cur===list.length-1)?'See Results →':'Next';
+}
+
+function updateNav(){
+  const list=getList();
+  const total=list.length;
+  const ans=list.filter(i=>state.answers[i]!==undefined).length;
+  document.getElementById('ans-count').textContent=`${ans} / ${total}`;
+  document.getElementById('prog-bar-fill').style.width=`${ans/total*100}%`;
+  document.getElementById('att-num').textContent=attCount;
+
+  // dots
+  const dp=document.getElementById('dot-panel');
+  let dhtml='';
+  list.forEach((qi,pos)=>{
+    let cls='nav-dot dot-unanswered';
+    if(state.answers[qi]!==undefined){
+      const sh=state.shuffles[qi];
+      if(sh && state.answers[qi]===sh.ci) cls='nav-dot dot-correct';
+      else cls='nav-dot dot-wrong';
+    }
+    dhtml+=`<button class="${cls}" onclick="window.jumpTo(${pos})">${pos+1}</button>`;
+  });
+  dp.innerHTML=dhtml;
+
+  const allDone=ans===total;
+  document.getElementById('results-pill').style.display=allDone?'inline':'none';
+}
+
+window.pickOpt=function(pos){
+  const list=getList();
+  const i=list[state.cur];
+  if(state.answers[i]!==undefined) return;
+  state.answers[i]=pos;
+  saveState();
+  render();
+  const allDone=list.filter(qi=>state.answers[qi]!==undefined).length===list.length;
+  if(allDone) document.getElementById('results-pill').style.display='inline';
+};
+window.goPrev=function(){
+  if(state.cur>0){state.cur--;saveState();render();}
+};
+window.goNext=function(){
+  const list=getList();
+  if(state.cur===list.length-1){window.goResults();return;}
+  state.cur++;saveState();render();
+};
+window.jumpTo=function(pos){
+  state.cur=pos;saveState();render();
+};
+window.toggleDots=function(){
+  const dp=document.getElementById('dot-panel');
+  dp.style.display=(dp.style.display==='flex')?'none':'flex';
+};
+window.goResults=function(){
+  state.showResults=true;
+  if(!state.retryMode){
+    attCount++;
+    localStorage.setItem(ATT_KEY,String(attCount));
+  }
+  saveState();render();
+};
+
+function showResultsScreen(){
+  const list=getList();
+  const total=list.length;
+  let correct=0;
+  list.forEach(i=>{
+    const sh=state.shuffles[i];
+    if(sh && state.answers[i]===sh.ci) correct++;
+  });
+  document.getElementById('results-heading').textContent = state.retryMode ? 'Retry Results' : 'Results';
+  document.getElementById('score-line').textContent=`Score: ${correct} / ${total}`;
+  let html='';
+  list.forEach((i,pos)=>{
+    const q=QS[i];
+    const sh=state.shuffles[i];
+    const chosen=state.answers[i];
+    const isCorrect=sh&&chosen===sh.ci;
+    const chosenText=(chosen!==undefined&&sh)?q.opts[sh.order[chosen]]:'(no answer)';
+    const correctText=sh?q.opts[sh.order[sh.ci]]:'(no answer)';
+    const rc=isCorrect?'rc-correct':'rc-wrong';
+    html+=`<div class="results-card">
+      <div class="rc-q">Q${pos+1}: ${q.q.substring(0,80)}${q.q.length>80?'&hellip;':''}</div>
+      <div class="rc-a ${rc}">${isCorrect?'Correct':'Wrong'} - Your answer: ${chosenText}${isCorrect?'':' | Correct: '+correctText}</div>
+      <div class="rc-expl">${q.expl}</div>
+    </div>`;
+  });
+  document.getElementById('results-cards').innerHTML=html;
+}
+
+window.retryWrong=function(){
+  const list=getList();
+  const wrong=list.filter(i=>{
+    const sh=state.shuffles[i];
+    return state.answers[i]===undefined||(sh&&state.answers[i]!==sh.ci);
+  });
+  if(!wrong.length) return;
+  wrong.forEach(i=>{delete state.answers[i];});
+  state.retryMode=true;
+  state.retryList=wrong;
+  state.showResults=false;
+  state.cur=0;
+  saveState();render();
+};
+window.copyResults=function(){
+  const list=getList();
+  let txt='Math Competition ch12 Results\n';
+  list.forEach((i,pos)=>{
+    const sh=state.shuffles[i];
+    const isCorrect=sh&&state.answers[i]===sh.ci;
+    txt+=`Q${pos+1}: ${isCorrect?'Correct':'Wrong'}\n`;
+  });
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt);
+    } else {
+      const ta=document.createElement('textarea');
+      ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    }
+  } catch(e){}
+};
+let pendingFreshMode = 'original';
+window.confirmFresh=function(mode){
+  pendingFreshMode = mode;
+  const t = document.getElementById('modal-title');
+  const m = document.getElementById('modal-msg');
+  if(mode==='random'){
+    t.textContent='Start Fresh (Random Order)?';
+    m.textContent='Questions will be reshuffled into a new random order, and all answers will be cleared. This cannot be undone.';
+  } else {
+    t.textContent='Start Fresh (Original Order)?';
+    m.textContent='Questions will return to their original order, and all answers will be cleared. This cannot be undone.';
+  }
+  document.getElementById('modal-overlay').classList.add('show');
+};
+window.closeModal=function(){
+  document.getElementById('modal-overlay').classList.remove('show');
+};
+window.doFresh=function(){
+  currentOrder = (pendingFreshMode==='random') ? shuffleRandom(identityOrder()) : identityOrder();
+  saveOrder(currentOrder);
+  QS = currentOrder.map(i => RAW_QS[i]);
+  localStorage.removeItem(SKEY);
+  state={cur:0,answers:{},shuffles:{},showResults:false,retryMode:false,retryList:[]};
+  document.getElementById('modal-overlay').classList.remove('show');
+  render();
+};
+
+loadState();
+render();
+})();
+</script>
+</body>
+</html>

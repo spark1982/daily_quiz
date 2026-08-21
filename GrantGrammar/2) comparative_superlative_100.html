@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comparative & Superlative Quiz</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; color: #1a1a2e; min-height: 100vh; }
+  #dueDate { background: #fff; text-align: center; padding: 10px; font-size: 2rem; font-weight: 800; color: #185FA5; border-bottom: 2px solid #dce3ef; }
+  #quizTitle { text-align: center; padding: 14px 16px 6px; font-size: 1.3rem; font-weight: 700; color: #1a1a2e; }
+  #quizSubtitle { text-align: center; font-size: 0.85rem; color: #666; padding-bottom: 10px; }
+  #quizArea { display: none; max-width: 680px; margin: 0 auto; padding: 16px; }
+  .type-badge { display: inline-block; background: #185FA5; color: #fff; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-bottom: 10px; letter-spacing: 0.03em; }
+  #qNum { font-size: 0.82rem; color: #888; margin-bottom: 4px; }
+  #qText { font-size: 1.2rem; font-weight: 700; line-height: 1.6; margin-bottom: 6px; color: #1a1a2e; }
+  #qSub { font-size: 0.88rem; color: #555; margin-bottom: 16px; }
+  .option-btn { display: block; width: 100%; margin-bottom: 10px; padding: 13px 16px; border-radius: 10px; border: 2px solid transparent; background: #e8edf4; color: #111111; font-size: 0.97rem; font-weight: 500; cursor: pointer; text-align: left; transition: all 0.15s; }
+  .option-btn:hover:not(:disabled) { background: #d5dff0; }
+  .option-btn.correct { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .option-btn.wrong { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+  .option-btn.reveal { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  #explanation { display: none; background: #fff8e1; border-left: 4px solid #f0a500; border-radius: 8px; padding: 12px 14px; font-size: 0.9rem; color: #5a3e00; margin-bottom: 14px; line-height: 1.5; }
+  #navRow { display: flex; gap: 10px; margin-top: 6px; }
+  .nav-btn { flex: 1; padding: 12px; border-radius: 10px; border: none; font-size: 0.95rem; font-weight: 700; cursor: pointer; background: #185FA5; color: #fff; transition: background 0.15s; }
+  .nav-btn:hover { background: #134d8a; }
+  #prevBtn { background: #e8edf4; color: #333; }
+  #prevBtn:hover { background: #d0d8e8; }
+  #resultsArea { display: none; max-width: 680px; margin: 0 auto; padding: 16px; }
+  #resultsScore { text-align: center; font-size: 1.4rem; font-weight: 800; color: #185FA5; margin-bottom: 16px; }
+  #resultsGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .result-card { border-radius: 10px; padding: 10px 12px; cursor: pointer; border: 2px solid transparent; }
+  .result-card.correct { background: #E1F5EE; border-color: #1D9E75; }
+  .result-card.wrong { background: #FCEBEB; border-color: #E24B4A; }
+  .result-card.skipped { background: #f3f3f3; border-color: #ccc; }
+  .result-card .rc-num { font-size: 0.75rem; font-weight: 700; color: #888; }
+  .result-card .rc-status { font-size: 0.8rem; font-weight: 700; margin: 2px 0; }
+  .result-card.correct .rc-status { color: #085041; }
+  .result-card.wrong .rc-status { color: #501313; }
+  .result-card .rc-answer { font-size: 0.72rem; color: #444; margin-top: 3px; }
+  #copyBtn { display: block; width: 100%; padding: 13px; background: #185FA5; color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-bottom: 12px; }
+  #startFreshBtn { display: block; width: 100%; padding: 13px; background: #fff; color: #E24B4A; border: 2px solid #E24B4A; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+  #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 999; align-items: center; justify-content: center; }
+  #modal.active { display: flex; }
+  #modalBox { background: #fff; border-radius: 16px; padding: 28px 24px; max-width: 340px; width: 90%; text-align: center; }
+  #modalBox h3 { font-size: 1.1rem; margin-bottom: 10px; }
+  #modalBox p { font-size: 0.9rem; color: #555; margin-bottom: 20px; }
+  #modalBtns { display: flex; gap: 10px; }
+  #modalCancel { flex: 1; padding: 11px; border-radius: 8px; border: 2px solid #ccc; background: #fff; font-weight: 700; cursor: pointer; }
+  #modalConfirm { flex: 1; padding: 11px; border-radius: 8px; border: none; background: #E24B4A; color: #fff; font-weight: 700; cursor: pointer; }
+  #navBar     { display:flex; align-items:center; gap:8px; padding:10px 12px; background:#fff; border-bottom:1px solid #dce3ef; position:sticky; top:0; z-index:100; }
+  .prog-track { background:#d7dde6; border-radius:3px; height:6px; flex:1; margin:0 8px; min-width:0; }
+  .prog-fill  { background:#185FA5; border-radius:3px; height:6px; width:0%; transition:width 0.2s; }
+  #nav-count  { font-size:13px; white-space:nowrap; color:#555; font-weight:700; }
+  #jump-btn   { font-size:12px; padding:4px 10px; border:1px solid #185FA5; border-radius:14px; background:#fff; color:#185FA5; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+  #dot-panel  { padding:8px 12px; background:#f5f7fa; border-bottom:1px solid #dce3ef; display:none; max-height:170px; overflow-y:auto; text-align:center; position:sticky; top:41px; z-index:99; }
+  .dot        { width:26px; height:26px; border-radius:50%; border:2px solid transparent; background:#d7dde6; font-size:11px; font-weight:700; color:#555; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; margin:2px; transition:all 0.15s; flex-shrink:0; }
+  .dot.correct      { background:#185FA5; border-color:#185FA5; color:#fff; }
+  .dot.wrong        { background:#E24B4A; border-color:#E24B4A; color:#fff; }
+  .dot.current      { outline:3px solid #185FA5; outline-offset:2px; }
+  .dot.results-pill { width:auto; padding:0 10px; border-radius:15px; background:#185FA5; color:#fff; border-color:#185FA5; font-size:11px; }
+  #retryWrongBtn    { display:block; width:100%; padding:13px; background:#1D9E75; color:#fff; border:none; border-radius:10px; font-size:1rem; font-weight:700; cursor:pointer; margin-bottom:12px; }
+</style>
+</head>
+<body>
+<!-- ===== Universal Quiz Timer (auto-injected) ===== -->
+<style>
+  #qzTimerBar { background: #ffffff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-family: 'Segoe UI', Arial, sans-serif; }
+  #qzTimerSetup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+  #qzTimerSetup label { font-weight: 700; }
+  #qzTimerInput { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+  #qzTimerStartBtn { background: #185FA5; color: #ffffff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  #qzTimerStartBtn:active { opacity: 0.8; }
+  #qzTimerRunning { display: none; align-items: center; gap: 8px; }
+  #qzTimerLabel { font-size: 0.78rem; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 0.02em; }
+  #qzTimerDisplay { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+  #qzTimerDisplay.qz-warn { color: #f5a623; }
+  #qzTimerDisplay.qz-danger { color: #E24B4A; }
+</style>
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label for="qzTimerInput">Set Time Limit:</label>
+    <input type="number" id="qzTimerInput" min="1" max="180" value="20"> min
+    <button id="qzTimerStartBtn" type="button">Start</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span id="qzTimerLabel">Time Left</span>
+    <span id="qzTimerDisplay">20:00</span>
+  </div>
+</div>
+<script>
+(function(){
+  var QZ_KEY = 'qzTimer_' + location.pathname;
+  var qz = { totalSec: null, startedAt: null };
+  try {
+    var raw = localStorage.getItem(QZ_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p.totalSec === 'number' && typeof p.startedAt === 'number') qz = p;
+    }
+  } catch(e) {}
+  var qzInterval = null;
+
+  function qzSave() { try { localStorage.setItem(QZ_KEY, JSON.stringify(qz)); } catch(e) {} }
+  function qzFormat(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60), s = sec % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function qzRender() {
+    var setupEl = document.getElementById('qzTimerSetup');
+    var runEl = document.getElementById('qzTimerRunning');
+    var disp = document.getElementById('qzTimerDisplay');
+    if (!setupEl || !runEl || !disp) return;
+    if (!qz.startedAt) {
+      setupEl.style.display = 'flex';
+      runEl.style.display = 'none';
+      return;
+    }
+    setupEl.style.display = 'none';
+    runEl.style.display = 'flex';
+    var elapsed = (Date.now() - qz.startedAt) / 1000;
+    var remaining = qz.totalSec - elapsed;
+    disp.classList.remove('qz-warn', 'qz-danger');
+    if (remaining <= 0) {
+      disp.textContent = "Time's Up";
+      disp.classList.add('qz-danger');
+      qzStopInterval();
+      return;
+    }
+    disp.textContent = qzFormat(remaining);
+    if (remaining <= qz.totalSec * 0.1) disp.classList.add('qz-danger');
+    else if (remaining <= qz.totalSec * 0.25) disp.classList.add('qz-warn');
+  }
+  function qzStartInterval() {
+    qzStopInterval();
+    qzInterval = setInterval(qzRender, 1000);
+  }
+  function qzStopInterval() {
+    if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+  }
+  function qzStart() {
+    var input = document.getElementById('qzTimerInput');
+    var minutes = parseFloat(input.value);
+    if (!minutes || minutes <= 0) minutes = 20;
+    qz.totalSec = Math.round(minutes * 60);
+    qz.startedAt = Date.now();
+    qzSave();
+    qzRender();
+    qzStartInterval();
+  }
+
+  var btn = document.getElementById('qzTimerStartBtn');
+  if (btn) btn.addEventListener('click', qzStart);
+  qzRender();
+  if (qz.startedAt) qzStartInterval();
+
+  function qzResetTimer() {
+    qz.totalSec = null;
+    qz.startedAt = null;
+    qzSave();
+    qzStopInterval();
+    qzRender();
+  }
+  var qzRetryRe = /retry|restart|reset|start\s*fresh|try\s*again|\uB2E4\uC2DC\s*\uC2DC\uC791|\uCC98\uC74C\uBD80\uD0B0/i;
+  document.addEventListener('click', function(ev) {
+    var el = ev.target, depth = 0;
+    while (el && depth < 4) {
+      if (el.id === 'qzTimerBar' || el.id === 'qzAttemptsBar') return;
+      var isClickable = el.tagName === 'BUTTON' || el.tagName === 'A' ||
+        (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) ||
+        (el.getAttribute && el.getAttribute('role') === 'button');
+      if (isClickable) {
+        var txt = (el.textContent || el.value || '').trim();
+        if (txt.length > 0 && txt.length < 40 && qzRetryRe.test(txt)) {
+          qzResetTimer();
+          return;
+        }
+      }
+      el = el.parentElement;
+      depth++;
+    }
+  }, true);
+})();
+</script>
+<!-- ===== End Universal Quiz Timer ===== -->
+<!-- ===== Universal Total Attempts Counter (auto-injected) ===== -->
+<style>
+  #qzAttemptsBar { background: #f5f8fc; border-bottom: 1px solid #d0dce8; padding: 6px 12px; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', Arial, sans-serif; font-size: 0.82rem; color: #4a6fa5; font-weight: 700; letter-spacing: 0.01em; }
+  #qzAttemptsBar span { color: #185FA5; font-weight: 900; margin-left: 4px; }
+</style>
+<div id="qzAttemptsBar">Total Attempts:<span id="qzAttemptsCount">0</span></div>
+<script>
+(function(){
+  var QA_KEY = 'qzAttempts_' + location.pathname;
+  function qaGet(){ try { return parseInt(localStorage.getItem(QA_KEY)||'0',10) || 0; } catch(e){ return 0; } }
+  function qaSet(n){ try { localStorage.setItem(QA_KEY, String(n)); } catch(e){} }
+  function qaRenderCount(){
+    var el = document.getElementById('qzAttemptsCount');
+    if (el) el.textContent = qaGet();
+  }
+  function qaIsVisible(el){
+    if (!el) return false;
+    var r = el.getBoundingClientRect();
+    if (r.width < 80 || r.height < 30) return false;
+    var cs = window.getComputedStyle(el);
+    return cs.display !== 'none' && cs.visibility !== 'hidden';
+  }
+  function qaResultsShowing(){
+    var els = document.querySelectorAll('[id*="result" i],[class*="result" i],[id*="score" i],[class*="score" i]');
+    for (var i=0;i<els.length;i++){ if (qaIsVisible(els[i])) return true; }
+    return false;
+  }
+  var qaWasShowing = false;
+  function qaCheck(){
+    var showing = qaResultsShowing();
+    if (showing && !qaWasShowing) {
+      qaSet(qaGet()+1);
+      qaRenderCount();
+    }
+    qaWasShowing = showing;
+  }
+  qaRenderCount();
+  setInterval(qaCheck, 800);
+  function qaObserve(){
+    if (!document.body) return;
+    var mo = new MutationObserver(function(){ qaCheck(); });
+    mo.observe(document.body, { attributes: true, childList: true, subtree: true });
+  }
+  if (document.body) qaObserve();
+  else document.addEventListener('DOMContentLoaded', qaObserve);
+  setTimeout(qaCheck, 1500);
+})();
+</script>
+<!-- ===== End Universal Total Attempts Counter ===== -->
+
+
+<div id="quizTitle">Comparative & Superlative</div>
+<div id="quizSubtitle">100 Questions · Choose the correct pair</div>
+<div id="navBar">
+  <span id="nav-count">0 / 0</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button id="jump-btn" onclick="toggleJump()">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+<div id="quizArea"></div>
+<div id="resultsArea"></div>
+<div id="modal">
+  <div id="modalBox">
+    <h3 id="modalTitle">Start Fresh?</h3>
+    <p id="modalText">All your answers will be cleared and the quiz will restart.</p>
+    <div id="modalBtns">
+      <button id="modalCancel">Cancel</button>
+      <button id="modalConfirm">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>
+// o[0] = correct pair "comparative / superlative"
+const QUESTIONS_RAW = [
+
+  // ══ TRULY IRREGULAR (10) ════════════════════════════════════════════════
+  {g:"Irregular", b:"good",
+   o:["better / best","gooder / goodest","more good / most good","beter / bets"],
+   exp:"good → better / best (completely irregular — must be memorized)"},
+  {g:"Irregular", b:"bad",
+   o:["worse / worst","badder / baddest","more bad / most bad","worser / worsest"],
+   exp:"bad → worse / worst (completely irregular — must be memorized)"},
+  {g:"Irregular", b:"far",
+   o:["farther / farthest","farer / farest","more far / most far","further / furtest"],
+   exp:"far → farther / farthest (distance); 'further/furthest' is also accepted for figurative use"},
+  {g:"Irregular", b:"little",
+   o:["less / least","littler / littlest","more little / most little","lesser / leastest"],
+   exp:"little → less / least (irregular when referring to amount)"},
+  {g:"Irregular", b:"much",
+   o:["more / most","mucher / muchest","more much / most much","morest / mostest"],
+   exp:"much → more / most (irregular — must be memorized)"},
+  {g:"Irregular", b:"many",
+   o:["more / most","manier / maniest","more many / most many","morer / mostest"],
+   exp:"many → more / most (same as 'much' — must be memorized)"},
+  {g:"Irregular", b:"well",
+   o:["better / best","weller / wellest","more well / most well","gooder / goodest"],
+   exp:"well → better / best (same irregular forms as 'good' when used as an adverb)"},
+  {g:"Irregular", b:"ill",
+   o:["worse / worst","iller / illest","more ill / most ill","badder / baddest"],
+   exp:"ill → worse / worst (same irregular forms as 'bad')"},
+  {g:"Irregular", b:"old",
+   o:["older / oldest","more old / most old","elder / eldest","olden / oldest"],
+   exp:"old → older / oldest (standard form); 'elder/eldest' exists but is used only for family members"},
+  {g:"Irregular", b:"late",
+   o:["later / latest","more late / most late","latter / last","latesst / lasttest"],
+   exp:"late → later / latest (for time); 'latter/last' exists but has a different meaning"},
+
+  // ══ DOUBLE CONSONANT + er/est (15) ══════════════════════════════════════
+  {g:"Double consonant + -er/-est", b:"big",
+   o:["bigger / biggest","biger / bigest","more big / most big","bigg / biggest"],
+   exp:"big → bigger / biggest (short vowel + single consonant: double the -g)"},
+  {g:"Double consonant + -er/-est", b:"hot",
+   o:["hotter / hottest","hoter / hotest","more hot / most hot","hott / hottest"],
+   exp:"hot → hotter / hottest (short vowel + single consonant: double the -t)"},
+  {g:"Double consonant + -er/-est", b:"thin",
+   o:["thinner / thinnest","thiner / thinest","more thin / most thin","thinn / thinnest"],
+   exp:"thin → thinner / thinnest (short vowel + single consonant: double the -n)"},
+  {g:"Double consonant + -er/-est", b:"fat",
+   o:["fatter / fattest","fater / fatest","more fat / most fat","fatt / fattest"],
+   exp:"fat → fatter / fattest (short vowel + single consonant: double the -t)"},
+  {g:"Double consonant + -er/-est", b:"sad",
+   o:["sadder / saddest","sader / sadest","more sad / most sad","sadd / saddest"],
+   exp:"sad → sadder / saddest (short vowel + single consonant: double the -d)"},
+  {g:"Double consonant + -er/-est", b:"mad",
+   o:["madder / maddest","mader / madest","more mad / most mad","madd / maddest"],
+   exp:"mad → madder / maddest (short vowel + single consonant: double the -d)"},
+  {g:"Double consonant + -er/-est", b:"wet",
+   o:["wetter / wettest","weter / wetest","more wet / most wet","wett / wettest"],
+   exp:"wet → wetter / wettest (short vowel + single consonant: double the -t)"},
+  {g:"Double consonant + -er/-est", b:"fit",
+   o:["fitter / fittest","fiter / fitest","more fit / most fit","fitt / fittest"],
+   exp:"fit → fitter / fittest (short vowel + single consonant: double the -t)"},
+  {g:"Double consonant + -er/-est", b:"dim",
+   o:["dimmer / dimmest","dimer / dimest","more dim / most dim","dimm / dimmest"],
+   exp:"dim → dimmer / dimmest (short vowel + single consonant: double the -m)"},
+  {g:"Double consonant + -er/-est", b:"slim",
+   o:["slimmer / slimmest","slimer / slimest","more slim / most slim","slimm / slimmest"],
+   exp:"slim → slimmer / slimmest (short vowel + single consonant: double the -m)"},
+  {g:"Double consonant + -er/-est", b:"flat",
+   o:["flatter / flattest","flater / flatest","more flat / most flat","flatt / flattest"],
+   exp:"flat → flatter / flattest (short vowel + single consonant: double the -t)"},
+  {g:"Double consonant + -er/-est", b:"red",
+   o:["redder / reddest","reder / redest","more red / most red","redd / reddest"],
+   exp:"red → redder / reddest (short vowel + single consonant: double the -d)"},
+  {g:"Double consonant + -er/-est", b:"tan",
+   o:["tanner / tannest","taner / tanest","more tan / most tan","tann / tannest"],
+   exp:"tan → tanner / tannest (short vowel + single consonant: double the -n)"},
+  {g:"Double consonant + -er/-est", b:"trim",
+   o:["trimmer / trimmest","trimer / trimest","more trim / most trim","trimm / trimmest"],
+   exp:"trim → trimmer / trimmest (short vowel + single consonant: double the -m)"},
+  {g:"Double consonant + -er/-est", b:"grim",
+   o:["grimmer / grimmest","grimer / grimest","more grim / most grim","grimm / grimmest"],
+   exp:"grim → grimmer / grimmest (short vowel + single consonant: double the -m)"},
+
+  // ══ DROP -e + er/est (15) ════════════════════════════════════════════════
+  {g:"Drop -e + -er/-est", b:"nice",
+   o:["nicer / nicest","niceer / niceest","more nice / most nice","nicere / niceste"],
+   exp:"nice → nicer / nicest (silent -e at end: drop -e, add -er/-est)"},
+  {g:"Drop -e + -er/-est", b:"large",
+   o:["larger / largest","largeer / largeest","more large / most large","largere / largeste"],
+   exp:"large → larger / largest (silent -e: drop -e, add -er/-est)"},
+  {g:"Drop -e + -er/-est", b:"safe",
+   o:["safer / safest","safeer / safeest","more safe / most safe","safere / safeste"],
+   exp:"safe → safer / safest (silent -e: drop -e, add -er/-est)"},
+  {g:"Drop -e + -er/-est", b:"brave",
+   o:["braver / bravest","braveer / braveest","more brave / most brave","bravere / braveste"],
+   exp:"brave → braver / bravest (silent -e: drop -e, add -er/-est)"},
+  {g:"Drop -e + -er/-est", b:"close",
+   o:["closer / closest","closeer / closeest","more close / most close","closere / closeste"],
+   exp:"close → closer / closest (silent -e: drop -e, add -er/-est)"},
+  {g:"Drop -e + -er/-est", b:"rude",
+   o:["ruder / rudest","rudeer / rudeest","more rude / most rude","rudere / rudeste"],
+   exp:"rude → ruder / rudest (silent -e: drop -e, add -er/-est)"},
+  {g:"Drop -e + -er/-est", b:"wise",
+   o:["wiser / wisest","wiseer / wiseest","more wise / most wise","wisere / wiseste"],
+   exp:"wise → wiser / wisest (silent -e: drop -e, add -er/-est)"},
+  {g:"Drop -e + -er/-est", b:"fine",
+   o:["finer / finest","fineer / fineest","more fine / most fine","finere / fineste"],
+   exp:"fine → finer / finest (silent -e: drop -e, add -er/-est)"},
+  {g:"Drop -e + -er/-est", b:"cute",
+   o:["cuter / cutest","cuteer / cuteest","more cute / most cute","cutere / cuteste"],
+   exp:"cute → cuter / cutest (silent -e: drop -e, add -er/-est)"},
+  {g:"Drop -e + -er/-est", b:"pale",
+   o:["paler / palest","paleer / paleest","more pale / most pale","palere / paleste"],
+   exp:"pale → paler / palest (silent -e: drop -e, add -er/-est)"},
+  {g:"Drop -e + -er/-est", b:"pure",
+   o:["purer / purest","pureer / pureest","more pure / most pure","purere / pureste"],
+   exp:"pure → purer / purest (silent -e: drop -e, add -er/-est)"},
+  {g:"Drop -e + -er/-est", b:"rare",
+   o:["rarer / rarest","rareer / rareest","more rare / most rare","rarere / rareste"],
+   exp:"rare → rarer / rarest (silent -e: drop -e, add -er/-est)"},
+  {g:"Drop -e + -er/-est", b:"strange",
+   o:["stranger / strangest","strangeer / strangeest","more strange / most strange","strangere / strangeste"],
+   exp:"strange → stranger / strangest (silent -e: drop -e, add -er/-est)"},
+  {g:"Drop -e + -er/-est", b:"simple",
+   o:["simpler / simplest","simpleer / simpleest","more simple / most simple","simplere / simpleste"],
+   exp:"simple → simpler / simplest (silent -e: drop -e, add -er/-est)"},
+  {g:"Drop -e + -er/-est", b:"gentle",
+   o:["gentler / gentlest","gentleer / gentleest","more gentle / most gentle","gentlere / gentleste"],
+   exp:"gentle → gentler / gentlest (silent -e: drop -e, add -er/-est)"},
+
+  // ══ -y → -ier/-iest (20) ════════════════════════════════════════════════
+  {g:"y → ier / iest", b:"happy",
+   o:["happier / happiest","happyer / happyest","more happy / most happy","hapier / hapiest"],
+   exp:"happy → happier / happiest (consonant + y: change -y to -i, add -er/-est)"},
+  {g:"y → ier / iest", b:"funny",
+   o:["funnier / funniest","funnyer / funnyest","more funny / most funny","funier / funiest"],
+   exp:"funny → funnier / funniest (consonant + y: change -y to -i, add -er/-est)"},
+  {g:"y → ier / iest", b:"easy",
+   o:["easier / easiest","easyer / easyest","more easy / most easy","easir / easist"],
+   exp:"easy → easier / easiest (consonant + y: change -y to -i, add -er/-est)"},
+  {g:"y → ier / iest", b:"busy",
+   o:["busier / busiest","busyer / busyest","more busy / most busy","busir / busist"],
+   exp:"busy → busier / busiest (consonant + y: change -y to -i, add -er/-est)"},
+  {g:"y → ier / iest", b:"dirty",
+   o:["dirtier / dirtiest","dirtyer / dirtyest","more dirty / most dirty","dirtir / dirtist"],
+   exp:"dirty → dirtier / dirtiest (consonant + y: change -y to -i, add -er/-est)"},
+  {g:"y → ier / iest", b:"heavy",
+   o:["heavier / heaviest","heavyer / heavyest","more heavy / most heavy","heavir / heavist"],
+   exp:"heavy → heavier / heaviest (consonant + y: change -y to -i, add -er/-est)"},
+  {g:"y → ier / iest", b:"early",
+   o:["earlier / earliest","earliyer / earlyest","more early / most early","earlir / earlist"],
+   exp:"early → earlier / earliest (consonant + y: change -y to -i, add -er/-est)"},
+  {g:"y → ier / iest", b:"angry",
+   o:["angrier / angriest","angryer / angryest","more angry / most angry","angrir / angrist"],
+   exp:"angry → angrier / angriest (consonant + y: change -y to -i, add -er/-est)"},
+  {g:"y → ier / iest", b:"pretty",
+   o:["prettier / prettiest","prettyer / prettyest","more pretty / most pretty","prettir / prettist"],
+   exp:"pretty → prettier / prettiest (consonant + y: change -y to -i, add -er/-est)"},
+  {g:"y → ier / iest", b:"lucky",
+   o:["luckier / luckiest","luckyer / luckyest","more lucky / most lucky","luckir / luckist"],
+   exp:"lucky → luckier / luckiest (consonant + y: change -y to -i, add -er/-est)"},
+  {g:"y → ier / iest", b:"noisy",
+   o:["noisier / noisiest","noisyer / noisyest","more noisy / most noisy","noisir / noisist"],
+   exp:"noisy → noisier / noisiest (consonant + y: change -y to -i, add -er/-est)"},
+  {g:"y → ier / iest", b:"lazy",
+   o:["lazier / laziest","lazyer / lazyest","more lazy / most lazy","lazir / lazist"],
+   exp:"lazy → lazier / laziest (consonant + y: change -y to -i, add -er/-est)"},
+  {g:"y → ier / iest", b:"crazy",
+   o:["crazier / craziest","crazyer / crazyest","more crazy / most crazy","crazir / crazist"],
+   exp:"crazy → crazier / craziest (consonant + y: change -y to -i, add -er/-est)"},
+  {g:"y → ier / iest", b:"silly",
+   o:["sillier / silliest","sillyer / sillyest","more silly / most silly","sillir / silliest"],
+   exp:"silly → sillier / silliest (consonant + y: change -y to -i, add -er/-est)"},
+  {g:"y → ier / iest", b:"cloudy",
+   o:["cloudier / cloudiest","cloudyer / cloudyest","more cloudy / most cloudy","cloudir / cloudist"],
+   exp:"cloudy → cloudier / cloudiest (consonant + y: change -y to -i, add -er/-est)"},
+  {g:"y → ier / iest", b:"windy",
+   o:["windier / windiest","windyer / windyest","more windy / most windy","windir / windist"],
+   exp:"windy → windier / windiest (consonant + y: change -y to -i, add -er/-est)"},
+  {g:"y → ier / iest", b:"spicy",
+   o:["spicier / spiciest","spicyer / spicyest","more spicy / most spicy","spicir / spicist"],
+   exp:"spicy → spicier / spiciest (consonant + y: change -y to -i, add -er/-est)"},
+  {g:"y → ier / iest", b:"thirsty",
+   o:["thirstier / thirstiest","thirstyer / thirstyest","more thirsty / most thirsty","thirstir / thirstist"],
+   exp:"thirsty → thirstier / thirstiest (consonant + y: change -y to -i, add -er/-est)"},
+  {g:"y → ier / iest", b:"hungry",
+   o:["hungrier / hungriest","hungryer / hungryest","more hungry / most hungry","hungrir / hungrist"],
+   exp:"hungry → hungrier / hungriest (consonant + y: change -y to -i, add -er/-est)"},
+  {g:"y → ier / iest", b:"healthy",
+   o:["healthier / healthiest","healthyer / healthyest","more healthy / most healthy","healthir / healthist"],
+   exp:"healthy → healthier / healthiest (consonant + y: change -y to -i, add -er/-est)"},
+
+  // ══ more / most (multi-syllable) (10) ═══════════════════════════════════
+  {g:"more / most", b:"beautiful",
+   o:["more beautiful / most beautiful","beautifuler / beautifulest","beautifuller / beautifullest","more beautifully / most beautifully"],
+   exp:"beautiful → more beautiful / most beautiful (3+ syllables: use more/most, never add -er/-est)"},
+  {g:"more / most", b:"interesting",
+   o:["more interesting / most interesting","interestinger / interestingest","more interestingly / most interestingly","interestinger / most interesting"],
+   exp:"interesting → more interesting / most interesting (3+ syllables: use more/most)"},
+  {g:"more / most", b:"expensive",
+   o:["more expensive / most expensive","expensiver / expensivest","expensiver / most expensive","more expensively / most expensively"],
+   exp:"expensive → more expensive / most expensive (3+ syllables: use more/most)"},
+  {g:"more / most", b:"difficult",
+   o:["more difficult / most difficult","difficulter / difficultest","more difficultly / most difficultly","difficulter / most difficult"],
+   exp:"difficult → more difficult / most difficult (3+ syllables: use more/most)"},
+  {g:"more / most", b:"important",
+   o:["more important / most important","importanter / importantest","more importantly / most importantly","importanter / most important"],
+   exp:"important → more important / most important (3+ syllables: use more/most)"},
+  {g:"more / most", b:"comfortable",
+   o:["more comfortable / most comfortable","comfortabler / comfortablest","more comfortably / most comfortably","comfortabler / most comfortable"],
+   exp:"comfortable → more comfortable / most comfortable (4+ syllables: use more/most)"},
+  {g:"more / most", b:"dangerous",
+   o:["more dangerous / most dangerous","dangerouser / dangerousest","more dangerously / most dangerously","dangerouser / most dangerous"],
+   exp:"dangerous → more dangerous / most dangerous (3+ syllables: use more/most)"},
+  {g:"more / most", b:"powerful",
+   o:["more powerful / most powerful","powerfuler / powerfulest","more powerfully / most powerfully","powerfuller / most powerful"],
+   exp:"powerful → more powerful / most powerful (3 syllables: use more/most)"},
+  {g:"more / most", b:"popular",
+   o:["more popular / most popular","popularer / popularest","more popularly / most popularly","popularer / most popular"],
+   exp:"popular → more popular / most popular (3 syllables: use more/most)"},
+  {g:"more / most", b:"creative",
+   o:["more creative / most creative","creativer / creativest","more creatively / most creatively","creativer / most creative"],
+   exp:"creative → more creative / most creative (3 syllables: use more/most)"},
+
+  // ══ Plain -er/-est (one syllable, no spelling change) (30) ══════════════
+  {g:"Add -er / -est", b:"tall",
+   o:["taller / tallest","more tall / most tall","taller / most tall","tallier / talliest"],
+   exp:"tall → taller / tallest (one syllable ending in two consonants: just add -er/-est)"},
+  {g:"Add -er / -est", b:"short",
+   o:["shorter / shortest","more short / most short","shorter / most short","shortier / shortiest"],
+   exp:"short → shorter / shortest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"fast",
+   o:["faster / fastest","more fast / most fast","faster / most fast","fastier / fastiest"],
+   exp:"fast → faster / fastest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"slow",
+   o:["slower / slowest","more slow / most slow","slower / most slow","slowier / slowiest"],
+   exp:"slow → slower / slowest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"cold",
+   o:["colder / coldest","more cold / most cold","colder / most cold","coldier / coldiest"],
+   exp:"cold → colder / coldest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"warm",
+   o:["warmer / warmest","more warm / most warm","warmer / most warm","warmier / warmiest"],
+   exp:"warm → warmer / warmest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"hard",
+   o:["harder / hardest","more hard / most hard","harder / most hard","hardier / hardiest"],
+   exp:"hard → harder / hardest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"soft",
+   o:["softer / softest","more soft / most soft","softer / most soft","softier / softiest"],
+   exp:"soft → softer / softest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"long",
+   o:["longer / longest","more long / most long","longer / most long","longier / longiest"],
+   exp:"long → longer / longest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"strong",
+   o:["stronger / strongest","more strong / most strong","stronger / most strong","strongier / strongiest"],
+   exp:"strong → stronger / strongest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"young",
+   o:["younger / youngest","more young / most young","younger / most young","youngier / youngiest"],
+   exp:"young → younger / youngest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"old",
+   o:["older / oldest","more old / most old","older / most old","oldier / oldiest"],
+   exp:"old → older / oldest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"new",
+   o:["newer / newest","more new / most new","newer / most new","newier / newiest"],
+   exp:"new → newer / newest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"clean",
+   o:["cleaner / cleanest","more clean / most clean","cleaner / most clean","cleanier / cleaniest"],
+   exp:"clean → cleaner / cleanest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"smart",
+   o:["smarter / smartest","more smart / most smart","smarter / most smart","smartier / smartiest"],
+   exp:"smart → smarter / smartest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"bright",
+   o:["brighter / brightest","more bright / most bright","brighter / most bright","brightier / brightiest"],
+   exp:"bright → brighter / brightest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"dark",
+   o:["darker / darkest","more dark / most dark","darker / most dark","darkier / darkiest"],
+   exp:"dark → darker / darkest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"sweet",
+   o:["sweeter / sweetest","more sweet / most sweet","sweeter / most sweet","sweetier / sweetiest"],
+   exp:"sweet → sweeter / sweetest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"cheap",
+   o:["cheaper / cheapest","more cheap / most cheap","cheaper / most cheap","cheapier / cheapiest"],
+   exp:"cheap → cheaper / cheapest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"rich",
+   o:["richer / richest","more rich / most rich","richer / most rich","richier / richiest"],
+   exp:"rich → richer / richest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"poor",
+   o:["poorer / poorest","more poor / most poor","poorer / most poor","poorier / pooriest"],
+   exp:"poor → poorer / poorest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"loud",
+   o:["louder / loudest","more loud / most loud","louder / most loud","loudier / loudiest"],
+   exp:"loud → louder / loudest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"mild",
+   o:["milder / mildest","more mild / most mild","milder / most mild","mildier / mildiest"],
+   exp:"mild → milder / mildest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"rough",
+   o:["rougher / roughest","more rough / most rough","rougher / most rough","roughier / roughiest"],
+   exp:"rough → rougher / roughest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"tough",
+   o:["tougher / toughest","more tough / most tough","tougher / most tough","toughier / toughiest"],
+   exp:"tough → tougher / toughest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"fresh",
+   o:["fresher / freshest","more fresh / most fresh","fresher / most fresh","freshier / freshiest"],
+   exp:"fresh → fresher / freshest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"high",
+   o:["higher / highest","more high / most high","higher / most high","highier / highiest"],
+   exp:"high → higher / highest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"low",
+   o:["lower / lowest","more low / most low","lower / most low","lowier / lowiest"],
+   exp:"low → lower / lowest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"deep",
+   o:["deeper / deepest","more deep / most deep","deeper / most deep","deepier / deepiest"],
+   exp:"deep → deeper / deepest (one syllable: just add -er/-est)"},
+  {g:"Add -er / -est", b:"sharp",
+   o:["sharper / sharpest","more sharp / most sharp","sharper / most sharp","sharpier / sharpiest"],
+   exp:"sharp → sharper / sharpest (one syllable: just add -er/-est)"},
+];
+
+const STORAGE_KEY = 'quiz_comparative_100_v1';
+let state = { cur: 0, answers: {}, shuffles: {}, showResults: false, retryMode: false, retryList: [] };
+let QUESTIONS = [];
+
+function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {} }
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    const bound = (s.retryMode ? (s.retryList||[]).length : QUESTIONS_RAW.length);
+    if (typeof s.cur !== 'number' || s.cur < 0 || s.cur >= bound) throw new Error();
+    if (typeof s.answers !== 'object' || typeof s.shuffles !== 'object') throw new Error();
+    state = s;
+    if (typeof state.retryMode !== 'boolean') state.retryMode = false;
+    if (!Array.isArray(state.retryList)) state.retryList = [];
+  } catch(e) {
+    localStorage.removeItem(STORAGE_KEY);
+    state = { cur: 0, answers: {}, shuffles: {}, showResults: false, retryMode: false, retryList: [] };
+  }
+}
+
+const ORDER_KEY = STORAGE_KEY + '_order_v1';
+function identityOrder() { return Array.from({length: QUESTIONS_RAW.length}, (_, i) => i); }
+function isValidOrder(arr) {
+  if (!Array.isArray(arr) || arr.length !== QUESTIONS_RAW.length) return false;
+  const sorted = arr.slice().sort((a, b) => a - b);
+  for (let i = 0; i < sorted.length; i++) if (sorted[i] !== i) return false;
+  return true;
+}
+function loadOrder() {
+  try {
+    const raw = localStorage.getItem(ORDER_KEY);
+    if (!raw) return null;
+    const arr = JSON.parse(raw);
+    if (!isValidOrder(arr)) throw new Error('bad order');
+    return arr;
+  } catch(e) { localStorage.removeItem(ORDER_KEY); return null; }
+}
+function saveOrder(order) { try { localStorage.setItem(ORDER_KEY, JSON.stringify(order)); } catch(e) {} }
+function shuffleOrder(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+let currentOrder = loadOrder() || identityOrder();
+let pendingFreshMode = 'original';
+function getList() { return state.retryMode ? state.retryList : QUESTIONS.map(function(_, i) { return i; }); }
+
+function buildQuestions() {
+  return currentOrder.map(ri => {
+    const r = QUESTIONS_RAW[ri];
+    return { g: r.g, b: r.b, options: r.o, ci: 0, exp: r.exp };
+  });
+}
+
+function getShuffle(qi) {
+  if (!state.shuffles[qi]) {
+    const n = QUESTIONS[qi].options.length;
+    let arr = Array.from({length: n}, (_, i) => i);
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    state.shuffles[qi] = arr;
+    saveState();
+  }
+  return state.shuffles[qi];
+}
+
+function buildDotNav() {
+  // ── progress bar & count ──
+  const list = getList();
+  const _answered = list.filter(qi => state.answers[qi] !== undefined).length;
+  const _total = list.length;
+  document.getElementById('nav-count').textContent = _answered + ' / ' + _total;
+  document.getElementById('prog-fill').style.width = (_total > 0 ? (_answered/_total*100).toFixed(1) : 0) + '%';
+  const nav = document.getElementById('dot-panel');
+  if (nav.style.display !== 'block') return;
+  nav.innerHTML = '';
+  list.forEach((qi, i) => {
+    const d = document.createElement('button');
+    d.className = 'dot';
+    d.textContent = i + 1;
+    if (state.answers[qi] !== undefined) {
+      d.classList.add(state.answers[qi] === getShuffle(qi).indexOf(0) ? 'correct' : 'wrong');
+    }
+    if (!state.showResults && i === state.cur) d.classList.add('current');
+    d.addEventListener('click', () => { state.showResults = false; state.cur = i; saveState(); render(); });
+    nav.appendChild(d);
+  });
+  if (state.showResults) {
+    const pill = document.createElement('button');
+    pill.className = 'dot results-pill';
+    pill.textContent = 'Results';
+    pill.addEventListener('click', () => { state.showResults = true; saveState(); render(); });
+    nav.appendChild(pill);
+  }
+}
+
+function render() {
+  try {
+    buildDotNav();
+    const qa = document.getElementById('quizArea');
+    const ra = document.getElementById('resultsArea');
+    if (state.showResults) {
+      qa.style.display = 'none';
+      ra.style.display = 'block';
+      showResults();
+    } else {
+      ra.style.display = 'none';
+      qa.style.display = 'block';
+      showQuestion();
+    }
+  } catch(e) {
+    document.getElementById('quizArea').style.display = 'block';
+    document.getElementById('quizArea').innerHTML = '<p style="color:red;padding:20px;">An error occurred. Please refresh.</p>';
+  }
+}
+
+function showQuestion() {
+  const list = getList();
+  const qi = list[state.cur];
+  const q = QUESTIONS[qi];
+  const shuffle = getShuffle(qi);
+  const answered = state.answers[qi] !== undefined;
+  const chosenIdx = state.answers[qi];
+  const correctShuffledIdx = shuffle.indexOf(0);
+  const isLast = state.cur === list.length - 1;
+
+  let optHtml = '';
+  shuffle.forEach((origIdx, shuffledIdx) => {
+    let cls = '';
+    if (answered) {
+      if (shuffledIdx === chosenIdx) cls = shuffledIdx === correctShuffledIdx ? 'correct' : 'wrong';
+      else if (shuffledIdx === correctShuffledIdx) cls = 'reveal';
+    }
+    optHtml += `<button class="option-btn ${cls}" onclick="choose(${shuffledIdx})" ${answered ? 'disabled' : ''}>${q.options[origIdx]}</button>`;
+  });
+
+  const expDisplay = (answered && chosenIdx !== correctShuffledIdx) ? 'block' : 'none';
+
+  document.getElementById('quizArea').innerHTML = `
+    <div class="type-badge">${q.g}</div>
+    <div id="qNum">Question ${state.cur + 1} / ${list.length}</div>
+    <div id="qText">${q.b}</div>
+    <div id="qSub">Choose the correct comparative and superlative forms.</div>
+    <div id="options">${optHtml}</div>
+    <div id="explanation" style="display:${expDisplay}">${q.exp}</div>
+    <div id="navRow">
+      <button class="nav-btn" id="prevBtn" onclick="go(-1)" ${state.cur === 0 ? 'disabled style="opacity:0.4"' : ''}>← Prev</button>
+      <button class="nav-btn" id="nextBtn" onclick="go(1)">${isLast ? 'See Results →' : 'Next →'}</button>
+    </div>
+  `;
+}
+
+function choose(shuffledIdx) {
+  const qi = getList()[state.cur];
+  if (state.answers[qi] !== undefined) return;
+  state.answers[qi] = shuffledIdx;
+  saveState();
+  render();
+}
+
+function go(dir) {
+  const list = getList();
+  const next = state.cur + dir;
+  if (next < 0) return;
+  if (next >= list.length) { state.showResults = true; saveState(); render(); return; }
+  state.cur = next;
+  saveState();
+  render();
+}
+
+function showResults() {
+  const list = getList();
+  let correct = 0;
+  list.forEach(qi => {
+    const ans = state.answers[qi];
+    if (ans === undefined) return;
+    if (ans === getShuffle(qi).indexOf(0)) correct++;
+  });
+  let gridHtml = '';
+  list.forEach((qi, i) => {
+    const ans = state.answers[qi];
+    const q = QUESTIONS[qi];
+    let status, cls, correctText = '';
+    if (ans === undefined) { status = 'Skipped'; cls = 'skipped'; correctText = q.options[0]; }
+    else if (ans === getShuffle(qi).indexOf(0)) { status = 'Correct ✓'; cls = 'correct'; }
+    else { status = 'Wrong ✗'; cls = 'wrong'; correctText = q.options[0]; }
+    gridHtml += `<div class="result-card ${cls}" onclick="jumpTo(${i})">
+      <div class="rc-num">Q${i+1}: ${q.b}</div>
+      <div class="rc-status">${status}</div>
+      ${correctText ? `<div class="rc-answer">✔ ${correctText}</div>` : ''}
+    </div>`;
+  });
+  document.getElementById('resultsArea').innerHTML = `
+    <div id="resultsScore">${correct} / ${list.length} Correct</div>
+    <div id="resultsGrid">${gridHtml}</div>
+    <button id="copyBtn" onclick="copyResults()">Copy All Results</button>
+    <button id="retryWrongBtn" onclick="retryWrong()">Retry Wrong Ones</button>
+    <button id="startFreshBtn" onclick="openModal('original')" style="margin-bottom:12px;">Start Fresh (Original Order)</button>
+    <button id="startFreshRandomBtn" onclick="openModal('random')" style="display:block;width:100%;padding:13px;background:#fff;color:#E24B4A;border:2px solid #E24B4A;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;">Start Fresh (Random Order)</button>
+  `;
+}
+
+function jumpTo(i) { state.cur = i; state.showResults = false; saveState(); render(); }
+
+function copyResults() {
+  const list = getList();
+  let text = 'Comparative & Superlative Quiz\n', correct = 0;
+  list.forEach((qi, i) => {
+    const ans = state.answers[qi];
+    const q = QUESTIONS[qi];
+    let status;
+    if (ans === undefined) status = 'Skipped';
+    else if (ans === getShuffle(qi).indexOf(0)) { correct++; status = 'Correct'; }
+    else status = 'Wrong (Correct: ' + q.options[0] + ')';
+    text += `Q${i+1} ${q.b}: ${status}\n`;
+  });
+  text += `\nScore: ${correct} / ${list.length}`;
+  try { navigator.clipboard.writeText(text).then(() => alert('Copied!')); }
+  catch(e) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert('Copied!'); }
+}
+
+function openModal(mode) {
+  pendingFreshMode = mode;
+  document.getElementById('modalTitle').textContent = mode === 'random' ? 'Start Fresh (Random Order)?' : 'Start Fresh (Original Order)?';
+  document.getElementById('modalText').textContent = mode === 'random'
+    ? 'Questions will be reshuffled into a new random order, and all progress will be reset.'
+    : 'Questions will return to their original order, and all progress will be reset.';
+  document.getElementById('modal').classList.add('active');
+}
+document.getElementById('modalCancel').addEventListener('click', () => document.getElementById('modal').classList.remove('active'));
+document.getElementById('modalConfirm').addEventListener('click', () => {
+  document.getElementById('modal').classList.remove('active');
+  currentOrder = (pendingFreshMode === 'random') ? shuffleOrder(identityOrder()) : identityOrder();
+  saveOrder(currentOrder);
+  localStorage.removeItem(STORAGE_KEY);
+  state = { cur: 0, answers: {}, shuffles: {}, showResults: false, retryMode: false, retryList: [] };
+  saveState();
+  QUESTIONS = buildQuestions();
+  render();
+});
+
+loadState();
+QUESTIONS = buildQuestions();
+render();
+
+function retryWrong() {
+  var list = getList();
+  var wrong = [];
+  for (var i = 0; i < list.length; i++) {
+    var qi = list[i];
+    if (state.answers[qi] !== undefined && state.answers[qi] !== getShuffle(qi).indexOf(0)) {
+      wrong.push(qi);
+    }
+  }
+  if (wrong.length === 0) return;
+  wrong.forEach(function(qi) { delete state.answers[qi]; });
+  state.retryMode = true;
+  state.retryList = wrong;
+  state.cur = 0;
+  state.showResults = false;
+  saveState();
+  render();
+}
+
+function toggleJump() {
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if (panel.style.display !== 'block') {
+    panel.style.display = 'block';
+    btn.textContent = 'Hide ▴';
+    buildDotNav();
+  } else {
+    panel.style.display = 'none';
+    btn.textContent = 'Jump ▾';
+  }
+}
+window.toggleJump = toggleJump;
+window.retryWrong = retryWrong;
+
+</script>
+</body>
+</html>

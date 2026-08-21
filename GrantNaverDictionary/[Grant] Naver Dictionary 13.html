@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Naver Dictionary 13 — Vocabulary Quiz</title>
+<style>
+  :root{
+    --green:#03C75A;
+    --green-dark:#02a94b;
+    --red:#e5484d;
+    --bg:#f5f7f6;
+    --card:#ffffff;
+    --text:#1b1f1e;
+    --muted:#6b7570;
+    --border:#e3e8e6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    display:flex;
+    justify-content:center;
+    padding:32px 16px;
+  }
+  .app{
+    width:100%;
+    max-width:640px;
+  }
+  header{
+    text-align:center;
+    margin-bottom:24px;
+  }
+  header h1{
+    font-size:22px;
+    margin:0 0 4px;
+    color:var(--green-dark);
+  }
+  header p{
+    margin:0;
+    color:var(--muted);
+    font-size:14px;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:28px 24px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.04);
+  }
+  /* Start screen */
+  .start-card{text-align:center;}
+  .start-card p{color:var(--muted); line-height:1.6; margin:16px 0 24px;}
+  .btn{
+    display:inline-block;
+    background:var(--green);
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    padding:12px 28px;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    transition:background .15s ease;
+  }
+  .btn:hover{background:var(--green-dark);}
+  .btn.secondary{background:#eef1f0; color:var(--text);}
+  .btn.secondary:hover{background:#e2e6e4;}
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+
+  /* Progress */
+  .progress-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:14px;
+    font-size:13px;
+    color:var(--muted);
+  }
+  .progress-bar{
+    height:6px;
+    background:var(--border);
+    border-radius:4px;
+    overflow:hidden;
+    margin-bottom:22px;
+  }
+  .progress-fill{
+    height:100%;
+    background:var(--green);
+    transition:width .25s ease;
+  }
+
+  /* Question */
+  .word-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin-bottom:6px;
+  }
+  .word{
+    font-size:30px;
+    font-weight:700;
+    color:var(--text);
+  }
+  .speak-btn{
+    background:#eef7f0;
+    border:1px solid var(--green);
+    color:var(--green-dark);
+    border-radius:50%;
+    width:38px;
+    height:38px;
+    font-size:16px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+  .speak-btn:hover{background:var(--green); color:#fff;}
+  .prompt{
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+    margin-bottom:22px;
+  }
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-bottom:6px;
+  }
+  .option{
+    text-align:left;
+    padding:14px 16px;
+    border-radius:10px;
+    border:1.5px solid var(--border);
+    background:#fff;
+    font-size:14.5px;
+    line-height:1.5;
+    cursor:pointer;
+    transition:border-color .12s ease, background .12s ease;
+  }
+  .option:hover:not(.locked){
+    border-color:var(--green);
+  }
+  .option.correct{
+    border-color:var(--green);
+    background:#eafaf0;
+    color:#0a7a3a;
+    font-weight:600;
+  }
+  .option.incorrect{
+    border-color:var(--red);
+    background:#fdeceb;
+    color:#b3282c;
+    font-weight:600;
+  }
+  .option.locked{
+    cursor:default;
+  }
+  .feedback{
+    margin-top:16px;
+    padding:14px 16px;
+    border-radius:10px;
+    font-size:13.5px;
+    line-height:1.6;
+    display:none;
+  }
+  .feedback.show{display:block;}
+  .feedback.right{background:#eafaf0; color:#0a7a3a;}
+  .feedback.wrong{background:#fdeceb; color:#8f1f22;}
+  .footer-row{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:20px;
+  }
+
+  /* Result */
+  .result-card{text-align:center;}
+  .score-big{
+    font-size:42px;
+    font-weight:800;
+    color:var(--green-dark);
+    margin:12px 0 4px;
+  }
+  .score-sub{color:var(--muted); font-size:14px; margin-bottom:24px;}
+  .missed-list{
+    text-align:left;
+    max-height:340px;
+    overflow-y:auto;
+    border-top:1px solid var(--border);
+    padding-top:14px;
+  }
+  .missed-item{
+    padding:10px 0;
+    border-bottom:1px solid var(--border);
+    font-size:13.5px;
+  }
+  .missed-item b{color:var(--text);}
+  .missed-item .def{color:var(--muted); margin-top:2px;}
+  .hidden{display:none;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Naver Dictionary 13</h1>
+    <p>Vocabulary Quiz — 51 words</p>
+  </header>
+
+  <!-- START SCREEN -->
+  <div class="card start-card" id="startScreen">
+    <p>Read each word, listen to its pronunciation using the speaker button, and choose the correct meaning from four options. You'll see the correct answer and an explanation right after each question.</p>
+    <button class="btn" onclick="startQuiz()">Start Quiz</button>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div class="card hidden" id="quizScreen">
+    <div class="progress-row">
+      <span id="progressLabel">Question 1 of 51</span>
+      <span id="scoreLabel">Score: 0</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div class="word-row">
+      <span class="word" id="wordText"></span>
+      <button class="speak-btn" id="speakBtn" title="Listen to pronunciation">🔊</button>
+    </div>
+    <p class="prompt">Choose the correct meaning of this word.</p>
+
+    <div class="options" id="optionsContainer"></div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="footer-row">
+      <button class="btn" id="nextBtn" disabled onclick="nextQuestion()">Next</button>
+    </div>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div class="card result-card hidden" id="resultScreen">
+    <div style="color:var(--muted); font-size:14px;">Quiz Complete</div>
+    <div class="score-big" id="finalScore"></div>
+    <div class="score-sub" id="finalScoreSub"></div>
+    <button class="btn secondary" onclick="restartQuiz()">Restart Quiz</button>
+    <div class="missed-list" id="missedList"></div>
+  </div>
+</div>
+
+<script>
+const WORDS = [
+  {word:"exploded", def:"burst apart or blew up violently, often with a loud noise"},
+  {word:"bitch", def:"a female dog"},
+  {word:"breeding", def:"the mating and production of young by animals"},
+  {word:"concentrate", def:"focus all of one's attention or effort on a particular thing"},
+  {word:"unsatisfactory", def:"not good enough; not acceptable"},
+  {word:"longingly", def:"in a way that shows a strong, wistful desire for something"},
+  {word:"abruptly", def:"suddenly and unexpectedly"},
+  {word:"bargain", def:"an agreement between two parties settling what each will give and receive"},
+  {word:"thrashing", def:"moving about wildly and violently"},
+  {word:"curtly", def:"in a rude, abrupt manner, using very few words"},
+  {word:"smirk", def:"a smug or self-satisfied smile"},
+  {word:"pines", def:"suffers from a strong, mournful longing for something"},
+  {word:"drool", def:"let saliva drip or flow from the mouth"},
+  {word:"wince", def:"make a slight, involuntary grimace of pain or distress"},
+  {word:"jovially", def:"in a cheerful, friendly, and good-humored manner"},
+  {word:"striding", def:"walking with long, decisive steps"},
+  {word:"plastered", def:"covered thickly with a substance such as mud or paint"},
+  {word:"threshold", def:"the strip of wood or stone at the bottom of a doorway; the entrance"},
+  {word:"clunk", def:"a dull, heavy sound made by pieces of solid material meeting"},
+  {word:"criticize", def:"express disapproval of someone or something based on their faults"},
+  {word:"shrieking", def:"making a high-pitched, piercing cry or sound"},
+  {word:"wheeled", def:"turned around quickly and sharply"},
+  {word:"abnormality", def:"something that deviates from what is normal or usual"},
+  {word:"tread", def:"walk, step, or plant one's foot in a particular way"},
+  {word:"bear", def:"to endure or put up with something difficult or unpleasant"},
+  {word:"blurt", def:"say something suddenly and without thinking, usually 'blurt out'"},
+  {word:"enclosed", def:"surrounded or shut in on all sides"},
+  {word:"slit", def:"a long, narrow cut or opening"},
+  {word:"broadly", def:"widely, or in a general way without going into detail"},
+  {word:"grinning", def:"smiling broadly"},
+  {word:"despite", def:"without being affected by; in spite of"},
+  {word:"regret", def:"a feeling of sadness or disappointment over something that has happened"},
+  {word:"content", def:"in a state of peaceful happiness or satisfaction"},
+  {word:"perplexed", def:"completely baffled; very confused"},
+  {word:"bewilder", def:"cause someone to become confused and unable to understand"},
+  {word:"occur", def:"happen; take place"},
+  {word:"site", def:"the location where something is, was, or is to be built"},
+  {word:"drift", def:"be carried slowly by a current of air or water, without direction"},
+  {word:"shrub", def:"a woody plant smaller than a tree, with several stems near the ground"},
+  {word:"mythology", def:"a collection of myths belonging to a particular religion or culture"},
+  {word:"fragrant", def:"having a pleasant, sweet smell"},
+  {word:"plentiful", def:"existing in large quantities; abundant"},
+  {word:"native", def:"belonging to a particular place by birth"},
+  {word:"frequency", def:"the rate at which something occurs over a period of time"},
+  {word:"come across", def:"to meet or find someone or something by chance"},
+  {word:"buoyant", def:"cheerful, optimistic, and full of energy"},
+  {word:"rubbish", def:"waste material; trash"},
+  {word:"untrustworthy", def:"not able to be relied on as honest or truthful"},
+  {word:"miniature", def:"very small; a much smaller version of something"},
+  {word:"jauntily", def:"in a cheerful, lively, and self-confident manner"},
+  {word:"perch", def:"to sit or rest on something narrow, such as a branch or ledge"}
+];
+
+let order = [];
+let currentIndex = 0;
+let score = 0;
+let currentOptions = [];
+let answered = false;
+let missed = [];
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function speak(text){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US';
+  u.rate = 0.9;
+  window.speechSynthesis.speak(u);
+}
+
+function startQuiz(){
+  order = WORDS.map((_, i) => i);
+  currentIndex = 0;
+  score = 0;
+  missed = [];
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('resultScreen').classList.add('hidden');
+  document.getElementById('quizScreen').classList.remove('hidden');
+  loadQuestion();
+}
+
+function loadQuestion(){
+  answered = false;
+  const item = WORDS[order[currentIndex]];
+  document.getElementById('wordText').textContent = item.word;
+  document.getElementById('speakBtn').onclick = () => speak(item.word);
+  document.getElementById('progressLabel').textContent = `Question ${currentIndex + 1} of ${WORDS.length}`;
+  document.getElementById('scoreLabel').textContent = `Score: ${score}`;
+  document.getElementById('progressFill').style.width = `${(currentIndex / WORDS.length) * 100}%`;
+
+  // Build 3 distractors from other words' definitions
+  const others = WORDS.filter((_, i) => i !== order[currentIndex]);
+  const distractors = shuffle(others).slice(0, 3);
+  currentOptions = shuffle([
+    { text: item.def, correct: true, sourceWord: item.word },
+    ...distractors.map(d => ({ text: d.def, correct: false, sourceWord: d.word }))
+  ]);
+
+  const container = document.getElementById('optionsContainer');
+  container.innerHTML = '';
+  currentOptions.forEach((opt, idx) => {
+    const btn = document.createElement('div');
+    btn.className = 'option';
+    btn.textContent = opt.text;
+    btn.onclick = () => selectOption(idx);
+    container.appendChild(btn);
+  });
+
+  const feedback = document.getElementById('feedback');
+  feedback.className = 'feedback';
+  feedback.textContent = '';
+  document.getElementById('nextBtn').disabled = true;
+}
+
+function selectOption(idx){
+  if(answered) return;
+  answered = true;
+  const item = WORDS[order[currentIndex]];
+  const options = document.querySelectorAll('.option');
+  const chosen = currentOptions[idx];
+
+  options.forEach((el, i) => {
+    el.classList.add('locked');
+    if(currentOptions[i].correct){
+      el.classList.add('correct');
+    } else if(i === idx){
+      el.classList.add('incorrect');
+    }
+  });
+
+  const feedback = document.getElementById('feedback');
+  feedback.classList.add('show');
+
+  if(chosen.correct){
+    score++;
+    feedback.classList.add('right');
+    feedback.textContent = `Correct! "${item.word}" means "${item.def}."`;
+  } else {
+    missed.push(item);
+    feedback.classList.add('wrong');
+    feedback.textContent = `Incorrect. "${item.word}" actually means "${item.def}." The meaning you chose ("${chosen.text}") belongs to the word "${chosen.sourceWord}."`;
+  }
+
+  document.getElementById('scoreLabel').textContent = `Score: ${score}`;
+  document.getElementById('nextBtn').disabled = false;
+}
+
+function nextQuestion(){
+  currentIndex++;
+  if(currentIndex >= order.length){
+    finishQuiz();
+  } else {
+    loadQuestion();
+  }
+}
+
+function finishQuiz(){
+  document.getElementById('quizScreen').classList.add('hidden');
+  document.getElementById('resultScreen').classList.remove('hidden');
+  document.getElementById('finalScore').textContent = `${score} / ${WORDS.length}`;
+  const pct = Math.round((score / WORDS.length) * 100);
+  document.getElementById('finalScoreSub').textContent = `You got ${pct}% correct.`;
+
+  const missedList = document.getElementById('missedList');
+  missedList.innerHTML = '';
+  if(missed.length === 0){
+    missedList.innerHTML = '<p style="text-align:center; color:var(--muted);">Perfect score — no missed words!</p>';
+  } else {
+    const heading = document.createElement('p');
+    heading.style.cssText = 'font-weight:600; margin:0 0 8px;';
+    heading.textContent = `Words to review (${missed.length}):`;
+    missedList.appendChild(heading);
+    missed.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'missed-item';
+      div.innerHTML = `<b>${item.word}</b><div class="def">${item.def}</div>`;
+      missedList.appendChild(div);
+    });
+  }
+}
+
+function restartQuiz(){
+  document.getElementById('resultScreen').classList.add('hidden');
+  document.getElementById('startScreen').classList.remove('hidden');
+}
+</script>
+</body>
+</html>

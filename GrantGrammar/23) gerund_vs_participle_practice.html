@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Gerund</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;color:#222;min-height:100vh;}
+#app{max-width:700px;margin:0 auto;padding:16px;}
+h1{text-align:center;font-size:1.35rem;font-weight:800;color:#185FA5;padding:14px 0 4px;}
+.instr{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0 4px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;min-width:52px;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:6px;}
+.timer-bar{background:white;border:1px solid #d0dce8;border-radius:8px;padding:8px 12px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.timer-setup{display:flex;align-items:center;gap:8px;font-size:0.85rem;color:#444;}
+.timer-setup label{font-weight:700;}
+.timer-setup input[type="number"]{width:56px;padding:5px 6px;border:1.5px solid #d0dce8;border-radius:6px;font-size:0.9rem;text-align:center;}
+.timer-start-btn{background:#185FA5;color:white;border:none;border-radius:6px;padding:6px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;}
+.timer-running{display:flex;align-items:center;gap:8px;}
+.timer-label{font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;}
+.timer-display{font-size:1.1rem;font-weight:900;color:#185FA5;font-family:'Courier New',monospace;}
+.timer-display.warn{color:#f5a623;}
+.timer-display.danger{color:#E24B4A;}
+#att-bar{text-align:center;font-size:0.8rem;color:#888;margin-bottom:8px;}
+#att-bar span{font-weight:700;color:#185FA5;}
+.card{background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:20px 18px;margin-bottom:12px;}
+.q-num{font-size:0.78rem;color:#888;margin-bottom:8px;}
+.topic-tag{display:inline-block;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:10px;background:#e3f0ff;color:#185FA5;margin-bottom:10px;}
+.q-text{font-size:0.95rem;line-height:1.5;margin-bottom:14px;color:#333;font-weight:600;}
+.opts{display:grid;gap:8px;}
+.opt{padding:11px 14px;border:2px solid #d7dde6;border-radius:8px;cursor:pointer;font-size:0.92rem;background:white;text-align:left;line-height:1.45;transition:border-color 0.15s,background 0.15s;}
+.opt:hover:not(:disabled){border-color:#185FA5;background:#f0f6ff;}
+.opt.correct{border-color:#1D9E75;background:#e6f7f1;color:#0d6b50;font-weight:700;}
+.opt.wrong{border-color:#E24B4A;background:#fdf0f0;color:#b03030;}
+.opt:disabled{cursor:default;}
+.opt b{text-decoration:underline;}
+.exp{margin-top:12px;padding:11px;background:#f5f9ff;border-left:3px solid #185FA5;border-radius:4px;font-size:0.86rem;line-height:1.55;color:#333;display:none;}
+.nav-btns{display:flex;gap:8px;margin-top:8px;}
+.nav-btns button{flex:1;padding:10px;border:1.5px solid #d7dde6;border-radius:8px;background:white;cursor:pointer;font-size:0.9rem;color:#444;}
+.nav-btns button:hover:not(:disabled){border-color:#185FA5;color:#185FA5;}
+.nav-btns button:disabled{opacity:0.4;cursor:not-allowed;}
+.results{background:white;border-radius:12px;padding:28px 20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.score-big{font-size:3rem;font-weight:900;color:#185FA5;}
+.score-lbl{color:#888;font-size:0.9rem;margin-bottom:16px;}
+.stats-row{display:flex;justify-content:center;gap:28px;margin-bottom:22px;}
+.stat-n{font-size:1.5rem;font-weight:800;}
+.stat-lbl{font-size:0.75rem;color:#888;}
+.res-btn{display:block;width:100%;padding:13px;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:10px;}
+.btn-copy{background:#7b61ff;color:white;}
+.btn-retry{background:#1D9E75;color:white;}
+.btn-fresh{background:#e8ecf0;color:#444;}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-ov.show{display:flex;}
+.modal-box{background:white;border-radius:14px;padding:24px;max-width:360px;width:90%;text-align:center;}
+.modal-box h3{color:#185FA5;margin-bottom:10px;font-size:1.05rem;}
+.modal-box p{font-size:0.88rem;color:#555;margin-bottom:18px;line-height:1.5;}
+.modal-acts{display:flex;gap:10px;}
+.modal-acts button{flex:1;padding:10px;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;cursor:pointer;}
+.modal-acts .cancel{background:#e8ecf0;color:#444;}
+.modal-acts .confirm{background:#E24B4A;color:white;}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>[Grant] Gerund</h1>
+  <div class="instr">Choose the sentence where the bolded word is used as a gerund.</div>
+  <div id="nav-bar">
+    <span id="nav-count">0 / 50</span>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+    <button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button>
+  </div>
+  <div id="dot-panel"></div>
+  <div class="timer-bar" id="timerBar">
+    <div class="timer-setup" id="timerSetup">
+      <label for="timerMin">Set Time Limit:</label>
+      <input type="number" id="timerMin" min="1" max="180" value="25"> min
+      <button class="timer-start-btn" onclick="startTimer()">Start</button>
+    </div>
+    <div class="timer-running" id="timerRunning" style="display:none;">
+      <span class="timer-label">Time Left</span>
+      <span class="timer-display" id="timerDisplay">25:00</span>
+    </div>
+  </div>
+  <div id="att-bar">Total Attempts: <span id="attCount">0</span></div>
+  <div id="qcard"></div>
+  <div id="freshModal" class="modal-ov">
+    <div class="modal-box">
+      <h3 id="freshTitle">Start Fresh?</h3>
+      <p id="freshText">All progress will be cleared. This cannot be undone.</p>
+      <div class="modal-acts">
+        <button class="cancel" onclick="closeFreshModal()">Cancel</button>
+        <button class="confirm" onclick="confirmFresh()">Start Fresh</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+var DATE = '20260702';
+var QUIZ_KEY = 'quiz_grantgerund_50_' + DATE + '_v1';
+var ATT_KEY  = 'quiz_grantgerund_att_' + DATE + '_v1';
+var ORDER_KEY = QUIZ_KEY + '_order_v1';
+
+var RAW_QUESTIONS = [
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['She is <b>swimming</b> in the pool right now.','<b>Swimming</b> is her favorite hobby.','They were <b>swimming</b> when it started to rain.','He will be <b>swimming</b> at the meet tomorrow.'],ci:1,
+   exp:'In "Swimming is her favorite hobby," "swimming" acts as the subject of the sentence - a noun - which makes it a gerund. In the other three sentences, "swimming" follows a form of "be" (is / were / will be) and is part of the progressive verb tense, describing an action in progress.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['I am <b>reading</b> a mystery novel.','She was <b>reading</b> when the phone rang.','<b>Reading</b> books helps you learn new words.','We will be <b>reading</b> the next chapter tomorrow.'],ci:2,
+   exp:'In "Reading books helps you learn new words," "reading" is the subject of the sentence, functioning as a noun - a gerund. In the other three sentences, "reading" follows "am / was / will be" and describes an action happening at a specific time, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['She loves <b>cooking</b> for her family.','My dad is <b>cooking</b> dinner tonight.','They were <b>cooking</b> when the fire alarm went off.','He will be <b>cooking</b> all afternoon.'],ci:0,
+   exp:'In "She loves cooking for her family," "cooking" is the object of the verb "loves" - a noun role - which makes it a gerund. In the other three sentences, "cooking" pairs with "is / were / will be" to form the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['The kids are <b>dancing</b> at the party.','We were <b>dancing</b> until midnight.','She will be <b>dancing</b> in the recital.','<b>Dancing</b> makes me happy.'],ci:3,
+   exp:'In "Dancing makes me happy," "dancing" is the subject of the sentence - a noun - so it is a gerund. In the other three sentences, "dancing" follows "are / were / will be" and describes an ongoing or planned action, making it part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['He is <b>writing</b> a letter to his grandmother.','My hobby is <b>writing</b> short stories.','They were <b>writing</b> essays all night.','She will be <b>writing</b> her speech tonight.'],ci:1,
+   exp:'In "My hobby is writing short stories," "writing" renames the subject "hobby" after the linking verb "is" - a noun role called a subject complement - which makes it a gerund. In the other three sentences, "writing" is paired with "is / were / will be" to describe an action in progress, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['She is <b>painting</b> a portrait.','They were <b>painting</b> the house last summer.','<b>Painting</b> the fence took all weekend.','He will be <b>painting</b> the mural next week.'],ci:2,
+   exp:'In "Painting the fence took all weekend," "painting" (along with "the fence") is the subject of the sentence, functioning as a noun - a gerund. In the other three sentences, "painting" follows "is / were / will be" and is part of the progressive verb tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['I enjoy <b>running</b> every morning.','He is <b>running</b> in the marathon this year.','She was <b>running</b> late for school.','They will be <b>running</b> the race together.'],ci:0,
+   exp:'In "I enjoy running every morning," "running" is the object of the verb "enjoy" - a noun role - which makes it a gerund. In the other three sentences, "running" pairs with "is / was / will be" to describe an action in progress, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['She is <b>singing</b> on stage right now.','We were <b>singing</b> along to the radio.','He will be <b>singing</b> at the wedding.','<b>Singing</b> in the choir is fun.'],ci:3,
+   exp:'In "Singing in the choir is fun," "singing" (with "in the choir") is the subject of the sentence, functioning as a noun - a gerund. In the other three sentences, "singing" follows "is / were / will be" and describes an action in progress, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['He is <b>studying</b> for his math test.','<b>Studying</b> every night improved her grades.','They were <b>studying</b> together at the library.','She will be <b>studying</b> abroad next year.'],ci:1,
+   exp:'In "Studying every night improved her grades," "studying" is the subject of the sentence - a noun - which makes it a gerund. In the other three sentences, "studying" follows "is / were / will be" and describes an ongoing or planned action, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['He is <b>traveling</b> to Japan this summer.','We were <b>traveling</b> all day yesterday.','<b>Traveling</b> to new countries excites her.','They will be <b>traveling</b> by train.'],ci:2,
+   exp:'In "Traveling to new countries excites her," "traveling" is the subject of the sentence, functioning as a noun - a gerund. In the other three sentences, "traveling" pairs with "is / were / will be" to form the progressive tense, describing an action in progress.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['She is <b>walking</b> her dog around the block.','They stayed fit by <b>walking</b> every day.','They were <b>walking</b> home when it began to snow.','He will be <b>walking</b> to school tomorrow.'],ci:1,
+   exp:'In "They stayed fit by walking every day," "walking" is the object of the preposition "by" - a noun role - which makes it a gerund. In the other three sentences, "walking" follows "is / were / will be" and is part of the progressive verb tense, describing an action in progress.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['The frog is <b>jumping</b> across the pond.','The kids were <b>jumping</b> on the trampoline.','She will be <b>jumping</b> in the long jump event.','Her favorite playground activity is <b>jumping</b> rope.'],ci:3,
+   exp:'In "Her favorite playground activity is jumping rope," "jumping" renames the subject "activity" after the linking verb "is" - a subject complement - which makes it a gerund. In the other three sentences, "jumping" follows "is / were / will be" and is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['The baby is <b>laughing</b> at the puppet show.','We were <b>laughing</b> so hard we cried.','I can\'t stop <b>laughing</b> at that joke.','They will be <b>laughing</b> about this for years.'],ci:2,
+   exp:'In "I can\'t stop laughing at that joke," "laughing" is the object of the verb "stop" - a noun role - which makes it a gerund. In the other three sentences, "laughing" follows "is / were / will be" and describes an action in progress, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['<b>Crying</b> is a normal way to release emotions.','The baby is <b>crying</b> in the next room.','She was <b>crying</b> after the sad movie.','He will be <b>crying</b> tears of joy at graduation.'],ci:0,
+   exp:'In "Crying is a normal way to release emotions," "crying" is the subject of the sentence - a noun - which makes it a gerund. In the other three sentences, "crying" follows "is / was / will be" and is part of the progressive verb tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['My mom is <b>driving</b> us to the airport.','She is nervous about <b>driving</b> on the highway.','They were <b>driving</b> through the mountains.','He will be <b>driving</b> to the conference next week.'],ci:1,
+   exp:'In "She is nervous about driving on the highway," "driving" is the object of the preposition "about" - a noun role - which makes it a gerund. In the other three sentences, "driving" follows "is / were / will be" and describes an action in progress, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['His favorite way to commute is <b>biking</b>.','She is <b>biking</b> to work today.','We were <b>biking</b> along the trail.','They will be <b>biking</b> across the state next month.'],ci:0,
+   exp:'In "His favorite way to commute is biking," "biking" renames the subject "way" after the linking verb "is" - a subject complement - which makes it a gerund. In the other three sentences, "biking" follows "is / were / will be" and is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['They are <b>hiking</b> up the mountain right now.','We were <b>hiking</b> for six hours yesterday.','Her weekend plan is <b>hiking</b>.','He will be <b>hiking</b> with his scout troop.'],ci:2,
+   exp:'In "Her weekend plan is hiking," "hiking" renames the subject "plan" after the linking verb "is" - a subject complement - which makes it a gerund. In the other three sentences, "hiking" follows "are / were / will be" and is part of the progressive verb tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['He is <b>skiing</b> down the black diamond slope.','They were <b>skiing</b> in the Alps last winter.','She will be <b>skiing</b> at the resort this weekend.','<b>Skiing</b> requires excellent balance.'],ci:3,
+   exp:'In "Skiing requires excellent balance," "skiing" is the subject of the sentence - a noun - which makes it a gerund. In the other three sentences, "skiing" follows "is / were / will be" and describes an action in progress, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['She is talented at <b>skating</b>.','He is <b>skating</b> on the frozen pond.','We were <b>skating</b> at the rink last night.','They will be <b>skating</b> in the competition.'],ci:0,
+   exp:'In "She is talented at skating," "skating" is the object of the preposition "at" - a noun role - which makes it a gerund. In the other three sentences, "skating" follows "is / were / will be" and is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['<b>Baking</b> relaxes her after a long day.','My grandmother is <b>baking</b> cookies.','They were <b>baking</b> bread all morning.','We will be <b>baking</b> a cake for the party.'],ci:0,
+   exp:'In "Baking relaxes her after a long day," "baking" is the subject of the sentence - a noun - which makes it a gerund. In the other three sentences, "baking" follows "is / were / will be" and describes an action in progress, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['He is <b>drawing</b> a picture of his dog.','He is skilled at <b>drawing</b> animals.','She was <b>drawing</b> when the bell rang.','They will be <b>drawing</b> during art class tomorrow.'],ci:1,
+   exp:'In "He is skilled at drawing animals," "drawing" is the object of the preposition "at" - a noun role - which makes it a gerund. In the other three sentences, "drawing" follows "is / was / will be" and is part of the progressive verb tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['Her passion is <b>sketching</b> landscapes.','He is <b>sketching</b> a portrait right now.','They were <b>sketching</b> the old building.','She will be <b>sketching</b> during the trip.'],ci:0,
+   exp:'In "Her passion is sketching landscapes," "sketching" renames the subject "passion" after the linking verb "is" - a subject complement - which makes it a gerund. In the other three sentences, "sketching" follows "is / were / will be" and is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['My aunt is <b>knitting</b> a scarf.','She was <b>knitting</b> all afternoon.','They will be <b>knitting</b> blankets for the shelter.','She enjoys <b>knitting</b> during the winter months.'],ci:3,
+   exp:'In "She enjoys knitting during the winter months," "knitting" is the object of the verb "enjoys" - a noun role - which makes it a gerund. In the other three sentences, "knitting" follows "is / was / will be" and describes an action in progress, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['My grandmother is <b>sewing</b> a quilt.','She was <b>sewing</b> a costume for the play.','He is interested in <b>sewing</b> his own clothes.','They will be <b>sewing</b> new curtains next week.'],ci:2,
+   exp:'In "He is interested in sewing his own clothes," "sewing" is the object of the preposition "in" - a noun role - which makes it a gerund. In the other three sentences, "sewing" follows "is / was / will be" and is part of the progressive verb tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['His favorite sport is <b>climbing</b>.','She is <b>climbing</b> the rock wall.','They were <b>climbing</b> the cliff at sunrise.','He will be <b>climbing</b> the tallest peak next year.'],ci:0,
+   exp:'In "His favorite sport is climbing," "climbing" renames the subject "sport" after the linking verb "is" - a subject complement - which makes it a gerund. In the other three sentences, "climbing" follows "is / were / will be" and is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['He is <b>jogging</b> around the park.','She was <b>jogging</b> when it started raining.','Her morning routine is <b>jogging</b>.','They will be <b>jogging</b> along the beach tomorrow.'],ci:2,
+   exp:'In "Her morning routine is jogging," "jogging" renames the subject "routine" after the linking verb "is" - a subject complement - which makes it a gerund. In the other three sentences, "jogging" follows "is / was / will be" and is part of the progressive verb tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['She is <b>exercising</b> at the gym right now.','They were <b>exercising</b> before breakfast.','He will be <b>exercising</b> every morning this month.','The doctor recommends <b>exercising</b> three times a week.'],ci:3,
+   exp:'In "The doctor recommends exercising three times a week," "exercising" is the object of the verb "recommends" - a noun role - which makes it a gerund. In the other three sentences, "exercising" follows "is / were / will be" and describes an action in progress, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['My neighbor is <b>gardening</b> this afternoon.','They were <b>gardening</b> all weekend.','She is passionate about <b>gardening</b>.','We will be <b>gardening</b> once the weather warms up.'],ci:2,
+   exp:'In "She is passionate about gardening," "gardening" is the object of the preposition "about" - a noun role - which makes it a gerund. In the other three sentences, "gardening" follows "is / were / will be" and is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['We are <b>camping</b> by the lake this weekend.','Their favorite summer activity is <b>camping</b>.','They were <b>camping</b> in the mountains last July.','He will be <b>camping</b> with his troop in August.'],ci:1,
+   exp:'In "Their favorite summer activity is camping," "camping" renames the subject "activity" after the linking verb "is" - a subject complement - which makes it a gerund. In the other three sentences, "camping" follows "are / were / will be" and is part of the progressive verb tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['He is <b>fishing</b> at the pier right now.','They were <b>fishing</b> all morning.','My grandfather loves <b>fishing</b> on quiet mornings.','We will be <b>fishing</b> at the lake this weekend.'],ci:2,
+   exp:'In "My grandfather loves fishing on quiet mornings," "fishing" is the object of the verb "loves" - a noun role - which makes it a gerund. In the other three sentences, "fishing" follows "is / were / will be" and describes an action in progress, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['<b>Shopping</b> for groceries takes her an hour.','She is <b>shopping</b> for a new dress.','They were <b>shopping</b> when the store closed.','We will be <b>shopping</b> for school supplies tomorrow.'],ci:0,
+   exp:'In "Shopping for groceries takes her an hour," "shopping" is the subject of the sentence - a noun - which makes it a gerund. In the other three sentences, "shopping" follows "is / were / will be" and is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['He is <b>cleaning</b> his room right now.','They were <b>cleaning</b> the garage all day.','She will be <b>cleaning</b> the kitchen after dinner.','<b>Cleaning</b> the whole house took all weekend.'],ci:3,
+   exp:'In "Cleaning the whole house took all weekend," "cleaning" is the subject of the sentence - a noun - which makes it a gerund. In the other three sentences, "cleaning" follows "is / were / will be" and describes an action in progress, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['She is <b>washing</b> the dishes now.','He is responsible for <b>washing</b> the car every week.','They were <b>washing</b> the windows yesterday.','We will be <b>washing</b> the laundry tonight.'],ci:1,
+   exp:'In "He is responsible for washing the car every week," "washing" is the object of the preposition "for" - a noun role - which makes it a gerund. In the other three sentences, "washing" follows "is / were / will be" and is part of the progressive verb tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['The baby is <b>sleeping</b> peacefully.','He avoids <b>sleeping</b> too late on school nights.','She was <b>sleeping</b> when the phone rang.','They will be <b>sleeping</b> in the tent tonight.'],ci:1,
+   exp:'In "He avoids sleeping too late on school nights," "sleeping" is the object of the verb "avoids" - a noun role - which makes it a gerund. In the other three sentences, "sleeping" follows "is / was / will be" and describes an action in progress, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['She is <b>dreaming</b> about her vacation right now.','He was <b>dreaming</b> when the alarm went off.','They will be <b>dreaming</b> of summer break all winter.','He never gets tired of <b>dreaming</b> about the future.'],ci:3,
+   exp:'In "He never gets tired of dreaming about the future," "dreaming" is the object of the preposition "of" - a noun role - which makes it a gerund. In the other three sentences, "dreaming" follows "is / was / will be" and is part of the progressive verb tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['They enjoy <b>planning</b> surprise parties.','She is <b>planning</b> the school trip.','We were <b>planning</b> the event for weeks.','He will be <b>planning</b> the menu tomorrow.'],ci:0,
+   exp:'In "They enjoy planning surprise parties," "planning" is the object of the verb "enjoy" - a noun role - which makes it a gerund. In the other three sentences, "planning" follows "is / were / will be" and describes an action in progress, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['He is <b>building</b> a treehouse.','They were <b>building</b> a sandcastle at the beach.','We will be <b>building</b> a new shed this summer.','<b>Building</b> strong friendships takes time and patience.'],ci:3,
+   exp:'In "Building strong friendships takes time and patience," "building" is the subject of the sentence - a noun - which makes it a gerund. In the other three sentences, "building" follows "is / were / will be" and is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['She is <b>creating</b> a new painting.','<b>Creating</b> original artwork is her greatest joy.','They were <b>creating</b> a mural on the wall.','We will be <b>creating</b> new designs next week.'],ci:1,
+   exp:'In "Creating original artwork is her greatest joy," "creating" is the subject of the sentence - a noun - which makes it a gerund. In the other three sentences, "creating" follows "is / were / will be" and describes an action in progress, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['They are <b>exploring</b> the old castle.','We were <b>exploring</b> the cave system yesterday.','She is excited about <b>exploring</b> new cities.','He will be <b>exploring</b> the rainforest next month.'],ci:2,
+   exp:'In "She is excited about exploring new cities," "exploring" is the object of the preposition "about" - a noun role - which makes it a gerund. In the other three sentences, "exploring" follows "are / were / will be" and is part of the progressive verb tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['<b>Teaching</b> young children requires great patience.','She is <b>teaching</b> a math class right now.','He was <b>teaching</b> when the fire drill started.','They will be <b>teaching</b> a new unit next semester.'],ci:0,
+   exp:'In "Teaching young children requires great patience," "teaching" is the subject of the sentence - a noun - which makes it a gerund. In the other three sentences, "teaching" follows "is / was / will be" and describes an action in progress, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['He is <b>learning</b> to play the guitar.','They were <b>learning</b> French last year.','His main goal this year is <b>learning</b> a new language.','She will be <b>learning</b> to drive this summer.'],ci:2,
+   exp:'In "His main goal this year is learning a new language," "learning" renames the subject "goal" after the linking verb "is" - a subject complement - which makes it a gerund. In the other three sentences, "learning" follows "is / were / will be" and is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['She is <b>practicing</b> the piano right now.','They were <b>practicing</b> for the big game.','He will be <b>practicing</b> his lines tonight.','She loves <b>practicing</b> new songs every day.'],ci:3,
+   exp:'In "She loves practicing new songs every day," "practicing" is the object of the verb "loves" - a noun role - which makes it a gerund. In the other three sentences, "practicing" follows "is / were / will be" and describes an action in progress, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['The band is <b>performing</b> on stage tonight.','She enjoys <b>performing</b> in front of large crowds.','They were <b>performing</b> when the power went out.','He will be <b>performing</b> at the talent show.'],ci:1,
+   exp:'In "She enjoys performing in front of large crowds," "performing" is the object of the verb "enjoys" - a noun role - which makes it a gerund. In the other three sentences, "performing" follows "is / were / will be" and is part of the progressive verb tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['They are <b>competing</b> in the finals today.','We were <b>competing</b> against the top team.','<b>Competing</b> at the national level was her lifelong dream.','He will be <b>competing</b> in the championship next week.'],ci:2,
+   exp:'In "Competing at the national level was her lifelong dream," "competing" is the subject of the sentence - a noun - which makes it a gerund. In the other three sentences, "competing" follows "are / were / will be" and describes an action in progress, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['He is passionate about <b>playing</b> the violin.','The children are <b>playing</b> in the yard.','They were <b>playing</b> video games all night.','She will be <b>playing</b> in the orchestra tomorrow.'],ci:0,
+   exp:'In "He is passionate about playing the violin," "playing" is the object of the preposition "about" - a noun role - which makes it a gerund. In the other three sentences, "playing" follows "are / were / will be" and is part of the progressive verb tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['She is <b>listening</b> to music right now.','They were <b>listening</b> to the radio during the drive.','He enjoys <b>listening</b> to podcasts on his commute.','We will be <b>listening</b> to the lecture tomorrow.'],ci:2,
+   exp:'In "He enjoys listening to podcasts on his commute," "listening" is the object of the verb "enjoys" - a noun role - which makes it a gerund. In the other three sentences, "listening" follows "is / were / will be" and describes an action in progress, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['He is <b>watching</b> a movie right now.','They were <b>watching</b> the game together.','She will be <b>watching</b> the fireworks tonight.','<b>Watching</b> too much television can affect your sleep.'],ci:3,
+   exp:'In "Watching too much television can affect your sleep," "watching" is the subject of the sentence - a noun - which makes it a gerund. In the other three sentences, "watching" follows "is / were / will be" and is part of the progressive verb tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['She is <b>photographing</b> the sunset right now.','He enjoys <b>photographing</b> wildlife in the forest.','They were <b>photographing</b> the wedding all afternoon.','We will be <b>photographing</b> the event tomorrow.'],ci:1,
+   exp:'In "He enjoys photographing wildlife in the forest," "photographing" is the object of the verb "enjoys" - a noun role - which makes it a gerund. In the other three sentences, "photographing" follows "is / were / will be" and describes an action in progress, so it is part of the progressive tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['She is <b>volunteering</b> at the shelter today.','His favorite way to give back is <b>volunteering</b>.','They were <b>volunteering</b> at the food bank last weekend.','We will be <b>volunteering</b> at the school fair.'],ci:1,
+   exp:'In "His favorite way to give back is volunteering," "volunteering" renames the subject "way" after the linking verb "is" - a subject complement - which makes it a gerund. In the other three sentences, "volunteering" follows "is / were / will be" and is part of the progressive verb tense.'},
+  {topic:'Gerund',
+   q:'Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?',
+   opts:['He is <b>coding</b> a new app right now.','They were <b>coding</b> the website all night.','She will be <b>coding</b> a program for her class project.','Her favorite hobby is <b>coding</b>.'],ci:3,
+   exp:'In "Her favorite hobby is coding," "coding" renames the subject "hobby" after the linking verb "is" - a subject complement - which makes it a gerund. In the other three sentences, "coding" follows "is / were / will be" and describes an action in progress, so it is part of the progressive tense.'}
+];
+
+function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function identityOrder(){var o=[];for(var i=0;i<RAW_QUESTIONS.length;i++)o.push(i);return o;}
+function isValidOrder(arr){if(!Array.isArray(arr)||arr.length!==RAW_QUESTIONS.length)return false;var s=arr.slice().sort(function(a,b){return a-b;});for(var i=0;i<s.length;i++)if(s[i]!==i)return false;return true;}
+function loadOrder(){try{var r=localStorage.getItem(ORDER_KEY);if(!r)return null;var a=JSON.parse(r);if(!isValidOrder(a))throw new Error('bad');return a;}catch(e){localStorage.removeItem(ORDER_KEY);return null;}}
+function saveOrder(o){try{localStorage.setItem(ORDER_KEY,JSON.stringify(o));}catch(e){}}
+function buildQuestions(raw,order){var out=[];for(var i=0;i<order.length;i++)out.push(raw[order[i]]);return out;}
+var currentOrder=loadOrder()||identityOrder();
+var QUESTIONS=buildQuestions(RAW_QUESTIONS,currentOrder);
+
+function defaultState(){return{cur:0,answers:{},showResults:false,timerStartedAt:null,timerTotalSec:null};}
+function saveState(s){try{localStorage.setItem(QUIZ_KEY,JSON.stringify(s));}catch(e){}}
+function loadState(){try{var r=localStorage.getItem(QUIZ_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
+var state=loadState()||defaultState();
+
+function loadAtt(){try{return parseInt(localStorage.getItem(ATT_KEY)||'0',10)||0;}catch(e){return 0;}}
+function saveAtt(n){try{localStorage.setItem(ATT_KEY,String(n));}catch(e){}}
+function renderAtt(){var el=document.getElementById('attCount');if(el)el.textContent=loadAtt();}
+
+var timerInterval=null;
+function formatTime(sec){sec=Math.max(0,Math.round(sec));var m=Math.floor(sec/60),s=sec%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+function renderTimer(){
+  var setup=document.getElementById('timerSetup'),run=document.getElementById('timerRunning'),disp=document.getElementById('timerDisplay');
+  if(!setup)return;
+  if(!state.timerStartedAt){setup.style.display='flex';run.style.display='none';return;}
+  setup.style.display='none';run.style.display='flex';
+  var elapsed=(Date.now()-state.timerStartedAt)/1000,rem=state.timerTotalSec-elapsed;
+  disp.classList.remove('warn','danger');
+  if(rem<=0){disp.textContent="Time's Up";disp.classList.add('danger');stopTimerInterval();return;}
+  disp.textContent=formatTime(rem);
+  if(rem<=state.timerTotalSec*0.1)disp.classList.add('danger');
+  else if(rem<=state.timerTotalSec*0.25)disp.classList.add('warn');
+}
+function startTimer(){var inp=document.getElementById('timerMin');var m=parseFloat(inp.value)||25;state.timerTotalSec=Math.round(m*60);state.timerStartedAt=Date.now();saveState(state);renderTimer();startTimerInterval();}
+function startTimerInterval(){stopTimerInterval();timerInterval=setInterval(renderTimer,1000);}
+function stopTimerInterval(){if(timerInterval){clearInterval(timerInterval);timerInterval=null;}}
+
+function updateNav(){
+  var ans=Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent=ans+' / '+QUESTIONS.length;
+  document.getElementById('prog-fill').style.width=(ans/QUESTIONS.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel=document.getElementById('dot-panel');if(panel.style.display==='none')return;
+  var h='';
+  for(var i=0;i<QUESTIONS.length;i++){
+    var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===QUESTIONS[i].ci?'#185FA5':'#E24B4A');
+    h+='<span onclick="goToQ('+i+')" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:'+bg+';color:#fff;font-size:11px;cursor:pointer;margin:2px;">'+(i+1)+'</span>';
+  }
+  panel.innerHTML=h;
+}
+function toggleJump(){
+  var p=document.getElementById('dot-panel'),b=document.getElementById('jump-btn');
+  if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}
+  else{p.style.display='none';b.textContent='Jump ▾';}
+}
+function goToQ(i){state.cur=i;state.showResults=false;saveState(state);document.getElementById('dot-panel').style.display='none';document.getElementById('jump-btn').textContent='Jump ▾';render();}
+function pick(optIdx){if(state.answers[state.cur]!==undefined)return;state.answers[state.cur]=optIdx;saveState(state);render();}
+function goPrev(){if(state.cur>0){state.cur--;saveState(state);render();}}
+function goNext(){
+  if(state.cur<QUESTIONS.length-1){state.cur++;saveState(state);render();}
+  else{if(!state.showResults){var a=loadAtt()+1;saveAtt(a);renderAtt();}state.showResults=true;saveState(state);render();}
+}
+function render(){
+  var c=document.getElementById('qcard');
+  if(state.showResults){renderResults();return;}
+  var q=QUESTIONS[state.cur],ans=state.answers[state.cur],done=ans!==undefined;
+  var isLast=state.cur===QUESTIONS.length-1;
+  var optsH='';
+  for(var i=0;i<q.opts.length;i++){
+    var cls='opt';
+    if(done){if(i===q.ci)cls+=' correct';else if(i===ans)cls+=' wrong';}
+    optsH+='<button class="'+cls+'"'+(done?' disabled':'')+' onclick="pick('+i+')">'+q.opts[i]+'</button>';
+  }
+  var expH=done&&ans!==q.ci?'<div class="exp" style="display:block">'+q.exp+'</div>':'';
+  var nextLbl=isLast?'See Results &#8594;':'Next &#8594;';
+  c.innerHTML='<div class="card"><div class="q-num">Q'+(state.cur+1)+' of '+QUESTIONS.length+'</div><span class="topic-tag">'+q.topic+'</span><div class="q-text">'+q.q+'</div><div class="opts">'+optsH+'</div>'+expH+'</div><div class="nav-btns"><button '+(state.cur===0?'disabled':'')+' onclick="goPrev()">&#8592; Prev</button><button onclick="goNext()">'+nextLbl+'</button></div>';
+  updateNav();
+}
+function renderResults(){
+  var correct=0,wrong=0,skip=0;
+  for(var i=0;i<QUESTIONS.length;i++){
+    if(state.answers[i]===undefined)skip++;
+    else if(state.answers[i]===QUESTIONS[i].ci)correct++;
+    else wrong++;
+  }
+  var pct=Math.round(correct/QUESTIONS.length*100);
+  var c=document.getElementById('qcard');
+  c.innerHTML='<div class="results"><div class="score-big">'+correct+'/'+QUESTIONS.length+'</div><div class="score-lbl">'+pct+'% correct</div><div class="stats-row"><div><div class="stat-n" style="color:#1D9E75">'+correct+'</div><div class="stat-lbl">Correct</div></div><div><div class="stat-n" style="color:#E24B4A">'+wrong+'</div><div class="stat-lbl">Wrong</div></div><div><div class="stat-n" style="color:#888">'+skip+'</div><div class="stat-lbl">Skipped</div></div></div><button class="res-btn btn-copy" onclick="copyRes()">Copy All Results</button><button class="res-btn btn-retry" onclick="retryWrong()">Retry Wrong Ones</button><button class="res-btn btn-fresh" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button><button class="res-btn btn-fresh" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button></div>';
+  updateNav();
+}
+function copyRes(){
+  var correct=0,lines=['[Grant] Gerund Results'];
+  for(var i=0;i<QUESTIONS.length;i++){
+    var q=QUESTIONS[i],a=state.answers[i],ok=a===q.ci;
+    if(ok)correct++;
+    lines.push('Q'+(i+1)+' '+(a===undefined?'SKIP':ok?'OK':'WRONG'));
+  }
+  lines.push('Score: '+correct+'/'+QUESTIONS.length);
+  try{navigator.clipboard.writeText(lines.join('\n'));}catch(e){alert(lines.join('\n'));}
+}
+function retryWrong(){
+  var wrong=[];
+  for(var i=0;i<QUESTIONS.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==QUESTIONS[i].ci){wrong.push(i);delete state.answers[i];}}
+  if(wrong.length>0){state.cur=wrong[0];state.showResults=false;saveState(state);render();}
+}
+var pendingFreshMode='original';
+function openFreshModalOriginal(){pendingFreshMode='original';document.getElementById('freshTitle').textContent='Start Fresh (Original Order)?';document.getElementById('freshText').textContent='Questions return to their original order and all progress is cleared.';document.getElementById('freshModal').classList.add('show');}
+function openFreshModalRandom(){pendingFreshMode='random';document.getElementById('freshTitle').textContent='Start Fresh (Random Order)?';document.getElementById('freshText').textContent='Questions will be reshuffled and all progress is cleared.';document.getElementById('freshModal').classList.add('show');}
+function closeFreshModal(){document.getElementById('freshModal').classList.remove('show');}
+function confirmFresh(){
+  currentOrder=(pendingFreshMode==='random')?shuffle(identityOrder()):identityOrder();
+  saveOrder(currentOrder);QUESTIONS=buildQuestions(RAW_QUESTIONS,currentOrder);
+  state=defaultState();saveState(state);stopTimerInterval();closeFreshModal();render();renderTimer();
+}
+
+window.toggleJump=toggleJump;window.goToQ=goToQ;window.pick=pick;window.goPrev=goPrev;window.goNext=goNext;
+window.startTimer=startTimer;window.copyRes=copyRes;window.retryWrong=retryWrong;
+window.openFreshModalOriginal=openFreshModalOriginal;window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;window.confirmFresh=confirmFresh;
+
+render();renderTimer();if(state.timerStartedAt)startTimerInterval();renderAtt();
+</script>
+</body>
+</html>

@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Subject & Verb Quiz</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+  h1 { color: #1a3a5c; font-size: 1.5rem; margin-bottom: 6px; text-align: center; }
+  .subtitle { color: #4a6fa5; font-size: 0.85rem; margin-bottom: 18px; text-align: center; }
+  .progress-bar-wrap { width: 100%; max-width: 700px; background: #d0dce8; border-radius: 8px; height: 10px; margin-bottom: 8px; }
+  .progress-bar { height: 10px; border-radius: 8px; background: #4a90d9; transition: width 0.3s; }
+  .progress-text { color: #4a6fa5; font-size: 0.8rem; margin-bottom: 16px; text-align: left; width: 100%; max-width: 700px; }
+  .card { background: #fff; border-radius: 14px; padding: 28px 28px 22px; max-width: 700px; width: 100%; box-shadow: 0 4px 18px rgba(0,0,0,0.10); }
+  .sentence-box { background: #eaf1fb; border-left: 4px solid #4a90d9; border-radius: 8px; padding: 14px 16px; margin-bottom: 18px; font-size: 1.05rem; color: #1a3a5c; line-height: 1.6; }
+  .sentence-label { font-size: 0.72rem; font-weight: 700; color: #4a90d9; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .question-text { font-size: 1rem; font-weight: 700; color: #1a3a5c; margin-bottom: 16px; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .opt-btn { background: #f5f8fc; border: 2px solid #c5d5e8; border-radius: 9px; padding: 12px 16px; font-size: 0.97rem; color: #1a3a5c; cursor: pointer; text-align: left; transition: background 0.15s, border-color 0.15s; }
+  .opt-btn:hover:not(:disabled) { background: #ddeaf9; border-color: #4a90d9; }
+  .opt-btn.correct { background: #d4edda; border-color: #28a745; color: #155724; }
+  .opt-btn.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+  .opt-btn:disabled { cursor: default; }
+  .feedback { margin-top: 14px; font-size: 0.9rem; font-weight: 600; min-height: 22px; }
+  .feedback.correct { color: #28a745; }
+  .feedback.wrong { color: #dc3545; }
+  .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+  .nav-btn { background: #4a90d9; color: #fff; border: none; border-radius: 8px; padding: 10px 24px; font-size: 0.95rem; cursor: pointer; font-weight: 600; transition: background 0.15s; }
+  .nav-btn:hover { background: #357abd; }
+  .nav-btn:disabled { background: #b0c4d8; cursor: default; }
+  /* Jump panel */
+  .jump-panel { display: none; width: 100%; max-width: 700px; background: #fff; border-radius: 14px; box-shadow: 0 4px 18px rgba(0,0,0,0.12); padding: 18px 16px; margin-bottom: 14px; }
+  .jump-panel.open { display: block; }
+  .jump-grid { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-start; }
+  .jdot { width: 34px; height: 34px; border-radius: 50%; background: #d0dce8; color: #1a3a5c; font-size: 0.72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, color 0.15s; flex-shrink: 0; border: 2px solid transparent; }
+  .jdot:hover { border-color: #4a90d9; }
+  .jdot.current { background: #4a90d9; color: #fff; }
+  .jdot.answered-correct { background: #28a745; color: #fff; }
+  .jdot.answered-wrong { background: #dc3545; color: #fff; }
+  .score-box { text-align: center; padding: 10px 0 4px; }
+  .score-big { font-size: 2.8rem; font-weight: 700; color: #1a3a5c; }
+  .score-label { color: #4a6fa5; font-size: 1rem; margin-bottom: 10px; }
+  .result-detail { font-size: 0.88rem; color: #4a6fa5; margin-bottom: 18px; }
+  .restart-btn { background: #4a90d9; color: #fff; border: none; border-radius: 9px; padding: 12px 32px; font-size: 1rem; cursor: pointer; font-weight: 700; transition: background 0.15s; }
+  .restart-btn:hover { background: #357abd; }
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.active { display: flex; }
+  .modal { background: #fff; border-radius: 14px; padding: 32px 28px; max-width: 360px; width: 90%; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+  .modal h2 { color: #1a3a5c; margin-bottom: 10px; font-size: 1.2rem; }
+  .modal p { color: #4a6fa5; font-size: 0.92rem; margin-bottom: 22px; line-height: 1.5; }
+  .modal-btns { display: flex; gap: 12px; justify-content: center; }
+  .modal-btn { padding: 10px 22px; border-radius: 8px; border: none; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
+  .modal-btn.confirm { background: #dc3545; color: #fff; }
+  .modal-btn.cancel { background: #e9ecef; color: #1a3a5c; }
+  .tag { display: inline-block; font-size: 0.7rem; font-weight: 700; border-radius: 5px; padding: 2px 7px; margin-bottom: 8px; }
+  .tag.subject { background: #d4edda; color: #155724; }
+  .tag.verb { background: #fff3cd; color: #856404; }
+  .tag.easy { background: #e2e3e5; color: #383d41; }
+  .tag.hard { background: #d1ecf1; color: #0c5460; }
+</style>
+</head>
+<body>
+<!-- ===== Universal Quiz Timer (auto-injected) ===== -->
+<style>
+  #qzTimerBar { background: #ffffff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-family: 'Segoe UI', Arial, sans-serif; }
+  #qzTimerSetup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+  #qzTimerSetup label { font-weight: 700; }
+  #qzTimerInput { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+  #qzTimerStartBtn { background: #185FA5; color: #ffffff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  #qzTimerStartBtn:active { opacity: 0.8; }
+  #qzTimerRunning { display: none; align-items: center; gap: 8px; }
+  #qzTimerLabel { font-size: 0.78rem; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 0.02em; }
+  #qzTimerDisplay { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+  #qzTimerDisplay.qz-warn { color: #f5a623; }
+  #qzTimerDisplay.qz-danger { color: #E24B4A; }
+</style>
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label for="qzTimerInput">Set Time Limit:</label>
+    <input type="number" id="qzTimerInput" min="1" max="180" value="20"> min
+    <button id="qzTimerStartBtn" type="button">Start</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span id="qzTimerLabel">Time Left</span>
+    <span id="qzTimerDisplay">20:00</span>
+  </div>
+</div>
+<script>
+(function(){
+  var QZ_KEY = 'qzTimer_' + location.pathname;
+  var qz = { totalSec: null, startedAt: null };
+  try {
+    var raw = localStorage.getItem(QZ_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p.totalSec === 'number' && typeof p.startedAt === 'number') qz = p;
+    }
+  } catch(e) {}
+  var qzInterval = null;
+
+  function qzSave() { try { localStorage.setItem(QZ_KEY, JSON.stringify(qz)); } catch(e) {} }
+  function qzFormat(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60), s = sec % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function qzRender() {
+    var setupEl = document.getElementById('qzTimerSetup');
+    var runEl = document.getElementById('qzTimerRunning');
+    var disp = document.getElementById('qzTimerDisplay');
+    if (!setupEl || !runEl || !disp) return;
+    if (!qz.startedAt) {
+      setupEl.style.display = 'flex';
+      runEl.style.display = 'none';
+      return;
+    }
+    setupEl.style.display = 'none';
+    runEl.style.display = 'flex';
+    var elapsed = (Date.now() - qz.startedAt) / 1000;
+    var remaining = qz.totalSec - elapsed;
+    disp.classList.remove('qz-warn', 'qz-danger');
+    if (remaining <= 0) {
+      disp.textContent = "Time's Up";
+      disp.classList.add('qz-danger');
+      qzStopInterval();
+      return;
+    }
+    disp.textContent = qzFormat(remaining);
+    if (remaining <= qz.totalSec * 0.1) disp.classList.add('qz-danger');
+    else if (remaining <= qz.totalSec * 0.25) disp.classList.add('qz-warn');
+  }
+  function qzStartInterval() {
+    qzStopInterval();
+    qzInterval = setInterval(qzRender, 1000);
+  }
+  function qzStopInterval() {
+    if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+  }
+  function qzStart() {
+    var input = document.getElementById('qzTimerInput');
+    var minutes = parseFloat(input.value);
+    if (!minutes || minutes <= 0) minutes = 20;
+    qz.totalSec = Math.round(minutes * 60);
+    qz.startedAt = Date.now();
+    qzSave();
+    qzRender();
+    qzStartInterval();
+  }
+
+  var btn = document.getElementById('qzTimerStartBtn');
+  if (btn) btn.addEventListener('click', qzStart);
+  qzRender();
+  if (qz.startedAt) qzStartInterval();
+
+  function qzResetTimer() {
+    qz.totalSec = null;
+    qz.startedAt = null;
+    qzSave();
+    qzStopInterval();
+    qzRender();
+  }
+  var qzRetryRe = /retry|restart|reset|start\s*fresh|try\s*again|\uB2E4\uC2DC\s*\uC2DC\uC791|\uCC98\uC74C\uBD80\uD0B0/i;
+  document.addEventListener('click', function(ev) {
+    var el = ev.target, depth = 0;
+    while (el && depth < 4) {
+      if (el.id === 'qzTimerBar' || el.id === 'qzAttemptsBar') return;
+      var isClickable = el.tagName === 'BUTTON' || el.tagName === 'A' ||
+        (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) ||
+        (el.getAttribute && el.getAttribute('role') === 'button');
+      if (isClickable) {
+        var txt = (el.textContent || el.value || '').trim();
+        if (txt.length > 0 && txt.length < 40 && qzRetryRe.test(txt)) {
+          qzResetTimer();
+          return;
+        }
+      }
+      el = el.parentElement;
+      depth++;
+    }
+  }, true);
+})();
+</script>
+<!-- ===== End Universal Quiz Timer ===== -->
+<!-- ===== Universal Total Attempts Counter (auto-injected) ===== -->
+<style>
+  #qzAttemptsBar { background: #f5f8fc; border-bottom: 1px solid #d0dce8; padding: 6px 12px; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', Arial, sans-serif; font-size: 0.82rem; color: #4a6fa5; font-weight: 700; letter-spacing: 0.01em; }
+  #qzAttemptsBar span { color: #185FA5; font-weight: 900; margin-left: 4px; }
+</style>
+<div id="qzAttemptsBar">Total Attempts:<span id="qzAttemptsCount">0</span></div>
+<script>
+(function(){
+  var QA_KEY = 'qzAttempts_' + location.pathname;
+  function qaGet(){ try { return parseInt(localStorage.getItem(QA_KEY)||'0',10) || 0; } catch(e){ return 0; } }
+  function qaSet(n){ try { localStorage.setItem(QA_KEY, String(n)); } catch(e){} }
+  function qaRenderCount(){
+    var el = document.getElementById('qzAttemptsCount');
+    if (el) el.textContent = qaGet();
+  }
+  function qaIsVisible(el){
+    if (!el) return false;
+    var r = el.getBoundingClientRect();
+    if (r.width < 80 || r.height < 30) return false;
+    var cs = window.getComputedStyle(el);
+    return cs.display !== 'none' && cs.visibility !== 'hidden';
+  }
+  function qaResultsShowing(){
+    var els = document.querySelectorAll('[id*="result" i],[class*="result" i],[id*="score" i],[class*="score" i]');
+    for (var i=0;i<els.length;i++){ if (qaIsVisible(els[i])) return true; }
+    return false;
+  }
+  var qaWasShowing = false;
+  function qaCheck(){
+    var showing = qaResultsShowing();
+    if (showing && !qaWasShowing) {
+      qaSet(qaGet()+1);
+      qaRenderCount();
+    }
+    qaWasShowing = showing;
+  }
+  qaRenderCount();
+  setInterval(qaCheck, 800);
+  function qaObserve(){
+    if (!document.body) return;
+    var mo = new MutationObserver(function(){ qaCheck(); });
+    mo.observe(document.body, { attributes: true, childList: true, subtree: true });
+  }
+  if (document.body) qaObserve();
+  else document.addEventListener('DOMContentLoaded', qaObserve);
+  setTimeout(qaCheck, 1500);
+})();
+</script>
+<!-- ===== End Universal Total Attempts Counter ===== -->
+
+
+<h1>[Grant] Subject &amp; Verb Quiz</h1>
+<div class="subtitle">Find the subject and verb in each sentence — 100 questions total</div>
+<div style="display:flex;align-items:center;gap:10px;width:100%;max-width:700px;margin-bottom:8px;">
+  <div class="progress-bar-wrap" style="flex:1;margin-bottom:0;"><div class="progress-bar" id="progBar"></div></div>
+  <button id="jumpToggleBtn" style="background:#4a90d9;color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">Jump ▾</button>
+</div>
+<div class="progress-text" id="progText">Question 1 of 100</div>
+<div class="jump-panel" id="jumpPanel"><div class="jump-grid" id="jumpGrid"></div></div>
+<div class="card" id="quizCard"></div>
+<div id="resultCard" style="display:none;" class="card score-box">
+  <div class="score-label">Final Score</div>
+  <div class="score-big" id="finalScore"></div>
+  <div class="result-detail" id="resultDetail"></div>
+  <button class="restart-btn" id="restartBtn" style="display:block;margin:0 auto 10px;">Start Fresh (Original Order)</button>
+  <button class="restart-btn" id="restartBtnRandom" style="display:block;margin:0 auto;">Start Fresh (Random Order)</button>
+</div>
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle">Start Fresh?</h2>
+    <p id="modalText">This will clear all your answers and restart the quiz from the beginning.</p>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" id="modalCancel">Cancel</button>
+      <button class="modal-btn confirm" id="modalConfirm">Yes, Restart</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+const STORAGE_KEY = 'grant_subject_verb_quiz_v1';
+
+// 10 simple sentences → 20 questions (Q1-Q20)
+// 40 complex sentences → 80 questions (Q21-Q100)
+// Within each group, the two Qs from the same sentence are NEVER adjacent.
+// Shuffling: within group, sentence-pairs are shuffled, then interleaved so same-sentence Qs are separated.
+
+const simpleSentences = [
+  { id:'s1', sentence:"The dog barked loudly.", subject:"The dog", verb:"barked", opts_s:["The dog","loudly","barked","dog"], opts_v:["The dog","loudly","barked","dog"] },
+  { id:'s2', sentence:"My sister reads every night.", subject:"My sister", verb:"reads", opts_s:["every night","reads","My sister","night"], opts_v:["reads","My sister","every","night"] },
+  { id:'s3', sentence:"The children played in the park.", subject:"The children", verb:"played", opts_s:["The children","park","played","in"], opts_v:["played","The children","park","in"] },
+  { id:'s4', sentence:"Our teacher smiled at the class.", subject:"Our teacher", verb:"smiled", opts_s:["Our teacher","class","smiled","the"], opts_v:["smiled","Our teacher","class","at"] },
+  { id:'s5', sentence:"The sun shines brightly every morning.", subject:"The sun", verb:"shines", opts_s:["The sun","brightly","shines","morning"], opts_v:["shines","The sun","brightly","morning"] },
+  { id:'s6', sentence:"He runs to school every day.", subject:"He", verb:"runs", opts_s:["He","school","runs","day"], opts_v:["runs","He","school","every"] },
+  { id:'s7', sentence:"The birds sang beautiful songs.", subject:"The birds", verb:"sang", opts_s:["The birds","songs","sang","beautiful"], opts_v:["sang","The birds","songs","beautiful"] },
+  { id:'s8', sentence:"She wrote a letter to her friend.", subject:"She", verb:"wrote", opts_s:["She","letter","wrote","friend"], opts_v:["wrote","She","letter","friend"] },
+  { id:'s9', sentence:"The cat slept on the warm sofa.", subject:"The cat", verb:"slept", opts_s:["The cat","sofa","slept","warm"], opts_v:["slept","The cat","sofa","warm"] },
+  { id:'s10', sentence:"We finished our homework before dinner.", subject:"We", verb:"finished", opts_s:["We","homework","finished","dinner"], opts_v:["finished","We","homework","dinner"] },
+];
+
+const complexSentences = [
+  { id:'c1', sentence:"The students who studied hard for the final exam received excellent grades from their teacher.", subject:"The students", verb:"received", opts_s:["The students","the final exam","their teacher","excellent grades"], opts_v:["received","studied","received excellent","gave"] },
+  { id:'c2', sentence:"After the heavy rainstorm finally stopped, the flooded streets slowly began to clear.", subject:"the flooded streets", verb:"began", opts_s:["the heavy rainstorm","the flooded streets","the streets slowly","After the storm"], opts_v:["began","stopped","clear","flooded"] },
+  { id:'c3', sentence:"The ancient library, which had been closed for decades, was recently restored by a group of dedicated volunteers.", subject:"The ancient library", verb:"was restored", opts_s:["The ancient library","a group of volunteers","decades","the building"], opts_v:["was restored","had been closed","restored","dedicated"] },
+  { id:'c4', sentence:"Because she practiced the piano every single day, Maria eventually performed flawlessly at the spring concert.", subject:"Maria", verb:"performed", opts_s:["Maria","the piano","the spring concert","she practiced"], opts_v:["performed","practiced","performed flawlessly","played"] },
+  { id:'c5', sentence:"The mysterious package that arrived on our doorstep early Tuesday morning contained an old, handwritten map.", subject:"The mysterious package", verb:"contained", opts_s:["The mysterious package","our doorstep","Tuesday morning","an old map"], opts_v:["contained","arrived","handwritten","delivered"] },
+  { id:'c6', sentence:"Despite the freezing temperatures outside, the hikers continued their journey toward the snow-covered mountain peak.", subject:"the hikers", verb:"continued", opts_s:["the hikers","the freezing temperatures","the mountain peak","their journey"], opts_v:["continued","freezing","covered","reached"] },
+  { id:'c7', sentence:"The scientist who discovered the new species of butterfly dedicated her research to protecting endangered habitats.", subject:"The scientist", verb:"dedicated", opts_s:["The scientist","the new species","endangered habitats","her research"], opts_v:["dedicated","discovered","protecting","studied"] },
+  { id:'c8', sentence:"When the school bell finally rang, dozens of excited students rushed out of the crowded hallways.", subject:"dozens of excited students", verb:"rushed", opts_s:["dozens of excited students","the school bell","the crowded hallways","the classroom"], opts_v:["rushed","rang","excited","crowded"] },
+  { id:'c9', sentence:"The old wooden bridge that once connected the two villages collapsed during the terrible flood last winter.", subject:"The old wooden bridge", verb:"collapsed", opts_s:["The old wooden bridge","the two villages","the terrible flood","last winter"], opts_v:["collapsed","connected","flooded","broke"] },
+  { id:'c10', sentence:"Although they had trained for months, the team lost the championship by just one point in the final second.", subject:"the team", verb:"lost", opts_s:["the team","the championship","months","the final second"], opts_v:["lost","trained","competed","played"] },
+  { id:'c11', sentence:"The enormous blue whale, which can grow up to thirty meters long, is the largest animal ever known to exist on Earth.", subject:"The enormous blue whale", verb:"is", opts_s:["The enormous blue whale","thirty meters","the largest animal","Earth"], opts_v:["is","can grow","known","existed"] },
+  { id:'c12', sentence:"Before the invention of smartphones, people relied on printed maps and phone books to find information.", subject:"people", verb:"relied", opts_s:["people","smartphones","printed maps","information"], opts_v:["relied","invention","find","printed"] },
+  { id:'c13', sentence:"The colorful autumn leaves, scattered across the quiet neighborhood sidewalks, created a stunning natural carpet.", subject:"The colorful autumn leaves", verb:"created", opts_s:["The colorful autumn leaves","the quiet neighborhood","natural carpet","sidewalks"], opts_v:["created","scattered","stunning","covered"] },
+  { id:'c14', sentence:"Every morning without fail, the dedicated mail carrier delivers hundreds of letters and packages to the residents of our street.", subject:"the dedicated mail carrier", verb:"delivers", opts_s:["the dedicated mail carrier","Every morning","hundreds of letters","our street"], opts_v:["delivers","fail","packages","delivering"] },
+  { id:'c15', sentence:"The documentary about ocean pollution, which aired last Friday, shocked millions of viewers around the world.", subject:"The documentary", verb:"shocked", opts_s:["The documentary","ocean pollution","last Friday","millions of viewers"], opts_v:["shocked","aired","polluted","documentary"] },
+  { id:'c16', sentence:"Since the new principal arrived at Jefferson Middle School, student attendance has improved dramatically.", subject:"student attendance", verb:"has improved", opts_s:["student attendance","the new principal","Jefferson Middle School","the school year"], opts_v:["has improved","arrived","improved dramatically","attending"] },
+  { id:'c17', sentence:"The fragile glass sculpture that the artist spent three months creating was accidentally knocked off the shelf by a visitor.", subject:"The fragile glass sculpture", verb:"was knocked", opts_s:["The fragile glass sculpture","the artist","a visitor","the shelf"], opts_v:["was knocked","spent","creating","accidentally"] },
+  { id:'c18', sentence:"Throughout history, many great civilizations that once flourished along mighty rivers eventually disappeared without a trace.", subject:"many great civilizations", verb:"disappeared", opts_s:["many great civilizations","Throughout history","mighty rivers","a trace"], opts_v:["disappeared","flourished","existed","historically"] },
+  { id:'c19', sentence:"The nervous student, who had stayed up all night studying for the test, completely forgot the answers during the exam.", subject:"The nervous student", verb:"forgot", opts_s:["The nervous student","the test","all night","the answers"], opts_v:["forgot","stayed up","studying","completed"] },
+  { id:'c20', sentence:"Underneath the crumbling stone wall at the edge of the garden, archaeologists discovered fragments of ancient Roman pottery.", subject:"archaeologists", verb:"discovered", opts_s:["archaeologists","the crumbling stone wall","the garden","fragments"], opts_v:["discovered","crumbling","uncovered","existed"] },
+  { id:'c21', sentence:"The talented young chef who trained in Paris for two years opened her first restaurant in downtown Chicago last spring.", subject:"The talented young chef", verb:"opened", opts_s:["The talented young chef","Paris","downtown Chicago","last spring"], opts_v:["opened","trained","cooked","first"] },
+  { id:'c22', sentence:"Because the electricity went out during the storm, the entire neighborhood was plunged into complete darkness for several hours.", subject:"the entire neighborhood", verb:"was plunged", opts_s:["the entire neighborhood","the storm","the electricity","several hours"], opts_v:["was plunged","went out","plunged","darkness"] },
+  { id:'c23', sentence:"The volunteers who collected food donations over the weekend distributed thousands of meals to families in need.", subject:"The volunteers", verb:"distributed", opts_s:["The volunteers","food donations","the weekend","thousands of meals"], opts_v:["distributed","collected","donated","needed"] },
+  { id:'c24', sentence:"After receiving the unexpected scholarship, the first-generation college student burst into tears of joy and relief.", subject:"the first-generation college student", verb:"burst", opts_s:["the first-generation college student","the unexpected scholarship","tears of joy","relief"], opts_v:["burst","receiving","cried","scholarship"] },
+  { id:'c25', sentence:"The endangered species that conservation groups have protected for decades are slowly beginning to recover in the wild.", subject:"The endangered species", verb:"are beginning", opts_s:["The endangered species","conservation groups","decades","the wild"], opts_v:["are beginning","have protected","recovering","protected"] },
+  { id:'c26', sentence:"On the highest shelf of the dusty antique shop, a small golden pocket watch had been waiting silently for its new owner.", subject:"a small golden pocket watch", verb:"had been waiting", opts_s:["a small golden pocket watch","the dusty antique shop","the highest shelf","its new owner"], opts_v:["had been waiting","waiting silently","sitting","found"] },
+  { id:'c27', sentence:"The results of the science experiment, which the class had worked on for two whole weeks, finally proved their hypothesis correct.", subject:"The results", verb:"proved", opts_s:["The results","the science experiment","the class","two whole weeks"], opts_v:["proved","had worked","correct","tested"] },
+  { id:'c28', sentence:"When temperatures rise above ninety degrees in the summer, local parks and swimming pools become crowded with families.", subject:"local parks and swimming pools", verb:"become", opts_s:["local parks and swimming pools","temperatures","the summer","families"], opts_v:["become","rise","crowded","swimming"] },
+  { id:'c29', sentence:"The astronaut who spent six months aboard the International Space Station returned to Earth with weakened muscles and improved vision.", subject:"The astronaut", verb:"returned", opts_s:["The astronaut","the International Space Station","six months","Earth"], opts_v:["returned","spent","improved","weakened"] },
+  { id:'c30', sentence:"Despite working two jobs and attending night school, the determined woman never gave up on her dream of becoming a doctor.", subject:"the determined woman", verb:"gave up", opts_s:["the determined woman","two jobs","night school","her dream"], opts_v:["gave up","working","attending","becoming"] },
+  { id:'c31', sentence:"The thick layer of ice that had formed on the surface of the pond overnight made skating dangerous for everyone.", subject:"The thick layer of ice", verb:"made", opts_s:["The thick layer of ice","the surface of the pond","skating","everyone"], opts_v:["made","had formed","dangerous","formed"] },
+  { id:'c32', sentence:"As soon as the curtain rose on opening night, the audience fell completely silent and leaned forward in their seats.", subject:"the audience", verb:"fell", opts_s:["the audience","opening night","the curtain","their seats"], opts_v:["fell","rose","leaned","silent"] },
+  { id:'c33', sentence:"The championship trophy, which had been missing from the school display case for over a year, was found hidden in the basement.", subject:"The championship trophy", verb:"was found", opts_s:["The championship trophy","the school display case","a year","the basement"], opts_v:["was found","had been missing","hidden","discovered"] },
+  { id:'c34', sentence:"Without proper preparation and a clear study schedule, even the brightest students can struggle with advanced mathematics.", subject:"even the brightest students", verb:"can struggle", opts_s:["even the brightest students","proper preparation","a clear study schedule","advanced mathematics"], opts_v:["can struggle","preparing","studying","mathematics"] },
+  { id:'c35', sentence:"The small fishing village that once thrived on the coast of Maine has transformed into a popular tourist destination.", subject:"The small fishing village", verb:"has transformed", opts_s:["The small fishing village","the coast of Maine","a tourist destination","Maine"], opts_v:["has transformed","thrived","transformed","visiting"] },
+  { id:'c36', sentence:"Because several key ingredients were missing from the pantry, the grandmother decided to create an entirely new recipe.", subject:"the grandmother", verb:"decided", opts_s:["the grandmother","key ingredients","the pantry","a new recipe"], opts_v:["decided","were missing","create","cooking"] },
+  { id:'c37', sentence:"The powerful earthquake that struck the coastal city early on Monday morning caused widespread damage to hundreds of buildings.", subject:"The powerful earthquake", verb:"caused", opts_s:["The powerful earthquake","the coastal city","Monday morning","hundreds of buildings"], opts_v:["caused","struck","damaged","widespread"] },
+  { id:'c38', sentence:"After years of careful observation, the ornithologist concluded that certain migratory birds navigate using Earth's magnetic field.", subject:"the ornithologist", verb:"concluded", opts_s:["the ornithologist","careful observation","migratory birds","Earth's magnetic field"], opts_v:["concluded","navigate","observe","field"] },
+  { id:'c39', sentence:"The teenagers who volunteered at the animal shelter every weekend formed deep bonds with the dogs and cats waiting for homes.", subject:"The teenagers", verb:"formed", opts_s:["The teenagers","the animal shelter","deep bonds","every weekend"], opts_v:["formed","volunteered","waiting","bonding"] },
+  { id:'c40', sentence:"Although the mountain trail was steep and covered with loose rocks, the experienced hiker reached the summit before noon.", subject:"the experienced hiker", verb:"reached", opts_s:["the experienced hiker","the mountain trail","loose rocks","the summit"], opts_v:["reached","covered","hiking","steep"] },
+];
+
+// Build question objects
+function makeQ(sent, type, globalIdx) {
+  if (type === 'subject') {
+    return {
+      sentence: sent.sentence,
+      question: "What is the SUBJECT of this sentence?",
+      answer: sent.subject,
+      options: shuffle([...sent.opts_s]),
+      tag: 'SUBJECT',
+      tagClass: 'subject',
+      difficulty: sent.id.startsWith('s') ? 'easy' : 'hard',
+    };
+  } else {
+    return {
+      sentence: sent.sentence,
+      question: "What is the VERB of this sentence?",
+      answer: sent.verb,
+      options: shuffle([...sent.opts_v]),
+      tag: 'VERB',
+      tagClass: 'verb',
+      difficulty: sent.id.startsWith('s') ? 'easy' : 'hard',
+    };
+  }
+}
+
+function shuffle(arr) {
+  for (let i = arr.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+
+// Build group: shuffle sentences, create S+V pairs, then shuffle all together
+// ensuring same-sentence Q's are never adjacent
+function buildGroup(sentences) {
+  const order = shuffle([...Array(sentences.length).keys()]);
+  // Create pairs: each index i → [subjectQ, verbQ]
+  const pairs = order.map(i => [makeQ(sentences[i], 'subject'), makeQ(sentences[i], 'verb')]);
+  // Randomly assign which of each pair goes to "first half" vs "second half" bucket
+  // Safe shuffle: place all first-of-pair in positions that are never adjacent to second-of-pair
+  // Method: build two arrays with random assignment of S/V order, then interleave with n-offset
+  const firstArr = pairs.map(p => Math.random() < 0.5 ? p[0] : p[1]);
+  const secondArr = pairs.map((p, i) => firstArr[i] === p[0] ? p[1] : p[0]);
+  // Shuffle each independently so order within bucket is also random
+  shuffle(firstArr);
+  shuffle(secondArr);
+  // Interleave: firstArr[0..n-1] then secondArr[0..n-1]
+  // Same-sentence pair is n positions apart — safe
+  return [...firstArr, ...secondArr];
+}
+
+// Deterministic identity pool: for each sentence (in fixed list order), [subjectQ, verbQ].
+function buildIdentity(sentences) {
+  const out = [];
+  for (let i = 0; i < sentences.length; i++) {
+    out.push(makeQ(sentences[i], 'subject'));
+    out.push(makeQ(sentences[i], 'verb'));
+  }
+  return out;
+}
+
+const RAW_QUESTIONS = [...buildIdentity(simpleSentences), ...buildIdentity(complexSentences)];
+const TOTAL = RAW_QUESTIONS.length;
+const allQuestions = RAW_QUESTIONS;
+
+const ORDER_KEY = STORAGE_KEY + '_order_v1';
+function identityOrder() { return Array.from({length: TOTAL}, (_, i) => i); }
+function isValidOrder(arr) {
+  if (!Array.isArray(arr) || arr.length !== TOTAL) return false;
+  const seen = new Set();
+  for (const v of arr) {
+    if (typeof v !== 'number' || v < 0 || v >= TOTAL || seen.has(v)) return false;
+    seen.add(v);
+  }
+  return true;
+}
+function loadOrder() {
+  try {
+    const raw = localStorage.getItem(ORDER_KEY);
+    if (!raw) return null;
+    const arr = JSON.parse(raw);
+    return isValidOrder(arr) ? arr : null;
+  } catch(e) { return null; }
+}
+function saveOrder(order) {
+  try { localStorage.setItem(ORDER_KEY, JSON.stringify(order)); } catch(e) {}
+}
+
+// Random Order mode reuses the original "same-sentence Qs never adjacent" constraint,
+// but operating on RAW_QUESTIONS indices instead of rebuilding question objects.
+function buildRandomGroupOrder(offset, count) {
+  const sentOrder = shuffle([...Array(count).keys()]);
+  const pairs = sentOrder.map(i => [offset + 2*i, offset + 2*i + 1]);
+  let firstArr = pairs.map(p => Math.random() < 0.5 ? p[0] : p[1]);
+  let secondArr = pairs.map((p, i) => firstArr[i] === p[0] ? p[1] : p[0]);
+  firstArr = shuffle(firstArr);
+  secondArr = shuffle(secondArr);
+  return [...firstArr, ...secondArr];
+}
+function buildRandomOrder() {
+  return [...buildRandomGroupOrder(0, simpleSentences.length), ...buildRandomGroupOrder(simpleSentences.length * 2, complexSentences.length)];
+}
+
+let currentOrder = loadOrder() || identityOrder();
+let pendingFreshMode = 'original';
+function Q(i) { return RAW_QUESTIONS[currentOrder[i]]; }
+
+function openFreshModal(mode) {
+  pendingFreshMode = mode;
+  document.getElementById('modalTitle').textContent = mode === 'random' ? 'Start Fresh (Random Order)?' : 'Start Fresh (Original Order)?';
+  document.getElementById('modalText').textContent = mode === 'random' ? 'Questions will be reshuffled into a new random order, and all progress will be reset.' : 'Questions will return to their original order, and all progress will be reset.';
+  document.getElementById('modalOverlay').classList.add('active');
+}
+
+// State
+let state = loadState();
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return { current: 0, answers: [] };
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function clearState() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+  state = { current: 0, answers: [] };
+}
+
+// Render
+const card = document.getElementById('quizCard');
+const resultCard = document.getElementById('resultCard');
+const progBar = document.getElementById('progBar');
+const progText = document.getElementById('progText');
+
+function render() {
+  const total = allQuestions.length;
+  if (state.current >= total) { showResult(); return; }
+  resultCard.style.display = 'none';
+  card.style.display = '';
+
+  const q = Q(state.current);
+  const ans = state.answers[state.current];
+  const pct = ((state.current) / total * 100).toFixed(1);
+  progBar.style.width = pct + '%';
+  progText.textContent = `Question ${state.current+1} of ${total}`;
+
+  const opts = q.options;
+  const isAnswered = ans !== undefined;
+
+  // Update jump panel
+  const jumpGrid = document.getElementById('jumpGrid');
+  jumpGrid.innerHTML = allQuestions.map((_, i) => {
+    let cls = 'jdot';
+    if (i === state.current) cls += ' current';
+    else if (state.answers[i] !== undefined) {
+      cls += Q(i).answer === state.answers[i] ? ' answered-correct' : ' answered-wrong';
+    }
+    return `<div class="${cls}" data-idx="${i}">${i+1}</div>`;
+  }).join('');
+  jumpGrid.querySelectorAll('.jdot').forEach(d => {
+    d.addEventListener('click', () => {
+      state.current = parseInt(d.dataset.idx);
+      document.getElementById('jumpPanel').classList.remove('open');
+      document.getElementById('jumpToggleBtn').textContent = 'Jump ▾';
+      saveState(); render();
+    });
+  });
+
+  card.innerHTML = `
+    <div class="sentence-box">
+      <div class="sentence-label">Sentence</div>
+      ${q.sentence}
+    </div>
+    <div class="question-text">${q.question}</div>
+    <span id="qIdentity" style="display:none">${currentOrder[state.current]}</span>
+    <div class="options">
+      ${opts.map((o,i) => {
+        let cls = 'opt-btn';
+        if (isAnswered) {
+          if (o === q.answer) cls += ' correct';
+          else if (o === ans && ans !== q.answer) cls += ' wrong';
+        }
+        return `<button class="${cls}" data-opt="${o}" ${isAnswered?'disabled':''}>${o}</button>`;
+      }).join('')}
+    </div>
+    <div class="feedback ${isAnswered ? (ans===q.answer?'correct':'wrong') : ''}">
+      ${isAnswered ? (ans===q.answer ? '✓ Correct!' : `✗ The answer is: ${q.answer}`) : ''}
+    </div>
+    <div class="nav">
+      <button class="nav-btn" id="prevBtn" ${state.current===0?'disabled':''}>← Prev</button>
+      <button class="nav-btn" id="freshBtn" style="background:#e9ecef;color:#1a3a5c;font-size:0.72rem;padding:10px 7px;">Fresh (Orig)</button>
+      <button class="nav-btn" id="freshBtnRandom" style="background:#e9ecef;color:#1a3a5c;font-size:0.72rem;padding:10px 7px;">Fresh (Random)</button>
+      <button class="nav-btn" id="nextBtn">${state.current>=total-1?'Show Results →':'Next →'}</button>
+    </div>
+  `;
+
+  card.querySelectorAll('.opt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (state.answers[state.current] !== undefined) return;
+      state.answers[state.current] = btn.dataset.opt;
+      saveState();
+      render();
+    });
+  });
+  document.getElementById('prevBtn').addEventListener('click', () => { state.current--; saveState(); render(); });
+  document.getElementById('nextBtn').addEventListener('click', () => { state.current++; saveState(); render(); });
+  document.getElementById('freshBtn').addEventListener('click', () => { openFreshModal('original'); });
+  document.getElementById('freshBtnRandom').addEventListener('click', () => { openFreshModal('random'); });
+}
+
+function showResult() {
+  card.style.display = 'none';
+  resultCard.style.display = '';
+  const total = allQuestions.length;
+  let correct = 0;
+  for (let i = 0; i < total; i++) { if (state.answers[i] === Q(i).answer) correct++; }
+  document.getElementById('finalScore').textContent = `${correct} / ${total}`;
+  const pct = Math.round(correct/total*100);
+  let msg = pct >= 90 ? 'Outstanding!' : pct >= 75 ? 'Great job!' : pct >= 60 ? 'Good effort!' : 'Keep practicing!';
+  document.getElementById('resultDetail').textContent = `${pct}% — ${msg}`;
+}
+
+document.getElementById('restartBtn').addEventListener('click', () => { openFreshModal('original'); });
+document.getElementById('restartBtnRandom').addEventListener('click', () => { openFreshModal('random'); });
+document.getElementById('modalCancel').addEventListener('click', () => {
+  document.getElementById('modalOverlay').classList.remove('active');
+});
+document.getElementById('modalConfirm').addEventListener('click', () => {
+  document.getElementById('modalOverlay').classList.remove('active');
+  currentOrder = (pendingFreshMode === 'random') ? buildRandomOrder() : identityOrder();
+  saveOrder(currentOrder);
+  clearState(); render();
+});
+
+render();
+
+document.getElementById('jumpToggleBtn').addEventListener('click', () => {
+  const panel = document.getElementById('jumpPanel');
+  const btn = document.getElementById('jumpToggleBtn');
+  const isOpen = panel.classList.toggle('open');
+  btn.textContent = isOpen ? 'Jump ▴' : 'Jump ▾';
+});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perfect Tense Quiz</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; min-height: 100vh; }
+  #app { max-width: 760px; margin: 0 auto; padding: 12px; }
+
+  .date-display { font-size: 2rem; font-weight: 800; text-align: center; color: #1D9E75; background: white; padding: 10px 0 4px; }
+
+  .quiz-header { background: white; border-radius: 12px; padding: 16px 18px 12px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .quiz-title { font-size: 1.25rem; font-weight: 800; color: #1a1a1a; text-align: center; }
+  .subtitle-bar { text-align: center; font-size: 0.82rem; color: #555; margin-top: 4px; }
+  .instruction { text-align: center; font-size: 0.88rem; color: #555; background: white; margin-top: 6px; }
+
+  /* Nav bar */
+  .nav-bar { background: white; border-radius: 10px; padding: 9px 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
+  .nav-compact { display: flex; align-items: center; gap: 10px; }
+  .nav-count { font-size: 0.82rem; color: #444; white-space: nowrap; font-weight: 600; }
+  .progress-track { flex: 1; height: 6px; background: #d7dde6; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #1D9E75; border-radius: 3px; transition: width 0.3s; }
+  .jump-btn { font-size: 0.78rem; background: none; border: 1.5px solid #1D9E75; color: #1D9E75; border-radius: 6px; padding: 3px 10px; cursor: pointer; white-space: nowrap; }
+  .dot-panel { display: none; flex-wrap: wrap; gap: 5px; margin-top: 8px; max-height: 170px; overflow-y: auto; padding: 4px 0; }
+  .dot-panel.open { display: flex; }
+  .nav-dot { width: 26px; height: 26px; border-radius: 50%; border: none; font-size: 0.7rem; font-weight: 700; cursor: pointer; color: white; background: #d7dde6; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .nav-dot.correct { background: #1D9E75; }
+  .nav-dot.wrong { background: #E24B4A; }
+  .results-pill { background: #1D9E75; color: white; border-radius: 12px; padding: 2px 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer; border: none; }
+
+  /* Question card */
+  .question-card { background: white; border-radius: 12px; padding: 18px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .q-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .q-num { font-size: 0.8rem; color: #777; font-weight: 600; }
+  .q-tag { background: #1D9E75; color: white; border-radius: 12px; padding: 2px 10px; font-size: 0.75rem; font-weight: 700; }
+  .q-text { font-size: 1rem; color: #1a1a1a; line-height: 1.65; margin-bottom: 14px; }
+  .blank { display: inline-block; border-bottom: 2px solid #185FA5; min-width: 140px; height: 1.3em; vertical-align: middle; color: #185FA5; font-weight: 700; padding: 0 6px; margin: 0 4px; }
+
+  /* Options */
+  .options { display: flex; flex-direction: column; gap: 8px; }
+  .opt-btn { width: 100%; text-align: left; padding: 11px 14px; border-radius: 8px; border: 2px solid transparent; background: #e8edf4; color: #111111; font-size: 0.95rem; cursor: pointer; transition: background 0.15s, border-color 0.15s; line-height: 1.4; }
+  .opt-btn.correct { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .opt-btn.wrong { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+  .opt-btn.revealed { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .opt-btn:disabled { cursor: default; }
+
+  .explanation { margin-top: 12px; background: #f5f7fa; border-left: 3px solid #1D9E75; border-radius: 6px; padding: 10px 12px; font-size: 0.88rem; color: #333; line-height: 1.55; display: none; }
+  .explanation.show { display: block; }
+
+  /* Nav buttons */
+  .btn-row { display: flex; gap: 10px; margin-top: 10px; }
+  .btn-prev { flex: 1; padding: 11px; border-radius: 8px; border: none; background: #e8edf4; color: #333; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+  .btn-next { flex: 1; padding: 11px; border-radius: 8px; border: none; background: #1D9E75; color: white; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+
+  /* Results */
+  #resultsScreen { display: none; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .results-heading { font-size: 1.3rem; font-weight: 800; color: #1D9E75; text-align: center; margin-bottom: 6px; }
+  .results-score { text-align: center; font-size: 1rem; color: #444; margin-bottom: 14px; }
+  .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-bottom: 16px; }
+  .r-card { border-radius: 8px; padding: 8px 10px; font-size: 0.82rem; cursor: pointer; background: #f5f7fa; }
+  .r-card.correct { background: #E1F5EE; color: #085041; border: 1.5px solid #1D9E75; }
+  .r-card.wrong { background: #FCEBEB; color: #501313; border: 1.5px solid #E24B4A; }
+  .r-card.skipped { background: #f5f7fa; color: #555; border: 1.5px solid #d7dde6; }
+  .r-card-label { font-weight: 700; margin-bottom: 2px; }
+  .results-btns { display: flex; flex-direction: column; gap: 8px; }
+  .btn-retry { padding: 12px; border-radius: 8px; border: none; background: #1D9E75; color: white; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+  .btn-copy { padding: 12px; border-radius: 8px; border: none; background: #185FA5; color: white; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+  .btn-fresh { padding: 12px; border-radius: 8px; border: none; background: #e8edf4; color: #333; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 999; align-items: center; justify-content: center; }
+  .modal-overlay.show { display: flex; }
+  .modal-box { background: white; border-radius: 12px; padding: 24px 20px; max-width: 320px; width: 90%; text-align: center; }
+  .modal-title { font-size: 1.05rem; font-weight: 800; color: #1a1a1a; margin-bottom: 8px; }
+  .modal-msg { font-size: 0.9rem; color: #555; margin-bottom: 18px; }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-cancel { flex: 1; padding: 10px; border-radius: 8px; border: none; background: #e8edf4; color: #333; font-weight: 700; cursor: pointer; font-size: 0.9rem; }
+  .modal-confirm { flex: 1; padding: 10px; border-radius: 8px; border: none; background: #E24B4A; color: white; font-weight: 700; cursor: pointer; font-size: 0.9rem; }
+
+  #quizArea { display: none; }
+</style>
+</head>
+<body>
+<!-- ===== Universal Quiz Timer (auto-injected) ===== -->
+<style>
+  #qzTimerBar { background: #ffffff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-family: 'Segoe UI', Arial, sans-serif; }
+  #qzTimerSetup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+  #qzTimerSetup label { font-weight: 700; }
+  #qzTimerInput { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+  #qzTimerStartBtn { background: #185FA5; color: #ffffff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  #qzTimerStartBtn:active { opacity: 0.8; }
+  #qzTimerRunning { display: none; align-items: center; gap: 8px; }
+  #qzTimerLabel { font-size: 0.78rem; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 0.02em; }
+  #qzTimerDisplay { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+  #qzTimerDisplay.qz-warn { color: #f5a623; }
+  #qzTimerDisplay.qz-danger { color: #E24B4A; }
+</style>
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label for="qzTimerInput">Set Time Limit:</label>
+    <input type="number" id="qzTimerInput" min="1" max="180" value="20"> min
+    <button id="qzTimerStartBtn" type="button">Start</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span id="qzTimerLabel">Time Left</span>
+    <span id="qzTimerDisplay">20:00</span>
+  </div>
+</div>
+<script>
+(function(){
+  var QZ_KEY = 'qzTimer_' + location.pathname;
+  var qz = { totalSec: null, startedAt: null };
+  try {
+    var raw = localStorage.getItem(QZ_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p.totalSec === 'number' && typeof p.startedAt === 'number') qz = p;
+    }
+  } catch(e) {}
+  var qzInterval = null;
+
+  function qzSave() { try { localStorage.setItem(QZ_KEY, JSON.stringify(qz)); } catch(e) {} }
+  function qzFormat(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60), s = sec % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function qzRender() {
+    var setupEl = document.getElementById('qzTimerSetup');
+    var runEl = document.getElementById('qzTimerRunning');
+    var disp = document.getElementById('qzTimerDisplay');
+    if (!setupEl || !runEl || !disp) return;
+    if (!qz.startedAt) {
+      setupEl.style.display = 'flex';
+      runEl.style.display = 'none';
+      return;
+    }
+    setupEl.style.display = 'none';
+    runEl.style.display = 'flex';
+    var elapsed = (Date.now() - qz.startedAt) / 1000;
+    var remaining = qz.totalSec - elapsed;
+    disp.classList.remove('qz-warn', 'qz-danger');
+    if (remaining <= 0) {
+      disp.textContent = "Time's Up";
+      disp.classList.add('qz-danger');
+      qzStopInterval();
+      return;
+    }
+    disp.textContent = qzFormat(remaining);
+    if (remaining <= qz.totalSec * 0.1) disp.classList.add('qz-danger');
+    else if (remaining <= qz.totalSec * 0.25) disp.classList.add('qz-warn');
+  }
+  function qzStartInterval() {
+    qzStopInterval();
+    qzInterval = setInterval(qzRender, 1000);
+  }
+  function qzStopInterval() {
+    if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+  }
+  function qzStart() {
+    var input = document.getElementById('qzTimerInput');
+    var minutes = parseFloat(input.value);
+    if (!minutes || minutes <= 0) minutes = 20;
+    qz.totalSec = Math.round(minutes * 60);
+    qz.startedAt = Date.now();
+    qzSave();
+    qzRender();
+    qzStartInterval();
+  }
+
+  var btn = document.getElementById('qzTimerStartBtn');
+  if (btn) btn.addEventListener('click', qzStart);
+  qzRender();
+  if (qz.startedAt) qzStartInterval();
+
+  function qzResetTimer() {
+    qz.totalSec = null;
+    qz.startedAt = null;
+    qzSave();
+    qzStopInterval();
+    qzRender();
+  }
+  var qzRetryRe = /retry|restart|reset|start\s*fresh|try\s*again|\uB2E4\uC2DC\s*\uC2DC\uC791|\uCC98\uC74C\uBD80\uD0B0/i;
+  document.addEventListener('click', function(ev) {
+    var el = ev.target, depth = 0;
+    while (el && depth < 4) {
+      if (el.id === 'qzTimerBar' || el.id === 'qzAttemptsBar') return;
+      var isClickable = el.tagName === 'BUTTON' || el.tagName === 'A' ||
+        (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) ||
+        (el.getAttribute && el.getAttribute('role') === 'button');
+      if (isClickable) {
+        var txt = (el.textContent || el.value || '').trim();
+        if (txt.length > 0 && txt.length < 40 && qzRetryRe.test(txt)) {
+          qzResetTimer();
+          return;
+        }
+      }
+      el = el.parentElement;
+      depth++;
+    }
+  }, true);
+})();
+</script>
+<!-- ===== End Universal Quiz Timer ===== -->
+
+<div id="app">
+  <div class="quiz-header">
+    <div class="quiz-title">Perfect Tense Quiz</div>
+    <div class="subtitle-bar" id="subtitleBar">Grammar | <span id="attDisplay">Total Attempts: 0</span></div>
+  </div>
+  <div class="instruction">Choose the correct perfect tense form to complete each sentence.</div>
+
+  <div class="nav-bar">
+    <div class="nav-compact">
+      <div class="nav-count" id="navCount">0 / 100</div>
+      <div class="progress-track"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+      <button class="jump-btn" onclick="window.toggleDots()">Jump</button>
+    </div>
+    <div class="dot-panel" id="dotPanel"></div>
+  </div>
+
+  <div id="quizArea">
+    <div class="question-card">
+      <div class="q-meta">
+        <span class="q-num" id="qNum">Q1 / 100</span>
+
+      </div>
+      <div class="q-text" id="qText"></div>
+      <div class="options" id="optionsDiv"></div>
+      <div class="explanation" id="explanation"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-prev" onclick="window.prevQ()">Prev</button>
+      <button class="btn-next" id="btnNext" onclick="window.nextQ()">Next</button>
+    </div>
+  </div>
+
+  <div id="resultsScreen">
+    <div class="results-heading">Results</div>
+    <div class="results-score" id="resultsScore"></div>
+    <div class="results-grid" id="resultsGrid"></div>
+    <div class="results-btns">
+      <button class="btn-retry" onclick="window.retryWrong()">Retry Wrong Ones</button>
+      <button class="btn-copy" onclick="window.copyResults()">Copy All Results</button>
+      <button class="btn-fresh" id="startFreshBtn" onclick="window.askFresh('original')">Start Fresh (Original Order)</button>
+      <button class="btn-fresh" id="startFreshRandomBtn" onclick="window.askFresh('random')">Start Fresh (Random Order)</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <div class="modal-title" id="modalTitle">Start Fresh?</div>
+    <div class="modal-msg" id="modalText">All progress will be cleared. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="window.cancelFresh()">Cancel</button>
+      <button class="modal-confirm" id="modalConfirm" onclick="window.confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const LS_KEY = 'quiz_perfecttense_100_v1';
+  const LS_ATT = 'quiz_perfecttense_100_att_v1';
+
+  const RAW_QUESTIONS = [
+    // [sentence_before_blank, correct_answer, sentence_after_blank, explanation, tag, options_pool]
+    // prepare
+    { before: "When the guests finally arrived, she", ans: "had prepared", after: "a wonderful dinner.", expl: '"had prepared" is past perfect — the dinner was ready before the guests arrived.', tag: "Past Perfect", opts: ["had prepared","has prepared","will have prepared","prepared"] },
+    { before: "Look at the dining table! She", ans: "has prepared", after: "a wonderful dinner just now.", expl: '"has prepared" is present perfect — the action just happened with a visible result now.', tag: "Present Perfect", opts: ["had prepared","has prepared","will have prepared","was preparing"] },
+    { before: "By the time you get stuck in traffic and arrive, she", ans: "will have prepared", after: "dinner.", expl: '"will have prepared" is future perfect — she will finish preparing before you arrive.', tag: "Future Perfect", opts: ["had prepared","has prepared","will have prepared","prepares"] },
+    // sell
+    { before: "The theater doors closed because they", ans: "had sold", after: "out of tickets hours before.", expl: '"had sold" is past perfect — the tickets sold out before the doors closed.', tag: "Past Perfect", opts: ["had sold","have sold","will have sold","sold"] },
+    { before: "We are too late; they", ans: "have sold", after: "all the tickets for tonight already.", expl: '"have sold" is present perfect — the tickets are gone now, affecting the present situation.', tag: "Present Perfect", opts: ["had sold","have sold","will have sold","were selling"] },
+    { before: "If you don't hurry, they", ans: "will have sold", after: "out of tickets by tomorrow morning.", expl: '"will have sold" is future perfect — the sellout will be complete before tomorrow morning.', tag: "Future Perfect", opts: ["had sold","have sold","will have sold","sell"] },
+    // eat
+    { before: "I", ans: "had eaten", after: "my lunch long before he called me to go out.", expl: '"had eaten" is past perfect — eating happened before he called.', tag: "Past Perfect", opts: ["had eaten","have eaten","will have eaten","ate"] },
+    { before: "I am not hungry at all because I", ans: "have eaten", after: "my lunch just now.", expl: '"have eaten" is present perfect — lunch was just finished and I feel full now.', tag: "Present Perfect", opts: ["had eaten","have eaten","will have eaten","was eating"] },
+    { before: "When you meet me at the restaurant at noon, I", ans: "will have eaten", after: "my lunch.", expl: '"will have eaten" is future perfect — I will finish eating before you meet me at noon.', tag: "Future Perfect", opts: ["had eaten","have eaten","will have eaten","eat"] },
+    // leave
+    { before: "The express train", ans: "had left", after: "the station ten minutes prior to her arrival.", expl: '"had left" is past perfect — the train departed before she arrived.', tag: "Past Perfect", opts: ["had left","has left","will have left","left"] },
+    { before: "Oh no, the train", ans: "has left", after: "recently, so the platform is completely empty.", expl: '"has left" is present perfect — the train just departed and the platform is empty now.', tag: "Present Perfect", opts: ["had left","has left","will have left","was leaving"] },
+    { before: "Hurry up, or the train", ans: "will have left", after: "the station by the time we park the car.", expl: '"will have left" is future perfect — the train will be gone before we finish parking.', tag: "Future Perfect", opts: ["had left","has left","will have left","leaves"] },
+    // finish
+    { before: "By the end of last semester, our team", ans: "had finished", after: "the entire science project.", expl: '"had finished" is past perfect — the project was complete before the semester ended.', tag: "Past Perfect", opts: ["had finished","has finished","will have finished","finished"] },
+    { before: "We", ans: "have finished", after: "the project successfully so far, but we need a final check.", expl: '"have finished" is present perfect — the project is done up to now, with relevance to the present.', tag: "Present Perfect", opts: ["had finished","have finished","will have finished","were finishing"] },
+    { before: "We", ans: "will have finished", after: "the project by next Friday afternoon.", expl: '"will have finished" is future perfect — completion will happen before next Friday.', tag: "Future Perfect", opts: ["had finished","have finished","will have finished","finish"] },
+    // read
+    { before: "He", ans: "had read", after: "the original novel before the movie adaptation came out.", expl: '"had read" is past perfect — he read the novel before the movie was released.', tag: "Past Perfect", opts: ["had read","has read","will have read","read"] },
+    { before: "He", ans: "has read", after: "that fantasy book recently and highly recommends it.", expl: '"has read" is present perfect — he recently finished it and it affects his current recommendation.', tag: "Present Perfect", opts: ["had read","has read","will have read","was reading"] },
+    { before: "He", ans: "will have read", after: "the entire series by the time the weekend ends.", expl: '"will have read" is future perfect — he will finish the series before the weekend is over.', tag: "Future Perfect", opts: ["had read","has read","will have read","reads"] },
+    // close
+    { before: "As soon as I got off work, I realized the grocery store", ans: "had closed", after: ".", expl: '"had closed" is past perfect — the store closed before I realized it.', tag: "Past Perfect", opts: ["had closed","has closed","will have closed","closed"] },
+    { before: "The store", ans: "has closed", after: "its doors just now, so we cannot go inside.", expl: '"has closed" is present perfect — it just closed and we cannot enter now.', tag: "Present Perfect", opts: ["had closed","has closed","will have closed","was closing"] },
+    { before: "By the time your late shift ends tonight, the mall", ans: "will have closed", after: ".", expl: '"will have closed" is future perfect — the mall will be closed before your shift ends.', tag: "Future Perfect", opts: ["had closed","has closed","will have closed","closes"] },
+    // save
+    { before: "She", ans: "had saved", after: "enough money before she even looked for a new vehicle.", expl: '"had saved" is past perfect — saving happened before she looked for a car.', tag: "Past Perfect", opts: ["had saved","has saved","will have saved","saved"] },
+    { before: "Over the past few years, she", ans: "has saved", after: "a great amount of money.", expl: '"has saved" is present perfect — saving happened over a period up to now.', tag: "Present Perfect", opts: ["had saved","has saved","will have saved","was saving"] },
+    { before: "She", ans: "will have saved", after: "enough money for college by the end of this year.", expl: '"will have saved" is future perfect — she will reach her savings goal before year-end.', tag: "Future Perfect", opts: ["had saved","has saved","will have saved","saves"] },
+    // stop
+    { before: "The heavy storm", ans: "had stopped", after: "right before the opening whistle blew.", expl: '"had stopped" is past perfect — the storm ended before the whistle blew.', tag: "Past Perfect", opts: ["had stopped","has stopped","will have stopped","stopped"] },
+    { before: "Look outside! The rain", ans: "has stopped", after: "finally after three long hours.", expl: '"has stopped" is present perfect — the rain just stopped and we can see it now.', tag: "Present Perfect", opts: ["had stopped","has stopped","will have stopped","was stopping"] },
+    { before: "The dark clouds are moving away, so the rain", ans: "will have stopped", after: "by match time.", expl: '"will have stopped" is future perfect — the rain will be over before the match begins.', tag: "Future Perfect", opts: ["had stopped","has stopped","will have stopped","stops"] },
+    // send
+    { before: "I", ans: "had sent", after: "the urgent file long before the boss demanded it.", expl: '"had sent" is past perfect — sending happened before the boss asked for it.', tag: "Past Perfect", opts: ["had sent","have sent","will have sent","sent"] },
+    { before: "Check your inbox; I", ans: "have sent", after: "the report to you just now.", expl: '"have sent" is present perfect — it was just sent and you can check it now.', tag: "Present Perfect", opts: ["had sent","have sent","will have sent","was sending"] },
+    { before: "I", ans: "will have sent", after: "the email before you even open your laptop tomorrow.", expl: '"will have sent" is future perfect — sending will be done before you open your laptop.', tag: "Future Perfect", opts: ["had sent","have sent","will have sent","send"] },
+    // build
+    { before: "By the time the harsh winter hit, the workers", ans: "had built", after: "the cabin.", expl: '"had built" is past perfect — the cabin was finished before winter arrived.', tag: "Past Perfect", opts: ["had built","have built","will have built","built"] },
+    { before: "Look at this beautiful structure! They", ans: "have built", after: "a new house recently.", expl: '"have built" is present perfect — the house was recently completed and we can see it now.', tag: "Present Perfect", opts: ["had built","have built","will have built","were building"] },
+    { before: "Before the first snow falls next month, they", ans: "will have built", after: "the roof.", expl: '"will have built" is future perfect — the roof will be finished before the first snow.', tag: "Future Perfect", opts: ["had built","have built","will have built","build"] },
+    // pack
+    { before: "She", ans: "had packed", after: "all her heavy suitcases days before the flight.", expl: '"had packed" is past perfect — packing was done days before the flight.', tag: "Past Perfect", opts: ["had packed","has packed","will have packed","packed"] },
+    { before: "Her room is messy because she", ans: "has packed", after: "her clothes for the trip just now.", expl: '"has packed" is present perfect — she just packed and the room is messy now as a result.', tag: "Present Perfect", opts: ["had packed","has packed","will have packed","was packing"] },
+    { before: "She", ans: "will have packed", after: "everything necessary by the time the taxi honks outside.", expl: '"will have packed" is future perfect — packing will be complete before the taxi arrives.', tag: "Future Perfect", opts: ["had packed","has packed","will have packed","packs"] },
+    // fix
+    { before: "He", ans: "had fixed", after: "the broken screen before his parents came back home.", expl: '"had fixed" is past perfect — the screen was fixed before his parents returned.', tag: "Past Perfect", opts: ["had fixed","has fixed","will have fixed","fixed"] },
+    { before: "Good news! He", ans: "has fixed", after: "the computer error finally.", expl: '"has fixed" is present perfect — the error is now resolved, with a present effect.', tag: "Present Perfect", opts: ["had fixed","has fixed","will have fixed","was fixing"] },
+    { before: "Do not worry, because he", ans: "will have fixed", after: "your laptop by tomorrow afternoon.", expl: '"will have fixed" is future perfect — the repair will be complete before tomorrow afternoon.', tag: "Future Perfect", opts: ["had fixed","has fixed","will have fixed","fixes"] },
+    // go
+    { before: "The rowdy kids", ans: "had gone", after: "to bed an hour before the babysitter arrived.", expl: '"had gone" is past perfect — the kids were already in bed before the babysitter came.', tag: "Past Perfect", opts: ["had gone","have gone","will have gone","went"] },
+    { before: "The house is very quiet because the children", ans: "have gone", after: "to sleep already.", expl: '"have gone" is present perfect — they are now asleep, which is why the house is quiet.', tag: "Present Perfect", opts: ["had gone","have gone","will have gone","were going"] },
+    { before: "By the time you get home from the late movie, the kids", ans: "will have gone", after: "to bed.", expl: '"will have gone" is future perfect — the kids will be in bed before you get home.', tag: "Future Perfect", opts: ["had gone","have gone","will have gone","go"] },
+    // wash
+    { before: "We", ans: "had washed", after: "the car thoroughly before the muddy rain started.", expl: '"had washed" is past perfect — washing was done before the rain started.', tag: "Past Perfect", opts: ["had washed","have washed","will have washed","washed"] },
+    { before: "The vehicle looks brand new since we", ans: "have washed", after: "it just now.", expl: '"have washed" is present perfect — we just washed it and it looks new now.', tag: "Present Perfect", opts: ["had washed","have washed","will have washed","were washing"] },
+    { before: "We", ans: "will have washed", after: "every window of the house by sunset today.", expl: '"will have washed" is future perfect — all windows will be washed before sunset.', tag: "Future Perfect", opts: ["had washed","have washed","will have washed","wash"] },
+    // graduate
+    { before: "She", ans: "had graduated", after: "from a prestigious university before she turned twenty.", expl: '"had graduated" is past perfect — she graduated before turning twenty.', tag: "Past Perfect", opts: ["had graduated","has graduated","will have graduated","graduated"] },
+    { before: "She", ans: "has graduated", after: "recently and is currently looking for an internship.", expl: '"has graduated" is present perfect — she recently graduated and is now job hunting.', tag: "Present Perfect", opts: ["had graduated","has graduated","will have graduated","was graduating"] },
+    { before: "By this time next year, she", ans: "will have graduated", after: "with honors.", expl: '"will have graduated" is future perfect — graduation will be complete by this time next year.', tag: "Future Perfect", opts: ["had graduated","has graduated","will have graduated","graduates"] },
+    // arrive
+    { before: "They", ans: "had arrived", after: "at the terminal long before the gate number changed.", expl: '"had arrived" is past perfect — they arrived before the gate changed.', tag: "Past Perfect", opts: ["had arrived","have arrived","will have arrived","arrived"] },
+    { before: "They", ans: "have arrived", after: "at the airport just now and are grabbing their bags.", expl: '"have arrived" is present perfect — they just arrived and are currently getting their bags.', tag: "Present Perfect", opts: ["had arrived","have arrived","will have arrived","were arriving"] },
+    { before: "By the time we reach the pickup lane, their plane", ans: "will have arrived", after: ".", expl: '"will have arrived" is future perfect — the plane will have landed before we reach the pickup lane.', tag: "Future Perfect", opts: ["had arrived","have arrived","will have arrived","arrives"] },
+    // prepare (set 18)
+    { before: "He", ans: "had prepared", after: "his presentation slides the night before the big meeting.", expl: '"had prepared" is past perfect — slides were ready the night before the meeting.', tag: "Past Perfect", opts: ["had prepared","has prepared","will have prepared","prepared"] },
+    { before: "He", ans: "has prepared", after: "his speech twice already this morning.", expl: '"has prepared" is present perfect — he practiced twice and it affects his readiness now.', tag: "Present Perfect", opts: ["had prepared","has prepared","will have prepared","was preparing"] },
+    { before: "He", ans: "will have prepared", after: "his final presentation by noon tomorrow.", expl: '"will have prepared" is future perfect — preparation will be done before noon tomorrow.', tag: "Future Perfect", opts: ["had prepared","has prepared","will have prepared","prepares"] },
+    // cook
+    { before: "The head chef", ans: "had cooked", after: "the special dish before the reviewer complained.", expl: '"had cooked" is past perfect — cooking happened before the reviewer\'s complaint.', tag: "Past Perfect", opts: ["had cooked","has cooked","will have cooked","cooked"] },
+    { before: "The kitchen is busy because the chef", ans: "has cooked", after: "a new menu just now.", expl: '"has cooked" is present perfect — the new menu was just prepared, making the kitchen busy.', tag: "Present Perfect", opts: ["had cooked","has cooked","will have cooked","was cooking"] },
+    { before: "The kitchen crew", ans: "will have cooked", after: "over a hundred meals by the time the restaurant closes.", expl: '"will have cooked" is future perfect — all meals will be cooked before closing time.', tag: "Future Perfect", opts: ["had cooked","has cooked","will have cooked","cook"] },
+    // paint
+    { before: "He", ans: "had painted", after: "the entire living room before the delivery truck arrived.", expl: '"had painted" is past perfect — painting was done before the truck arrived.', tag: "Past Perfect", opts: ["had painted","has painted","will have painted","painted"] },
+    { before: "Be careful of the walls; he", ans: "has painted", after: "them recently.", expl: '"has painted" is present perfect — the walls were recently painted and are still wet.', tag: "Present Perfect", opts: ["had painted","has painted","will have painted","was painting"] },
+    { before: "He", ans: "will have painted", after: "the whole bedroom by the time the new furniture comes.", expl: '"will have painted" is future perfect — painting will be complete before the furniture arrives.', tag: "Future Perfect", opts: ["had painted","has painted","will have painted","paints"] },
+    // learn
+    { before: "She", ans: "had learned", after: "basic Spanish before her family moved to Madrid.", expl: '"had learned" is past perfect — she knew Spanish before the family moved.', tag: "Past Perfect", opts: ["had learned","has learned","will have learned","learned"] },
+    { before: "She", ans: "has learned", after: "foreign languages for five years so far.", expl: '"has learned" is present perfect — she has been learning up to now for five years.', tag: "Present Perfect", opts: ["had learned","has learned","will have learned","was learning"] },
+    { before: "She", ans: "will have learned", after: "conversational French by the time her exchange program ends.", expl: '"will have learned" is future perfect — she will know French before the program ends.', tag: "Future Perfect", opts: ["had learned","has learned","will have learned","learns"] },
+    // fly
+    { before: "The tiny birds", ans: "had flown", after: "away before the neighborhood cat jumped.", expl: '"had flown" is past perfect — the birds left before the cat jumped.', tag: "Past Perfect", opts: ["had flown","have flown","will have flown","flew"] },
+    { before: "The cage is wide open and the parrot", ans: "has flown", after: "away.", expl: '"has flown" is present perfect — the parrot just flew away and the cage is still open.', tag: "Present Perfect", opts: ["had flown","has flown","will have flown","was flying"] },
+    { before: "If you make loud noises, the birds", ans: "will have flown", after: "away before you can take a picture.", expl: '"will have flown" is future perfect — the birds will be gone before you get a photo.', tag: "Future Perfect", opts: ["had flown","has flown","will have flown","fly"] },
+    // book
+    { before: "We", ans: "had booked", after: "our hotel room a month prior to the peak season.", expl: '"had booked" is past perfect — booking was done a month before peak season.', tag: "Past Perfect", opts: ["had booked","have booked","will have booked","booked"] },
+    { before: "I", ans: "have booked", after: "a table for us at the Italian restaurant already.", expl: '"have booked" is present perfect — the reservation is made and ready now.', tag: "Present Perfect", opts: ["had booked","have booked","will have booked","was booking"] },
+    { before: "We", ans: "will have booked", after: "all our flights before the ticket prices double next week.", expl: '"will have booked" is future perfect — all bookings will be done before prices rise.', tag: "Future Perfect", opts: ["had booked","have booked","will have booked","book"] },
+    // turn
+    { before: "He", ans: "had turned", after: "off the main lights before he stepped out into the hallway.", expl: '"had turned" is past perfect — the lights were off before he stepped out.', tag: "Past Perfect", opts: ["had turned","has turned","will have turned","turned"] },
+    { before: "The building is completely dark because he", ans: "has turned", after: "off the power just now.", expl: '"has turned" is present perfect — he just switched off the power, causing current darkness.', tag: "Present Perfect", opts: ["had turned","has turned","will have turned","was turning"] },
+    { before: "He", ans: "will have turned", after: "off all the security switches by the time the clock strikes ten.", expl: '"will have turned" is future perfect — all switches will be off before ten o\'clock.', tag: "Future Perfect", opts: ["had turned","has turned","will have turned","turns"] },
+    // make
+    { before: "I", ans: "had made", after: "a fresh pot of coffee before my morning alarm rang.", expl: '"had made" is past perfect — coffee was ready before the alarm went off.', tag: "Past Perfect", opts: ["had made","have made","will have made","made"] },
+    { before: "The kitchen smells amazing because I", ans: "have made", after: "some coffee just now.", expl: '"have made" is present perfect — coffee was just brewed and the smell is present now.', tag: "Present Perfect", opts: ["had made","have made","will have made","was making"] },
+    { before: "Wake up early tomorrow, and I", ans: "will have made", after: "breakfast by then.", expl: '"will have made" is future perfect — breakfast will be ready before you wake up.', tag: "Future Perfect", opts: ["had made","have made","will have made","make"] },
+    // write
+    { before: "She", ans: "had written", after: "the financial report before the director even requested it.", expl: '"had written" is past perfect — the report was done before the director asked.', tag: "Past Perfect", opts: ["had written","has written","will have written","wrote"] },
+    { before: "She", ans: "has written", after: "the weekly column for her supervisor already.", expl: '"has written" is present perfect — the column is finished and submitted now.', tag: "Present Perfect", opts: ["had written","has written","will have written","was writing"] },
+    { before: "She", ans: "will have written", after: "the entire manuscript by the end of this month.", expl: '"will have written" is future perfect — the manuscript will be done before month-end.', tag: "Future Perfect", opts: ["had written","has written","will have written","writes"] },
+    // watch
+    { before: "The students", ans: "had watched", after: "the tutorial video before the laboratory class began.", expl: '"had watched" is past perfect — watching happened before the lab class started.', tag: "Past Perfect", opts: ["had watched","have watched","will have watched","watched"] },
+    { before: "The students", ans: "have watched", after: "an educational documentary on history recently.", expl: '"have watched" is present perfect — they recently watched it with relevance to their studies now.', tag: "Present Perfect", opts: ["had watched","have watched","will have watched","were watching"] },
+    { before: "They", ans: "will have watched", after: "all the required lectures by the time exams start.", expl: '"will have watched" is future perfect — all lectures will be viewed before exams begin.', tag: "Future Perfect", opts: ["had watched","have watched","will have watched","watch"] },
+    // melt
+    { before: "The thick ice", ans: "had melted", after: "long before the spring flowers blossomed.", expl: '"had melted" is past perfect — the ice was gone before the flowers bloomed.', tag: "Past Perfect", opts: ["had melted","has melted","will have melted","melted"] },
+    { before: "The winter snow", ans: "has melted", after: "completely over the past few days.", expl: '"has melted" is present perfect — the snow is gone now as a result of recent warm days.', tag: "Present Perfect", opts: ["had melted","has melted","will have melted","was melting"] },
+    { before: "The ice on the lake", ans: "will have melted", after: "by the time April arrives.", expl: '"will have melted" is future perfect — the ice will be gone before April comes.', tag: "Future Perfect", opts: ["had melted","has melted","will have melted","melts"] },
+    // print
+    { before: "He", ans: "had printed", after: "out the confirmation page before he shut down his computer.", expl: '"had printed" is past perfect — printing was done before he shut the computer down.', tag: "Past Perfect", opts: ["had printed","has printed","will have printed","printed"] },
+    { before: "He", ans: "has printed", after: "the boarding passes just now, so we are ready to leave.", expl: '"has printed" is present perfect — passes are printed and we are ready now.', tag: "Present Perfect", opts: ["had printed","has printed","will have printed","was printing"] },
+    { before: "He", ans: "will have printed", after: "all the concert tickets by tonight.", expl: '"will have printed" is future perfect — all tickets will be printed before tonight ends.', tag: "Future Perfect", opts: ["had printed","has printed","will have printed","prints"] },
+    // meet
+    { before: "We", ans: "had met", after: "the famous author once before she wrote her best-selling book.", expl: '"had met" is past perfect — we met her before she became famous.', tag: "Past Perfect", opts: ["had met","have met","will have met","met"] },
+    { before: "We", ans: "have met", after: "the new neighbors who moved in next door recently.", expl: '"have met" is present perfect — we recently got to know them and they are now our neighbors.', tag: "Present Perfect", opts: ["had met","have met","will have met","were meeting"] },
+    { before: "We", ans: "will have met", after: "all the board members by the end of this afternoon's meeting.", expl: '"will have met" is future perfect — all introductions will be done before the meeting ends.', tag: "Future Perfect", opts: ["had met","have met","will have met","meet"] },
+    // buy
+    { before: "She", ans: "had bought", after: "all the fresh berries before the bakery started its morning shift.", expl: '"had bought" is past perfect — she bought berries before the bakery opened.', tag: "Past Perfect", opts: ["had bought","has bought","will have bought","bought"] },
+    { before: "She", ans: "has bought", after: "some organic milk and eggs from the market just now.", expl: '"has bought" is present perfect — the shopping is done and she has the items now.', tag: "Present Perfect", opts: ["had bought","has bought","will have bought","was buying"] },
+    { before: "She", ans: "will have bought", after: "the necessary baking ingredients by the time you arrive.", expl: '"will have bought" is future perfect — shopping will be done before you get there.', tag: "Future Perfect", opts: ["had bought","has bought","will have bought","buys"] },
+    // repair
+    { before: "The mechanic", ans: "had repaired", after: "the engine before the customer called for an update.", expl: '"had repaired" is past perfect — the repair was done before the customer called.', tag: "Past Perfect", opts: ["had repaired","has repaired","will have repaired","repaired"] },
+    { before: "The mechanic", ans: "has repaired", after: "the brakes already, so the car is safe now.", expl: '"has repaired" is present perfect — the brakes are fixed and the car is safe now.', tag: "Present Perfect", opts: ["had repaired","has repaired","will have repaired","was repairing"] },
+    { before: "The repair shop", ans: "will have repaired", after: "your truck by five o'clock this evening.", expl: '"will have repaired" is future perfect — the truck will be fixed before five o\'clock.', tag: "Future Perfect", opts: ["had repaired","has repaired","will have repaired","repairs"] },
+    // download
+    { before: "I", ans: "had downloaded", after: "the gaming application before my friend recommended it.", expl: '"had downloaded" is past perfect — downloading happened before my friend\'s recommendation.', tag: "Past Perfect", opts: ["had downloaded","have downloaded","will have downloaded","downloaded"] },
+    { before: "I", ans: "have downloaded", after: "the new software update on my smartphone just now.", expl: '"have downloaded" is present perfect — the update is on the phone now.', tag: "Present Perfect", opts: ["had downloaded","have downloaded","will have downloaded","was downloading"] },
+    { before: "I", ans: "will have downloaded", after: "the entire movie before the Wi-Fi connection cuts off.", expl: '"will have downloaded" is future perfect — downloading will finish before Wi-Fi cuts out.', tag: "Future Perfect", opts: ["had downloaded","have downloaded","will have downloaded","download"] },
+    // rise
+    { before: "The bright sun", ans: "had risen", after: "above the hills before my alarm clock went off.", expl: '"had risen" is past perfect — the sun was already up before the alarm rang.', tag: "Past Perfect", opts: ["had risen","has risen","will have risen","rose"] },
+  ];
+
+  function shuffle(arr) {
+    let a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  const ORDER_KEY = LS_KEY + '_order_v1';
+  function identityOrder() { return Array.from({length: RAW_QUESTIONS.length}, (_, i) => i); }
+  function isValidOrder(arr) {
+    if (!Array.isArray(arr) || arr.length !== RAW_QUESTIONS.length) return false;
+    const seen = new Set();
+    for (const v of arr) {
+      if (typeof v !== 'number' || v < 0 || v >= RAW_QUESTIONS.length || seen.has(v)) return false;
+      seen.add(v);
+    }
+    return true;
+  }
+  function loadOrder() {
+    try {
+      const raw = localStorage.getItem(ORDER_KEY);
+      if (!raw) return null;
+      const arr = JSON.parse(raw);
+      return isValidOrder(arr) ? arr : null;
+    } catch(e) { return null; }
+  }
+  function saveOrder(order) { try { localStorage.setItem(ORDER_KEY, JSON.stringify(order)); } catch(e) {} }
+  function shuffleOrder(arr) { return shuffle(arr); }
+  let currentOrder = loadOrder() || identityOrder();
+  let pendingFreshMode = 'original';
+
+  function buildQuestions() {
+    return currentOrder.map(idx => RAW_QUESTIONS[idx]);
+  }
+
+  // Question order (persisted across reloads; defaults to original order)
+  let QUESTIONS = buildQuestions();
+  function getList() { return state.retryMode ? state.retryList : QUESTIONS.map(function(_, i) { return i; }); }
+
+  const defaultState = () => ({
+    cur: 0,
+    answers: {},
+    shuffles: {},
+    showResults: false,
+    retryMode: false,
+    retryList: [],
+    retryCur: 0,
+    retryAnswers: {},
+  });
+
+  let state = defaultState();
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      const bound = (s.retryMode ? (s.retryList||[]).length : QUESTIONS.length);
+      if (typeof s.cur !== 'number' || s.cur < 0 || s.cur >= bound) throw new Error('invalid');
+      if (typeof s.answers !== 'object' || typeof s.shuffles !== 'object') throw new Error('invalid');
+      // Restore question order from saved shuffles keys if needed
+      state = s;
+      if (typeof state.retryMode !== 'boolean') state.retryMode = false;
+      if (!Array.isArray(state.retryList)) state.retryList = [];
+    } catch(e) {
+      localStorage.removeItem(LS_KEY);
+      state = defaultState();
+    }
+  }
+
+  function saveState() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {}
+  }
+
+  function getAttempts() {
+    return parseInt(localStorage.getItem(LS_ATT) || '0');
+  }
+  function incAttempts() {
+    localStorage.setItem(LS_ATT, String(getAttempts() + 1));
+  }
+  function updateAttDisplay() {
+    document.getElementById('attDisplay').textContent = 'Total Attempts: ' + getAttempts();
+  }
+
+  function getShuffled(idx) {
+    if (!state.shuffles[idx]) {
+      state.shuffles[idx] = shuffle(QUESTIONS[idx].opts);
+      saveState();
+    }
+    return state.shuffles[idx];
+  }
+
+  function countAnswered() {
+    return Object.keys(state.answers).length;
+  }
+
+  function updateNav() {
+    const list = getList();
+    const answered = list.filter(qi => state.answers[qi] !== undefined).length;
+    const total = list.length;
+    document.getElementById('navCount').textContent = answered + ' / ' + total;
+    document.getElementById('progFill').style.width = (answered / total * 100) + '%';
+    // dots
+    const panel = document.getElementById('dotPanel');
+    panel.innerHTML = '';
+    list.forEach((qi, i) => {
+      const d = document.createElement('button');
+      d.className = 'nav-dot' + (state.answers[qi] === undefined ? '' : state.answers[qi] === QUESTIONS[qi].ans ? ' correct' : ' wrong');
+      d.textContent = i + 1;
+      d.onclick = () => { state.cur = i; render(); };
+      panel.appendChild(d);
+    });
+    // results pill
+    if (answered === total) {
+      const pill = document.createElement('button');
+      pill.className = 'results-pill';
+      pill.textContent = 'Results';
+      pill.onclick = () => { state.showResults = true; saveState(); render(); };
+      panel.appendChild(pill);
+    }
+  }
+
+  window.toggleDots = function() {
+    const panel = document.getElementById('dotPanel');
+    const btn = document.querySelector('.jump-btn');
+    if (panel.classList.contains('open')) {
+      panel.classList.remove('open');
+      btn.textContent = 'Jump';
+    } else {
+      panel.classList.add('open');
+      btn.textContent = 'Hide';
+    }
+  };
+
+  function renderQuestion() {
+    const list = getList();
+    const i = list[state.cur];
+    const q = QUESTIONS[i];
+    document.getElementById('qNum').textContent = 'Q' + (state.cur + 1) + ' / ' + list.length;
+    document.getElementById('qText').innerHTML = q.before + ' <span class="blank">' + (state.answers[i] !== undefined ? state.answers[i] : '') + '</span> ' + q.after;
+
+    const shuffled = getShuffled(i);
+    const answered = state.answers[i] !== undefined;
+    const optDiv = document.getElementById('optionsDiv');
+    optDiv.innerHTML = '';
+    shuffled.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.textContent = opt;
+      if (answered) {
+        btn.disabled = true;
+        if (opt === q.ans) btn.classList.add(state.answers[i] === q.ans ? 'correct' : 'revealed');
+        else if (opt === state.answers[i]) btn.classList.add('wrong');
+      } else {
+        btn.onclick = () => selectAnswer(i, opt);
+      }
+      optDiv.appendChild(btn);
+    });
+
+    const expl = document.getElementById('explanation');
+    if (answered && state.answers[i] !== q.ans) {
+      expl.textContent = q.expl;
+      expl.classList.add('show');
+    } else {
+      expl.classList.remove('show');
+      expl.textContent = '';
+    }
+
+    document.getElementById('btnNext').textContent = (state.cur === list.length - 1) ? 'See Results \u2192' : 'Next';
+    updateNav();
+  }
+
+  function selectAnswer(i, opt) {
+    state.answers[i] = opt;
+    document.getElementById('qText').innerHTML = QUESTIONS[i].before + ' <span class="blank">' + opt + '</span> ' + QUESTIONS[i].after;
+
+    saveState();
+    renderQuestion();
+  }
+
+  window.prevQ = function() {
+    if (state.cur > 0) { state.cur--; render(); }
+  };
+
+  window.nextQ = function() {
+    const list = getList();
+    if (state.cur === list.length - 1) {
+      state.showResults = true;
+      if (!state.retryMode) {
+        incAttempts();
+        updateAttDisplay();
+      }
+      saveState();
+      render();
+    } else {
+      state.cur++;
+      render();
+    }
+  };
+
+  function renderResults() {
+    const list = getList();
+    const total = list.length;
+    let correct = 0, wrong = 0, skipped = 0;
+    list.forEach(qi => {
+      if (state.answers[qi] === undefined) skipped++;
+      else if (state.answers[qi] === QUESTIONS[qi].ans) correct++;
+      else wrong++;
+    });
+    document.getElementById('resultsScore').textContent = correct + ' correct, ' + wrong + ' wrong, ' + skipped + ' skipped out of ' + total;
+    const grid = document.getElementById('resultsGrid');
+    grid.innerHTML = '';
+    list.forEach((qi, i) => {
+      const card = document.createElement('div');
+      let cls = 'r-card ';
+      if (state.answers[qi] === undefined) cls += 'skipped';
+      else if (state.answers[qi] === QUESTIONS[qi].ans) cls += 'correct';
+      else cls += 'wrong';
+      card.className = cls;
+      card.innerHTML = '<div class="r-card-label">Q' + (i+1) + '</div><div>' + (state.answers[qi] === undefined ? 'Skipped' : state.answers[qi] === QUESTIONS[qi].ans ? 'Correct' : 'Wrong') + '</div>';
+      card.onclick = () => { state.showResults = false; state.cur = i; saveState(); render(); };
+      grid.appendChild(card);
+    });
+  }
+
+  window.retryWrong = function() {
+    const list = getList();
+    const wrongs = list.filter(qi => state.answers[qi] !== undefined && state.answers[qi] !== QUESTIONS[qi].ans);
+    if (wrongs.length === 0) { alert('No wrong answers to retry!'); return; }
+    // Clear wrong answers so they can be retried
+    wrongs.forEach(qi => { delete state.answers[qi]; });
+    state.retryMode = true;
+    state.retryList = wrongs;
+    state.cur = 0;
+    state.showResults = false;
+    saveState();
+    render();
+  };
+
+  window.copyResults = function() {
+    const list = getList();
+    const total = list.length;
+    let lines = ['Perfect Tense Quiz - Results\n'];
+    list.forEach((qi, i) => {
+      const a = state.answers[qi];
+      const status = a === undefined ? 'Skipped' : a === QUESTIONS[qi].ans ? 'Correct' : 'Wrong';
+      lines.push('Q' + (i+1) + ': ' + status + (status === 'Wrong' ? ' (Your answer: ' + a + ' | Correct: ' + QUESTIONS[qi].ans + ')' : ''));
+    });
+    const text = lines.join('\n');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+    } else { fallbackCopy(text); }
+  };
+
+  function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+
+  window.askFresh = function(mode) {
+    pendingFreshMode = mode;
+    document.getElementById('modalTitle').textContent = mode === 'random' ? 'Start Fresh (Random Order)?' : 'Start Fresh (Original Order)?';
+    document.getElementById('modalText').textContent = mode === 'random' ? 'Questions will be reshuffled into a new random order, and all progress will be reset.' : 'Questions will return to their original order, and all progress will be reset.';
+    document.getElementById('freshModal').classList.add('show');
+  };
+  window.cancelFresh = function() {
+    document.getElementById('freshModal').classList.remove('show');
+  };
+  window.confirmFresh = function() {
+    document.getElementById('freshModal').classList.remove('show');
+    localStorage.removeItem(LS_KEY);
+    currentOrder = (pendingFreshMode === 'random') ? shuffleOrder(identityOrder()) : identityOrder();
+    saveOrder(currentOrder);
+    QUESTIONS = buildQuestions();
+    state = defaultState();
+    render();
+  };
+
+  function render() {
+    const quizArea = document.getElementById('quizArea');
+    const resultsScreen = document.getElementById('resultsScreen');
+    try {
+      if (state.showResults) {
+        quizArea.style.display = 'none';
+        resultsScreen.style.display = 'block';
+        renderResults();
+        updateNav();
+      } else {
+        resultsScreen.style.display = 'none';
+        quizArea.style.display = 'block';
+        renderQuestion();
+      }
+    } catch(e) {
+      quizArea.style.display = 'block';
+      quizArea.innerHTML = '<div style="padding:20px;color:red;">An error occurred. Please refresh the page.</div>';
+    }
+  }
+
+  // Export all onclick handlers
+  window.prevQ = window.prevQ;
+  window.nextQ = window.nextQ;
+  window.toggleDots = window.toggleDots;
+  window.retryWrong = window.retryWrong;
+  window.copyResults = window.copyResults;
+  window.askFresh = window.askFresh;
+  window.cancelFresh = window.cancelFresh;
+  window.confirmFresh = window.confirmFresh;
+
+  loadState();
+  updateAttDisplay();
+  render();
+})();
+</script>
+</body>
+</html>

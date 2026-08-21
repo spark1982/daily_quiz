@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Present Participle</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;color:#222;min-height:100vh;}
+#app{max-width:700px;margin:0 auto;padding:16px;}
+h1{text-align:center;font-size:1.35rem;font-weight:800;color:#185FA5;padding:14px 0 4px;}
+.instr{text-align:center;font-size:0.88rem;color:#555;padding:4px 12px 10px;}
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0 4px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;min-width:52px;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:6px;}
+.timer-bar{background:white;border:1px solid #d0dce8;border-radius:8px;padding:8px 12px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.timer-setup{display:flex;align-items:center;gap:8px;font-size:0.85rem;color:#444;}
+.timer-setup label{font-weight:700;}
+.timer-setup input[type="number"]{width:56px;padding:5px 6px;border:1.5px solid #d0dce8;border-radius:6px;font-size:0.9rem;text-align:center;}
+.timer-start-btn{background:#185FA5;color:white;border:none;border-radius:6px;padding:6px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;}
+.timer-running{display:flex;align-items:center;gap:8px;}
+.timer-label{font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;}
+.timer-display{font-size:1.1rem;font-weight:900;color:#185FA5;font-family:'Courier New',monospace;}
+.timer-display.warn{color:#f5a623;}
+.timer-display.danger{color:#E24B4A;}
+#att-bar{text-align:center;font-size:0.8rem;color:#888;margin-bottom:8px;}
+#att-bar span{font-weight:700;color:#185FA5;}
+.card{background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:20px 18px;margin-bottom:12px;}
+.q-num{font-size:0.78rem;color:#888;margin-bottom:8px;}
+.topic-tag{display:inline-block;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:10px;background:#e3f0ff;color:#185FA5;margin-bottom:10px;}
+.q-text{font-size:0.95rem;line-height:1.5;margin-bottom:14px;color:#333;font-weight:600;}
+.opts{display:grid;gap:8px;}
+.opt{padding:11px 14px;border:2px solid #d7dde6;border-radius:8px;cursor:pointer;font-size:0.92rem;background:white;text-align:left;line-height:1.45;transition:border-color 0.15s,background 0.15s;}
+.opt:hover:not(:disabled){border-color:#185FA5;background:#f0f6ff;}
+.opt.correct{border-color:#1D9E75;background:#e6f7f1;color:#0d6b50;font-weight:700;}
+.opt.wrong{border-color:#E24B4A;background:#fdf0f0;color:#b03030;}
+.opt:disabled{cursor:default;}
+.opt b{text-decoration:underline;}
+.exp{margin-top:12px;padding:11px;background:#f5f9ff;border-left:3px solid #185FA5;border-radius:4px;font-size:0.86rem;line-height:1.55;color:#333;display:none;}
+.nav-btns{display:flex;gap:8px;margin-top:8px;}
+.nav-btns button{flex:1;padding:10px;border:1.5px solid #d7dde6;border-radius:8px;background:white;cursor:pointer;font-size:0.9rem;color:#444;}
+.nav-btns button:hover:not(:disabled){border-color:#185FA5;color:#185FA5;}
+.nav-btns button:disabled{opacity:0.4;cursor:not-allowed;}
+.results{background:white;border-radius:12px;padding:28px 20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.score-big{font-size:3rem;font-weight:900;color:#185FA5;}
+.score-lbl{color:#888;font-size:0.9rem;margin-bottom:16px;}
+.stats-row{display:flex;justify-content:center;gap:28px;margin-bottom:22px;}
+.stat-n{font-size:1.5rem;font-weight:800;}
+.stat-lbl{font-size:0.75rem;color:#888;}
+.res-btn{display:block;width:100%;padding:13px;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:10px;}
+.btn-copy{background:#7b61ff;color:white;}
+.btn-retry{background:#1D9E75;color:white;}
+.btn-fresh{background:#e8ecf0;color:#444;}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-ov.show{display:flex;}
+.modal-box{background:white;border-radius:14px;padding:24px;max-width:360px;width:90%;text-align:center;}
+.modal-box h3{color:#185FA5;margin-bottom:10px;font-size:1.05rem;}
+.modal-box p{font-size:0.88rem;color:#555;margin-bottom:18px;line-height:1.5;}
+.modal-acts{display:flex;gap:10px;}
+.modal-acts button{flex:1;padding:10px;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;cursor:pointer;}
+.modal-acts .cancel{background:#e8ecf0;color:#444;}
+.modal-acts .confirm{background:#E24B4A;color:white;}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>[Grant] Present Participle</h1>
+  <div class="instr">Choose the sentence where the bolded word is used as a present participle.</div>
+  <div id="nav-bar">
+    <span id="nav-count">0 / 50</span>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+    <button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button>
+  </div>
+  <div id="dot-panel"></div>
+  <div class="timer-bar" id="timerBar">
+    <div class="timer-setup" id="timerSetup">
+      <label for="timerMin">Set Time Limit:</label>
+      <input type="number" id="timerMin" min="1" max="180" value="25"> min
+      <button class="timer-start-btn" onclick="startTimer()">Start</button>
+    </div>
+    <div class="timer-running" id="timerRunning" style="display:none;">
+      <span class="timer-label">Time Left</span>
+      <span class="timer-display" id="timerDisplay">25:00</span>
+    </div>
+  </div>
+  <div id="att-bar">Total Attempts: <span id="attCount">0</span></div>
+  <div id="qcard"></div>
+  <div id="freshModal" class="modal-ov">
+    <div class="modal-box">
+      <h3 id="freshTitle">Start Fresh?</h3>
+      <p id="freshText">All progress will be cleared. This cannot be undone.</p>
+      <div class="modal-acts">
+        <button class="cancel" onclick="closeFreshModal()">Cancel</button>
+        <button class="confirm" onclick="confirmFresh()">Start Fresh</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+var DATE = '20260702';
+var QUIZ_KEY = 'quiz_grantparticiple_50_' + DATE + '_v1';
+var ATT_KEY  = 'quiz_grantparticiple_att_' + DATE + '_v1';
+var ORDER_KEY = QUIZ_KEY + '_order_v1';
+
+var RAW_QUESTIONS = [
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The <b>flying</b> kite got tangled in the tree.','She is <b>flying</b> to Chicago tomorrow.','<b>Flying</b> makes her nervous.','They were <b>flying</b> kites at the beach yesterday.'],ci:0,
+   exp:'In "The flying kite got tangled in the tree," "flying" comes directly before the noun "kite" and describes what the kite is doing - this adjective use of an -ing word is a present participle. In "She is flying to Chicago tomorrow" and "They were flying kites at the beach yesterday," "flying" is the main verb paired with "is / were," making it part of the progressive tense. In "Flying makes her nervous," "flying" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The dog is <b>barking</b> at the mail carrier.','The dog was <b>barking</b> all night.','The <b>barking</b> dog woke up the whole neighborhood.','His constant <b>barking</b> annoyed the neighbors.'],ci:2,
+   exp:'In "The barking dog woke up the whole neighborhood," "barking" comes directly before the noun "dog" and describes what the dog is doing - this adjective use of an -ing word is a present participle. In "The dog is barking at the mail carrier" and "The dog was barking all night," "barking" is the main verb paired with "is / was," making it part of the progressive tense. In "His constant barking annoyed the neighbors," "barking" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The water is <b>boiling</b> right now.','Be careful of the <b>boiling</b> water on the stove.','<b>Boiling</b> is one way to purify water.','The soup was <b>boiling</b> over when she walked in.'],ci:1,
+   exp:'In "Be careful of the boiling water on the stove," "boiling" comes directly before the noun "water" and describes what the water is doing - this adjective use of an -ing word is a present participle. In "The water is boiling right now" and "The soup was boiling over when she walked in," "boiling" is the main verb paired with "is / was," making it part of the progressive tense. In "Boiling is one way to purify water," "boiling" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The baby is <b>sleeping</b> in the crib.','<b>Sleeping</b> eight hours a night is important for kids.','She was <b>sleeping</b> when the storm began.','Please don\'t wake the <b>sleeping</b> baby.'],ci:3,
+   exp:'In "Please don\'t wake the sleeping baby," "sleeping" comes directly before the noun "baby" and describes what the baby is doing - this adjective use of an -ing word is a present participle. In "The baby is sleeping in the crib" and "She was sleeping when the storm began," "sleeping" is the main verb paired with "is / was," making it part of the progressive tense. In "Sleeping eight hours a night is important for kids," "sleeping" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The <b>shining</b> star caught everyone\'s attention.','The star is <b>shining</b> brightly tonight.','<b>Shining</b> shoes is one of his weekend chores.','The moon was <b>shining</b> over the lake.'],ci:0,
+   exp:'In "The shining star caught everyone\'s attention," "shining" comes directly before the noun "star" and describes what the star is doing - this adjective use of an -ing word is a present participle. In "The star is shining brightly tonight" and "The moon was shining over the lake," "shining" is the main verb paired with "is / was," making it part of the progressive tense. In "Shining shoes is one of his weekend chores," "shining" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The leaves are <b>falling</b> from the trees.','Snow was <b>falling</b> steadily all afternoon.','The <b>falling</b> leaves covered the sidewalk.','<b>Falling</b> asleep in class is embarrassing.'],ci:2,
+   exp:'In "The falling leaves covered the sidewalk," "falling" comes directly before the noun "leaves" and describes what the leaves are doing - this adjective use of an -ing word is a present participle. In "The leaves are falling from the trees" and "Snow was falling steadily all afternoon," "falling" is the main verb paired with "are / was," making it part of the progressive tense. In "Falling asleep in class is embarrassing," "falling" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The child is <b>crying</b> in the other room.','The <b>crying</b> child needed comfort.','<b>Crying</b> helps release stress.','She was <b>crying</b> during the sad movie.'],ci:1,
+   exp:'In "The crying child needed comfort," "crying" comes directly before the noun "child" and describes what the child is doing - this adjective use of an -ing word is a present participle. In "The child is crying in the other room" and "She was crying during the sad movie," "crying" is the main verb paired with "is / was," making it part of the progressive tense. In "Crying helps release stress," "crying" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The bird is <b>singing</b> outside my window.','<b>Singing</b> is her favorite way to relax.','They were <b>singing</b> loudly in the car.','The <b>singing</b> bird perched on the fence.'],ci:3,
+   exp:'In "The singing bird perched on the fence," "singing" comes directly before the noun "bird" and describes what the bird is doing - this adjective use of an -ing word is a present participle. In "The bird is singing outside my window" and "They were singing loudly in the car," "singing" is the main verb paired with "is / were," making it part of the progressive tense. In "Singing is her favorite way to relax," "singing" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['They could hear the <b>running</b> water from the stream.','He is <b>running</b> in the park right now.','<b>Running</b> helps build endurance.','She was <b>running</b> late for the bus.'],ci:0,
+   exp:'In "They could hear the running water from the stream," "running" comes directly before the noun "water" and describes what the water is doing - this adjective use of an -ing word is a present participle. In "He is running in the park right now" and "She was running late for the bus," "running" is the main verb paired with "is / was," making it part of the progressive tense. In "Running helps build endurance," "running" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The company is <b>growing</b> rapidly this year.','The tomatoes were <b>growing</b> quickly in the warm weather.','The <b>growing</b> plant needed more sunlight.','<b>Growing</b> your own vegetables can save money.'],ci:2,
+   exp:'In "The growing plant needed more sunlight," "growing" comes directly before the noun "plant" and describes what the plant is doing - this adjective use of an -ing word is a present participle. In "The company is growing rapidly this year" and "The tomatoes were growing quickly in the warm weather," "growing" is the main verb paired with "is / were," making it part of the progressive tense. In "Growing your own vegetables can save money," "growing" (with "your own vegetables") is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The wind is <b>blowing</b> hard today.','The wind was <b>blowing</b> all night.','<b>Blowing</b> bubbles is fun for kids.','The <b>blowing</b> wind knocked over the trash cans.'],ci:3,
+   exp:'In "The blowing wind knocked over the trash cans," "blowing" comes directly before the noun "wind" and describes what the wind is doing - this adjective use of an -ing word is a present participle. In "The wind is blowing hard today" and "The wind was blowing all night," "blowing" is the main verb paired with "is / was," making it part of the progressive tense. In "Blowing bubbles is fun for kids," "blowing" (with "bubbles") is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The ice is <b>melting</b> in the sun.','The <b>melting</b> ice dripped onto the counter.','The snow was <b>melting</b> quickly.','<b>Melting</b> chocolate requires low heat.'],ci:1,
+   exp:'In "The melting ice dripped onto the counter," "melting" comes directly before the noun "ice" and describes what the ice is doing - this adjective use of an -ing word is a present participle. In "The ice is melting in the sun" and "The snow was melting quickly," "melting" is the main verb paired with "is / was," making it part of the progressive tense. In "Melting chocolate requires low heat," "melting" (with "chocolate") is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The candle is <b>burning</b> on the table.','The <b>burning</b> candle filled the room with a sweet smell.','The fire was <b>burning</b> brightly.','<b>Burning</b> old paperwork is one way to get rid of it.'],ci:1,
+   exp:'In "The burning candle filled the room with a sweet smell," "burning" comes directly before the noun "candle" and describes what the candle is doing - this adjective use of an -ing word is a present participle. In "The candle is burning on the table" and "The fire was burning brightly," "burning" is the main verb paired with "is / was," making it part of the progressive tense. In "Burning old paperwork is one way to get rid of it," "burning" (with "old paperwork") is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The <b>blooming</b> flower attracted several bees.','The flowers are <b>blooming</b> early this year.','The roses were <b>blooming</b> all summer.','<b>Blooming</b> takes several weeks for this species.'],ci:0,
+   exp:'In "The blooming flower attracted several bees," "blooming" comes directly before the noun "flower" and describes what the flower is doing - this adjective use of an -ing word is a present participle. In "The flowers are blooming early this year" and "The roses were blooming all summer," "blooming" is the main verb paired with "are / were," making it part of the progressive tense. In "Blooming takes several weeks for this species," "blooming" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The child is <b>laughing</b> at the cartoon.','They were <b>laughing</b> during the movie.','<b>Laughing</b> with friends is good for your health.','The <b>laughing</b> child ran across the yard.'],ci:3,
+   exp:'In "The laughing child ran across the yard," "laughing" comes directly before the noun "child" and describes what the child is doing - this adjective use of an -ing word is a present participle. In "The child is laughing at the cartoon" and "They were laughing during the movie," "laughing" is the main verb paired with "is / were," making it part of the progressive tense. In "Laughing with friends is good for your health," "laughing" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['She is <b>smiling</b> for the photo.','He was <b>smiling</b> the whole time.','<b>Smiling</b> can instantly improve your mood.','The <b>smiling</b> girl waved at the camera.'],ci:3,
+   exp:'In "The smiling girl waved at the camera," "smiling" comes directly before the noun "girl" and describes what the girl is doing - this adjective use of an -ing word is a present participle. In "She is smiling for the photo" and "He was smiling the whole time," "smiling" is the main verb paired with "is / was," making it part of the progressive tense. In "Smiling can instantly improve your mood," "smiling" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The dog\'s tail is <b>wagging</b> excitedly.','Its tail was <b>wagging</b> the moment we walked in.','The <b>wagging</b> tail showed how happy the dog was.','<b>Wagging</b> its tail is how a dog shows excitement.'],ci:2,
+   exp:'In "The wagging tail showed how happy the dog was," "wagging" comes directly before the noun "tail" and describes what the tail is doing - this adjective use of an -ing word is a present participle. In "The dog\'s tail is wagging excitedly" and "Its tail was wagging the moment we walked in," "wagging" is the main verb paired with "is / was," making it part of the progressive tense. In "Wagging its tail is how a dog shows excitement," "wagging" (with "its tail") is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The <b>spinning</b> dancer amazed the audience.','She is <b>spinning</b> across the stage.','They were <b>spinning</b> in perfect unison.','<b>Spinning</b> for long periods can make you dizzy.'],ci:0,
+   exp:'In "The spinning dancer amazed the audience," "spinning" comes directly before the noun "dancer" and describes what the dancer is doing - this adjective use of an -ing word is a present participle. In "She is spinning across the stage" and "They were spinning in perfect unison," "spinning" is the main verb paired with "is / were," making it part of the progressive tense. In "Spinning for long periods can make you dizzy," "spinning" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The faucet is <b>dripping</b> again.','The <b>dripping</b> faucet kept her awake all night.','The faucet was <b>dripping</b> for hours before anyone noticed.','Constant <b>dripping</b> can waste a lot of water.'],ci:1,
+   exp:'In "The dripping faucet kept her awake all night," "dripping" comes directly before the noun "faucet" and describes what the faucet is doing - this adjective use of an -ing word is a present participle. In "The faucet is dripping again" and "The faucet was dripping for hours before anyone noticed," "dripping" is the main verb paired with "is / was," making it part of the progressive tense. In "Constant dripping can waste a lot of water," "dripping" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The wolf is <b>howling</b> at the moon.','The wolves were <b>howling</b> all night.','The <b>howling</b> wolf could be heard from miles away.','<b>Howling</b> is how wolves communicate over long distances.'],ci:2,
+   exp:'In "The howling wolf could be heard from miles away," "howling" comes directly before the noun "wolf" and describes what the wolf is doing - this adjective use of an -ing word is a present participle. In "The wolf is howling at the moon" and "The wolves were howling all night," "howling" is the main verb paired with "is / were," making it part of the progressive tense. In "Howling is how wolves communicate over long distances," "howling" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['A bee is <b>buzzing</b> near the window.','The <b>buzzing</b> bee landed on the flower.','The bees were <b>buzzing</b> around the hive.','That constant <b>buzzing</b> gave her a headache.'],ci:1,
+   exp:'In "The buzzing bee landed on the flower," "buzzing" comes directly before the noun "bee" and describes what the bee is doing - this adjective use of an -ing word is a present participle. In "A bee is buzzing near the window" and "The bees were buzzing around the hive," "buzzing" is the main verb paired with "is / were," making it part of the progressive tense. In "That constant buzzing gave her a headache," "buzzing" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The <b>humming</b> engine idled in the driveway.','The engine is <b>humming</b> smoothly.','The generator was <b>humming</b> in the background.','<b>Humming</b> a tune helps her concentrate.'],ci:0,
+   exp:'In "The humming engine idled in the driveway," "humming" comes directly before the noun "engine" and describes what the engine is doing - this adjective use of an -ing word is a present participle. In "The engine is humming smoothly" and "The generator was humming in the background," "humming" is the main verb paired with "is / was," making it part of the progressive tense. In "Humming a tune helps her concentrate," "humming" (with "a tune") is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The <b>creaking</b> floor gave away his hiding spot.','The old floor is <b>creaking</b> under our feet.','The stairs were <b>creaking</b> as she climbed them.','That <b>creaking</b> kept everyone from sleeping.'],ci:0,
+   exp:'In "The creaking floor gave away his hiding spot," "creaking" comes directly before the noun "floor" and describes what the floor is doing - this adjective use of an -ing word is a present participle. In "The old floor is creaking under our feet" and "The stairs were creaking as she climbed them," "creaking" is the main verb paired with "is / were," making it part of the progressive tense. In "That creaking kept everyone from sleeping," "creaking" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The kettle is <b>whistling</b> on the stove.','The <b>whistling</b> kettle signaled that the water was ready.','The kettle was <b>whistling</b> loudly a moment ago.','<b>Whistling</b> while you work can make chores more fun.'],ci:1,
+   exp:'In "The whistling kettle signaled that the water was ready," "whistling" comes directly before the noun "kettle" and describes what the kettle is doing - this adjective use of an -ing word is a present participle. In "The kettle is whistling on the stove" and "The kettle was whistling loudly a moment ago," "whistling" is the main verb paired with "is / was," making it part of the progressive tense. In "Whistling while you work can make chores more fun," "whistling" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The coals are <b>glowing</b> in the fire pit.','The lantern was <b>glowing</b> softly.','<b>Glowing</b> under a black light is a fun science trick.','The <b>glowing</b> ember was the only light in the tent.'],ci:3,
+   exp:'In "The glowing ember was the only light in the tent," "glowing" comes directly before the noun "ember" and describes what the ember is doing - this adjective use of an -ing word is a present participle. In "The coals are glowing in the fire pit" and "The lantern was glowing softly," "glowing" is the main verb paired with "are / was," making it part of the progressive tense. In "Glowing under a black light is a fun science trick," "glowing" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The <b>flickering</b> flame cast shadows on the wall.','The candle flame is <b>flickering</b> in the breeze.','The lights were <b>flickering</b> during the storm.','<b>Flickering</b> can be a sign that a bulb needs replacing.'],ci:0,
+   exp:'In "The flickering flame cast shadows on the wall," "flickering" comes directly before the noun "flame" and describes what the flame is doing - this adjective use of an -ing word is a present participle. In "The candle flame is flickering in the breeze" and "The lights were flickering during the storm," "flickering" is the main verb paired with "is / were," making it part of the progressive tense. In "Flickering can be a sign that a bulb needs replacing," "flickering" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The lion is <b>roaring</b> across the savanna.','The crowd was <b>roaring</b> after the winning goal.','The <b>roaring</b> lion startled the tourists.','<b>Roaring</b> is a way lions mark their territory.'],ci:2,
+   exp:'In "The roaring lion startled the tourists," "roaring" comes directly before the noun "lion" and describes what the lion is doing - this adjective use of an -ing word is a present participle. In "The lion is roaring across the savanna" and "The crowd was roaring after the winning goal," "roaring" is the main verb paired with "is / was," making it part of the progressive tense. In "Roaring is a way lions mark their territory," "roaring" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The <b>chirping</b> cricket kept her awake.','A cricket is <b>chirping</b> somewhere in the grass.','The crickets were <b>chirping</b> loudly last night.','<b>Chirping</b> is how crickets attract a mate.'],ci:0,
+   exp:'In "The chirping cricket kept her awake," "chirping" comes directly before the noun "cricket" and describes what the cricket is doing - this adjective use of an -ing word is a present participle. In "A cricket is chirping somewhere in the grass" and "The crickets were chirping loudly last night," "chirping" is the main verb paired with "is / were," making it part of the progressive tense. In "Chirping is how crickets attract a mate," "chirping" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The mouse is <b>squeaking</b> in its cage.','The hinge was <b>squeaking</b> every time the door opened.','<b>Squeaking</b> is a common sound in old houses.','The <b>squeaking</b> mouse darted behind the fridge.'],ci:3,
+   exp:'In "The squeaking mouse darted behind the fridge," "squeaking" comes directly before the noun "mouse" and describes what the mouse is doing - this adjective use of an -ing word is a present participle. In "The mouse is squeaking in its cage" and "The hinge was squeaking every time the door opened," "squeaking" is the main verb paired with "is / was," making it part of the progressive tense. In "Squeaking is a common sound in old houses," "squeaking" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The boat is <b>drifting</b> toward the shore.','The <b>drifting</b> cloud slowly changed shape.','The raft was <b>drifting</b> downstream.','<b>Drifting</b> off to sleep during class is embarrassing.'],ci:1,
+   exp:'In "The drifting cloud slowly changed shape," "drifting" comes directly before the noun "cloud" and describes what the cloud is doing - this adjective use of an -ing word is a present participle. In "The boat is drifting toward the shore" and "The raft was drifting downstream," "drifting" is the main verb paired with "is / was," making it part of the progressive tense. In "Drifting off to sleep during class is embarrassing," "drifting" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The wire is <b>sparking</b> near the outlet.','The old wiring was <b>sparking</b> behind the wall.','The <b>sparking</b> wire was a serious fire hazard.','<b>Sparking</b> new ideas is what brainstorming is all about.'],ci:2,
+   exp:'In "The sparking wire was a serious fire hazard," "sparking" comes directly before the noun "wire" and describes what the wire is doing - this adjective use of an -ing word is a present participle. In "The wire is sparking near the outlet" and "The old wiring was sparking behind the wall," "sparking" is the main verb paired with "is / was," making it part of the progressive tense. In "Sparking new ideas is what brainstorming is all about," "sparking" (with "new ideas") is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The pipe is <b>leaking</b> under the sink.','The roof was <b>leaking</b> during the storm.','<b>Leaking</b> information to reporters got him fired.','The <b>leaking</b> pipe caused water damage in the basement.'],ci:3,
+   exp:'In "The leaking pipe caused water damage in the basement," "leaking" comes directly before the noun "pipe" and describes what the pipe is doing - this adjective use of an -ing word is a present participle. In "The pipe is leaking under the sink" and "The roof was leaking during the storm," "leaking" is the main verb paired with "is / was," making it part of the progressive tense. In "Leaking information to reporters got him fired," "leaking" (with "information") is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The <b>rusting</b> fence needed to be repainted.','The old gate is <b>rusting</b> in the rain.','The tools were <b>rusting</b> in the shed.','<b>Rusting</b> happens faster in humid climates.'],ci:0,
+   exp:'In "The rusting fence needed to be repainted," "rusting" comes directly before the noun "fence" and describes what the fence is doing - this adjective use of an -ing word is a present participle. In "The old gate is rusting in the rain" and "The tools were rusting in the shed," "rusting" is the main verb paired with "is / were," making it part of the progressive tense. In "Rusting happens faster in humid climates," "rusting" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The ice is <b>cracking</b> under the weight.','The old floorboards were <b>cracking</b> with every step.','The <b>cracking</b> branch finally snapped off the tree.','<b>Cracking</b> your knuckles is a habit that can be hard to break.'],ci:2,
+   exp:'In "The cracking branch finally snapped off the tree," "cracking" comes directly before the noun "branch" and describes what the branch is doing - this adjective use of an -ing word is a present participle. In "The ice is cracking under the weight" and "The old floorboards were cracking with every step," "cracking" is the main verb paired with "is / were," making it part of the progressive tense. In "Cracking your knuckles is a habit that can be hard to break," "cracking" (with "your knuckles") is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The bananas are <b>rotting</b> on the counter.','The <b>rotting</b> fruit attracted a swarm of flies.','The apples were <b>rotting</b> in the bin.','<b>Rotting</b> can happen quickly in warm, humid weather.'],ci:1,
+   exp:'In "The rotting fruit attracted a swarm of flies," "rotting" comes directly before the noun "fruit" and describes what the fruit is doing - this adjective use of an -ing word is a present participle. In "The bananas are rotting on the counter" and "The apples were rotting in the bin," "rotting" is the main verb paired with "are / were," making it part of the progressive tense. In "Rotting can happen quickly in warm, humid weather," "rotting" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The plant is <b>withering</b> without enough water.','The <b>withering</b> leaf finally fell to the ground.','The flowers were <b>withering</b> in the heat.','<b>Withering</b> is often the first sign a plant needs water.'],ci:1,
+   exp:'In "The withering leaf finally fell to the ground," "withering" comes directly before the noun "leaf" and describes what the leaf is doing - this adjective use of an -ing word is a present participle. In "The plant is withering without enough water" and "The flowers were withering in the heat," "withering" is the main verb paired with "is / were," making it part of the progressive tense. In "Withering is often the first sign a plant needs water," "withering" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The ground is <b>shaking</b> beneath our feet.','The whole building was <b>shaking</b> during the earthquake.','The <b>shaking</b> ground sent everyone running outside.','<b>Shaking</b> hands is a common way to greet someone.'],ci:2,
+   exp:'In "The shaking ground sent everyone running outside," "shaking" comes directly before the noun "ground" and describes what the ground is doing - this adjective use of an -ing word is a present participle. In "The ground is shaking beneath our feet" and "The whole building was shaking during the earthquake," "shaking" is the main verb paired with "is / was," making it part of the progressive tense. In "Shaking hands is a common way to greet someone," "shaking" (with "hands") is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['Her hand is <b>trembling</b> from the cold.','His voice was <b>trembling</b> with fear.','<b>Trembling</b> is a natural response to fear.','Her <b>trembling</b> hand could barely hold the pen.'],ci:3,
+   exp:'In "Her trembling hand could barely hold the pen," "trembling" comes directly before the noun "hand" and describes what the hand is doing - this adjective use of an -ing word is a present participle. In "Her hand is trembling from the cold" and "His voice was trembling with fear," "trembling" is the main verb paired with "is / was," making it part of the progressive tense. In "Trembling is a natural response to fear," "trembling" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['His <b>quivering</b> lip showed he was about to cry.','Her lip is <b>quivering</b> with emotion.','His chin was <b>quivering</b> as he spoke.','<b>Quivering</b> can be a sign of nervousness or cold.'],ci:0,
+   exp:'In "His quivering lip showed he was about to cry," "quivering" comes directly before the noun "lip" and describes what the lip is doing - this adjective use of an -ing word is a present participle. In "Her lip is quivering with emotion" and "His chin was quivering as he spoke," "quivering" is the main verb paired with "is / was," making it part of the progressive tense. In "Quivering can be a sign of nervousness or cold," "quivering" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The cursor is <b>blinking</b> on the screen.','The <b>blinking</b> cursor waited for her to type.','The light was <b>blinking</b> on the dashboard.','<b>Blinking</b> rapidly can be a sign of dry eyes.'],ci:1,
+   exp:'In "The blinking cursor waited for her to type," "blinking" comes directly before the noun "cursor" and describes what the cursor is doing - this adjective use of an -ing word is a present participle. In "The cursor is blinking on the screen" and "The light was blinking on the dashboard," "blinking" is the main verb paired with "is / was," making it part of the progressive tense. In "Blinking rapidly can be a sign of dry eyes," "blinking" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The light is <b>flashing</b> at the intersection.','The sign was <b>flashing</b> all night.','The <b>flashing</b> light warned drivers of danger ahead.','<b>Flashing</b> your headlights can warn other drivers.'],ci:2,
+   exp:'In "The flashing light warned drivers of danger ahead," "flashing" comes directly before the noun "light" and describes what the light is doing - this adjective use of an -ing word is a present participle. In "The light is flashing at the intersection" and "The sign was flashing all night," "flashing" is the main verb paired with "is / was," making it part of the progressive tense. In "Flashing your headlights can warn other drivers," "flashing" (with "your headlights") is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The <b>ringing</b> bell signaled the end of class.','The bell is <b>ringing</b> right now.','The phone was <b>ringing</b> for several minutes.','<b>Ringing</b> the doorbell twice is considered rude in some cultures.'],ci:0,
+   exp:'In "The ringing bell signaled the end of class," "ringing" comes directly before the noun "bell" and describes what the bell is doing - this adjective use of an -ing word is a present participle. In "The bell is ringing right now" and "The phone was ringing for several minutes," "ringing" is the main verb paired with "is / was," making it part of the progressive tense. In "Ringing the doorbell twice is considered rude in some cultures," "ringing" (with "the doorbell") is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The alarm is <b>beeping</b> loudly.','The <b>beeping</b> alarm woke up the whole house.','The smoke detector was <b>beeping</b> all night.','<b>Beeping</b> constantly is what smoke detectors do when the battery is low.'],ci:1,
+   exp:'In "The beeping alarm woke up the whole house," "beeping" comes directly before the noun "alarm" and describes what the alarm is doing - this adjective use of an -ing word is a present participle. In "The alarm is beeping loudly" and "The smoke detector was beeping all night," "beeping" is the main verb paired with "is / was," making it part of the progressive tense. In "Beeping constantly is what smoke detectors do when the battery is low," "beeping" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The horse is <b>galloping</b> across the field.','The horses were <b>galloping</b> toward the finish line.','The <b>galloping</b> horse kicked up clouds of dust.','<b>Galloping</b> is the fastest gait a horse can perform.'],ci:2,
+   exp:'In "The galloping horse kicked up clouds of dust," "galloping" comes directly before the noun "horse" and describes what the horse is doing - this adjective use of an -ing word is a present participle. In "The horse is galloping across the field" and "The horses were galloping toward the finish line," "galloping" is the main verb paired with "is / were," making it part of the progressive tense. In "Galloping is the fastest gait a horse can perform," "galloping" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The <b>jumping</b> kangaroo bounded across the outback.','The kangaroo is <b>jumping</b> over the fence.','The kangaroos were <b>jumping</b> through the tall grass.','<b>Jumping</b> into cold water takes courage.'],ci:0,
+   exp:'In "The jumping kangaroo bounded across the outback," "jumping" comes directly before the noun "kangaroo" and describes what the kangaroo is doing - this adjective use of an -ing word is a present participle. In "The kangaroo is jumping over the fence" and "The kangaroos were jumping through the tall grass," "jumping" is the main verb paired with "is / were," making it part of the progressive tense. In "Jumping into cold water takes courage," "jumping" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The vine is <b>climbing</b> up the fence.','Ivy was <b>climbing</b> along the brick wall.','<b>Climbing</b> is her favorite way to challenge herself outdoors.','The <b>climbing</b> vine wrapped around the trellis.'],ci:3,
+   exp:'In "The climbing vine wrapped around the trellis," "climbing" comes directly before the noun "vine" and describes what the vine is doing - this adjective use of an -ing word is a present participle. In "The vine is climbing up the fence" and "Ivy was climbing along the brick wall," "climbing" is the main verb paired with "is / was," making it part of the progressive tense. In "Climbing is her favorite way to challenge herself outdoors," "climbing" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The lake is <b>freezing</b> over already.','The pond was <b>freezing</b> quickly overnight.','The <b>freezing</b> lake was too dangerous to walk on.','<b>Freezing</b> leftovers can help them last longer.'],ci:2,
+   exp:'In "The freezing lake was too dangerous to walk on," "freezing" comes directly before the noun "lake" and describes what the lake is doing - this adjective use of an -ing word is a present participle. In "The lake is freezing over already" and "The pond was freezing quickly overnight," "freezing" is the main verb paired with "is / was," making it part of the progressive tense. In "Freezing leftovers can help them last longer," "freezing" (with "leftovers") is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The stars are <b>twinkling</b> brightly tonight.','The lights were <b>twinkling</b> above the stage.','<b>Twinkling</b> is caused by the movement of air in the atmosphere.','The <b>twinkling</b> star could be seen from the campsite.'],ci:3,
+   exp:'In "The twinkling star could be seen from the campsite," "twinkling" comes directly before the noun "star" and describes what the star is doing - this adjective use of an -ing word is a present participle. In "The stars are twinkling brightly tonight" and "The lights were twinkling above the stage," "twinkling" is the main verb paired with "are / were," making it part of the progressive tense. In "Twinkling is caused by the movement of air in the atmosphere," "twinkling" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The toddler is <b>giggling</b> at the puppet show.','The kids were <b>giggling</b> in the back seat.','<b>Giggling</b> during the test got them both in trouble.','The <b>giggling</b> toddler chased the bubbles.'],ci:3,
+   exp:'In "The giggling toddler chased the bubbles," "giggling" comes directly before the noun "toddler" and describes what the toddler is doing - this adjective use of an -ing word is a present participle. In "The toddler is giggling at the puppet show" and "The kids were giggling in the back seat," "giggling" is the main verb paired with "is / were," making it part of the progressive tense. In "Giggling during the test got them both in trouble," "giggling" is the subject of the sentence, functioning as a noun, so it is a gerund.'},
+  {topic:'Present Participle',
+   q:'Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?',
+   opts:['The ring is <b>sparkling</b> under the lights.','Her earrings were <b>sparkling</b> in the sunlight.','The <b>sparkling</b> diamond caught everyone\'s eye.','<b>Sparkling</b> is a quality that makes gemstones so valuable.'],ci:2,
+   exp:'In "The sparkling diamond caught everyone\'s eye," "sparkling" comes directly before the noun "diamond" and describes what the diamond is doing - this adjective use of an -ing word is a present participle. In "The ring is sparkling under the lights" and "Her earrings were sparkling in the sunlight," "sparkling" is the main verb paired with "is / was," making it part of the progressive tense. In "Sparkling is a quality that makes gemstones so valuable," "sparkling" is the subject of the sentence, functioning as a noun, so it is a gerund.'}
+];
+
+function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function identityOrder(){var o=[];for(var i=0;i<RAW_QUESTIONS.length;i++)o.push(i);return o;}
+function isValidOrder(arr){if(!Array.isArray(arr)||arr.length!==RAW_QUESTIONS.length)return false;var s=arr.slice().sort(function(a,b){return a-b;});for(var i=0;i<s.length;i++)if(s[i]!==i)return false;return true;}
+function loadOrder(){try{var r=localStorage.getItem(ORDER_KEY);if(!r)return null;var a=JSON.parse(r);if(!isValidOrder(a))throw new Error('bad');return a;}catch(e){localStorage.removeItem(ORDER_KEY);return null;}}
+function saveOrder(o){try{localStorage.setItem(ORDER_KEY,JSON.stringify(o));}catch(e){}}
+function buildQuestions(raw,order){var out=[];for(var i=0;i<order.length;i++)out.push(raw[order[i]]);return out;}
+var currentOrder=loadOrder()||identityOrder();
+var QUESTIONS=buildQuestions(RAW_QUESTIONS,currentOrder);
+
+function defaultState(){return{cur:0,answers:{},showResults:false,timerStartedAt:null,timerTotalSec:null};}
+function saveState(s){try{localStorage.setItem(QUIZ_KEY,JSON.stringify(s));}catch(e){}}
+function loadState(){try{var r=localStorage.getItem(QUIZ_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
+var state=loadState()||defaultState();
+
+function loadAtt(){try{return parseInt(localStorage.getItem(ATT_KEY)||'0',10)||0;}catch(e){return 0;}}
+function saveAtt(n){try{localStorage.setItem(ATT_KEY,String(n));}catch(e){}}
+function renderAtt(){var el=document.getElementById('attCount');if(el)el.textContent=loadAtt();}
+
+var timerInterval=null;
+function formatTime(sec){sec=Math.max(0,Math.round(sec));var m=Math.floor(sec/60),s=sec%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+function renderTimer(){
+  var setup=document.getElementById('timerSetup'),run=document.getElementById('timerRunning'),disp=document.getElementById('timerDisplay');
+  if(!setup)return;
+  if(!state.timerStartedAt){setup.style.display='flex';run.style.display='none';return;}
+  setup.style.display='none';run.style.display='flex';
+  var elapsed=(Date.now()-state.timerStartedAt)/1000,rem=state.timerTotalSec-elapsed;
+  disp.classList.remove('warn','danger');
+  if(rem<=0){disp.textContent="Time's Up";disp.classList.add('danger');stopTimerInterval();return;}
+  disp.textContent=formatTime(rem);
+  if(rem<=state.timerTotalSec*0.1)disp.classList.add('danger');
+  else if(rem<=state.timerTotalSec*0.25)disp.classList.add('warn');
+}
+function startTimer(){var inp=document.getElementById('timerMin');var m=parseFloat(inp.value)||25;state.timerTotalSec=Math.round(m*60);state.timerStartedAt=Date.now();saveState(state);renderTimer();startTimerInterval();}
+function startTimerInterval(){stopTimerInterval();timerInterval=setInterval(renderTimer,1000);}
+function stopTimerInterval(){if(timerInterval){clearInterval(timerInterval);timerInterval=null;}}
+
+function updateNav(){
+  var ans=Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent=ans+' / '+QUESTIONS.length;
+  document.getElementById('prog-fill').style.width=(ans/QUESTIONS.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel=document.getElementById('dot-panel');if(panel.style.display==='none')return;
+  var h='';
+  for(var i=0;i<QUESTIONS.length;i++){
+    var bg=state.answers[i]===undefined?'#d7dde6':(state.answers[i]===QUESTIONS[i].ci?'#185FA5':'#E24B4A');
+    h+='<span onclick="goToQ('+i+')" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:'+bg+';color:#fff;font-size:11px;cursor:pointer;margin:2px;">'+(i+1)+'</span>';
+  }
+  panel.innerHTML=h;
+}
+function toggleJump(){
+  var p=document.getElementById('dot-panel'),b=document.getElementById('jump-btn');
+  if(p.style.display==='none'){p.style.display='block';b.textContent='Hide ▴';renderDots();}
+  else{p.style.display='none';b.textContent='Jump ▾';}
+}
+function goToQ(i){state.cur=i;state.showResults=false;saveState(state);document.getElementById('dot-panel').style.display='none';document.getElementById('jump-btn').textContent='Jump ▾';render();}
+function pick(optIdx){if(state.answers[state.cur]!==undefined)return;state.answers[state.cur]=optIdx;saveState(state);render();}
+function goPrev(){if(state.cur>0){state.cur--;saveState(state);render();}}
+function goNext(){
+  if(state.cur<QUESTIONS.length-1){state.cur++;saveState(state);render();}
+  else{if(!state.showResults){var a=loadAtt()+1;saveAtt(a);renderAtt();}state.showResults=true;saveState(state);render();}
+}
+function render(){
+  var c=document.getElementById('qcard');
+  if(state.showResults){renderResults();return;}
+  var q=QUESTIONS[state.cur],ans=state.answers[state.cur],done=ans!==undefined;
+  var isLast=state.cur===QUESTIONS.length-1;
+  var optsH='';
+  for(var i=0;i<q.opts.length;i++){
+    var cls='opt';
+    if(done){if(i===q.ci)cls+=' correct';else if(i===ans)cls+=' wrong';}
+    optsH+='<button class="'+cls+'"'+(done?' disabled':'')+' onclick="pick('+i+')">'+q.opts[i]+'</button>';
+  }
+  var expH=done&&ans!==q.ci?'<div class="exp" style="display:block">'+q.exp+'</div>':'';
+  var nextLbl=isLast?'See Results &#8594;':'Next &#8594;';
+  c.innerHTML='<div class="card"><div class="q-num">Q'+(state.cur+1)+' of '+QUESTIONS.length+'</div><span class="topic-tag">'+q.topic+'</span><div class="q-text">'+q.q+'</div><div class="opts">'+optsH+'</div>'+expH+'</div><div class="nav-btns"><button '+(state.cur===0?'disabled':'')+' onclick="goPrev()">&#8592; Prev</button><button onclick="goNext()">'+nextLbl+'</button></div>';
+  updateNav();
+}
+function renderResults(){
+  var correct=0,wrong=0,skip=0;
+  for(var i=0;i<QUESTIONS.length;i++){
+    if(state.answers[i]===undefined)skip++;
+    else if(state.answers[i]===QUESTIONS[i].ci)correct++;
+    else wrong++;
+  }
+  var pct=Math.round(correct/QUESTIONS.length*100);
+  var c=document.getElementById('qcard');
+  c.innerHTML='<div class="results"><div class="score-big">'+correct+'/'+QUESTIONS.length+'</div><div class="score-lbl">'+pct+'% correct</div><div class="stats-row"><div><div class="stat-n" style="color:#1D9E75">'+correct+'</div><div class="stat-lbl">Correct</div></div><div><div class="stat-n" style="color:#E24B4A">'+wrong+'</div><div class="stat-lbl">Wrong</div></div><div><div class="stat-n" style="color:#888">'+skip+'</div><div class="stat-lbl">Skipped</div></div></div><button class="res-btn btn-copy" onclick="copyRes()">Copy All Results</button><button class="res-btn btn-retry" onclick="retryWrong()">Retry Wrong Ones</button><button class="res-btn btn-fresh" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button><button class="res-btn btn-fresh" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button></div>';
+  updateNav();
+}
+function copyRes(){
+  var correct=0,lines=['[Grant] Present Participle Results'];
+  for(var i=0;i<QUESTIONS.length;i++){
+    var q=QUESTIONS[i],a=state.answers[i],ok=a===q.ci;
+    if(ok)correct++;
+    lines.push('Q'+(i+1)+' '+(a===undefined?'SKIP':ok?'OK':'WRONG'));
+  }
+  lines.push('Score: '+correct+'/'+QUESTIONS.length);
+  try{navigator.clipboard.writeText(lines.join('\n'));}catch(e){alert(lines.join('\n'));}
+}
+function retryWrong(){
+  var wrong=[];
+  for(var i=0;i<QUESTIONS.length;i++){if(state.answers[i]!==undefined&&state.answers[i]!==QUESTIONS[i].ci){wrong.push(i);delete state.answers[i];}}
+  if(wrong.length>0){state.cur=wrong[0];state.showResults=false;saveState(state);render();}
+}
+var pendingFreshMode='original';
+function openFreshModalOriginal(){pendingFreshMode='original';document.getElementById('freshTitle').textContent='Start Fresh (Original Order)?';document.getElementById('freshText').textContent='Questions return to their original order and all progress is cleared.';document.getElementById('freshModal').classList.add('show');}
+function openFreshModalRandom(){pendingFreshMode='random';document.getElementById('freshTitle').textContent='Start Fresh (Random Order)?';document.getElementById('freshText').textContent='Questions will be reshuffled and all progress is cleared.';document.getElementById('freshModal').classList.add('show');}
+function closeFreshModal(){document.getElementById('freshModal').classList.remove('show');}
+function confirmFresh(){
+  currentOrder=(pendingFreshMode==='random')?shuffle(identityOrder()):identityOrder();
+  saveOrder(currentOrder);QUESTIONS=buildQuestions(RAW_QUESTIONS,currentOrder);
+  state=defaultState();saveState(state);stopTimerInterval();closeFreshModal();render();renderTimer();
+}
+
+window.toggleJump=toggleJump;window.goToQ=goToQ;window.pick=pick;window.goPrev=goPrev;window.goNext=goNext;
+window.startTimer=startTimer;window.copyRes=copyRes;window.retryWrong=retryWrong;
+window.openFreshModalOriginal=openFreshModalOriginal;window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;window.confirmFresh=confirmFresh;
+
+render();renderTimer();if(state.timerStartedAt)startTimerInterval();renderAtt();
+</script>
+</body>
+</html>

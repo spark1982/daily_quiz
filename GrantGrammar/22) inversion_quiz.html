@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Inversion Quiz</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #111; min-height: 100vh; }
+  #page-wrap { max-width: 720px; margin: 0 auto; padding: 12px 16px 60px; }
+  #date-display { text-align: center; font-size: 2rem; font-weight: 800; color: #185FA5; background: white; padding: 10px 0 4px; }
+  #quiz-title { text-align: center; font-size: 1.4rem; font-weight: 800; color: #1D9E75; margin: 6px 0 2px; }
+  #att-display { text-align: center; font-size: 0.82rem; color: #555; margin-bottom: 4px; }
+  .instruction { text-align: center; font-size: 0.88rem; color: #555; background: white; margin-bottom: 8px; }
+  #nav-bar { position: sticky; top: 0; background: white; z-index: 100; border: 2px solid #1D9E75; border-radius: 10px; padding: 8px 12px 6px; margin-bottom: 12px; }
+  #nav-row { display: flex; align-items: center; gap: 8px; }
+  #count-label { font-size: 0.82rem; font-weight: 700; color: #111; white-space: nowrap; }
+  #prog-track { flex: 1; height: 8px; background: #d7dde6; border-radius: 4px; overflow: hidden; }
+  #prog-fill { height: 100%; background: #1D9E75; width: 0%; border-radius: 4px; transition: width 0.3s; }
+  #jump-btn { font-size: 0.78rem; font-weight: 700; color: #185FA5; background: none; border: 1.5px solid #185FA5; border-radius: 6px; padding: 3px 9px; cursor: pointer; white-space: nowrap; }
+  #dot-panel { display: none; margin-top: 8px; max-height: 170px; overflow-y: auto; flex-wrap: wrap; gap: 6px; padding-top: 4px; }
+  #dot-panel.open { display: flex; }
+  .dot { width: 26px; height: 26px; border-radius: 50%; border: none; font-size: 0.72rem; font-weight: 700; cursor: pointer; color: white; background: #d7dde6; }
+  .dot.correct { background: #1D9E75; }
+  .dot.wrong { background: #E24B4A; }
+  .results-pill { background: #185FA5; color: white; border: none; border-radius: 13px; padding: 4px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+  #quiz-screen { display: none; }
+  #q-box { background: white; border-radius: 12px; padding: 18px 16px 14px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  #q-label { font-size: 0.78rem; font-weight: 700; color: #888; margin-bottom: 6px; }
+  #q-stem { font-size: 1rem; font-weight: 600; color: #111; margin-bottom: 6px; }
+  #q-sentence { font-size: 1.05rem; font-weight: 700; font-style: normal; color: #185FA5; background: #f0f5ff; border-left: 4px solid #185FA5; border-radius: 6px; padding: 10px 12px; margin-bottom: 4px; }
+  #q-task { font-size: 0.9rem; color: #444; margin-top: 8px; }
+  .opt-btn { display: block; width: 100%; text-align: left; background: #e8edf4; color: #111; border: 2px solid transparent; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; font-size: 0.92rem; cursor: pointer; line-height: 1.4; }
+  .opt-btn.correct { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .opt-btn.wrong { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+  #exp-box { display: none; background: #fffbe6; border: 2px solid #f5a623; border-radius: 10px; padding: 12px 14px; font-size: 0.88rem; line-height: 1.6; margin-bottom: 10px; }
+  #exp-box.show { display: block; }
+  #bottom-nav { display: flex; gap: 10px; margin-top: 6px; }
+  .nav-btn { flex: 1; padding: 13px; font-size: 1rem; font-weight: 700; border: none; border-radius: 10px; cursor: pointer; }
+  #prev-btn { background: #e8edf4; color: #444; }
+  #next-btn { background: #1D9E75; color: white; }
+  #results-screen { display: none; }
+  #results-heading { text-align: center; font-size: 1.5rem; font-weight: 800; color: #1D9E75; margin-bottom: 4px; padding-top: 10px; }
+  #results-score { text-align: center; font-size: 1rem; color: #444; margin-bottom: 14px; }
+  #results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 18px; }
+  .res-card { background: #f5f7fa; border-radius: 8px; padding: 10px 8px; text-align: center; cursor: pointer; }
+  .res-card.r-correct { border-left: 4px solid #1D9E75; }
+  .res-card.r-wrong { border-left: 4px solid #E24B4A; }
+  .res-card.r-skip { border-left: 4px solid #d7dde6; }
+  .res-card .rc-num { font-size: 0.8rem; font-weight: 700; color: #888; }
+  .res-card .rc-status { font-size: 0.85rem; font-weight: 700; margin-top: 2px; }
+  .r-correct .rc-status { color: #1D9E75; }
+  .r-wrong .rc-status { color: #E24B4A; }
+  .r-skip .rc-status { color: #999; }
+  .res-action { display: block; width: 100%; padding: 14px; font-size: 1rem; font-weight: 700; border: none; border-radius: 10px; cursor: pointer; margin-bottom: 10px; }
+  #retry-btn { background: #1D9E75; color: white; }
+  #copy-btn { background: #185FA5; color: white; }
+  #fresh-btn, #fresh-btn-random { background: #e8edf4; color: #444; }
+  #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 9999; align-items: center; justify-content: center; }
+  #modal-overlay.show { display: flex; }
+  #modal-box { background: white; border-radius: 14px; padding: 26px 24px; max-width: 340px; width: 90%; text-align: center; }
+  #modal-box h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 10px; }
+  #modal-box p { font-size: 0.9rem; color: #555; margin-bottom: 18px; }
+  #modal-box .m-btns { display: flex; gap: 10px; }
+  #modal-box .m-btns button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+  #modal-cancel { background: #e8edf4; color: #444; }
+  #modal-confirm { background: #E24B4A; color: white; }
+</style>
+</head>
+<body>
+<!-- ===== Universal Quiz Timer (auto-injected) ===== -->
+<style>
+  #qzTimerBar { background: #ffffff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-family: 'Segoe UI', Arial, sans-serif; }
+  #qzTimerSetup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+  #qzTimerSetup label { font-weight: 700; }
+  #qzTimerInput { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+  #qzTimerStartBtn { background: #185FA5; color: #ffffff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  #qzTimerStartBtn:active { opacity: 0.8; }
+  #qzTimerRunning { display: none; align-items: center; gap: 8px; }
+  #qzTimerLabel { font-size: 0.78rem; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 0.02em; }
+  #qzTimerDisplay { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+  #qzTimerDisplay.qz-warn { color: #f5a623; }
+  #qzTimerDisplay.qz-danger { color: #E24B4A; }
+</style>
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label for="qzTimerInput">Set Time Limit:</label>
+    <input type="number" id="qzTimerInput" min="1" max="180" value="20"> min
+    <button id="qzTimerStartBtn" type="button">Start</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span id="qzTimerLabel">Time Left</span>
+    <span id="qzTimerDisplay">20:00</span>
+  </div>
+</div>
+<script>
+(function(){
+  var QZ_KEY = 'qzTimer_' + location.pathname;
+  var qz = { totalSec: null, startedAt: null };
+  try {
+    var raw = localStorage.getItem(QZ_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p.totalSec === 'number' && typeof p.startedAt === 'number') qz = p;
+    }
+  } catch(e) {}
+  var qzInterval = null;
+
+  function qzSave() { try { localStorage.setItem(QZ_KEY, JSON.stringify(qz)); } catch(e) {} }
+  function qzFormat(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60), s = sec % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function qzRender() {
+    var setupEl = document.getElementById('qzTimerSetup');
+    var runEl = document.getElementById('qzTimerRunning');
+    var disp = document.getElementById('qzTimerDisplay');
+    if (!setupEl || !runEl || !disp) return;
+    if (!qz.startedAt) {
+      setupEl.style.display = 'flex';
+      runEl.style.display = 'none';
+      return;
+    }
+    setupEl.style.display = 'none';
+    runEl.style.display = 'flex';
+    var elapsed = (Date.now() - qz.startedAt) / 1000;
+    var remaining = qz.totalSec - elapsed;
+    disp.classList.remove('qz-warn', 'qz-danger');
+    if (remaining <= 0) {
+      disp.textContent = "Time's Up";
+      disp.classList.add('qz-danger');
+      qzStopInterval();
+      return;
+    }
+    disp.textContent = qzFormat(remaining);
+    if (remaining <= qz.totalSec * 0.1) disp.classList.add('qz-danger');
+    else if (remaining <= qz.totalSec * 0.25) disp.classList.add('qz-warn');
+  }
+  function qzStartInterval() {
+    qzStopInterval();
+    qzInterval = setInterval(qzRender, 1000);
+  }
+  function qzStopInterval() {
+    if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+  }
+  function qzStart() {
+    var input = document.getElementById('qzTimerInput');
+    var minutes = parseFloat(input.value);
+    if (!minutes || minutes <= 0) minutes = 20;
+    qz.totalSec = Math.round(minutes * 60);
+    qz.startedAt = Date.now();
+    qzSave();
+    qzRender();
+    qzStartInterval();
+  }
+
+  var btn = document.getElementById('qzTimerStartBtn');
+  if (btn) btn.addEventListener('click', qzStart);
+  qzRender();
+  if (qz.startedAt) qzStartInterval();
+
+  function qzResetTimer() {
+    qz.totalSec = null;
+    qz.startedAt = null;
+    qzSave();
+    qzStopInterval();
+    qzRender();
+  }
+  var qzRetryRe = /retry|restart|reset|start\s*fresh|try\s*again|\uB2E4\uC2DC\s*\uC2DC\uC791|\uCC98\uC74C\uBD80\uD0B0/i;
+  document.addEventListener('click', function(ev) {
+    var el = ev.target, depth = 0;
+    while (el && depth < 4) {
+      if (el.id === 'qzTimerBar' || el.id === 'qzAttemptsBar') return;
+      var isClickable = el.tagName === 'BUTTON' || el.tagName === 'A' ||
+        (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) ||
+        (el.getAttribute && el.getAttribute('role') === 'button');
+      if (isClickable) {
+        var txt = (el.textContent || el.value || '').trim();
+        if (txt.length > 0 && txt.length < 40 && qzRetryRe.test(txt)) {
+          qzResetTimer();
+          return;
+        }
+      }
+      el = el.parentElement;
+      depth++;
+    }
+  }, true);
+})();
+</script>
+<!-- ===== End Universal Quiz Timer ===== -->
+
+<div id="page-wrap">
+  <div id="quiz-title">[Grant] Inversion Quiz</div>
+  <div id="att-display">Inverted Sentences | Total Attempts: 0</div>
+  <div class="instruction">Read each original sentence and choose the correctly inverted form.</div>
+  <div id="nav-bar">
+    <div id="nav-row">
+      <span id="count-label">0 / 50</span>
+      <div id="prog-track"><div id="prog-fill"></div></div>
+      <button id="jump-btn" onclick="window.toggleDots()">Jump</button>
+    </div>
+    <div id="dot-panel"></div>
+  </div>
+  <div id="quiz-screen">
+    <div id="q-box">
+      <div id="q-label"></div>
+      <div id="q-stem">Original sentence:</div>
+      <div id="q-sentence"></div>
+      <div id="q-task">Which sentence correctly inverts this sentence?</div>
+    </div>
+    <div id="opts-wrap"></div>
+    <div id="exp-box"></div>
+    <div id="bottom-nav">
+      <button class="nav-btn" id="prev-btn" onclick="window.goPrev()">Prev</button>
+      <button class="nav-btn" id="next-btn" onclick="window.goNext()">Next</button>
+    </div>
+  </div>
+  <div id="results-screen">
+    <div id="results-heading">Quiz Complete!</div>
+    <div id="results-score"></div>
+    <div id="results-grid"></div>
+    <button class="res-action" id="retry-btn" onclick="window.retryWrong()">Retry Wrong Ones</button>
+    <button class="res-action" id="copy-btn" onclick="window.copyResults()">Copy All Results</button>
+    <button class="res-action" id="fresh-btn" onclick="window.startFresh('original')">Start Fresh (Original Order)</button>
+    <button class="res-action" id="fresh-btn-random" onclick="window.startFresh('random')">Start Fresh (Random Order)</button>
+  </div>
+</div>
+<div id="modal-overlay">
+  <div id="modal-box">
+    <h3 id="modalTitle">Start Fresh?</h3>
+    <p id="modalText">All progress will be cleared and the quiz will restart from the beginning.</p>
+    <div class="m-btns">
+      <button id="modal-cancel" onclick="window.closeModal()">Cancel</button>
+      <button id="modal-confirm" onclick="window.confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  var STORAGE_KEY = 'quiz_grant_inversion50_v1';
+  var ATT_KEY = 'quiz_grant_inversion50_att_v1';
+  var TOTAL = 50;
+
+  var QS = [
+    {
+      original: "She has never seen such a beautiful sunset.",
+      opts: [
+        "Never has she seen such a beautiful sunset.",
+        "Never she has seen such a beautiful sunset.",
+        "Never has she such a beautiful sunset seen.",
+        "Has never she seen such a beautiful sunset."
+      ],
+      ci: 0,
+      exp: "\"Never\" is a negative adverb. When it starts a sentence, the subject and auxiliary must invert: \"Never + has + she + seen...\". The correct form is: Never has she seen such a beautiful sunset."
+    },
+    {
+      original: "I have rarely eaten at such a fancy restaurant.",
+      opts: [
+        "Rarely I have eaten at such a fancy restaurant.",
+        "Rarely had I eaten at such a fancy restaurant.",
+        "Rarely have I eaten at such a fancy restaurant.",
+        "Rarely have I ate at such a fancy restaurant."
+      ],
+      ci: 2,
+      exp: "\"Rarely\" triggers inversion: \"Rarely + have + I + eaten...\". The tense is present perfect, so \"have\" stays (not \"had\"). The past participle \"eaten\" follows. The correct form is: Rarely have I eaten at such a fancy restaurant."
+    },
+    {
+      original: "He had hardly arrived home when the phone rang.",
+      opts: [
+        "Hardly he had arrived home when the phone rang.",
+        "Hardly had he arrived home when the phone rang.",
+        "Hardly did he arrive home when the phone rang.",
+        "Hardly had he arrived home that the phone rang."
+      ],
+      ci: 1,
+      exp: "\"Hardly\" triggers inversion: \"Hardly + had + he + arrived...\". The conjunction must be \"when\" (not \"that\"), and past perfect \"had\" is correct. The correct form is: Hardly had he arrived home when the phone rang."
+    },
+    {
+      original: "She left the office, and almost immediately it began to rain.",
+      opts: [
+        "No sooner she had left the office than it began to rain.",
+        "No sooner did she leave the office when it began to rain.",
+        "No sooner had she left the office when it began to rain.",
+        "No sooner had she left the office than it began to rain."
+      ],
+      ci: 3,
+      exp: "\"No sooner...than\" requires inversion: \"No sooner + had + she + left...\". The paired conjunction must be \"than\" (not \"when\"), and past perfect \"had\" is correct. The correct form is: No sooner had she left the office than it began to rain."
+    },
+    {
+      original: "Tom did not know that he was about to win the award.",
+      opts: [
+        "Little Tom knew that he was about to win the award.",
+        "Little did Tom know that he was about to win the award.",
+        "Little knew Tom that he was about to win the award.",
+        "Little does Tom know that he was about to win the award."
+      ],
+      ci: 1,
+      exp: "\"Little\" as a negative adverb triggers do-auxiliary inversion in the past: \"Little + did + Tom + know...\". The main verb becomes the base form \"know\" after \"did\". The correct form is: Little did Tom know that he was about to win the award."
+    },
+    {
+      original: "I have never in my life tasted anything so delicious.",
+      opts: [
+        "Never in my life I have tasted anything so delicious.",
+        "Never in my life had I tasted anything so delicious.",
+        "Never in my life have I taste anything so delicious.",
+        "Never in my life have I tasted anything so delicious."
+      ],
+      ci: 3,
+      exp: "The fronted phrase \"Never in my life\" triggers inversion: \"Never in my life + have + I + tasted...\". The tense is present perfect (\"have\", not \"had\"), and the past participle \"tasted\" is correct. The correct form is: Never in my life have I tasted anything so delicious."
+    },
+    {
+      original: "We had scarcely arrived at the hotel when it started to snow.",
+      opts: [
+        "Scarcely we had arrived at the hotel when it started to snow.",
+        "Scarcely had we arrive at the hotel when it started to snow.",
+        "Scarcely had we arrived at the hotel when it started to snow.",
+        "Scarcely did we arrive at the hotel when it started to snow."
+      ],
+      ci: 2,
+      exp: "\"Scarcely\" triggers inversion: \"Scarcely + had + we + arrived...\". Past perfect \"had\" is correct, and the past participle \"arrived\" follows. \"Did\" would require simple past, which changes the meaning. The correct form is: Scarcely had we arrived at the hotel when it started to snow."
+    },
+    {
+      original: "The children had not finished dinner when the power went out.",
+      opts: [
+        "Hardly the children had finished dinner when the power went out.",
+        "Hardly had the children finished dinner when the power went out.",
+        "Hardly did the children finish dinner when the power went out.",
+        "Hardly had the children finished dinner that the power went out."
+      ],
+      ci: 1,
+      exp: "\"Hardly\" triggers inversion: \"Hardly + had + the children + finished...\". The conjunction must be \"when\" (not \"that\"), and the past participle \"finished\" follows past perfect \"had\". The correct form is: Hardly had the children finished dinner when the power went out."
+    },
+    {
+      original: "She understood the truth only after she read the letter.",
+      opts: [
+        "Only after she read the letter she understood the truth.",
+        "Only after she read the letter did she understand the truth.",
+        "Only after she had read the letter did she understood the truth.",
+        "Only after did she read the letter she understand the truth."
+      ],
+      ci: 1,
+      exp: "With \"Only after + clause\", the main clause inverts using a do-auxiliary: \"...did + she + understand\". The \"only after\" clause keeps normal word order, and the base form \"understand\" (not \"understood\") follows \"did\". The correct form is: Only after she read the letter did she understand the truth."
+    },
+    {
+      original: "The students did not understand until the teacher explained it.",
+      opts: [
+        "Not until the teacher explained it the students understood.",
+        "Not until did the teacher explain it did the students understand.",
+        "Not until the teacher explained it did the students understand.",
+        "Not until the teacher had explained it understood the students."
+      ],
+      ci: 2,
+      exp: "With \"Not until + clause\", the main clause inverts using a do-auxiliary: \"Not until the teacher explained it + did + the students + understand\". The base form \"understand\" follows \"did\". The correct form is: Not until the teacher explained it did the students understand."
+    },
+    {
+      original: "Daniel won the contest, and he also won the grand prize.",
+      opts: [
+        "Not only Daniel has won the contest, but he has also won the grand prize.",
+        "Not only has Daniel won the contest, but also he has won the grand prize.",
+        "Not only has Daniel won the contest, but also has he won the grand prize.",
+        "Not only won Daniel the contest, but also won he the grand prize."
+      ],
+      ci: 2,
+      exp: "\"Not only...but also\" triggers inversion in both clauses. First clause: \"Not only + has + Daniel + won...\". Second clause: \"but also + has + he + won...\". Both require subject-auxiliary inversion. The correct form is: Not only has Daniel won the contest, but also has he won the grand prize."
+    },
+    {
+      original: "I seldom go to the cinema these days.",
+      opts: [
+        "Seldom I go to the cinema these days.",
+        "Seldom do I go to the cinema these days.",
+        "Seldom did I go to the cinema these days.",
+        "Seldom have I gone to the cinema these days."
+      ],
+      ci: 1,
+      exp: "\"Seldom\" is a negative frequency adverb. With a simple present verb, inversion uses do-auxiliary: \"Seldom + do + I + go...\". The base form \"go\" follows \"do\". The correct form is: Seldom do I go to the cinema these days."
+    },
+    {
+      original: "He had no sooner sat down than the alarm went off.",
+      opts: [
+        "No sooner he had sat down than the alarm went off.",
+        "No sooner had he sat down than the alarm went off.",
+        "No sooner had he sat down when the alarm went off.",
+        "No sooner did he sit down than the alarm went off."
+      ],
+      ci: 1,
+      exp: "\"No sooner...than\" requires inversion: \"No sooner + had + he + sat down...\". The conjunction must be \"than\" (not \"when\"). Past perfect \"had\" is correct. The correct form is: No sooner had he sat down than the alarm went off."
+    },
+    {
+      original: "She had barely stepped outside when it started to hail.",
+      opts: [
+        "Barely she had stepped outside when it started to hail.",
+        "Barely had she stepped outside when it started to hail.",
+        "Barely did she step outside when it started to hail.",
+        "Barely had she stepped outside that it started to hail."
+      ],
+      ci: 1,
+      exp: "\"Barely\" triggers inversion: \"Barely + had + she + stepped...\". The conjunction is \"when\" (not \"that\"), and past perfect \"had\" is correct. The correct form is: Barely had she stepped outside when it started to hail."
+    },
+    {
+      original: "The manager did not realize until later that a mistake had been made.",
+      opts: [
+        "Not until later the manager realized that a mistake had been made.",
+        "Not until later did the manager realize that a mistake had been made.",
+        "Not until later had the manager realized that a mistake had been made.",
+        "Not until did the manager later realize that a mistake had been made."
+      ],
+      ci: 1,
+      exp: "With \"Not until + time expression\", the main clause inverts using a do-auxiliary: \"Not until later + did + the manager + realize...\". The base form \"realize\" follows \"did\". The correct form is: Not until later did the manager realize that a mistake had been made."
+    },
+    {
+      original: "She was only happy after she heard the good news.",
+      opts: [
+        "Only after she heard the good news she was happy.",
+        "Only after she heard the good news was she happy.",
+        "Only after she heard the good news did she happy.",
+        "Only after did she hear the good news was she happy."
+      ],
+      ci: 1,
+      exp: "With \"Only after + clause\" and a \"be\" verb in the main clause, inversion brings \"be\" before the subject: \"Only after she heard the good news + was + she + happy\". No do-auxiliary is needed. The correct form is: Only after she heard the good news was she happy."
+    },
+    {
+      original: "He did not speak until he was spoken to.",
+      opts: [
+        "Not until he was spoken to he spoke.",
+        "Not until he was spoken to spoke he.",
+        "Not until he was spoken to did he speak.",
+        "Not until was he spoken to did he speak."
+      ],
+      ci: 2,
+      exp: "With \"Not until + clause\", the main clause inverts with do-auxiliary: \"Not until he was spoken to + did + he + speak\". The \"until\" clause keeps normal word order, and the base form \"speak\" follows \"did\". The correct form is: Not until he was spoken to did he speak."
+    },
+    {
+      original: "I have never seen so many people at one place.",
+      opts: [
+        "Never have I seen so many people at one place.",
+        "Never I have seen so many people at one place.",
+        "Never did I see so many people at one place.",
+        "Never seen have I so many people at one place."
+      ],
+      ci: 0,
+      exp: "\"Never\" triggers inversion with the present perfect auxiliary: \"Never + have + I + seen...\". The past participle \"seen\" follows. The correct form is: Never have I seen so many people at one place."
+    },
+    {
+      original: "She had no sooner hung up the phone than it rang again.",
+      opts: [
+        "No sooner had she hung up the phone when it rang again.",
+        "No sooner she had hung up the phone than it rang again.",
+        "No sooner had she hung up the phone than it rang again.",
+        "No sooner did she hang up the phone than it rang again."
+      ],
+      ci: 2,
+      exp: "\"No sooner...than\" requires inversion: \"No sooner + had + she + hung up...\". The conjunction must be \"than\" (not \"when\"), and past perfect \"had\" is correct. The correct form is: No sooner had she hung up the phone than it rang again."
+    },
+    {
+      original: "He does not often make such a careless mistake.",
+      opts: [
+        "Seldom he makes such a careless mistake.",
+        "Seldom does he makes such a careless mistake.",
+        "Seldom does he make such a careless mistake.",
+        "Seldom did he make such a careless mistake."
+      ],
+      ci: 2,
+      exp: "\"Seldom\" triggers do-auxiliary inversion in simple present: \"Seldom + does + he + make...\". The base form \"make\" (not \"makes\") follows \"does\". The correct form is: Seldom does he make such a careless mistake."
+    },
+    {
+      original: "They had barely left the building when the fire alarm sounded.",
+      opts: [
+        "Barely they had left the building when the fire alarm sounded.",
+        "Barely had they left the building when the fire alarm sounded.",
+        "Barely did they leave the building when the fire alarm sounded.",
+        "Barely had they left the building that the fire alarm sounded."
+      ],
+      ci: 1,
+      exp: "\"Barely\" triggers inversion: \"Barely + had + they + left...\". The conjunction is \"when\" (not \"that\"), and past perfect \"had\" is correct. The correct form is: Barely had they left the building when the fire alarm sounded."
+    },
+    {
+      original: "I have not once forgotten to do my homework.",
+      opts: [
+        "Not once I have forgotten to do my homework.",
+        "Not once have I forgotten to do my homework.",
+        "Not once did I forget to do my homework.",
+        "Not once had I forgotten to do my homework."
+      ],
+      ci: 1,
+      exp: "\"Not once\" is a negative expression that triggers inversion. With present perfect: \"Not once + have + I + forgotten...\". The past participle \"forgotten\" follows. The correct form is: Not once have I forgotten to do my homework."
+    },
+    {
+      original: "We did not leave until everyone was ready.",
+      opts: [
+        "Not until everyone was ready we left.",
+        "Not until everyone was ready had we left.",
+        "Not until everyone was ready did we leave.",
+        "Not until did everyone was ready did we leave."
+      ],
+      ci: 2,
+      exp: "With \"Not until + clause\", the main clause inverts using do-auxiliary: \"Not until everyone was ready + did + we + leave\". The \"until\" clause keeps normal order. The correct form is: Not until everyone was ready did we leave."
+    },
+    {
+      original: "The team only discovered the error after the project was submitted.",
+      opts: [
+        "Only after the project was submitted the team discovered the error.",
+        "Only after the project was submitted did the team discover the error.",
+        "Only after the project was submitted did the team discovered the error.",
+        "Only after did the project submit did the team discover the error."
+      ],
+      ci: 1,
+      exp: "With \"Only after + clause\", the main clause inverts: \"Only after the project was submitted + did + the team + discover...\". The base form \"discover\" (not \"discovered\") follows \"did\". The correct form is: Only after the project was submitted did the team discover the error."
+    },
+    {
+      original: "He had no sooner opened the door than the cat ran out.",
+      opts: [
+        "No sooner had he opened the door when the cat ran out.",
+        "No sooner he had opened the door than the cat ran out.",
+        "No sooner did he open the door than the cat ran out.",
+        "No sooner had he opened the door than the cat ran out."
+      ],
+      ci: 3,
+      exp: "\"No sooner...than\" requires inversion: \"No sooner + had + he + opened...\". The conjunction must be \"than\" (not \"when\"), and past perfect \"had\" is correct. The correct form is: No sooner had he opened the door than the cat ran out."
+    },
+    {
+      original: "She rarely complains, even when things go wrong.",
+      opts: [
+        "Rarely she complains, even when things go wrong.",
+        "Rarely does she complain, even when things go wrong.",
+        "Rarely did she complain, even when things go wrong.",
+        "Rarely has she complained, even when things go wrong."
+      ],
+      ci: 1,
+      exp: "\"Rarely\" triggers do-auxiliary inversion in simple present: \"Rarely + does + she + complain...\". The base form \"complain\" follows \"does\". The correct form is: Rarely does she complain, even when things go wrong."
+    },
+    {
+      original: "He had barely finished speaking when the audience started clapping.",
+      opts: [
+        "Barely he had finished speaking when the audience started clapping.",
+        "Barely had he finished speaking when the audience started clapping.",
+        "Barely did he finish speaking when the audience started clapping.",
+        "Barely had he finished speaking that the audience started clapping."
+      ],
+      ci: 1,
+      exp: "\"Barely\" triggers inversion with past perfect: \"Barely + had + he + finished...\". The conjunction is \"when\" (not \"that\"). The correct form is: Barely had he finished speaking when the audience started clapping."
+    },
+    {
+      original: "The scientist did not understand the result until she ran the test again.",
+      opts: [
+        "Not until she ran the test again the scientist understood the result.",
+        "Not until she ran the test again did the scientist understood the result.",
+        "Not until she ran the test again did the scientist understand the result.",
+        "Not until did she run the test again did the scientist understand the result."
+      ],
+      ci: 2,
+      exp: "With \"Not until + clause\", the main clause inverts: \"Not until she ran the test again + did + the scientist + understand...\". The base form \"understand\" (not \"understood\") follows \"did\". The correct form is: Not until she ran the test again did the scientist understand the result."
+    },
+    {
+      original: "I have not seen such a crowd since the last World Cup.",
+      opts: [
+        "Not since the last World Cup I have seen such a crowd.",
+        "Not since the last World Cup did I see such a crowd.",
+        "Not since the last World Cup have I seen such a crowd.",
+        "Not since the last World Cup had I seen such a crowd."
+      ],
+      ci: 2,
+      exp: "\"Not since\" triggers inversion. With present perfect: \"Not since the last World Cup + have + I + seen...\". The past participle \"seen\" follows. The correct form is: Not since the last World Cup have I seen such a crowd."
+    },
+    {
+      original: "He won the race, and he also broke the world record.",
+      opts: [
+        "Not only he won the race, but he also broke the world record.",
+        "Not only did he win the race, but he also broke the world record.",
+        "Not only did he win the race, but also did he break the world record.",
+        "Not only won he the race, but also broke he the world record."
+      ],
+      ci: 2,
+      exp: "\"Not only...but also\" triggers inversion in both clauses. First: \"Not only + did + he + win...\". Second: \"but also + did + he + break...\". Both clauses use do-auxiliary inversion (simple past). The correct form is: Not only did he win the race, but also did he break the world record."
+    },
+    {
+      original: "She had no sooner closed her eyes than she fell asleep.",
+      opts: [
+        "No sooner had she closed her eyes when she fell asleep.",
+        "No sooner had she closed her eyes than she fell asleep.",
+        "No sooner she had closed her eyes than she fell asleep.",
+        "No sooner did she close her eyes than she fell asleep."
+      ],
+      ci: 1,
+      exp: "\"No sooner...than\" requires inversion: \"No sooner + had + she + closed...\". The conjunction must be \"than\" (not \"when\"), and past perfect \"had\" is correct. The correct form is: No sooner had she closed her eyes than she fell asleep."
+    },
+    {
+      original: "I have never felt so proud of my work.",
+      opts: [
+        "Never I have felt so proud of my work.",
+        "Never did I feel so proud of my work.",
+        "Never felt have I so proud of my work.",
+        "Never have I felt so proud of my work."
+      ],
+      ci: 3,
+      exp: "\"Never\" triggers inversion with present perfect: \"Never + have + I + felt...\". The past participle \"felt\" follows. The correct form is: Never have I felt so proud of my work."
+    },
+    {
+      original: "He did not realize his mistake until it was too late.",
+      opts: [
+        "Not until it was too late he realized his mistake.",
+        "Not until it was too late had he realized his mistake.",
+        "Not until it was too late did he realize his mistake.",
+        "Not until it was too late did he realized his mistake."
+      ],
+      ci: 2,
+      exp: "With \"Not until + clause\", the main clause inverts: \"Not until it was too late + did + he + realize...\". The base form \"realize\" (not \"realized\") follows \"did\". The correct form is: Not until it was too late did he realize his mistake."
+    },
+    {
+      original: "She not only passed the test but also got the highest score.",
+      opts: [
+        "Not only she passed the test, but she also got the highest score.",
+        "Not only did she pass the test, but also she got the highest score.",
+        "Not only did she pass the test, but also did she get the highest score.",
+        "Not only passed she the test, but also got she the highest score."
+      ],
+      ci: 2,
+      exp: "\"Not only...but also\" triggers inversion in both clauses. First: \"Not only + did + she + pass...\". Second: \"but also + did + she + get...\". Both use do-auxiliary inversion. The correct form is: Not only did she pass the test, but also did she get the highest score."
+    },
+    {
+      original: "The children had barely gone to bed when the guests arrived.",
+      opts: [
+        "Barely the children had gone to bed when the guests arrived.",
+        "Barely had the children gone to bed when the guests arrived.",
+        "Barely did the children go to bed when the guests arrived.",
+        "Barely had the children gone to bed that the guests arrived."
+      ],
+      ci: 1,
+      exp: "\"Barely\" triggers inversion with past perfect: \"Barely + had + the children + gone...\". The conjunction is \"when\" (not \"that\"). The correct form is: Barely had the children gone to bed when the guests arrived."
+    },
+    {
+      original: "We had never imagined that the plan would succeed.",
+      opts: [
+        "Never we had imagined that the plan would succeed.",
+        "Never had we imagined that the plan would succeed.",
+        "Never did we imagine that the plan would succeed.",
+        "Never have we imagined that the plan would succeed."
+      ],
+      ci: 1,
+      exp: "\"Never\" triggers inversion. The original uses past perfect, so: \"Never + had + we + imagined...\". The correct form is: Never had we imagined that the plan would succeed."
+    },
+    {
+      original: "She had no sooner walked in than the phone started ringing.",
+      opts: [
+        "No sooner had she walked in when the phone started ringing.",
+        "No sooner she had walked in than the phone started ringing.",
+        "No sooner had she walked in than the phone started ringing.",
+        "No sooner did she walk in than the phone started ringing."
+      ],
+      ci: 2,
+      exp: "\"No sooner...than\" requires inversion: \"No sooner + had + she + walked in...\". The conjunction must be \"than\" (not \"when\"), and past perfect \"had\" is correct. The correct form is: No sooner had she walked in than the phone started ringing."
+    },
+    {
+      original: "He rarely arrives on time to class.",
+      opts: [
+        "Rarely he arrives on time to class.",
+        "Rarely has he arrived on time to class.",
+        "Rarely does he arrive on time to class.",
+        "Rarely did he arrive on time to class."
+      ],
+      ci: 2,
+      exp: "\"Rarely\" triggers do-auxiliary inversion in simple present: \"Rarely + does + he + arrive...\". The base form \"arrive\" follows \"does\". The correct form is: Rarely does he arrive on time to class."
+    },
+    {
+      original: "She did not smile until the judge announced her name.",
+      opts: [
+        "Not until the judge announced her name she smiled.",
+        "Not until the judge announced her name had she smiled.",
+        "Not until the judge announced her name did she smiled.",
+        "Not until the judge announced her name did she smile."
+      ],
+      ci: 3,
+      exp: "With \"Not until + clause\", the main clause inverts: \"Not until the judge announced her name + did + she + smile\". The base form \"smile\" (not \"smiled\") follows \"did\". The correct form is: Not until the judge announced her name did she smile."
+    },
+    {
+      original: "He had scarcely put down his bag when his mother called him.",
+      opts: [
+        "Scarcely he had put down his bag when his mother called him.",
+        "Scarcely had he put down his bag when his mother called him.",
+        "Scarcely did he put down his bag when his mother called him.",
+        "Scarcely had he put down his bag that his mother called him."
+      ],
+      ci: 1,
+      exp: "\"Scarcely\" triggers inversion with past perfect: \"Scarcely + had + he + put down...\". The conjunction is \"when\" (not \"that\"). The correct form is: Scarcely had he put down his bag when his mother called him."
+    },
+    {
+      original: "I have not been in this part of town for a long time.",
+      opts: [
+        "Not for a long time I have been in this part of town.",
+        "Not for a long time have I been in this part of town.",
+        "Not for a long time was I in this part of town.",
+        "Not for a long time had I been in this part of town."
+      ],
+      ci: 1,
+      exp: "\"Not for a long time\" triggers inversion. With present perfect: \"Not for a long time + have + I + been...\". The correct form is: Not for a long time have I been in this part of town."
+    },
+    {
+      original: "He speaks English well, and he also writes it beautifully.",
+      opts: [
+        "Not only he speaks English well, but he also writes it beautifully.",
+        "Not only does he speak English well, but he also writes it beautifully.",
+        "Not only does he speak English well, but also does he write it beautifully.",
+        "Not only speaks he English well, but also writes he it beautifully."
+      ],
+      ci: 2,
+      exp: "\"Not only...but also\" inverts both clauses. First: \"Not only + does + he + speak...\". Second: \"but also + does + he + write...\". Both use simple present do-auxiliary. The correct form is: Not only does he speak English well, but also does he write it beautifully."
+    },
+    {
+      original: "The boy had scarcely started eating when the bell rang.",
+      opts: [
+        "Scarcely the boy had started eating when the bell rang.",
+        "Scarcely had the boy started eating when the bell rang.",
+        "Scarcely did the boy start eating when the bell rang.",
+        "Scarcely had the boy started eating that the bell rang."
+      ],
+      ci: 1,
+      exp: "\"Scarcely\" triggers inversion with past perfect: \"Scarcely + had + the boy + started...\". The conjunction is \"when\" (not \"that\"). The correct form is: Scarcely had the boy started eating when the bell rang."
+    },
+    {
+      original: "We only found out the truth after the meeting ended.",
+      opts: [
+        "Only after the meeting ended we found out the truth.",
+        "Only after the meeting ended had we found out the truth.",
+        "Only after the meeting ended did we find out the truth.",
+        "Only after did the meeting end did we find out the truth."
+      ],
+      ci: 2,
+      exp: "With \"Only after + clause\", the main clause inverts: \"Only after the meeting ended + did + we + find out...\". The base form \"find out\" (not \"found out\") follows \"did\". The correct form is: Only after the meeting ended did we find out the truth."
+    },
+    {
+      original: "She had no sooner left the room than everyone started talking.",
+      opts: [
+        "No sooner had she left the room when everyone started talking.",
+        "No sooner did she leave the room than everyone started talking.",
+        "No sooner had she left the room than everyone started talking.",
+        "No sooner she had left the room than everyone started talking."
+      ],
+      ci: 2,
+      exp: "\"No sooner...than\" requires inversion: \"No sooner + had + she + left...\". The conjunction must be \"than\" (not \"when\"), and past perfect \"had\" is correct. The correct form is: No sooner had she left the room than everyone started talking."
+    },
+    {
+      original: "He did not say a word even after he was blamed.",
+      opts: [
+        "Not even after he was blamed he said a word.",
+        "Not even after he was blamed did he say a word.",
+        "Not even after he was blamed had he said a word.",
+        "Not even after he was blamed did he said a word."
+      ],
+      ci: 1,
+      exp: "With \"Not even after + clause\", the main clause inverts: \"Not even after he was blamed + did + he + say...\". The base form \"say\" (not \"said\") follows \"did\". The correct form is: Not even after he was blamed did he say a word."
+    },
+    {
+      original: "I have not witnessed such bravery before in my life.",
+      opts: [
+        "Never before in my life I have witnessed such bravery.",
+        "Never before in my life had I witnessed such bravery.",
+        "Never before in my life did I witness such bravery.",
+        "Never before in my life have I witnessed such bravery."
+      ],
+      ci: 3,
+      exp: "\"Never before in my life\" triggers inversion. With present perfect: \"Never before in my life + have + I + witnessed...\". The past participle \"witnessed\" follows. The correct form is: Never before in my life have I witnessed such bravery."
+    },
+    {
+      original: "She had no sooner reached the station than the train departed.",
+      opts: [
+        "No sooner she had reached the station than the train departed.",
+        "No sooner had she reached the station when the train departed.",
+        "No sooner did she reach the station than the train departed.",
+        "No sooner had she reached the station than the train departed."
+      ],
+      ci: 3,
+      exp: "\"No sooner...than\" requires inversion: \"No sooner + had + she + reached...\". The conjunction must be \"than\" (not \"when\"), and past perfect \"had\" is correct. The correct form is: No sooner had she reached the station than the train departed."
+    },
+    {
+      original: "They were only satisfied after every detail was checked.",
+      opts: [
+        "Only after every detail was checked they were satisfied.",
+        "Only after every detail was checked were they satisfied.",
+        "Only after every detail was checked did they satisfy.",
+        "Only after did every detail check were they satisfied."
+      ],
+      ci: 1,
+      exp: "With \"Only after + clause\" and a \"be\" verb in the main clause, \"be\" inverts before the subject: \"Only after every detail was checked + were + they + satisfied\". No do-auxiliary is needed with \"be\". The correct form is: Only after every detail was checked were they satisfied."
+    },
+    {
+      original: "He had no sooner tasted the soup than he asked for more.",
+      opts: [
+        "No sooner had he tasted the soup when he asked for more.",
+        "No sooner had he tasted the soup than he asked for more.",
+        "No sooner he had tasted the soup than he asked for more.",
+        "No sooner did he taste the soup than he asked for more."
+      ],
+      ci: 1,
+      exp: "\"No sooner...than\" requires inversion: \"No sooner + had + he + tasted...\". The conjunction must be \"than\" (not \"when\"), and past perfect \"had\" is correct. The correct form is: No sooner had he tasted the soup than he asked for more."
+    }
+  ];
+
+  var ORDER_KEY = STORAGE_KEY + '_order_v1';
+  function identityOrder() {
+    var arr = [];
+    for (var i = 0; i < TOTAL; i++) arr.push(i);
+    return arr;
+  }
+  function isValidOrder(arr) {
+    if (!Array.isArray(arr) || arr.length !== TOTAL) return false;
+    var seen = {};
+    for (var i = 0; i < arr.length; i++) {
+      var v = arr[i];
+      if (typeof v !== 'number' || v < 0 || v >= TOTAL || seen[v]) return false;
+      seen[v] = true;
+    }
+    return true;
+  }
+  function loadOrder() {
+    try {
+      var raw = localStorage.getItem(ORDER_KEY);
+      if (!raw) return null;
+      var arr = JSON.parse(raw);
+      return isValidOrder(arr) ? arr : null;
+    } catch(e) { return null; }
+  }
+  function saveOrder(order) {
+    try { localStorage.setItem(ORDER_KEY, JSON.stringify(order)); } catch(e) {}
+  }
+  function randomOrder() {
+    var arr = identityOrder();
+    for (var i = arr.length-1; i > 0; i--) {
+      var j = Math.floor(Math.random()*(i+1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+  var currentOrder = loadOrder() || identityOrder();
+  saveOrder(currentOrder);
+  var pendingFreshMode = 'original';
+
+  var state = {
+    cur: currentOrder[0],
+    answers: {},
+    shuffles: {},
+    showResults: false,
+    retryList: null,
+    _chosenPos: {}
+  };
+
+  var attempts = parseInt(localStorage.getItem(ATT_KEY) || '0', 10);
+  var dotsOpen = false;
+
+  function saveState() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+  }
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      var s = JSON.parse(raw);
+      if (typeof s.cur !== 'number' || s.cur < 0 || s.cur >= TOTAL) return;
+      if (!s.answers || typeof s.answers !== 'object') return;
+      if (!s.shuffles || typeof s.shuffles !== 'object') return;
+      state = s;
+      var ns = {};
+      Object.keys(state.shuffles).forEach(function(k) { ns[parseInt(k,10)] = state.shuffles[k]; });
+      state.shuffles = ns;
+      if (!state._chosenPos) state._chosenPos = {};
+    } catch(e) { localStorage.removeItem(STORAGE_KEY); }
+  }
+
+  function getShuffle(qi) {
+    if (!state.shuffles[qi]) {
+      var arr = [0,1,2,3];
+      for (var i=3;i>0;i--) { var j=Math.floor(Math.random()*(i+1)); var t=arr[i]; arr[i]=arr[j]; arr[j]=t; }
+      state.shuffles[qi] = arr;
+    }
+    return state.shuffles[qi];
+  }
+
+  function answeredCount() { return Object.keys(state.answers).length; }
+
+  function updateNav() {
+    var total = state.retryList ? state.retryList.length : TOTAL;
+    var answered = answeredCount();
+    document.getElementById('count-label').textContent = answered + ' / ' + total;
+    document.getElementById('prog-fill').style.width = (answered/total*100) + '%';
+    document.getElementById('att-display').textContent = 'Inverted Sentences | Total Attempts: ' + attempts;
+
+    var qi = state.cur;
+    var navList = state.retryList ? state.retryList : currentOrder;
+    var navIdx = navList.indexOf(qi);
+    var isLast = navIdx === navList.length-1;
+    var firstQ = navList[0];
+
+    var prevBtn = document.getElementById('prev-btn');
+    var nextBtn = document.getElementById('next-btn');
+    prevBtn.disabled = (qi === firstQ);
+
+    if (isLast) {
+      nextBtn.textContent = 'See Results';
+      nextBtn.disabled = false;
+      nextBtn.onclick = window.goResults;
+    } else {
+      nextBtn.textContent = 'Next';
+      nextBtn.disabled = false;
+      nextBtn.onclick = window.goNext;
+    }
+    buildDots();
+  }
+
+  function buildDots() {
+    var panel = document.getElementById('dot-panel');
+    var total = state.retryList ? state.retryList.length : TOTAL;
+    var list = state.retryList ? state.retryList : currentOrder;
+    var html = '';
+    list.forEach(function(qi, idx) {
+      var cls = 'dot';
+      var a = state.answers[qi];
+      if (a !== undefined) cls += a ? ' correct' : ' wrong';
+      html += '<button class="'+cls+'" onclick="window.jumpTo('+qi+')">'+(idx+1)+'</button>';
+    });
+    if (answeredCount() === total) {
+      html += '<button class="results-pill" onclick="window.goResults()">Results</button>';
+    }
+    panel.innerHTML = html;
+  }
+
+  function render() {
+    try {
+      var quiz = document.getElementById('quiz-screen');
+      var res = document.getElementById('results-screen');
+      if (state.showResults) {
+        quiz.style.display = 'none';
+        res.style.display = 'block';
+        renderResults();
+        return;
+      }
+      quiz.style.display = 'block';
+      res.style.display = 'none';
+
+      var qi = state.cur;
+      var q = QS[qi];
+      var list = state.retryList ? state.retryList : currentOrder;
+      var idx = list.indexOf(qi) + 1;
+
+      document.getElementById('q-label').textContent = 'Question ' + idx + ' of ' + list.length;
+      document.getElementById('q-sentence').textContent = q.original;
+
+      var sh = getShuffle(qi);
+      var optsWrap = document.getElementById('opts-wrap');
+      var html = '';
+      sh.forEach(function(origIdx, pos) {
+        html += '<button class="opt-btn" id="opt'+pos+'" onclick="window.choose('+pos+')">' + q.opts[origIdx] + '</button>';
+      });
+      optsWrap.innerHTML = html;
+
+      var expBox = document.getElementById('exp-box');
+      expBox.innerHTML = '';
+      expBox.classList.remove('show');
+
+      if (state.answers[qi] !== undefined) {
+        var sh2 = getShuffle(qi);
+        var correctPos = sh2.indexOf(q.ci);
+        sh2.forEach(function(origIdx, pos) {
+          var btn = document.getElementById('opt'+pos);
+          if (pos === correctPos) btn.classList.add('correct');
+        });
+        var chosen = state._chosenPos[qi] !== undefined ? state._chosenPos[qi] : -1;
+        if (!state.answers[qi] && chosen >= 0) {
+          var b = document.getElementById('opt'+chosen);
+          if (b) b.classList.add('wrong');
+        }
+        expBox.innerHTML = q.exp;
+        expBox.classList.add('show');
+      }
+      updateNav();
+    } catch(e) {
+      document.getElementById('quiz-screen').innerHTML = '<p style="color:red;padding:20px;">Render error: '+e.message+'</p>';
+    }
+  }
+
+  window.choose = function(pos) {
+    var qi = state.cur;
+    if (state.answers[qi] !== undefined) return;
+    var sh = getShuffle(qi);
+    var chosenOrig = sh[pos];
+    var isCorrect = (chosenOrig === QS[qi].ci);
+    state.answers[qi] = isCorrect;
+    state._chosenPos[qi] = pos;
+    saveState();
+
+    var correctPos = sh.indexOf(QS[qi].ci);
+    sh.forEach(function(origIdx, p) {
+      var btn = document.getElementById('opt'+p);
+      if (!btn) return;
+      if (p === correctPos) btn.classList.add('correct');
+      else if (!isCorrect && p === pos) btn.classList.add('wrong');
+    });
+    var expBox = document.getElementById('exp-box');
+    expBox.innerHTML = QS[qi].exp;
+    expBox.classList.add('show');
+    updateNav();
+  };
+
+  window.goPrev = function() {
+    var list = state.retryList ? state.retryList : currentOrder;
+    var idx = list.indexOf(state.cur);
+    if (idx > 0) { state.cur = list[idx-1]; saveState(); render(); }
+  };
+
+  window.goNext = function() {
+    var list = state.retryList ? state.retryList : currentOrder;
+    var idx = list.indexOf(state.cur);
+    if (idx < list.length-1) { state.cur = list[idx+1]; saveState(); render(); }
+  };
+
+  window.goResults = function() {
+    state.showResults = true;
+    if (!state.retryList) {
+      attempts++;
+      localStorage.setItem(ATT_KEY, attempts.toString());
+    }
+    saveState();
+    render();
+  };
+
+  window.toggleDots = function() {
+    dotsOpen = !dotsOpen;
+    var panel = document.getElementById('dot-panel');
+    var btn = document.getElementById('jump-btn');
+    if (dotsOpen) { panel.classList.add('open'); btn.textContent = 'Hide'; }
+    else { panel.classList.remove('open'); btn.textContent = 'Jump'; }
+  };
+
+  window.jumpTo = function(qi) {
+    state.cur = qi;
+    state.showResults = false;
+    saveState();
+    render();
+    if (dotsOpen) window.toggleDots();
+  };
+
+  function renderResults() {
+    var list = state.retryList ? state.retryList : currentOrder;
+    var correct = 0;
+    list.forEach(function(qi) { if (state.answers[qi] === true) correct++; });
+    document.getElementById('results-score').textContent = correct + ' / ' + list.length + ' correct';
+    var grid = '';
+    list.forEach(function(qi, idx) {
+      var a = state.answers[qi];
+      var cls = a === undefined ? 'r-skip' : (a ? 'r-correct' : 'r-wrong');
+      var label = a === undefined ? 'Skipped' : (a ? 'Correct' : 'Wrong');
+      grid += '<div class="res-card '+cls+'" onclick="window.jumpTo('+qi+')">';
+      grid += '<div class="rc-num">Q'+(idx+1)+'</div>';
+      grid += '<div class="rc-status">'+label+'</div></div>';
+    });
+    document.getElementById('results-grid').innerHTML = grid;
+    updateNav();
+  }
+
+  window.retryWrong = function() {
+    var list = state.retryList ? state.retryList : currentOrder;
+    var wrong = list.filter(function(qi) { return state.answers[qi] !== true; });
+    if (wrong.length === 0) return;
+    wrong.forEach(function(qi) {
+      delete state.answers[qi];
+      if (state._chosenPos) delete state._chosenPos[qi];
+    });
+    state.retryList = wrong;
+    state.cur = wrong[0];
+    state.showResults = false;
+    saveState();
+    render();
+  };
+
+  window.copyResults = function() {
+    var list = state.retryList ? state.retryList : currentOrder;
+    var lines = ['[Grant] Inversion Quiz - June 18, 2026'];
+    list.forEach(function(qi, idx) {
+      var a = state.answers[qi];
+      lines.push('Q'+(idx+1)+': '+(a===undefined?'Skipped':a?'Correct':'Wrong'));
+    });
+    var correct = list.filter(function(qi){return state.answers[qi]===true;}).length;
+    lines.push('Score: '+correct+'/'+list.length);
+    navigator.clipboard.writeText(lines.join('\n')).catch(function(){});
+  };
+
+  window.startFresh = function(mode) {
+    pendingFreshMode = mode;
+    document.getElementById('modalTitle').textContent = mode === 'random' ? 'Start Fresh (Random Order)?' : 'Start Fresh (Original Order)?';
+    document.getElementById('modalText').textContent = mode === 'random' ? 'Questions will be reshuffled into a new random order, and all progress will be reset.' : 'Questions will return to their original order, and all progress will be reset.';
+    document.getElementById('modal-overlay').classList.add('show');
+  };
+
+  window.closeModal = function() {
+    document.getElementById('modal-overlay').classList.remove('show');
+  };
+
+  window.confirmFresh = function() {
+    localStorage.removeItem(STORAGE_KEY);
+    currentOrder = (pendingFreshMode === 'random') ? randomOrder() : identityOrder();
+    saveOrder(currentOrder);
+    state = { cur:currentOrder[0], answers:{}, shuffles:{}, showResults:false, retryList:null, _chosenPos:{} };
+    closeModal();
+    render();
+  };
+
+  loadState();
+  render();
+})();
+</script>
+</body>
+</html>

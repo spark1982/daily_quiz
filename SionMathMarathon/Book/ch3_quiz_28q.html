@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 3 Quiz</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Georgia, serif; background: #f5f6fa; color: #111111; font-size: 1rem; }
+
+/* Timer */
+#qzTimerBar {
+  position: sticky; top: 0; z-index: 100;
+  background: #fff; border-bottom: 2px solid #d7dde6;
+  padding: 8px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+#qzTimerSetup { display: flex; align-items: center; gap: 8px; }
+#qzTimerSetup label { font-size: 0.88rem; color: #555; }
+#qzTimerSetup input { width: 56px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.88rem; }
+#qzTimerStartBtn { background: #1D9E75; color: #fff; border: none; border-radius: 4px; padding: 5px 12px; font-size: 0.88rem; cursor: pointer; }
+#qzTimerRunning { display: none; align-items: center; gap: 10px; }
+#qzTimerRunning span { font-size: 0.88rem; color: #555; }
+#qzCountdown { font-family: monospace; font-size: 1.05rem; font-weight: bold; color: #111; min-width: 56px; }
+#qzPauseBtn { background: #f5a623; color: #fff; border: none; border-radius: 4px; padding: 5px 10px; font-size: 0.82rem; cursor: pointer; }
+#qzResetBtn { background: #e2e8f0; color: #333; border: none; border-radius: 4px; padding: 5px 10px; font-size: 0.82rem; cursor: pointer; }
+
+/* App */
+#appWrap { max-width: 780px; margin: 0 auto; padding: 20px 16px 60px; }
+h1 { font-size: 1.45rem; color: #1D9E75; text-align: center; margin-bottom: 4px; }
+.instruction { text-align: center; font-size: 0.88rem; color: #555; margin-bottom: 10px; }
+#subtitle { text-align: center; font-size: 0.82rem; color: #555; margin-bottom: 14px; }
+
+/* Nav bar */
+#navBar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+#navCount { font-size: 0.88rem; color: #444; white-space: nowrap; }
+#progressBarWrap { flex: 1; height: 7px; background: #d7dde6; border-radius: 4px; min-width: 80px; }
+#progressBarFill { height: 100%; background: #1D9E75; border-radius: 4px; width: 0%; transition: width 0.3s; }
+#jumpToggle { font-size: 0.82rem; color: #185FA5; cursor: pointer; text-decoration: underline; white-space: nowrap; }
+#dotPanel { display: none; max-height: 170px; overflow-y: auto; padding: 8px 0; margin-bottom: 10px; }
+.dotRow { display: flex; flex-wrap: wrap; gap: 5px; }
+.dot {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: #d7dde6; color: #333; font-size: 0.7rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-weight: bold; border: 2px solid transparent;
+}
+.dot.correct { background: #1D9E75; color: #fff; }
+.dot.wrong { background: #E24B4A; color: #fff; }
+#resultsPill { display: none; margin-top: 6px; }
+#resultsPill button { background: #1D9E75; color: #fff; border: none; border-radius: 12px; padding: 4px 14px; font-size: 0.82rem; cursor: pointer; }
+
+/* Quiz area */
+#quizArea { display: none; }
+.qnum { font-size: 0.82rem; color: #888; margin-bottom: 6px; }
+.qtag { display: inline-block; background: #e8edf4; color: #444; border-radius: 10px; padding: 2px 10px; font-size: 0.76rem; margin-bottom: 10px; }
+.qtext { font-size: 1.02rem; line-height: 1.65; margin-bottom: 16px; }
+.qtext .underline { text-decoration: underline; }
+.options { display: flex; flex-direction: column; gap: 9px; margin-bottom: 18px; }
+.opt {
+  background: #e8edf4; color: #111111; border: 2px solid transparent;
+  border-radius: 7px; padding: 10px 14px; cursor: pointer;
+  font-size: 0.97rem; line-height: 1.5; text-align: left; transition: background 0.15s;
+}
+.opt:hover { background: #dce3ee; }
+.opt.correct { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+.opt.wrong { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+.explanation {
+  border: 2px solid #f5a623; background: #fffbf0;
+  border-radius: 7px; padding: 12px 14px; font-size: 0.93rem;
+  line-height: 1.6; margin-bottom: 16px; display: none;
+}
+
+/* Bottom nav */
+#bottomNav { display: flex; justify-content: space-between; margin-top: 10px; }
+#prevBtn { background: #e2e8f0; color: #333; border: none; border-radius: 6px; padding: 9px 20px; font-size: 0.95rem; cursor: pointer; }
+#prevBtn:disabled { opacity: 0.4; cursor: default; }
+#nextBtn { background: #1D9E75; color: #fff; border: none; border-radius: 6px; padding: 9px 22px; font-size: 0.95rem; cursor: pointer; }
+
+/* Results */
+#resultsArea { display: none; }
+#resultsArea h2 { color: #1D9E75; text-align: center; margin-bottom: 18px; font-size: 1.3rem; }
+#summaryGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-bottom: 22px; }
+.sumCard {
+  border-radius: 7px; padding: 10px 8px; text-align: center; cursor: pointer; font-size: 0.82rem;
+}
+.sumCard.correct { background: #E1F5EE; border: 2px solid #1D9E75; color: #085041; }
+.sumCard.wrong { background: #FCEBEB; border: 2px solid #E24B4A; color: #501313; }
+.sumCard.skipped { background: #f5f6fa; border: 2px solid #d7dde6; color: #555; }
+.sumCard .snum { font-weight: bold; font-size: 1rem; }
+#resultsBtns { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+#retryBtn { background: #1D9E75; color: #fff; border: none; border-radius: 6px; padding: 10px 28px; font-size: 1rem; cursor: pointer; }
+#copyBtn { background: #185FA5; color: #fff; border: none; border-radius: 6px; padding: 10px 28px; font-size: 1rem; cursor: pointer; }
+#freshBtnOriginal, #freshBtnRandom { background: #e2e8f0; color: #333; border: none; border-radius: 6px; padding: 10px 28px; font-size: 1rem; cursor: pointer; }
+
+/* Modal */
+#modalOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: center; justify-content: center; }
+#modalOverlay.active { display: flex; }
+#modalBox { background: #fff; border-radius: 10px; padding: 28px 24px; max-width: 360px; width: 90%; text-align: center; }
+#modalBox p { margin-bottom: 20px; font-size: 1rem; line-height: 1.5; }
+#modalBtns { display: flex; gap: 12px; justify-content: center; }
+#modalCancel { background: #e2e8f0; color: #333; border: none; border-radius: 6px; padding: 8px 20px; cursor: pointer; }
+#modalConfirm { background: #E24B4A; color: #fff; border: none; border-radius: 6px; padding: 8px 20px; cursor: pointer; }
+
+/* Fraction display */
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; font-size: 0.9em; line-height: 1.2; margin: 0 2px; }
+.frac .num { border-bottom: 1px solid currentColor; padding: 0 2px; }
+.frac .den { padding: 0 2px; }
+</style>
+</head>
+<body>
+
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label>Timer (min):</label>
+    <input type="number" id="qzMinInput" value="20" min="1" max="120">
+    <button id="qzTimerStartBtn" onclick="window.qzStartTimer()">Start Timer</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span>Time Left:</span>
+    <span id="qzCountdown">20:00</span>
+    <button id="qzPauseBtn" onclick="window.qzTogglePause()">Pause</button>
+    <button id="qzResetBtn" onclick="window.qzTimerReset()">Reset</button>
+  </div>
+</div>
+
+<div id="appWrap">
+  <h1>Chapter 3 Quiz</h1>
+  <p class="instruction">Read each problem carefully and select the best answer.</p>
+  <div id="subtitle">Loading...</div>
+
+  <div id="navBar">
+    <span id="navCount">0 / 25</span>
+    <div id="progressBarWrap"><div id="progressBarFill"></div></div>
+    <span id="jumpToggle" onclick="window.toggleDots()">Jump</span>
+  </div>
+  <div id="dotPanel"><div class="dotRow" id="dotRow"></div><div id="resultsPill"><button onclick="window.goResults()">Results</button></div></div>
+
+  <div id="quizArea"></div>
+
+  <div id="bottomNav">
+    <button id="prevBtn" onclick="window.goPrev()">Prev</button>
+    <button id="nextBtn" onclick="window.goNext()">Next</button>
+  </div>
+
+  <div id="resultsArea">
+    <h2>Results</h2>
+    <div id="summaryGrid"></div>
+    <div id="resultsBtns">
+      <button id="retryBtn" onclick="window.retryWrong()">Retry Wrong Ones</button>
+      <button id="copyBtn" onclick="window.copyResults()">Copy All Results</button>
+      <button id="freshBtnOriginal" onclick="window.openFreshModal('original')">Start Fresh (Original Order)</button>
+      <button id="freshBtnRandom" onclick="window.openFreshModal('random')">Start Fresh (Random Order)</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalOverlay">
+  <div id="modalBox">
+    <h3 id="modalTitle" style="margin-bottom:10px;font-size:1.05rem;">Start Fresh (Original Order)?</h3>
+    <p id="modalMsg">Questions will return to their original order, and all progress will be reset.</p>
+    <div id="modalBtns">
+      <button id="modalCancel" onclick="window.closeModal()">Cancel</button>
+      <button id="modalConfirm" onclick="window.doFresh()">Yes, Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var QUIZ_ID = 'ch3_sion_2026';
+  var SK = 'quiz_' + QUIZ_ID + '_v1';
+  var ATT_KEY = 'quiz_' + QUIZ_ID + '_att_v1';
+
+  // Helper for fractions
+  function frac(n, d) {
+    return '<span class="frac"><span class="num">' + n + '</span><span class="den">' + d + '</span></span>';
+  }
+
+  var questions = [
+    // ===== EXAMPLES (3.1 - 3.5) =====
+    {
+      id: 'e1', section: 'Example 3.1',
+      text: 'Gulliver came to the island country of Lilliput with 7,000,000 dollars. He spent all his money on bottles of milk at 7 dollars per bottle; at the time, an empty bottle cost 1 dollar. When he drank all the milk he returned the empty bottles and immediately used all the money he got back to buy more milk. While doing this, he noticed that both the price of milk and the price of an empty bottle doubled. Then he drank all the milk again, returned the bottles and used all the money again to buy more milk and so on. Every time he went back to the shop for more milk both the price of milk and the price of an empty bottle doubled. How many bottles of milk did Gulliver drink?',
+      opts: ['1,000,000 bottles', '1,166,666 bottles', '1,142,857 bottles', '1,250,000 bottles'],
+      ci: 1,
+      exp: 'The answer is 1,166,666 bottles.'
+    },
+    {
+      id: 'e2', section: 'Example 3.2',
+      text: 'A certain car drives 40 miles per gallon of gas at a rate of 60 mph. It drives 35 miles per gallon of gas at a rate of 75 mph. So, traveling at the higher speed saves time, but uses more gas. Gas costs $3.50 per gallon. What is the cost for each hour of time saved when traveling at the higher speed? (MathCounts)',
+      opts: ['$2.50', '$3.00', '$3.75', '$4.00'],
+      ci: 2,
+      exp: 'The answer is $3.75.'
+    },
+    {
+      id: 'e3', section: 'Example 3.3',
+      text: 'Before a soccer game between North and South, there were five predictions:\na) There won\'t be a draw.\nb) North will score against South.\nc) North will win.\nd) North won\'t lose.\ne) Three goals will be made in total.\nAfter the match, it turned out that exactly three of these predictions were true. How many goals did South make in the game? (Moscow)',
+      opts: ['0 goals', '1 goal', '2 goals', '3 goals'],
+      ci: 2,
+      exp: 'The answer is 2 goals.'
+    },
+    {
+      id: 'e4', section: 'Example 3.4',
+      text: 'Auggie spent all of his money in 5 stores. In each store, he spent $1 more than one-half of what he had when he went in. How many dollars did Auggie have when he entered the first store?',
+      opts: ['$30', '$46', '$62', '$94'],
+      ci: 2,
+      exp: 'The answer is $62.'
+    },
+    {
+      id: 'e5', section: 'Example 3.5',
+      text: 'Alice, Betty, and Carol took the same series of exams. For each exam there was one score of x, one score of y, and one score of z, where x, y, and z are distinct positive integers. The total of the scores obtained by each of the girls was: Alice 20, Betty 10, and Carol 9. If Betty placed first in the algebra exam, who placed second in the geometry exam?',
+      opts: ['Alice', 'Betty', 'Carol', 'Cannot be determined'],
+      ci: 2,
+      exp: 'The answer is Carol.'
+    },
+    // ===== PROBLEMS (3.1 - 3.23) =====
+    {
+      id: 'p1', section: 'Problem 3.1',
+      text: 'Solution Y is 30 percent liquid X and 70 percent water. If 2 kilograms of water evaporate from 8 kilograms of solution Y and 2 kilograms of solution Y are added to the remaining 6 kilograms of liquid, what percent of this new liquid solution is liquid X? (GMAT)',
+      opts: ['33%', '35%', '37.5%', '40%'],
+      ci: 2,
+      exp: 'The answer is 37.5%.'
+    },
+    {
+      id: 'p2', section: 'Problem 3.2',
+      text: 'A particular online vendor offers discounts for orders of 11 or more shirts, as the table shows. For how many different quantities of shirts would the cost exceed the cost of buying the least number of shirts at the next discount level? (MathCounts)\n\nNumber of Shirts | Discount\n1–10: no discount\n11–25: 10% off\n26–50: 15% off\n51–100: 20% off\n101–250: 30% off\n251 or more: 35% off',
+      opts: ['25', '28', '33', '36'],
+      ci: 2,
+      exp: 'The answer is 33.'
+    },
+    {
+      id: 'p3', section: 'Problem 3.3',
+      text: 'Alice leaves Denver, driving at a constant speed. After a while, she passes a mile marker displaying a two-digit number. One hour later, she passes a second marker with the same two digits in reverse order. In another hour she passes a third marker with the same two digits separated by a zero. What is the rate of Alice\'s car in miles per hour? (MathCounts)',
+      opts: ['35 mph', '40 mph', '45 mph', '50 mph'],
+      ci: 2,
+      exp: 'The answer is 45 mph.'
+    },
+    {
+      id: 'p4', section: 'Problem 3.4',
+      text: 'If 330 people are required to construct 30 km of railway track in 9 months, how many months will it take 275 people, working at the same rate, to construct 150 km of track? (MathCounts)',
+      opts: ['45 months', '48 months', '54 months', '60 months'],
+      ci: 2,
+      exp: 'The answer is 54 months.'
+    },
+    {
+      id: 'p5', section: 'Problem 3.5',
+      text: 'Three players play 4 rounds of a game and end with a tie score of 80. A different player wins each of the final three rounds. Starting from round 2, when a player wins, he or she doubles his or her points, and the two losers each must subtract the amount the winner gains from his or her score. What was the highest score at the end of round 1? (MathCounts)',
+      opts: ['150', '170', '190', '210'],
+      ci: 2,
+      exp: 'The answer is 190.'
+    },
+    {
+      id: 'p6', section: 'Problem 3.6',
+      text: 'The combined weight of two airline passengers\' checked luggage is 105 kilograms. The airline\'s checked-luggage policy allows each passenger a maximum weight at no charge, and charges a constant, per-kilogram rate for any extra weight. One passenger pays $12.00 for the total extra weight of her luggage, and the other passenger pays $18.00 for the total extra weight of his luggage. If all of the luggage had belonged to one of the passengers, the over-weight charge would have been $78.00. How many kilograms of luggage is one person permitted without charge by the airline? (MathCounts)',
+      opts: ['25 kg', '30 kg', '40 kg', '45 kg'],
+      ci: 2,
+      exp: 'The answer is 40 kg.'
+    },
+    {
+      id: 'p7', section: 'Problem 3.7',
+      text: 'Abe can paint the room in 15 hours, Bea can paint 50 percent faster than Abe, and Coe can paint twice as fast as Abe. Abe begins to paint the room and works alone for the first hour and a half. Then Bea joins Abe, and they work together until half the room is painted. Then Coe joins Abe and Bea, and they work together until the entire room is painted. Find the number of minutes after Abe begins for the three of them to finish painting the room. (AIME)',
+      opts: ['274 minutes', '300 minutes', '320 minutes', '334 minutes'],
+      ci: 3,
+      exp: 'The answer is 334 minutes.'
+    },
+    {
+      id: 'p8', section: 'Problem 3.8',
+      text: 'A consumer report revealed the following information about three tubes of toothpaste. Bright is 60% more expensive than Fresh and has 25% less volume than Glow. Glow is 25% less expensive than Bright and has 33\u2153% more volume than Fresh. Fresh costs $1.00 per unit of volume. What is the number of cents per unit of volume of Glow? (MathCounts)',
+      opts: ['75 cents', '80 cents', '90 cents', '96 cents'],
+      ci: 2,
+      exp: 'The answer is 90 cents.'
+    },
+    {
+      id: 'p9', section: 'Problem 3.9',
+      text: 'There are two boats that start out on opposite sides of a river at the same time. Each one is heading across the river to the other side at a constant speed. The current of the river can be ignored. The first time they pass, they are 700 yards from one of the banks of the river. The second time they pass, they have each turned around after reaching their respective opposite shores and have started back toward where they each began. When they pass the second time, they are 300 yards from the other bank of the river. How wide is the river?',
+      opts: ['1500 yards', '1650 yards', '1800 yards', '2100 yards'],
+      ci: 2,
+      exp: 'The answer is 1800 yards.'
+    },
+    {
+      id: 'p10', section: 'Problem 3.10',
+      text: 'Lupe went to the store and paid for her purchase with a $10 bill. She found that the digits making the amount of her purchase could be rearranged to make the amount she received back in change. If her purchase amount and her change amount were different and each amount was at least $1, how many possible amounts of change could she have received? (MathCounts)',
+      opts: ['4', '6', '8', '10'],
+      ci: 2,
+      exp: 'The answer is 8.'
+    },
+    {
+      id: 'p11', section: 'Problem 3.11',
+      text: 'There are three treasure chests. One chest is plated with silver, one with gold, and one with bronze. One of the three chests is filled with great treasure, whereas the other two chests both house man-eating pythons. Faced with a dilemma, you then notice that there are inscriptions on the chests:\n\nSilver Chest: The treasure is in this chest.\nGold Chest: Treasure is not in this chest.\nBronze Chest: Treasure is not in the Gold Chest.\n\nIf at least one statement is true and at least one statement is false, which chest contains the treasure? (Waterloo)',
+      opts: ['Silver Chest', 'Gold Chest', 'Bronze Chest', 'Cannot be determined'],
+      ci: 2,
+      exp: 'The answer is the Bronze Chest.'
+    },
+    {
+      id: 'p12', section: 'Problem 3.12',
+      text: 'Jon and Steve ride their bicycles on a path that parallels two side-by-side train tracks running in the east/west direction. Jon rides east at 20 miles per hour, and Steve rides west at 20 miles per hour. Two trains of equal length traveling in opposite directions at constant but different speeds, each passes the two riders. Each train takes exactly 1 minute to go past Jon. The westbound train takes 10 times as long as the eastbound train to go past Steve. What is the length of each train? (AIME)',
+      opts: [frac(18,27)+' miles', frac(20,27)+' miles', frac(22,27)+' miles', frac(24,27)+' miles'],
+      ci: 2,
+      exp: 'The answer is <span class="frac"><span class="num">22</span><span class="den">27</span></span> miles.'
+    },
+    {
+      id: 'p13', section: 'Problem 3.13',
+      text: 'An escalator of n steps descends at constant speed. Ann and Zoe walk down the escalator steadily as it moves. Ann goes twice as many escalator steps per minute as Zoe. Ann reaches the bottom after taking 27 steps while Zoe reaches the bottom after taking 18 steps. What is n? (AHSME)',
+      opts: ['48', '54', '60', '72'],
+      ci: 1,
+      exp: 'The answer is 54.'
+    },
+    {
+      id: 'p14', section: 'Problem 3.14',
+      text: 'Four friends took a multiple-choice test. Their papers are shown below. Each of them has exactly two correct answers. Using their answers, what are the correct answers to questions 1, 2, 3, and 4, in that order? (MathCounts)\n\nJerry: 1.A  2.B  3.A  4.C\nJim:   1.B  2.A  3.D  4.B\nJohn:  1.B  2.A  3.A  4.C\nJeremy: 1.A  2.C  3.D  4.A',
+      opts: ['A, A, D, C', 'B, A, D, C', 'A, B, D, C', 'B, A, A, C'],
+      ci: 0,
+      exp: 'The answer is A, A, D, C.'
+    },
+    {
+      id: 'p15', section: 'Problem 3.15',
+      text: 'Four friends Alice, Bobby, Cathy, and Doug, come to a bridge. They have one flashlight. It\'s dark, so nobody can walk without the flashlight. Anyone can walk either alone, or together with someone else, but the bridge can\'t hold more than two people at a time. It takes 1 minute for Alice to cross the bridge, 2 minutes for Bobby, 5 minutes for Cathy, and 10 minutes for Doug. Any two of them together must walk at the speed of the slower one. What is the smallest amount of time needed for all four friends to end up on the other side of the bridge? (Mathworks)',
+      opts: ['15 minutes', '17 minutes', '19 minutes', '21 minutes'],
+      ci: 1,
+      exp: 'The answer is 17 minutes.'
+    },
+    {
+      id: 'p16', section: 'Problem 3.16',
+      text: 'A contest challenges you to build a soft-landing device for eggs dropped out of a building. You may make the following assumptions:\n\n- All eggs are identical.\n- If an egg survives a drop from some height, it would survive a drop from any lower height.\n- If an egg does not survive a drop from some height, it would not survive a drop from any higher height.\n- An egg might not even survive a fall from the first floor.\n\nIf you have only one egg, to see how good your device is, you must start at the first floor, and test from successive floors until the egg breaks. If you had started at a higher floor and your egg broke on the first drop, you would have no way to determine from which, if any, of the lower floors your device would have worked. What is the tallest building for which you can test every floor with only ten drops and two eggs? (Chicago ARML)',
+      opts: ['45 floors', '50 floors', '55 floors', '60 floors'],
+      ci: 2,
+      exp: 'The answer is 55 floors.'
+    },
+    {
+      id: 'p17', section: 'Problem 3.17',
+      text: 'The Chateau family has two cupboards for its wine bottles, a small cupboard and one much larger. Being very fussy, they do not like their wine exposed to the light more than 12 times, including both the time they buy it and the time they drink it and each time they open the cupboard. If they drink one bottle each day, how often does the Chateau family need to buy wine? (Francis Xavier)',
+      opts: ['60 days', '72 days', '78 days', '84 days'],
+      ci: 2,
+      exp: 'The answer is 78 days.'
+    },
+    {
+      id: 'p18', section: 'Problem 3.18',
+      text: 'The only people living in an island are knights and liars. The knights always tell the truth, while the liars always lie. A traveler met three islanders and asked each one of them: "How many of the other two islanders are knights?" The first one said: "None." The second one said: "One." What did the third one say? (Moscow)',
+      opts: ['"None"', '"One"', '"Two"', '"Three"'],
+      ci: 1,
+      exp: 'The answer is "One".'
+    },
+    {
+      id: 'p19', section: 'Problem 3.19',
+      text: 'Ben\'s clock reads 5:37. When is the next time the angle between the hour hand and the minute hand will be the same as it is now?',
+      opts: ['6:01', '6:10', '6:23', '6:49'],
+      ci: 2,
+      exp: 'The answer is 6:23.'
+    },
+    {
+      id: 'p20', section: 'Problem 3.20',
+      text: 'As Kyle walked along a street at a constant speed, he noticed that every 12 minutes, a bus passed him traveling in the same direction as Kyle, and every 4 minutes, a bus passed him traveling in the opposite direction as Kyle. If all the buses travel at a constant speed and leave the terminals at each end of the street at equally spaced intervals, how many minutes long is that interval? (MathCounts)',
+      opts: ['4 minutes', '6 minutes', '8 minutes', '10 minutes'],
+      ci: 1,
+      exp: 'The answer is 6 minutes.'
+    },
+    {
+      id: 'p21', section: 'Problem 3.21',
+      text: 'In a mathematics contest, 100 students had to solve four problems. No student solved all four problems. The first problem was solved by 90 students, the second problem was solved by 80 students, the third problem was solved by 70 students, and the fourth problem was solved by 60 students. How many students solved both the third and fourth problems? (PMWC)',
+      opts: ['20 students', '25 students', '30 students', '35 students'],
+      ci: 2,
+      exp: 'The answer is 30 students.'
+    },
+    {
+      id: 'p22', section: 'Problem 3.22',
+      text: 'Rooster, Raven, and Cuckoo took part in a singing contest. Each judge voted for one of the three participants. Woodpecker counted 59 judges, with 15 judges voting for Rooster or Raven, 18 voting for Raven or Cuckoo, and 20 voting for Cuckoo or Rooster. Woodpecker counted poorly. However, each of the four numbers he counted above differed from reality by no more than 13. How many judges voted for Raven? (Moscow)',
+      opts: ['9 judges', '11 judges', '13 judges', '15 judges'],
+      ci: 2,
+      exp: 'The answer is 13 judges.'
+    },
+    {
+      id: 'p23', section: 'Problem 3.23',
+      text: 'Al walks down to the bottom of an escalator that is moving up and he counts 150 steps. Bob walks up to the top of the escalator and he counts 75 steps. If Al\'s speed of walking (in steps per unit time) is three times Bob\'s walking speed, how many steps are visible on the escalator at a given time? (AIME)',
+      opts: ['100 steps', '110 steps', '120 steps', '150 steps'],
+      ci: 2,
+      exp: 'The answer is 120 steps.'
+    }
+  ];
+
+  var totalQ = questions.length;
+  var ORDER_KEY = SK + '_order_v1';
+  function identityOrder(){var a=[];for(var i=0;i<totalQ;i++)a.push(i);return a;}
+  function isValidOrder(o){if(!Array.isArray(o)||o.length!==totalQ)return false;var seen={};for(var i=0;i<o.length;i++){if(typeof o[i]!=='number'||o[i]<0||o[i]>=totalQ||seen[o[i]])return false;seen[o[i]]=true;}return true;}
+  function loadOrder(){try{var o=JSON.parse(localStorage.getItem(ORDER_KEY)||'null');return isValidOrder(o)?o:null;}catch(e){return null;}}
+  function saveOrder(o){localStorage.setItem(ORDER_KEY,JSON.stringify(o));}
+  function randomOrder(){var a=identityOrder();for(var k=a.length-1;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}return a;}
+  var currentOrder = loadOrder() || identityOrder();
+  saveOrder(currentOrder);
+  var pendingFreshMode = 'original';
+
+  var state = {
+    cur: 0,
+    answers: {},
+    shuffles: {},
+    showResults: false,
+    retryMode: false,
+    retryList: []
+  };
+
+  function getList() {
+    if (state.retryMode) return state.retryList;
+    var l = [];
+    for (var i = 0; i < totalQ; i++) l.push(i);
+    return l;
+  }
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(SK);
+      if (!raw) return;
+      var s = JSON.parse(raw);
+      if (typeof s.answers !== 'object' || typeof s.shuffles !== 'object') return;
+      if (s.retryMode && !Array.isArray(s.retryList)) return;
+      var listLen = s.retryMode ? s.retryList.length : totalQ;
+      if (typeof s.cur !== 'number' || s.cur < 0 || s.cur >= listLen) return;
+      state = s;
+    } catch(e) {
+      localStorage.removeItem(SK);
+    }
+  }
+
+  function saveState() {
+    localStorage.setItem(SK, JSON.stringify(state));
+  }
+
+  function getShuffleFor(idx) {
+    if (state.shuffles[idx]) return state.shuffles[idx];
+    var q = questions[idx];
+    var arr = q.opts.map(function(o, i){ return i; });
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    state.shuffles[idx] = arr;
+    return arr;
+  }
+
+  function answeredCount() {
+    return Object.keys(state.answers).length;
+  }
+
+  function updateNav() {
+    var list = getList();
+    var ac = 0;
+    for (var k = 0; k < list.length; k++) {
+      if (state.answers[currentOrder[list[k]]] !== undefined) ac++;
+    }
+    document.getElementById('navCount').textContent = ac + ' / ' + list.length;
+    document.getElementById('progressBarFill').style.width = (ac / list.length * 100) + '%';
+    // dots
+    var dr = document.getElementById('dotRow');
+    dr.innerHTML = '';
+    for (var i = 0; i < list.length; i++) {
+      var qi = currentOrder[list[i]];
+      var d = document.createElement('span');
+      d.className = 'dot';
+      if (state.answers[qi] !== undefined) {
+        var q = questions[qi];
+        var shuffle = getShuffleFor(qi);
+        var chosen = shuffle[state.answers[qi]];
+        d.className = 'dot ' + (chosen === q.ci ? 'correct' : 'wrong');
+      }
+      d.textContent = i + 1;
+      (function(ii){ d.onclick = function(){ window.jumpTo(ii); }; })(i);
+      dr.appendChild(d);
+    }
+    // show results pill if all answered
+    var rp = document.getElementById('resultsPill');
+    rp.style.display = (ac === list.length) ? 'block' : 'none';
+    // subtitle
+    var att = parseInt(localStorage.getItem(ATT_KEY) || '0');
+    document.getElementById('subtitle').textContent = 'Chapter 3 | Total Attempts: ' + att;
+  }
+
+  function render() {
+    updateNav();
+    if (state.showResults) {
+      showResultsScreen();
+      return;
+    }
+    document.getElementById('resultsArea').style.display = 'none';
+    document.getElementById('quizArea').style.display = 'block';
+
+    var list = getList();
+    var posInOrder = list[state.cur];
+    var idx = currentOrder[posInOrder];
+    var q = questions[idx];
+    var shuffle = getShuffleFor(idx);
+    var answered = state.answers[idx] !== undefined;
+
+    var html = '<div class="qnum">Question ' + (state.cur + 1) + ' of ' + list.length + '</div>';
+    html += '<div class="qtag">' + q.section + '</div>';
+    // Format question text - handle newlines
+    var qtextFormatted = q.text.replace(/\n/g, '<br>');
+    html += '<div class="qtext">' + qtextFormatted + '</div>';
+    html += '<div class="options">';
+    for (var i = 0; i < shuffle.length; i++) {
+      var origIdx = shuffle[i];
+      var cls = 'opt';
+      if (answered) {
+        if (i === state.answers[idx]) {
+          cls += (origIdx === q.ci) ? ' correct' : ' wrong';
+        } else if (origIdx === q.ci) {
+          cls += ' correct';
+        }
+      }
+      var disabled = answered ? 'style="cursor:default"' : '';
+      html += '<button class="' + cls + '" onclick="window.chooseOpt(' + i + ')" ' + disabled + '>' + q.opts[origIdx] + '</button>';
+    }
+    html += '</div>';
+    // explanation: show only on wrong answer (math competition style for all)
+    if (answered) {
+      var chosenOrig = shuffle[state.answers[idx]];
+      var isWrong = chosenOrig !== q.ci;
+      if (isWrong) {
+        html += '<div class="explanation" style="display:block">' + q.exp + '</div>';
+      }
+    }
+    document.getElementById('quizArea').innerHTML = html;
+
+    // Prev/Next
+    document.getElementById('prevBtn').disabled = (state.cur === 0);
+    var isLast = (state.cur === list.length - 1);
+    var nextBtn = document.getElementById('nextBtn');
+    nextBtn.textContent = isLast ? 'See Results \u2192' : 'Next';
+
+    document.getElementById('bottomNav').style.display = 'flex';
+  }
+
+  function showResultsScreen() {
+    document.getElementById('quizArea').style.display = 'none';
+    document.getElementById('bottomNav').style.display = 'none';
+    document.getElementById('resultsArea').style.display = 'block';
+
+    var list = getList();
+    var h2 = document.querySelector('#resultsArea h2');
+    if (h2) h2.textContent = state.retryMode ? 'Retry Results' : 'Results';
+
+    var grid = document.getElementById('summaryGrid');
+    grid.innerHTML = '';
+    for (var i = 0; i < list.length; i++) {
+      var qi = currentOrder[list[i]];
+      var q = questions[qi];
+      var card = document.createElement('div');
+      var shuffle = state.shuffles[qi] || getShuffleFor(qi);
+      if (state.answers[qi] === undefined) {
+        card.className = 'sumCard skipped';
+        card.innerHTML = '<div class="snum">Q' + (i+1) + '</div><div>Skipped</div>';
+      } else {
+        var chosenOrig = shuffle[state.answers[qi]];
+        var correct = chosenOrig === q.ci;
+        card.className = 'sumCard ' + (correct ? 'correct' : 'wrong');
+        card.innerHTML = '<div class="snum">Q' + (i+1) + '</div><div>' + (correct ? 'Correct' : 'Wrong') + '</div>';
+      }
+      (function(ii){ card.onclick = function(){ state.showResults = false; state.cur = ii; render(); }; })(i);
+      grid.appendChild(card);
+    }
+    var att = parseInt(localStorage.getItem(ATT_KEY) || '0');
+    document.getElementById('subtitle').textContent = 'Chapter 3 | Total Attempts: ' + att;
+  }
+
+  window.chooseOpt = function(i) {
+    var list = getList();
+    var posInOrder = list[state.cur];
+    var qi = currentOrder[posInOrder];
+    if (state.answers[qi] !== undefined) return;
+    state.answers[qi] = i;
+    saveState();
+    render();
+  };
+
+  window.goPrev = function() {
+    if (state.cur > 0) { state.cur--; saveState(); render(); }
+  };
+
+  window.goNext = function() {
+    var list = getList();
+    if (state.cur === list.length - 1) {
+      window.goResults();
+    } else {
+      state.cur++;
+      saveState();
+      render();
+    }
+  };
+
+  window.goResults = function() {
+    if (!state.retryMode) {
+      var att = parseInt(localStorage.getItem(ATT_KEY) || '0');
+      localStorage.setItem(ATT_KEY, att + 1);
+    }
+    state.showResults = true;
+    saveState();
+    render();
+  };
+
+  window.jumpTo = function(i) {
+    state.showResults = false;
+    state.cur = i;
+    saveState();
+    render();
+  };
+
+  window.toggleDots = function() {
+    var dp = document.getElementById('dotPanel');
+    dp.style.display = dp.style.display === 'block' ? 'none' : 'block';
+  };
+
+  window.retryWrong = function() {
+    var list = getList();
+    var wrongs = [];
+    for (var k = 0; k < list.length; k++) {
+      var posInOrder = list[k];
+      var qi = currentOrder[posInOrder];
+      var shuffle = state.shuffles[qi] || getShuffleFor(qi);
+      if (state.answers[qi] !== undefined) {
+        var chosenOrig = shuffle[state.answers[qi]];
+        if (chosenOrig !== questions[qi].ci) {
+          wrongs.push(posInOrder);
+        }
+      }
+    }
+    if (wrongs.length === 0) return;
+    for (var j = 0; j < wrongs.length; j++) {
+      var qiWrong = currentOrder[wrongs[j]];
+      delete state.answers[qiWrong];
+      delete state.shuffles[qiWrong];
+    }
+    state.retryMode = true;
+    state.retryList = wrongs;
+    state.showResults = false;
+    state.cur = 0;
+    saveState();
+    render();
+  };
+
+  window.copyResults = function() {
+    var list = getList();
+    var lines = ['Chapter 3 Quiz Results'];
+    var correct = 0;
+    for (var i = 0; i < list.length; i++) {
+      var qi = currentOrder[list[i]];
+      var q = questions[qi];
+      var shuffle = state.shuffles[qi] || getShuffleFor(qi);
+      var status = 'Skipped';
+      if (state.answers[qi] !== undefined) {
+        var chosenOrig = shuffle[state.answers[qi]];
+        status = (chosenOrig === q.ci) ? 'Correct' : 'Wrong';
+        if (status === 'Correct') correct++;
+      }
+      lines.push('Q' + (i+1) + ' (' + q.section + '): ' + status);
+    }
+    lines.push('Score: ' + correct + ' / ' + list.length);
+    navigator.clipboard.writeText(lines.join('\n')).catch(function(){});
+  };
+
+  window.openFreshModal = function(mode) {
+    pendingFreshMode = mode;
+    if (mode === 'random') {
+      document.getElementById('modalTitle').textContent = 'Start Fresh (Random Order)?';
+      document.getElementById('modalMsg').textContent = 'Questions will be reshuffled into a new random order, and all progress will be reset.';
+    } else {
+      document.getElementById('modalTitle').textContent = 'Start Fresh (Original Order)?';
+      document.getElementById('modalMsg').textContent = 'Questions will return to their original order, and all progress will be reset.';
+    }
+    document.getElementById('modalOverlay').classList.add('active');
+  };
+
+  window.doFresh = function() {
+    localStorage.removeItem(SK);
+    currentOrder = (pendingFreshMode === 'random') ? randomOrder() : identityOrder();
+    saveOrder(currentOrder);
+    state = { cur: 0, answers: {}, shuffles: {}, showResults: false, retryMode: false, retryList: [] };
+    window.qzTimerReset();
+    closeModal();
+    render();
+  };
+
+  window.closeModal = function() {
+    document.getElementById('modalOverlay').classList.remove('active');
+  };
+
+  // Init
+  loadState();
+  render();
+})();
+
+// Timer IIFE
+(function(){
+  var TIMER_KEY = 'qzTimer_ch3_sion_2026';
+  var timerInterval = null;
+  var pausedRemaining = null;
+  var startedAt = null;
+  var totalSecs = null;
+
+  function fmt(s) {
+    var m = Math.floor(s / 60);
+    var sec = s % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
+
+  function tick() {
+    var elapsed = Math.floor((Date.now() - startedAt) / 1000);
+    var remaining = totalSecs - elapsed;
+    if (remaining <= 0) {
+      remaining = 0;
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    var el = document.getElementById('qzCountdown');
+    el.textContent = remaining === 0 ? "Time's Up" : fmt(remaining);
+    var pct = remaining / totalSecs;
+    if (pct <= 0.10) { el.style.color = '#E24B4A'; }
+    else if (pct <= 0.25) { el.style.color = '#f5a623'; }
+    else { el.style.color = '#111'; }
+  }
+
+  window.qzStartTimer = function() {
+    var mins = parseInt(document.getElementById('qzMinInput').value) || 20;
+    totalSecs = mins * 60;
+    pausedRemaining = null;
+    startedAt = Date.now();
+    document.getElementById('qzTimerSetup').style.display = 'none';
+    var run = document.getElementById('qzTimerRunning');
+    run.style.display = 'flex';
+    document.getElementById('qzPauseBtn').textContent = 'Pause';
+    clearInterval(timerInterval);
+    tick();
+    timerInterval = setInterval(tick, 500);
+  };
+
+  window.qzTogglePause = function() {
+    var btn = document.getElementById('qzPauseBtn');
+    if (btn.textContent === 'Pause') {
+      // pause
+      clearInterval(timerInterval);
+      timerInterval = null;
+      var elapsed = Math.floor((Date.now() - startedAt) / 1000);
+      pausedRemaining = Math.max(0, totalSecs - elapsed);
+      btn.textContent = 'Resume';
+    } else {
+      // resume
+      startedAt = Date.now() - (totalSecs - pausedRemaining) * 1000;
+      pausedRemaining = null;
+      timerInterval = setInterval(tick, 500);
+      btn.textContent = 'Pause';
+    }
+  };
+
+  window.qzTimerReset = function() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    pausedRemaining = null;
+    startedAt = null;
+    totalSecs = null;
+    document.getElementById('qzCountdown').textContent = '00:00';
+    document.getElementById('qzCountdown').style.color = '#111';
+    document.getElementById('qzTimerRunning').style.display = 'none';
+    document.getElementById('qzTimerSetup').style.display = 'flex';
+    localStorage.removeItem('qzTimer_ch3_sion_2026');
+  };
+})();
+</script>
+</body>
+</html>

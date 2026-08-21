@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 2 Quiz</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;color:#111;min-height:100vh}
+#quiz-wrap{max-width:820px;margin:0 auto;padding:12px}
+#date-display{font-size:2rem;font-weight:800;text-align:center;color:#1D9E75;background:#fff;padding:8px 0 2px}
+#quiz-title{font-size:1.35rem;font-weight:800;text-align:center;color:#111;padding:4px 0 2px}
+#subtitle-bar{text-align:center;font-size:0.9rem;color:#555;padding:2px 0 4px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:4px 0 8px}
+#nav-bar{background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.07)}
+#progress-row{display:flex;align-items:center;gap:8px}
+#prog-label{font-size:0.82rem;color:#555;white-space:nowrap}
+#prog-track{flex:1;height:6px;background:#d7dde6;border-radius:3px;overflow:hidden}
+#prog-fill{height:100%;background:#1D9E75;border-radius:3px;transition:width 0.2s}
+#jump-btn{font-size:0.78rem;padding:3px 10px;border:1px solid #1D9E75;background:#fff;color:#1D9E75;border-radius:12px;cursor:pointer;white-space:nowrap}
+#dots-panel{display:none;max-height:170px;overflow-y:auto;padding:8px 4px 4px;display:none;flex-wrap:wrap;gap:5px;margin-top:6px}
+.dot{width:28px;height:28px;border-radius:50%;font-size:0.72rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:none;background:#d7dde6;color:#555}
+.dot.correct{background:#1D9E75;color:#fff}
+.dot.wrong{background:#E24B4A;color:#fff}
+.dot.results-pill{width:auto;padding:0 10px;border-radius:12px;background:#185FA5;color:#fff;font-size:0.72rem}
+#quiz-area{display:none;background:#fff;border-radius:10px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin-bottom:10px}
+.type-tag{display:inline-block;background:#185FA5;color:#fff;font-size:0.72rem;font-weight:700;border-radius:10px;padding:2px 10px;margin-bottom:8px}
+#q-number{font-size:0.82rem;color:#888;margin-bottom:4px}
+#q-text{font-size:1rem;line-height:1.6;margin-bottom:14px}
+#q-text .math-block{display:block;margin:8px 0;font-style:italic}
+.opt-btn{display:block;width:100%;text-align:left;padding:10px 14px;margin-bottom:7px;border-radius:7px;border:2px solid transparent;background:#e8edf4;color:#111;font-size:0.95rem;cursor:pointer;transition:background 0.15s}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.opt-btn.revealed{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+#explanation{display:none;background:#fffbe6;border-left:3px solid #1D9E75;padding:10px 12px;border-radius:5px;font-size:0.88rem;line-height:1.5;margin-top:8px}
+#btn-row{display:flex;gap:8px;margin-top:12px;justify-content:space-between}
+#prev-btn,#next-btn{padding:9px 22px;border-radius:7px;border:none;font-size:0.95rem;font-weight:700;cursor:pointer}
+#prev-btn{background:#e8edf4;color:#333}
+#next-btn{background:#1D9E75;color:#fff}
+#results-screen{display:none;background:#fff;border-radius:10px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08)}
+#results-heading{font-size:1.3rem;font-weight:800;color:#1D9E75;text-align:center;margin-bottom:6px}
+#results-score{text-align:center;font-size:1rem;color:#555;margin-bottom:12px}
+#results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:14px}
+.res-card{border-radius:8px;padding:8px 10px;font-size:0.82rem;cursor:pointer;background:#f5f7fa}
+.res-card.correct{background:#E1F5EE;border-left:3px solid #1D9E75}
+.res-card.wrong{background:#FCEBEB;border-left:3px solid #E24B4A}
+.res-card.skipped{background:#f5f7fa;border-left:3px solid #d7dde6}
+.res-card .qn{font-weight:700;margin-bottom:2px}
+.res-card .status{font-size:0.75rem}
+#res-btn-row{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+#retry-btn{background:#1D9E75;color:#fff;border:none;padding:11px;border-radius:7px;font-size:0.95rem;font-weight:700;cursor:pointer}
+#copy-btn{background:#185FA5;color:#fff;border:none;padding:11px;border-radius:7px;font-size:0.95rem;font-weight:700;cursor:pointer}
+.fresh-btn{display:block;width:100%;background:#e8edf4;color:#333;border:none;padding:11px;border-radius:7px;font-size:0.95rem;font-weight:700;cursor:pointer;margin-bottom:8px}
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center}
+#modal-box{background:#fff;border-radius:10px;padding:24px 20px;max-width:320px;width:90%;text-align:center}
+#modal-box h3{margin-bottom:10px;font-size:1.05rem}
+#modal-box p{font-size:0.88rem;color:#555;margin-bottom:16px}
+#modal-cancel{background:#e8edf4;color:#333;border:none;padding:9px 20px;border-radius:7px;cursor:pointer;font-weight:700;margin-right:8px}
+#modal-confirm{background:#E24B4A;color:#fff;border:none;padding:9px 20px;border-radius:7px;cursor:pointer;font-weight:700}
+sup{font-size:0.7em;vertical-align:super}
+.frac{display:inline-block;text-align:center;vertical-align:middle;font-size:0.95em}
+.frac .num{display:block;border-bottom:1px solid #111;padding:0 3px;line-height:1.3}
+.frac .den{display:block;padding:0 3px;line-height:1.3}
+</style>
+</head>
+<body>
+<div id="quiz-wrap">
+  <div id="quiz-title">Chapter 2 Practice Quiz</div>
+  <div id="subtitle-bar">Examples &amp; Problems | Total Attempts: <span id="att-display">0</span></div>
+  <div class="instruction">Choose the best answer for each problem.</div>
+  <div id="nav-bar">
+    <div id="progress-row">
+      <span id="prog-label">0 / 28</span>
+      <div id="prog-track"><div id="prog-fill" style="width:0%"></div></div>
+      <button id="jump-btn" onclick="window.toggleDots()">Jump</button>
+    </div>
+    <div id="dots-panel"></div>
+  </div>
+  <div id="quiz-area">
+    <span class="type-tag" id="type-tag">Algebra</span>
+    <div id="q-number"></div>
+    <div id="q-text"></div>
+    <div id="options"></div>
+    <div id="explanation"></div>
+    <div id="btn-row">
+      <button id="prev-btn" onclick="window.prevQ()">Prev</button>
+      <button id="next-btn" onclick="window.nextQ()">Next</button>
+    </div>
+  </div>
+  <div id="results-screen">
+    <div id="results-heading">Results</div>
+    <div id="results-score"></div>
+    <div id="results-grid"></div>
+    <div id="res-btn-row">
+      <button id="retry-btn" onclick="window.retryWrong()">Retry Wrong Ones</button>
+      <button id="copy-btn" onclick="window.copyResults()">Copy All Results</button>
+      <button id="fresh-btn-original" class="fresh-btn" onclick="window.askFresh('original')">Start Fresh (Original Order)</button>
+      <button id="fresh-btn-random" class="fresh-btn" onclick="window.askFresh('random')">Start Fresh (Random Order)</button>
+    </div>
+  </div>
+</div>
+<div id="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center">
+  <div id="modal-box">
+    <h3 id="modal-title">Start Fresh (Original Order)?</h3>
+    <p id="modal-text">Questions will return to their original order, and all progress will be reset.</p>
+    <button id="modal-cancel" onclick="window.closeModal()">Cancel</button>
+    <button id="modal-confirm" onclick="window.confirmFresh()">Yes, Start Fresh</button>
+  </div>
+</div>
+<script>
+(function(){
+const LSKEY='quiz_ch2_28q_v1';
+const LSATT='quiz_ch2_28q_att_v1';
+
+function frac(n,d){return '<span class="frac"><span class="num">'+n+'</span><span class="den">'+d+'</span></span>';}
+function binom(n,k){return '<span style="display:inline-flex;align-items:center;vertical-align:middle"><span style="font-size:1.4em;line-height:1;font-weight:300">(</span><span style="display:inline-flex;flex-direction:column;align-items:center;font-size:0.82em;line-height:1.3;margin:0 1px"><span>'+n+'</span><span>'+k+'</span></span><span style="font-size:1.4em;line-height:1;font-weight:300">)</span></span>';}
+
+const QUESTIONS=[
+{tag:'Algebra',
+ text:'What is the sum of all real values of x that are solutions to the equation <br>('+frac('2','3')+'x<sup>2</sup> &minus; x &minus; '+frac('2','3')+')<sup>(x<sup>2</sup>&minus;9x+20)</sup> = 1?',
+ options:[frac('23','2'), '12', '10', frac('21','2')],
+ ci:0,
+ explanation:'The expression equals 1 when the exponent is 0, the base is 1, or the base is &minus;1 with an even exponent. Solving each case and summing valid solutions gives 23/2.'
+},
+{tag:'Counting',
+ text:'Professor Conway collects a total of 58 midterms from the two sections of his introductory linear algebra course. He notices that the number of midterms from the smaller section is equal to the product of the digits of the number of midterms from his larger section. Assuming that everyone handed in a midterm, how many students are there in the smaller section?',
+ options:['21 students','14 students','18 students','24 students'],
+ ci:0,
+ explanation:'If the larger section has n students, the smaller has 58&minus;n. We need 58&minus;n = product of digits of n. Testing n=37: product of digits = 3&times;7=21, and 58&minus;37=21. So the smaller section has 21 students.'
+},
+{tag:'Algebra',
+ text:'Find the sum of all possible x values such that '+frac('1','x')+' + '+frac('1','y')+' = '+frac('1','7')+', where x and y are positive integers.',
+ options:['78','56','84','91'],
+ ci:0,
+ explanation:'Multiplying through and factoring: (x&minus;7)(y&minus;7)=49. The factor pairs of 49 give solutions. Summing all valid x values gives 78.'
+},
+{tag:'Combinatorics',
+ text:'In which row of Pascal\'s triangle do three consecutive entries occur that are in the ratio 3:4:5?',
+ options:['62','60','64','58'],
+ ci:0,
+ explanation:'Setting up equations from the ratio condition C(n,k):C(n,k+1):C(n,k+2)=3:4:5 and solving yields n=62.'
+},
+{tag:'Combinatorics',
+ text:'Find the smallest positive integer n for which the expansion of (xy&minus;3x+7y&minus;21)<sup>n</sup>, after like terms have been collected, has at least 1996 terms.',
+ options:['44','43','45','42'],
+ ci:0,
+ explanation:'The expression factors as (x+7)(y&minus;3). So (xy&minus;3x+7y&minus;21)<sup>n</sup>=(x+7)<sup>n</sup>(y&minus;3)<sup>n</sup>, which has (n+1)<sup>2</sup> terms. We need (n+1)<sup>2</sup>&ge;1996, so n+1&ge;45, giving n&ge;44.'
+},
+{tag:'Algebra',
+ text:'If for three distinct positive numbers x, y, and z, '+frac('y','x&minus;z')+' = '+frac('x+y','z')+' = '+frac('x','y')+', then find the numerical value of '+frac('x','y')+'. (AHSME)',
+ options:['2',''+frac('1','2'),'3',''+frac('3','2')],
+ ci:0,
+ explanation:'By the property of equal ratios, each equals the sum of numerators over sum of denominators: (y+x+y+x)/((x&minus;z)+z+y) = (2x+2y)/(x+y) = 2. So x/y = 2.'
+},
+{tag:'Algebra',
+ text:'Positive integers x and y satisfy x < y and '+frac('1','x')+' + '+frac('1','y')+' = '+frac('5','12')+'. What is the sum of all possible x values?',
+ options:['7','8','9','6'],
+ ci:0,
+ explanation:'Multiply by 12xy: 12y+12x=5xy. Factor: (5x&minus;12)(5y&minus;12)=144. Since x<y, we find x=3 (y=12) and x=4 (y=6). Sum = 3+4 = 7.'
+},
+{tag:'Algebra',
+ text:'Find all positive integral pairs (x, y) that satisfy the equation xy + x &minus; 2y = 9.',
+ options:['(3, 6)','(2, 7)','(4, 5)','(5, 4)'],
+ ci:0,
+ explanation:'By Simon\'s Favorite Factoring Trick: xy+x&minus;2y&minus;2=7, so (x&minus;2)(y+1)=7. Since x,y>0, we get x&minus;2=1, y+1=7, giving (3,6).'
+},
+{tag:'Algebra',
+ text:'Find the sum of the roots of the equation x<sup>2001</sup> + ('+frac('1','2')+'&minus;x)<sup>2001</sup> = 0, given that there are no multiple roots. (AIME)',
+ options:['500',''+frac('1','2'),'1000',''+frac('1001','2')],
+ ci:0,
+ explanation:'If r is a root, so is 1/2&minus;r, and they pair to sum to 1/2. The equation reduces to a 2000th degree polynomial with 2000 roots, 1000 pairs each summing to 1/2, giving total sum = 1000&times;(1/2) = 500.'
+},
+{tag:'Algebra',
+ text:'If f('+frac('2x&minus;3','x&minus;2')+') = 5x &minus; 2, compute f<sup>&minus;1</sup>(27). (ARML)',
+ options:[frac('43','19'),''+frac('29','5'),'3',''+frac('41','19')],
+ ci:0,
+ explanation:'Let f<sup>&minus;1</sup>(27)=t, so f(t)=27. When 5x&minus;2=27, x=29/5. Then t = (2(29/5)&minus;3)/((29/5)&minus;2) = (43/5)/(19/5) = 43/19.'
+},
+{tag:'Algebra',
+ text:'Suppose a+b+c = '+frac('1','a')+'+'+frac('1','b')+'+'+frac('1','c')+' = 5, and abc = 1. Compute a<sup>3</sup>+b<sup>3</sup>+c<sup>3</sup>. (ARML)',
+ options:['53','50','55','48'],
+ ci:0,
+ explanation:'From 1/a+1/b+1/c=5 and abc=1: ab+ac+bc=5. Then a<sup>2</sup>+b<sup>2</sup>+c<sup>2</sup>=25&minus;10=15. And a<sup>3</sup>+b<sup>3</sup>+c<sup>3</sup>=3abc+(a+b+c)(a<sup>2</sup>+b<sup>2</sup>+c<sup>2</sup>&minus;ab&minus;ac&minus;bc)=3+5(15&minus;5)=53.'
+},
+{tag:'Algebra',
+ text:'Let f be a function such that for x &isin; {&minus;1, 0, 1}, f(x<sup>2</sup>) = 2(f(x))<sup>2</sup> &minus; 1. Compute all possible values of f(&minus;1). (ARML)',
+ options:['&plusmn;'+frac('1','2')+', &plusmn;1','&plusmn;1 only','0, &plusmn;1','&plusmn;'+frac('1','2')+' only'],
+ ci:0,
+ explanation:'Let f(1)=a and f(&minus;1)=b. At x=1: a=2a<sup>2</sup>&minus;1, so a=&minus;1/2 or 1. At x=&minus;1: b=2b<sup>2</sup>&minus;1... Working through cases gives f(&minus;1) can be &plusmn;1/2 or &plusmn;1.'
+},
+{tag:'Algebra',
+ text:'Let a = 3<sup>'+frac('1','223')+'</sup> + 1 and for all n &ge; 3 let<br><br>f(n) = '+binom('n','0')+'a<sup>n&minus;1</sup> &minus; '+binom('n','1')+'a<sup>n&minus;2</sup> + '+binom('n','2')+'a<sup>n&minus;3</sup> &minus; &hellip; + (&minus;1)<sup>n&minus;1</sup>'+binom('n','n&minus;1')+'a<sup>0</sup>.<br><br>Find f(2007) + f(2008). (Purple Comet)',
+ options:['19683','19683/2','6561','59049'],
+ ci:0,
+ explanation:'a&middot;f(n)=(a&minus;1)<sup>n</sup>&minus;(&minus;1)<sup>n</sup>. Since a&minus;1=3<sup>1/223</sup>, f(n)=(3<sup>n/223</sup>&minus;(&minus;1)<sup>n</sup>)/a. Then f(2007)+f(2008)=3<sup>2007/223</sup>&middot;(1+3<sup>1/223</sup>)/a=3<sup>9</sup>=19683.'
+},
+{tag:'Algebra',
+ text:'&lfloor;x&rfloor; is the largest integer less than or equal to x. Find the sum of the three smallest positive solutions to x &minus; &lfloor;x&rfloor; = '+frac('1','&lfloor;x&rfloor;')+'. (MathCounts)',
+ options:[frac('121','12'),''+frac('109','12'),'10',''+frac('125','12')],
+ ci:0,
+ explanation:'For &lfloor;x&rfloor;=2: x=2+1/2. For &lfloor;x&rfloor;=3: x=3+1/3. For &lfloor;x&rfloor;=4: x=4+1/4. Sum = 2+1/2+3+1/3+4+1/4 = 9+1/2+1/3+1/4 = 9+6/12+4/12+3/12 = 9+13/12 = 121/12.'
+},
+{tag:'Number Theory',
+ text:'If the tens digit of (4A1)<sup>1A4</sup> is 2, compute all possible values for the digit A. Here, 4A1 and 1A4 represent 3-digit numbers. (ARML)',
+ options:['3 and 8','2 and 7','4 and 6','1 and 9'],
+ ci:0,
+ explanation:'By Binomial Theorem, (4A1)<sup>1A4</sup>=(4A0+1)<sup>1A4</sup>. The tens digit is determined by (1A4)(4A0) mod 100, which reduces to the units digit of 4&middot;A. The tens digit is 2 only when A=3 (units digit 12) or A=8 (units digit 32).'
+},
+{tag:'Algebra',
+ text:'The arithmetic mean of two distinct positive integers x and y is a two-digit integer. The geometric mean of x and y is obtained by reversing the digits of the arithmetic mean. What is |x&minus;y|? (AMC 12)',
+ options:['66','54','77','88'],
+ ci:0,
+ explanation:'Let arithmetic mean = 10a+b, geometric mean = 10b+a. Setting up (x&minus;y)<sup>2</sup>=4(10a+b)<sup>2</sup>&minus;4(10b+a)<sup>2</sup>=396(a<sup>2</sup>&minus;b<sup>2</sup>). For c=1, a<sup>2</sup>&minus;b<sup>2</sup>=11, a=6, b=5 works. |x&minus;y|=6&radic;(11&times;11)=66.'
+},
+{tag:'Combinatorics',
+ text:'Expanding (1 + 0.2)<sup>1000</sup> by the Binomial Theorem we get<br><br>'+binom('1000','0')+'(0.2)<sup>0</sup> + '+binom('1000','1')+'(0.2)<sup>1</sup> + &hellip; + '+binom('1000','1000')+'(0.2)<sup>1000</sup> = A<sub>0</sub> + A<sub>1</sub> + &hellip; + A<sub>1000</sub>,<br><br>where A<sub>k</sub> = '+binom('1000','k')+'(0.2)<sup>k</sup><br><br>for k = 0, 1, &hellip;, 1000. For which k is A<sub>k</sub> the largest? (AIME)',
+ options:['166','167','165','200'],
+ ci:0,
+ explanation:'The ratio A<sub>k</sub>/A<sub>k&minus;1</sub> = (1001&minus;k)/(5k). This is > 1 iff k < 166.83. So A<sub>k</sub> increases up to k=166 and decreases after. The largest term is at k=166.'
+},
+{tag:'Combinatorics',
+ text:'For any a and b, we will define a "move that adds (a,b)" as a move from any point (c,d) to the point (c+a,d+b). A particle moves according to the following rules. If a move added (p,q) to get to the current position, the next move will add either (p&minus;1,q) or (p,q&minus;1) to move to the next position. Neither p nor q can ever be negative. Particle A starts at (0,0) and moves to (3,4). Particle A will continue to move according to the preceding rules. When the particle can no longer move according to the preceding rules, it is located at point (r,r). What is the value of r? (MathCounts)',
+ options:['14','7','21','12'],
+ ci:0,
+ explanation:'The expression s+t (sum of coordinates added) starts at 3+4=7. Each subsequent move adds (7&minus;1), (7&minus;2), ..., (7&minus;6)=1, totaling r+r=7+(7&minus;1)+(7&minus;2)+...+(7&minus;6)=7+6+5+...+1=28, so r=14.'
+},
+{tag:'Algebra',
+ text:'What is the sum of all real numbers x such that (x<sup>2</sup>&minus;5x+5)<sup>(x<sup>2</sup>&minus;7x+12)</sup> = 1? (MathCounts)',
+ options:['10','8','12','9'],
+ ci:0,
+ explanation:'Cases: base=1 gives x=1,4; exponent=0 (with base&ne;0) gives x=3,4; base=&minus;1 with even exponent gives x=2,3. All of x=1,2,3,4 are solutions. Sum=10.'
+},
+{tag:'Number Theory',
+ text:'Kevin and Devin each makes one hat per day for charity, but they started on different days. Today, Kevin made his 520th hat, and Devin made his 50th. A celebration is planned for the next date that Kevin\'s hat count is evenly divisible by Devin\'s hat count. In how many days from today will they celebrate? (MathCounts)',
+ options:['44 days','40 days','50 days','47 days'],
+ ci:0,
+ explanation:'In n days: Kevin has 520+n hats, Devin has 50+n. We need (m&minus;1)(n+50)=470 for some integer m. The smallest n+50>50 giving 470/(n+50) an integer is n+50=47&times;2, n+50=94, n=44.'
+},
+{tag:'Combinatorics',
+ text:'When (x+2y&minus;z)<sup>8</sup> is expanded, and the like terms are combined, what is the coefficient of the term x<sup>3</sup>y<sup>2</sup>z<sup>3</sup>? (MathCounts)',
+ options:['&minus;2240','2240','&minus;1120','1120'],
+ ci:0,
+ explanation:'Treat as ((x+2y)+(−z))<sup>8</sup>. The term with z<sup>3</sup> comes from C(8,3)(x+2y)<sup>5</sup>(&minus;z)<sup>3</sup>. Then from (x+2y)<sup>5</sup>, the x<sup>3</sup>(2y)<sup>2</sup> term is C(5,2)x<sup>3</sup>(4y<sup>2</sup>). Total: C(8,3)(&minus;1)<sup>3</sup>&times;C(5,2)&times;4 = 56&times;(&minus;1)&times;10&times;4 = &minus;2240.'
+},
+{tag:'Number Theory',
+ text:'Ryan\'s letter weighs 9/10 oz. Stamps weigh 1/30 oz each. The cost of mailing the first ounce, or fraction thereof, costs 37 cents, and each additional ounce, or fraction thereof, costs 23 cents. If Ryan only has 1 cent stamps, how many stamps should he use? Remember that he is paying for the weight of the stamps, too. Assume there are no physical constraints regarding the number of stamps or the size of the envelope. (MathCounts)',
+ options:['152','149','156','160'],
+ ci:0,
+ explanation:'With x stamps, total weight = x/30+9/10 oz. Cost = 37+23&lceil;x/30+9/10&minus;1&rceil; = x cents. Solving: x&equiv;14 (mod 23) and x&ge;149. The smallest such x is 152.'
+},
+{tag:'Algebra',
+ text:'Compute '+frac('(10<sup>4</sup>+324)(22<sup>4</sup>+324)&hellip;(58<sup>4</sup>+324)','(4<sup>4</sup>+324)(16<sup>4</sup>+324)&hellip;(52<sup>4</sup>+324)')+'. (AIME)',
+ options:['373','374','372','376'],
+ ci:0,
+ explanation:'Using n<sup>4</sup>+324=((n&minus;3)<sup>2</sup>+9)((n+3)<sup>2</sup>+9), the product telescopes: the answer is (61<sup>2</sup>+9)/(1<sup>2</sup>+9) = 3730/10 = 373.'
+},
+{tag:'Algebra',
+ text:'The polynomial 1&minus;x+x<sup>2</sup>&minus;x<sup>3</sup>+&hellip;+x<sup>16</sup>&minus;x<sup>17</sup> may be written in the form a<sub>0</sub>+a<sub>1</sub>y+a<sub>2</sub>y<sup>2</sup>+a<sub>3</sub>y<sup>3</sup>+&hellip;+a<sub>16</sub>y<sup>16</sup>+a<sub>17</sub>y<sup>17</sup>, where y=x+1 and the a<sub>i</sub>\'s are constants. Find the value of a<sub>2</sub>. (AIME)',
+ options:['816','153','171','680'],
+ ci:0,
+ explanation:'The polynomial = (1&minus;x<sup>18</sup>)/(1+x) = (1&minus;(y&minus;1)<sup>18</sup>)/y. Expanding (y&minus;1)<sup>18</sup> and dividing by y, the coefficient of y<sup>2</sup> is C(18,3)=816.'
+},
+{tag:'Algebra',
+ text:'If f(x)+'+frac('1','x')+'&middot;f(&minus;'+frac('1','x')+') = 3, what is the value of f(2)? (MathCounts)',
+ options:[frac('3','4'),''+frac('3','2'),'3',''+frac('9','4')],
+ ci:0,
+ explanation:'Replace x with &minus;1/x to get a second equation. Solving the system: 2f(x)=3&minus;3/x, so f(2)=3/2&minus;3/4=3/4.'
+},
+{tag:'Algebra',
+ text:'If<br><br><div style="margin:8px 0 8px 32px;font-size:1rem">f(x) = <span style="display:inline-block;border-left:2px solid #111;padding-left:8px"><span style="display:block">&minus;x,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if x &lt; 0</span><span style="display:block">&minus;x<sup>2</sup>,&nbsp;&nbsp;if x &ge; 0</span></span></div><br>and f(f(f(x))) = 4, what is the value of x? (MathCounts)',
+ options:['&minus;2','2','&minus;&radic;2','&radic;2'],
+ ci:0,
+ explanation:'f(f(f(x)))=4 positive, so f(f(x)) is negative. f(f(x))=&minus;4. f(x) must be positive, so f(x)=&radic;4=2. Since f(x)=2>0, x must be negative and f(x)=&minus;x=2, so x=&minus;2.'
+},
+{tag:'Algebra',
+ text:'What is the minimum value of 8x<sup>3</sup> + 36x + '+frac('54','x')+' + '+frac('27','x<sup>3</sup>')+' for positive real numbers x? (MathCounts)',
+ options:['48&radic;6','48','96','24&radic;6'],
+ ci:0,
+ explanation:'The expression is (2x+3/x)<sup>3</sup>. By AM-GM, 2x+3/x &ge; 2&radic;(2x&middot;3/x)=2&radic;6. So (2x+3/x)<sup>3</sup>&ge;(2&radic;6)<sup>3</sup>=48&radic;6.'
+},
+{tag:'Combinatorics',
+ text:'How many of the first 1000 positive integers can be expressed in the form &lfloor;2x&rfloor;+&lfloor;4x&rfloor;+&lfloor;6x&rfloor;+&lfloor;8x&rfloor;, where x is a real number? (AIME)',
+ options:['600','500','660','700'],
+ ci:0,
+ explanation:'For x&isin;(0,1], the expression changes value at x=1/8,1/6,1/4,1/3,3/8,1/2,5/8,2/3,3/4,5/6,7/8 &mdash; yielding 12 expressible values per unit interval. For x&isin;(0,50], we get 50&times;12=600 values among the first 1000 positive integers.'
+}
+];
+
+let state={cur:0,answers:{},shuffles:{},showResults:false,retryMode:false,retryList:[]};
+let dotsVisible=false;
+const TOTAL=QUESTIONS.length;
+
+const ORDER_KEY=LSKEY+'_order_v1';
+function identityOrder(){return QUESTIONS.map((_,i)=>i);}
+function isValidOrder(o){if(!Array.isArray(o)||o.length!==TOTAL)return false;const seen=new Set();for(const v of o){if(typeof v!=='number'||v<0||v>=TOTAL||seen.has(v))return false;seen.add(v);}return true;}
+function loadOrder(){try{const o=JSON.parse(localStorage.getItem(ORDER_KEY)||'null');return isValidOrder(o)?o:null;}catch(e){return null;}}
+function saveOrder(o){localStorage.setItem(ORDER_KEY,JSON.stringify(o));}
+function randomOrder(){const a=identityOrder();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+let currentOrder=loadOrder()||identityOrder();
+saveOrder(currentOrder);
+let pendingFreshMode='original';
+
+function loadState(){
+  try{
+    const raw=localStorage.getItem(LSKEY);
+    if(!raw)return;
+    const s=JSON.parse(raw);
+    if(s.retryMode&&!Array.isArray(s.retryList))throw new Error();
+    const listLen=s.retryMode?s.retryList.length:QUESTIONS.length;
+    if(typeof s.cur!=='number'||s.cur<0||s.cur>=listLen)throw new Error();
+    if(typeof s.answers!=='object'||typeof s.shuffles!=='object')throw new Error();
+    state=s;
+  }catch(e){localStorage.removeItem(LSKEY);}
+}
+function saveState(){
+  try{localStorage.setItem(LSKEY,JSON.stringify(state));}catch(e){}
+}
+function getAtt(){
+  return parseInt(localStorage.getItem(LSATT)||'0',10);
+}
+function incAtt(){
+  localStorage.setItem(LSATT,String(getAtt()+1));
+  document.getElementById('att-display').textContent=getAtt();
+}
+
+function getList(){
+  return state.retryMode?state.retryList:currentOrder;
+}
+
+function getShuffled(qi){
+  if(state.shuffles[qi])return state.shuffles[qi];
+  const q=QUESTIONS[qi];
+  const idxs=q.options.map((_,i)=>i);
+  for(let i=idxs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[idxs[i],idxs[j]]=[idxs[j],idxs[i]];}
+  state.shuffles[qi]=idxs;
+  saveState();
+  return idxs;
+}
+
+function render(){
+  try{
+    const list=getList();
+    const quizArea=document.getElementById('quiz-area');
+    const resultsScreen=document.getElementById('results-screen');
+    if(state.showResults){
+      quizArea.style.display='none';
+      resultsScreen.style.display='block';
+      renderResults();
+      updateNav();
+      return;
+    }
+    resultsScreen.style.display='none';
+    quizArea.style.display='block';
+    const qi=list[state.cur];
+    const q=QUESTIONS[qi];
+    document.getElementById('type-tag').textContent=q.tag;
+    document.getElementById('q-number').textContent='Question '+(state.cur+1)+' of '+list.length;
+    document.getElementById('q-text').innerHTML=q.text;
+    const shuffled=getShuffled(qi);
+    const answered=state.answers[qi];
+    const optDiv=document.getElementById('options');
+    optDiv.innerHTML='';
+    shuffled.forEach(function(origIdx){
+      const btn=document.createElement('button');
+      btn.className='opt-btn';
+      btn.innerHTML=q.options[origIdx];
+      if(answered!==undefined){
+        btn.disabled=true;
+        if(origIdx===q.ci){btn.classList.add(answered===q.ci?'correct':'revealed');}
+        else if(origIdx===answered){btn.classList.add('wrong');}
+      } else {
+        btn.onclick=function(){window.answer(origIdx);}
+      }
+      optDiv.appendChild(btn);
+    });
+    const expDiv=document.getElementById('explanation');
+    if(answered!==undefined){
+      expDiv.style.display='block';
+      expDiv.innerHTML='<b>'+(answered===q.ci?'Correct!':'Wrong.')+'</b> '+q.explanation;
+    } else {
+      expDiv.style.display='none';
+    }
+    const nextBtn=document.getElementById('next-btn');
+    if(state.cur===list.length-1){nextBtn.textContent='See Results \u2192';}
+    else{nextBtn.textContent='Next';}
+    updateNav();
+  }catch(e){
+    document.getElementById('quiz-area').innerHTML='<p style="color:red">Display error: '+e.message+'</p>';
+  }
+}
+
+function updateNav(){
+  const list=getList();
+  const answered=Object.keys(state.answers).filter(k=>list.includes(parseInt(k))).length;
+  document.getElementById('prog-label').textContent=answered+' / '+list.length;
+  const pct=list.length?Math.round(answered/list.length*100):0;
+  document.getElementById('prog-fill').style.width=pct+'%';
+  const panel=document.getElementById('dots-panel');
+  panel.innerHTML='';
+  list.forEach(function(qi,i){
+    const d=document.createElement('button');
+    d.className='dot';
+    d.textContent=i+1;
+    const ans=state.answers[qi];
+    if(ans!==undefined){d.classList.add(ans===QUESTIONS[qi].ci?'correct':'wrong');}
+    d.onclick=function(){state.cur=i;saveState();render();}
+    panel.appendChild(d);
+  });
+  if(state.showResults){
+    const pill=document.createElement('button');
+    pill.className='dot results-pill';
+    pill.textContent='Results';
+    pill.onclick=function(){render();}
+    panel.appendChild(pill);
+  }
+  document.getElementById('att-display').textContent=getAtt();
+}
+
+function renderResults(){
+  const list=getList();
+  let correct=0,wrong=0,skipped=0;
+  list.forEach(function(qi){
+    const a=state.answers[qi];
+    if(a===undefined)skipped++;
+    else if(a===QUESTIONS[qi].ci)correct++;
+    else wrong++;
+  });
+  document.getElementById('results-score').textContent=correct+' / '+list.length+' correct';
+  const grid=document.getElementById('results-grid');
+  grid.innerHTML='';
+  list.forEach(function(qi,i){
+    const a=state.answers[qi];
+    const card=document.createElement('div');
+    card.className='res-card '+(a===undefined?'skipped':a===QUESTIONS[qi].ci?'correct':'wrong');
+    card.innerHTML='<div class="qn">Q'+(i+1)+'</div><div class="status">'+(a===undefined?'Skipped':a===QUESTIONS[qi].ci?'Correct':'Wrong')+'</div>';
+    card.onclick=function(){state.showResults=false;state.cur=i;saveState();render();}
+    grid.appendChild(card);
+  });
+}
+
+window.answer=function(origIdx){
+  const list=getList();
+  const qi=list[state.cur];
+  state.answers[qi]=origIdx;
+  saveState();
+  render();
+};
+window.prevQ=function(){
+  if(state.cur>0){state.cur--;saveState();render();}
+};
+window.nextQ=function(){
+  const list=getList();
+  if(state.cur<list.length-1){state.cur++;saveState();render();}
+  else{state.showResults=true;if(!state.retryMode){incAtt();}saveState();render();}
+};
+window.toggleDots=function(){
+  dotsVisible=!dotsVisible;
+  document.getElementById('dots-panel').style.display=dotsVisible?'flex':'none';
+  document.getElementById('jump-btn').textContent=dotsVisible?'Hide':'Jump';
+};
+window.retryWrong=function(){
+  const list=getList();
+  const wrongList=list.filter(qi=>state.answers[qi]!==undefined&&state.answers[qi]!==QUESTIONS[qi].ci);
+  if(!wrongList.length){alert('No wrong answers to retry!');return;}
+  wrongList.forEach(qi=>{delete state.answers[qi];delete state.shuffles[qi];});
+  state.retryMode=true;
+  state.retryList=wrongList;
+  state.cur=0;
+  state.showResults=false;
+  saveState();
+  render();
+};
+window.copyResults=function(){
+  const list=getList();
+  let txt='Chapter 2 Quiz Results\n';
+  list.forEach(function(qi,i){
+    const a=state.answers[qi];
+    txt+='Q'+(i+1)+': '+(a===undefined?'Skipped':a===QUESTIONS[qi].ci?'Correct':'Wrong')+'\n';
+  });
+  try{navigator.clipboard.writeText(txt);}catch(e){
+    const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+  }
+};
+window.askFresh=function(mode){
+  pendingFreshMode=mode;
+  const title=document.getElementById('modal-title');
+  const text=document.getElementById('modal-text');
+  if(mode==='random'){
+    title.textContent='Start Fresh (Random Order)?';
+    text.textContent='Questions will be reshuffled into a new random order, and all progress will be reset.';
+  } else {
+    title.textContent='Start Fresh (Original Order)?';
+    text.textContent='Questions will return to their original order, and all progress will be reset.';
+  }
+  document.getElementById('modal-overlay').style.display='flex';
+};
+window.closeModal=function(){
+  document.getElementById('modal-overlay').style.display='none';
+};
+window.confirmFresh=function(){
+  localStorage.removeItem(LSKEY);
+  currentOrder=(pendingFreshMode==='random')?randomOrder():identityOrder();
+  saveOrder(currentOrder);
+  state={cur:0,answers:{},shuffles:{},showResults:false,retryMode:false,retryList:[]};
+  document.getElementById('modal-overlay').style.display='none';
+  render();
+};
+
+loadState();
+render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Past vs Present Perfect</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; color: #111; }
+  #date-display { text-align: center; font-size: 2rem; font-weight: 800; color: #185FA5; background: #fff; padding: 18px 0 4px; }
+  #title-display { text-align: center; font-size: 1.5rem; font-weight: 700; background: #fff; padding: 4px 0 2px; }
+  #subtitle-bar { text-align: center; font-size: 0.85rem; color: #555; background: #fff; padding: 2px 0 10px; }
+  .instruction { text-align: center; font-size: 0.88rem; color: #555; background: #fff; padding: 6px 0 12px; }
+  #top-nav { background: #fff; padding: 8px 16px; border-bottom: 1px solid #e0e0e0; }
+  #nav-row { display: flex; align-items: center; gap: 10px; }
+  #answered-count { font-size: 0.82rem; color: #555; white-space: nowrap; }
+  #progress-bar-wrap { flex: 1; height: 6px; background: #d7dde6; border-radius: 3px; overflow: hidden; }
+  #progress-bar-fill { height: 100%; background: #1D9E75; border-radius: 3px; transition: width 0.3s; width: 0%; }
+  #jump-btn { font-size: 0.8rem; background: none; border: 1px solid #1D9E75; color: #1D9E75; border-radius: 4px; padding: 3px 9px; cursor: pointer; white-space: nowrap; }
+  #dot-panel { display: none; flex-wrap: wrap; gap: 6px; padding: 10px 0 4px; max-height: 170px; overflow-y: auto; }
+  .dot { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; cursor: pointer; color: #fff; background: #d7dde6; }
+  .dot.correct { background: #1D9E75; }
+  .dot.wrong { background: #E24B4A; }
+  #results-pill { display: none; margin-left: 6px; background: #1D9E75; color: #fff; font-size: 0.78rem; border-radius: 12px; padding: 3px 12px; cursor: pointer; border: none; font-weight: 700; }
+  #quiz-area { display: none; max-width: 680px; margin: 0 auto; padding: 24px 16px; }
+  #q-number { font-size: 0.82rem; color: #888; margin-bottom: 6px; }
+  #q-text { font-size: 1.15rem; font-weight: 600; line-height: 1.6; margin-bottom: 20px; }
+  .option-btn { display: block; width: 100%; text-align: left; padding: 14px 18px; margin-bottom: 12px; border-radius: 8px; border: 2px solid transparent; cursor: pointer; font-size: 1rem; font-weight: 500; background: #e8edf4; color: #111111; }
+  .option-btn.correct { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .option-btn.wrong   { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+  #explanation-box { display: none; background: #fff; border-left: 4px solid #1D9E75; border-radius: 6px; padding: 12px 16px; margin-top: 8px; font-size: 0.92rem; line-height: 1.6; color: #333; }
+  #bottom-nav { max-width: 680px; margin: 0 auto; padding: 0 16px 32px; display: flex; gap: 10px; }
+  #bottom-nav button { flex: 1; padding: 13px; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; border: none; }
+  #prev-btn { background: #e8edf4; color: #111; }
+  #next-btn { background: #1D9E75; color: #fff; }
+  #results-area { display: none; max-width: 680px; margin: 0 auto; padding: 24px 16px; }
+  #results-card { background: #f5f7fa; border-radius: 12px; padding: 28px 24px; text-align: center; }
+  #results-heading { font-size: 1.6rem; font-weight: 800; color: #1D9E75; margin-bottom: 6px; }
+  #score-line { font-size: 1.1rem; color: #333; margin-bottom: 20px; }
+  #results-list { text-align: left; margin-bottom: 24px; }
+  .result-item { background: #fff; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; font-size: 0.9rem; line-height: 1.5; }
+  .result-item .ri-q { font-weight: 600; margin-bottom: 4px; }
+  .result-item .ri-your { color: #E24B4A; }
+  .result-item .ri-correct { color: #085041; }
+  .result-item .ri-explain { color: #555; margin-top: 4px; }
+  #results-btns { display: flex; flex-direction: column; gap: 10px; }
+  #retry-btn  { background: #1D9E75; color: #fff; padding: 14px; border-radius: 8px; border: none; font-size: 1rem; font-weight: 700; cursor: pointer; }
+  #copy-btn   { background: #185FA5; color: #fff; padding: 14px; border-radius: 8px; border: none; font-size: 1rem; font-weight: 700; cursor: pointer; }
+  #fresh-btn, #fresh-btn-random { background: #e8edf4; color: #111; padding: 14px; border-radius: 8px; border: none; font-size: 1rem; font-weight: 700; cursor: pointer; }
+  #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; }
+  #modal-overlay.active { display: flex; }
+  #modal-box { background: #fff; border-radius: 12px; padding: 28px 24px; max-width: 320px; width: 90%; text-align: center; }
+  #modal-box p { font-size: 1rem; margin-bottom: 20px; line-height: 1.5; }
+  #modal-btns { display: flex; gap: 10px; }
+  #modal-cancel  { flex: 1; background: #e8edf4; color: #111; border: none; border-radius: 8px; padding: 12px; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+  #modal-confirm { flex: 1; background: #E24B4A; color: #fff; border: none; border-radius: 8px; padding: 12px; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+</style>
+</head>
+<body>
+<!-- ===== Universal Quiz Timer (auto-injected) ===== -->
+<style>
+  #qzTimerBar { background: #ffffff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-family: 'Segoe UI', Arial, sans-serif; }
+  #qzTimerSetup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+  #qzTimerSetup label { font-weight: 700; }
+  #qzTimerInput { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+  #qzTimerStartBtn { background: #185FA5; color: #ffffff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  #qzTimerStartBtn:active { opacity: 0.8; }
+  #qzTimerRunning { display: none; align-items: center; gap: 8px; }
+  #qzTimerLabel { font-size: 0.78rem; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 0.02em; }
+  #qzTimerDisplay { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+  #qzTimerDisplay.qz-warn { color: #f5a623; }
+  #qzTimerDisplay.qz-danger { color: #E24B4A; }
+</style>
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label for="qzTimerInput">Set Time Limit:</label>
+    <input type="number" id="qzTimerInput" min="1" max="180" value="20"> min
+    <button id="qzTimerStartBtn" type="button">Start</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span id="qzTimerLabel">Time Left</span>
+    <span id="qzTimerDisplay">20:00</span>
+  </div>
+</div>
+<script>
+(function(){
+  var QZ_KEY = 'qzTimer_' + location.pathname;
+  var qz = { totalSec: null, startedAt: null };
+  try {
+    var raw = localStorage.getItem(QZ_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p.totalSec === 'number' && typeof p.startedAt === 'number') qz = p;
+    }
+  } catch(e) {}
+  var qzInterval = null;
+
+  function qzSave() { try { localStorage.setItem(QZ_KEY, JSON.stringify(qz)); } catch(e) {} }
+  function qzFormat(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60), s = sec % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function qzRender() {
+    var setupEl = document.getElementById('qzTimerSetup');
+    var runEl = document.getElementById('qzTimerRunning');
+    var disp = document.getElementById('qzTimerDisplay');
+    if (!setupEl || !runEl || !disp) return;
+    if (!qz.startedAt) {
+      setupEl.style.display = 'flex';
+      runEl.style.display = 'none';
+      return;
+    }
+    setupEl.style.display = 'none';
+    runEl.style.display = 'flex';
+    var elapsed = (Date.now() - qz.startedAt) / 1000;
+    var remaining = qz.totalSec - elapsed;
+    disp.classList.remove('qz-warn', 'qz-danger');
+    if (remaining <= 0) {
+      disp.textContent = "Time's Up";
+      disp.classList.add('qz-danger');
+      qzStopInterval();
+      return;
+    }
+    disp.textContent = qzFormat(remaining);
+    if (remaining <= qz.totalSec * 0.1) disp.classList.add('qz-danger');
+    else if (remaining <= qz.totalSec * 0.25) disp.classList.add('qz-warn');
+  }
+  function qzStartInterval() {
+    qzStopInterval();
+    qzInterval = setInterval(qzRender, 1000);
+  }
+  function qzStopInterval() {
+    if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+  }
+  function qzStart() {
+    var input = document.getElementById('qzTimerInput');
+    var minutes = parseFloat(input.value);
+    if (!minutes || minutes <= 0) minutes = 20;
+    qz.totalSec = Math.round(minutes * 60);
+    qz.startedAt = Date.now();
+    qzSave();
+    qzRender();
+    qzStartInterval();
+  }
+
+  var btn = document.getElementById('qzTimerStartBtn');
+  if (btn) btn.addEventListener('click', qzStart);
+  qzRender();
+  if (qz.startedAt) qzStartInterval();
+
+  function qzResetTimer() {
+    qz.totalSec = null;
+    qz.startedAt = null;
+    qzSave();
+    qzStopInterval();
+    qzRender();
+  }
+  var qzRetryRe = /retry|restart|reset|start\s*fresh|try\s*again|\uB2E4\uC2DC\s*\uC2DC\uC791|\uCC98\uC74C\uBD80\uD0B0/i;
+  document.addEventListener('click', function(ev) {
+    var el = ev.target, depth = 0;
+    while (el && depth < 4) {
+      if (el.id === 'qzTimerBar' || el.id === 'qzAttemptsBar') return;
+      var isClickable = el.tagName === 'BUTTON' || el.tagName === 'A' ||
+        (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) ||
+        (el.getAttribute && el.getAttribute('role') === 'button');
+      if (isClickable) {
+        var txt = (el.textContent || el.value || '').trim();
+        if (txt.length > 0 && txt.length < 40 && qzRetryRe.test(txt)) {
+          qzResetTimer();
+          return;
+        }
+      }
+      el = el.parentElement;
+      depth++;
+    }
+  }, true);
+})();
+</script>
+<!-- ===== End Universal Quiz Timer ===== -->
+
+<div id="title-display">Past vs. Present Perfect</div>
+<div id="subtitle-bar">Choose the correct tense | <span id="att-display">Total Attempts: 0</span></div>
+<div class="instruction">Read the sentence carefully and choose: simple past or present perfect.</div>
+<div id="top-nav">
+  <div id="nav-row">
+    <span id="answered-count">0 / 50</span>
+    <div id="progress-bar-wrap"><div id="progress-bar-fill"></div></div>
+    <button id="jump-btn" onclick="window.toggleDots()">Jump</button>
+    <button id="results-pill" onclick="window.goResults()">Results</button>
+  </div>
+  <div id="dot-panel"></div>
+</div>
+<div id="quiz-area">
+  <div id="q-number"></div>
+  <div id="q-text"></div>
+  <div id="options-wrap"></div>
+  <div id="explanation-box"></div>
+</div>
+<div id="bottom-nav">
+  <button id="prev-btn">Prev</button>
+  <button id="next-btn">Next</button>
+</div>
+<div id="results-area">
+  <div id="results-card">
+    <div id="results-heading">Results</div>
+    <div id="score-line"></div>
+    <div id="results-list"></div>
+    <div id="results-btns">
+      <button id="retry-btn" onclick="window.retryWrong()">Retry Wrong Ones</button>
+      <button id="copy-btn" onclick="window.copyResults()">Copy All Results</button>
+      <button id="fresh-btn" onclick="window.askFresh('original')">Start Fresh (Original Order)</button>
+      <button id="fresh-btn-random" onclick="window.askFresh('random')">Start Fresh (Random Order)</button>
+    </div>
+  </div>
+</div>
+<div id="modal-overlay">
+  <div id="modal-box">
+    <div id="modalTitle" style="font-size:1.1rem;font-weight:800;margin-bottom:10px;">Start Fresh?</div>
+    <p id="modalText">Start over from the beginning? Your progress will be cleared.</p>
+    <div id="modal-btns">
+      <button id="modal-cancel" onclick="window.closeModal()">Cancel</button>
+      <button id="modal-confirm" onclick="window.confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  var LS_KEY  = "quiz_pastperf50_v1";
+  var ATT_KEY = "quiz_pastperf50_att_v1";
+
+  var Q = [
+    {s:"I ________ a movie last night.",                              o:["watched","have watched"],           ci:0, e:"Last night is a finished past time, so use simple past: watched."},
+    {s:"I ________ that movie before.",                               o:["saw","have seen"],                  ci:1, e:"Before with no specific time = experience up to now, so use present perfect: have seen."},
+    {s:"She ________ to Paris twice in her life.",                    o:["went","has been"],                  ci:1, e:"In her life = experience up to now with no specific time, so use present perfect: has been."},
+    {s:"We ________ dinner an hour ago.",                             o:["finished","have finished"],         ci:0, e:"An hour ago is a specific finished time, so use simple past: finished."},
+    {s:"He ________ his homework yet.",                               o:["did not finish","has not finished"],ci:1, e:"Yet connects to the present moment, so use present perfect: has not finished."},
+    {s:"They ________ a new restaurant last weekend.",                o:["tried","have tried"],               ci:0, e:"Last weekend is a specific finished time, so use simple past: tried."},
+    {s:"The train ________ at 9 o'clock this morning.",              o:["arrived","has arrived"],            ci:0, e:"At 9 o'clock is a specific finished time, so use simple past: arrived."},
+    {s:"I ________ my keys. I cannot find them!",                    o:["lost","have lost"],                 ci:1, e:"The result still affects the present (cannot find them), so use present perfect: have lost."},
+    {s:"She ________ three cups of coffee so far today.",            o:["drank","has drunk"],                ci:1, e:"So far today means the period is still ongoing, so use present perfect: has drunk."},
+    {s:"We ________ in this city since 2018.",                       o:["lived","have lived"],               ci:1, e:"Since 2018 connects past to the present, so use present perfect: have lived."},
+    {s:"He ________ his bike when he was ten.",                      o:["broke","has broken"],               ci:0, e:"When he was ten is a specific finished time, so use simple past: broke."},
+    {s:"I ________ such delicious food.",                            o:["never ate","have never eaten"],     ci:1, e:"Never with no specific time = experience up to now, so use present perfect: have never eaten."},
+    {s:"They ________ the project last Friday.",                     o:["completed","have completed"],       ci:0, e:"Last Friday is a specific finished time, so use simple past: completed."},
+    {s:"She ________ her report.",                                   o:["already submitted","has already submitted"], ci:1, e:"Already indicates completion relative to now, so use present perfect: has already submitted."},
+    {s:"We ________ that museum when we visited Rome.",              o:["saw","have seen"],                  ci:0, e:"When we visited Rome is a specific finished event, so use simple past: saw."},
+    {s:"I ________ from a long run.",                                o:["just returned","have just returned"], ci:1, e:"Just = very recent with present relevance, so use present perfect: have just returned."},
+    {s:"He ________ the company in 2005.",                           o:["founded","has founded"],            ci:0, e:"In 2005 is a specific finished year, so use simple past: founded."},
+    {s:"I ________ this song many times before.",                    o:["heard","have heard"],               ci:1, e:"Many times before = repeated experience up to now, so use present perfect: have heard."},
+    {s:"She ________ her ankle during the race yesterday.",          o:["twisted","has twisted"],            ci:0, e:"Yesterday is a specific finished time, so use simple past: twisted."},
+    {s:"I ________ my wallet. I need to go back and find it.",       o:["lost","have lost"],                 ci:1, e:"The result still affects the present (need to go back), so use present perfect: have lost."},
+    {s:"I ________ to Japan three times.",                           o:["went","have been"],                 ci:1, e:"No specific time given - counting experience up to now, so use present perfect: have been."},
+    {s:"She ________ the book two days ago.",                        o:["finished","has finished"],          ci:0, e:"Two days ago is a specific finished time, so use simple past: finished."},
+    {s:"He ________ the news this morning at 7 a.m.",               o:["watched","has watched"],            ci:0, e:"At 7 a.m. is a specific finished time, so use simple past: watched."},
+    {s:"I ________ learning guitar.",                                 o:["recently started","have recently started"], ci:1, e:"Recently with present relevance = present perfect: have recently started."},
+    {s:"She ________ her first car when she was 25.",                o:["bought","has bought"],              ci:0, e:"When she was 25 is a specific finished time, so use simple past: bought."},
+    {s:"He ________ for this company for ten years.",                o:["worked","has worked"],              ci:1, e:"For ten years up to now = present perfect: has worked."},
+    {s:"I ________ the email an hour ago.",                          o:["sent","have sent"],                 ci:0, e:"An hour ago is a specific finished time, so use simple past: sent."},
+    {s:"They ________ sushi before.",                                o:["never ate","have never eaten"],     ci:1, e:"Never ... before = lack of experience up to now, so use present perfect: have never eaten."},
+    {s:"She ________ a gold medal at the 2020 Olympics.",            o:["won","has won"],                    ci:0, e:"At the 2020 Olympics is a specific finished event, so use simple past: won."},
+    {s:"I ________ lunch.",                                          o:["already ate","have already eaten"], ci:1, e:"Already = completed with present relevance, so use present perfect: have already eaten."},
+    {s:"We ________ this game before and we lost.",                  o:["played","have played"],             ci:0, e:"The specific result we lost ties it to a finished past event, so use simple past: played."},
+    {s:"He ________ sick since Monday.",                             o:["was","has been"],                   ci:1, e:"Since Monday connects past to the present moment, so use present perfect: has been."},
+    {s:"I ________ my passport last summer.",                        o:["lost","have lost"],                 ci:0, e:"Last summer is a specific finished time, so use simple past: lost."},
+    {s:"She ________ the dishes.",                                   o:["just washed","has just washed"],    ci:1, e:"Just = very recent with present relevance, so use present perfect: has just washed."},
+    {s:"They ________ the new policy last month.",                   o:["announced","have announced"],       ci:0, e:"Last month is a specific finished time, so use simple past: announced."},
+    {s:"I ________ a horse.",                                        o:["never rode","have never ridden"],   ci:1, e:"Never with no specific time = experience up to now, so use present perfect: have never ridden."},
+    {s:"She ________ this city when she was a child.",               o:["visited","has visited"],            ci:0, e:"When she was a child is a specific finished period, so use simple past: visited."},
+    {s:"We ________ each other since college.",                      o:["knew","have known"],                ci:1, e:"Since college = ongoing relationship from past to now, so use present perfect: have known."},
+    {s:"He ________ the door and walked in.",                        o:["opened","has opened"],              ci:0, e:"This describes a finished sequence of past actions, so use simple past: opened."},
+    {s:"I ________ this week's report.",                             o:["did not write yet","have not written yet"], ci:1, e:"Yet with present relevance = present perfect: have not written yet."},
+    {s:"She ________ her grandmother every Sunday last year.",       o:["visited","has visited"],            ci:0, e:"Last year is a finished period, so use simple past: visited."},
+    {s:"They ________ a new office downtown.",                       o:["just opened","have just opened"],   ci:1, e:"Just = very recent with present relevance, so use present perfect: have just opened."},
+    {s:"I ________ coffee every morning when I worked there.",       o:["drank","have drunk"],               ci:0, e:"When I worked there is a finished period in the past, so use simple past: drank."},
+    {s:"He ________ the contract.",                                  o:["already signed","has already signed"], ci:1, e:"Already = completed with present relevance, so use present perfect: has already signed."},
+    {s:"We ________ that film at the cinema last March.",            o:["watched","have watched"],           ci:0, e:"Last March is a specific finished time, so use simple past: watched."},
+    {s:"I ________ this book twice and I love it.",                  o:["read","have read"],                 ci:1, e:"No specific past time given - counting experience up to now, so use present perfect: have read."},
+    {s:"She ________ her presentation and left the room.",           o:["finished","has finished"],          ci:0, e:"This describes a finished past sequence of events, so use simple past: finished."},
+    {s:"The scientists ________ a new planet last year.",            o:["discovered","have discovered"],     ci:0, e:"Last year is a specific finished time, so use simple past: discovered."},
+    {s:"I ________ this exercise before, so I know what to do.",    o:["did","have done"],                  ci:1, e:"Before with no specific time = experience up to now, so use present perfect: have done."},
+    {s:"She ________ the bus this morning and was late for class.",  o:["missed","has missed"],              ci:0, e:"Was late shows the morning is over and finished, so use simple past: missed."}
+  ];
+
+  var ORDER_KEY = LS_KEY + "_order_v1";
+  function identityOrder(){ var a=[]; for(var i=0;i<Q.length;i++) a.push(i); return a; }
+  function isValidOrder(arr){
+    if(!Array.isArray(arr) || arr.length!==Q.length) return false;
+    var seen={};
+    for(var i=0;i<arr.length;i++){
+      var v=arr[i];
+      if(typeof v!=="number" || v<0 || v>=Q.length || seen[v]) return false;
+      seen[v]=true;
+    }
+    return true;
+  }
+  function loadOrder(){
+    try{
+      var raw=localStorage.getItem(ORDER_KEY);
+      if(!raw) return null;
+      var arr=JSON.parse(raw);
+      return isValidOrder(arr) ? arr : null;
+    }catch(e){ return null; }
+  }
+  function saveOrder(order){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(order)); }catch(e){} }
+  function shuffleOrder(arr){
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  var currentOrder = loadOrder() || identityOrder();
+  var pendingFreshMode = "original";
+  function qAt(i) { return Q[currentOrder[i]]; }
+
+  var state = {cur:0, answers:{}, shuffles:{}, showResults:false, retryMode:false, retryList:[]};
+  var attempts = 0;
+
+  function getList(){ return state.retryMode ? state.retryList : (function(){var l=[];for(var i=0;i<Q.length;i++)l.push(i);return l;})(); }
+
+  function shuffle2() { return Math.random() < 0.5 ? [0,1] : [1,0]; }
+  function initShuffles() {
+    for (var i=0; i<Q.length; i++) { if (!state.shuffles[i]) state.shuffles[i] = shuffle2(); }
+  }
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        var s = JSON.parse(raw);
+        var retryMode = !!s.retryMode;
+        var retryList = Array.isArray(s.retryList) ? s.retryList : [];
+        var listLen = retryMode ? retryList.length : Q.length;
+        if (typeof s.cur === "number" && s.cur >= 0 && s.cur < listLen &&
+            typeof s.answers === "object" && s.answers !== null &&
+            typeof s.shuffles === "object" && s.shuffles !== null) {
+          state = s;
+          state.retryMode = retryMode;
+          state.retryList = retryList;
+        } else { localStorage.removeItem(LS_KEY); }
+      }
+    } catch(e) { localStorage.removeItem(LS_KEY); }
+    try { var a = localStorage.getItem(ATT_KEY); if (a) attempts = parseInt(a) || 0; } catch(e) {}
+    initShuffles();
+  }
+  function saveState() { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {} }
+  function saveAttempts() { try { localStorage.setItem(ATT_KEY, String(attempts)); } catch(e) {} }
+
+  function render() {
+    try {
+      if (state.showResults) { renderResults(); return; }
+      document.getElementById("quiz-area").style.display = "block";
+      document.getElementById("results-area").style.display = "none";
+      document.getElementById("bottom-nav").style.display = "flex";
+      var list = getList();
+      var pos = state.cur;
+      var qi = list[pos];
+      var q = qAt(qi);
+      var sh = state.shuffles[qi];
+      var answered = state.answers[qi] !== undefined;
+      document.getElementById("q-number").textContent = "Question " + (pos+1) + " of " + list.length;
+      document.getElementById("q-text").textContent = q.s;
+      var wrap = document.getElementById("options-wrap");
+      wrap.innerHTML = "";
+      for (var di=0; di<sh.length; di++) {
+        (function(origIdx) {
+          var btn = document.createElement("button");
+          btn.className = "option-btn";
+          btn.textContent = q.o[origIdx];
+          if (answered) {
+            btn.disabled = true;
+            if (origIdx === q.ci) btn.classList.add("correct");
+            else if (state.answers[qi] === origIdx) btn.classList.add("wrong");
+          } else {
+            btn.onclick = function() { window.choose(origIdx); };
+          }
+          wrap.appendChild(btn);
+        })(sh[di]);
+      }
+      var expBox = document.getElementById("explanation-box");
+      if (answered) { expBox.textContent = q.e; expBox.style.display = "block"; }
+      else { expBox.style.display = "none"; }
+      updateNav(); updateDots(); updateProgress();
+    } catch(e) {
+      document.getElementById("quiz-area").innerHTML = "<p style='padding:20px;color:#E24B4A;'>Error rendering. Please refresh.</p>";
+    }
+  }
+
+  function updateNav() {
+    var list = getList();
+    var prevBtn = document.getElementById("prev-btn");
+    var nextBtn = document.getElementById("next-btn");
+    prevBtn.disabled = (state.cur === 0);
+    prevBtn.onclick = window.goPrev;
+    nextBtn.disabled = false;
+    nextBtn.onclick = (state.cur === list.length - 1) ? window.goResults : window.goNext;
+    document.getElementById("att-display").textContent = "Total Attempts: " + attempts;
+    var allAnswered = list.every(function(i){ return state.answers[i] !== undefined; });
+    document.getElementById("results-pill").style.display = allAnswered ? "inline-block" : "none";
+  }
+  function updateProgress() {
+    var list = getList();
+    var n = 0; for (var k=0; k<list.length; k++) { if (state.answers[list[k]] !== undefined) n++; }
+    document.getElementById("answered-count").textContent = n + " / " + list.length;
+    document.getElementById("progress-bar-fill").style.width = (n / list.length * 100) + "%";
+  }
+  function updateDots() {
+    var list = getList();
+    var panel = document.getElementById("dot-panel");
+    panel.innerHTML = "";
+    for (var pos=0; pos<list.length; pos++) {
+      (function(p) {
+        var idx = list[p];
+        var d = document.createElement("div");
+        d.className = "dot";
+        d.textContent = p + 1;
+        if (state.answers[idx] !== undefined) d.classList.add(state.answers[idx] === qAt(idx).ci ? "correct" : "wrong");
+        d.onclick = function() { state.cur = p; saveState(); render(); };
+        panel.appendChild(d);
+      })(pos);
+    }
+  }
+  function renderResults() {
+    document.getElementById("quiz-area").style.display = "none";
+    document.getElementById("results-area").style.display = "block";
+    document.getElementById("bottom-nav").style.display = "none";
+    var list = getList();
+    var correct = 0;
+    for (var k=0; k<list.length; k++) { if (state.answers[list[k]] === qAt(list[k]).ci) correct++; }
+    document.getElementById("score-line").textContent = correct + " / " + list.length + " correct";
+    var heading = document.getElementById("results-heading");
+    if (heading) heading.textContent = state.retryMode ? "Retry Results" : "Results";
+    var resList = document.getElementById("results-list");
+    resList.innerHTML = "";
+    for (var k=0; k<list.length; k++) {
+      (function(p) {
+        var idx = list[p];
+        var q = qAt(idx);
+        var userAns = state.answers[idx];
+        var isCorrect = userAns === q.ci;
+        var div = document.createElement("div");
+        div.className = "result-item";
+        var html = "<div class='ri-q'>Q" + (p+1) + ". " + q.s + "</div>";
+        if (isCorrect) {
+          html += "<div class='ri-correct'>Correct: " + q.o[q.ci] + "</div>";
+        } else {
+          html += "<div class='ri-your'>Your answer: " + (userAns !== undefined ? q.o[userAns] : "(skipped)") + "</div>";
+          html += "<div class='ri-correct'>Correct: " + q.o[q.ci] + "</div>";
+        }
+        html += "<div class='ri-explain'>" + q.e + "</div>";
+        div.innerHTML = html;
+        resList.appendChild(div);
+      })(k);
+    }
+    updateDots(); updateProgress();
+    document.getElementById("att-display").textContent = "Total Attempts: " + attempts;
+  }
+
+  window.choose = function(origIdx) {
+    var list = getList(); var qi = list[state.cur];
+    if (state.answers[qi] !== undefined) return;
+    state.answers[qi] = origIdx; saveState(); render();
+  };
+  window.goNext = function() { var list = getList(); if (state.cur < list.length-1) { state.cur++; saveState(); render(); } };
+  window.goPrev = function() { if (state.cur > 0) { state.cur--; saveState(); render(); } };
+  window.goResults = function() { if (!state.retryMode) { attempts++; saveAttempts(); } state.showResults = true; saveState(); render(); };
+  window.retryWrong = function() {
+    var list = getList();
+    var wrong = [];
+    for (var k=0; k<list.length; k++) { var i=list[k]; if (state.answers[i] !== qAt(i).ci) wrong.push(i); }
+    if (!wrong.length) return;
+    for (var j=0; j<wrong.length; j++) { delete state.answers[wrong[j]]; }
+    state.retryMode = true;
+    state.retryList = wrong;
+    state.cur = 0;
+    state.showResults = false; saveState();
+    document.getElementById("bottom-nav").style.display = "flex"; render();
+  };
+  window.copyResults = function() {
+    var list = getList();
+    var text = "Past vs. Present Perfect Results\n"; var correct = 0;
+    for (var k=0; k<list.length; k++) {
+      var i = list[k];
+      var ok = state.answers[i] === qAt(i).ci; if (ok) correct++;
+      text += "\nQ" + (k+1) + ". " + qAt(i).s + "\n" + (ok ? "Correct" : "Wrong") + " - " + qAt(i).o[qAt(i).ci] + "\n";
+    }
+    text += "\nScore: " + correct + " / " + list.length;
+    if (navigator.clipboard) navigator.clipboard.writeText(text).catch(function() {});
+  };
+  window.askFresh = function(mode) {
+    pendingFreshMode = mode;
+    document.getElementById("modalTitle").textContent = mode === "random" ? "Start Fresh (Random Order)?" : "Start Fresh (Original Order)?";
+    document.getElementById("modalText").textContent = mode === "random" ? "Questions will be reshuffled into a new random order, and all progress will be reset." : "Questions will return to their original order, and all progress will be reset.";
+    document.getElementById("modal-overlay").classList.add("active");
+  };
+  window.closeModal = function() { document.getElementById("modal-overlay").classList.remove("active"); };
+  window.confirmFresh = function() {
+    try { localStorage.removeItem(LS_KEY); } catch(e) {}
+    currentOrder = (pendingFreshMode === "random") ? shuffleOrder(identityOrder()) : identityOrder();
+    saveOrder(currentOrder);
+    state = {cur:0, answers:{}, shuffles:{}, showResults:false, retryMode:false, retryList:[]}; initShuffles(); saveState();
+    document.getElementById("modal-overlay").classList.remove("active");
+    document.getElementById("bottom-nav").style.display = "flex"; render();
+  };
+  window.toggleDots = function() {
+    var p = document.getElementById("dot-panel");
+    p.style.display = (p.style.display === "flex") ? "none" : "flex";
+  };
+
+  loadState(); render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Passive Voice Quiz</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body{
+    margin:0; background:#eef2f7; color:#111;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:0 0 60px;
+  }
+  .wrap{ max-width:720px; margin:0 auto; padding:0 14px; }
+  .datebar{
+    font-size:2rem; font-weight:800; text-align:center; color:#185FA5;
+    background:#fff; padding:14px 10px; border-radius:0 0 16px 16px;
+    box-shadow:0 2px 6px rgba(0,0,0,.06);
+  }
+  h1{ text-align:center; font-size:1.5rem; margin:18px 0 4px; color:#15324d; }
+  .attempts{ text-align:center; font-size:.95rem; color:#555; margin:0 0 12px; }
+  .badge-row{ text-align:center; margin-bottom:14px; }
+  .badge{
+    display:inline-block; background:#185FA5; color:#fff; font-weight:700;
+    font-size:.85rem; padding:6px 16px; border-radius:999px; letter-spacing:.3px;
+  }
+
+  /* top progress nav */
+  .nav{ background:#fff; border-radius:14px; padding:12px 14px; box-shadow:0 1px 4px rgba(0,0,0,.05); margin-bottom:16px; }
+  .nav-row{ display:flex; align-items:center; gap:12px; }
+  .nav-count{ font-size:.9rem; font-weight:700; color:#185FA5; white-space:nowrap; min-width:54px; }
+  .bar{ flex:1; height:9px; background:#d7dde6; border-radius:999px; overflow:hidden; }
+  .bar-fill{ height:100%; background:#185FA5; width:0%; transition:width .2s; }
+  .jumpbtn{
+    background:#e8edf4; border:none; color:#185FA5; font-weight:700; font-size:.82rem;
+    padding:7px 14px; border-radius:999px; cursor:pointer; white-space:nowrap;
+  }
+  .resbtn{
+    background:#185FA5; border:none; color:#fff; font-weight:700; font-size:.82rem;
+    padding:7px 14px; border-radius:999px; cursor:pointer; white-space:nowrap; display:none;
+  }
+  .dots{ display:none; flex-wrap:wrap; gap:7px; margin-top:12px; max-height:170px; overflow-y:auto; padding-top:4px; }
+  .dot{
+    width:26px; height:26px; border-radius:50%; border:none; cursor:pointer;
+    font-size:.72rem; font-weight:700; color:#fff; background:#b9c1cc;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .dot.correct{ background:#185FA5; }
+  .dot.wrong{ background:#E24B4A; }
+  .dot.cur{ outline:3px solid #15324d; outline-offset:1px; }
+
+  /* quiz area */
+  #quizArea{ display:none; }
+  .qnum{ font-size:.85rem; color:#888; font-weight:700; margin-bottom:6px; }
+  .qtext{ font-size:1.08rem; font-weight:700; color:#15324d; margin-bottom:14px; line-height:1.5; }
+
+  .diagram{ position:relative; background:#fff; border:2px solid #dbe3ec; border-radius:14px; padding:18px 16px; margin-bottom:18px; overflow:hidden; }
+  .arrow-overlay{ position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; z-index:1; }
+  .sline{ position:relative; z-index:2; display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .lbl{
+    flex:0 0 auto; background:#185FA5; color:#fff; font-size:.66rem; font-weight:800;
+    padding:4px 8px; border-radius:6px; letter-spacing:.5px; align-self:center;
+  }
+  .stext{ font-size:1.1rem; color:#1a1a1a; line-height:1.6; }
+  .stext .vb{ font-weight:800; color:#185FA5; }
+  .blank{
+    display:inline-block; min-width:104px; text-align:center; border-bottom:2px solid #185FA5;
+    color:#185FA5; font-weight:700; padding:0 4px;
+  }
+  .blank.filled{ border-bottom:2px solid #1D9E75; color:#085041; }
+  .gap{ height:60px; }
+
+  .opts{ display:flex; flex-direction:column; gap:11px; }
+  .opt{
+    width:100%; text-align:left; cursor:pointer;
+    background:#e8edf4; color:#111111; border:2px solid transparent;
+    border-radius:12px; padding:15px 16px; font-size:1.05rem; font-weight:600;
+    transition:background .12s,border-color .12s;
+  }
+  .opt.correct{ background:#E1F5EE; border:2px solid #1D9E75; color:#085041; }
+  .opt.wrong{ background:#FCEBEB; border:2px solid #E24B4A; color:#501313; }
+  .opt:disabled{ cursor:default; }
+
+  .explain{
+    margin-top:14px; background:#FCEBEB; border:2px solid #E24B4A; color:#501313;
+    border-radius:12px; padding:13px 15px; font-size:.96rem; line-height:1.5; display:none;
+  }
+  .explain.show{ display:block; }
+
+  .navbtns{ display:flex; gap:12px; margin-top:20px; }
+  .navbtn{
+    flex:1; padding:14px; border-radius:12px; border:none; cursor:pointer;
+    font-size:1rem; font-weight:700;
+  }
+  .prev{ background:#e8edf4; color:#185FA5; }
+  .next{ background:#185FA5; color:#fff; }
+  .navbtn:disabled{ opacity:.4; cursor:default; }
+
+  /* results */
+  #resultsScreen{ display:none; }
+  #resultsScreen.show{ display:block; }
+  .score{ text-align:center; font-size:2.2rem; font-weight:800; color:#185FA5; margin:6px 0 4px; }
+  .score-sub{ text-align:center; color:#555; margin-bottom:18px; }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:10px; margin-bottom:20px; }
+  .gcard{
+    border-radius:10px; padding:10px 6px; text-align:center; cursor:pointer; border:2px solid transparent;
+  }
+  .gcard .gn{ font-size:.8rem; font-weight:700; color:#555; }
+  .gcard .gs{ font-size:.85rem; font-weight:800; margin-top:3px; }
+  .gcard.c{ background:#E1F5EE; border-color:#1D9E75; } .gcard.c .gs{ color:#085041; }
+  .gcard.w{ background:#FCEBEB; border-color:#E24B4A; } .gcard.w .gs{ color:#501313; }
+  .gcard.s{ background:#f0f0f0; border-color:#ccc; } .gcard.s .gs{ color:#777; }
+  .actbtns{ display:flex; flex-direction:column; gap:11px; }
+  .actbtn{ padding:14px; border-radius:12px; border:none; cursor:pointer; font-size:1rem; font-weight:700; }
+  .copy{ background:#e8edf4; color:#185FA5; }
+  .retry{ background:#185FA5; color:#fff; }
+  .fresh{ background:#fff; color:#E24B4A; border:2px solid #E24B4A; }
+
+  /* modal */
+  .overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; padding:24px; z-index:50; }
+  .overlay.show{ display:flex; }
+  .modal{ background:#fff; border-radius:16px; padding:24px 22px; max-width:340px; width:100%; text-align:center; }
+  .modal h3{ margin:0 0 8px; color:#15324d; }
+  .modal p{ margin:0 0 20px; color:#555; font-size:.95rem; line-height:1.5; }
+  .modal-btns{ display:flex; gap:11px; }
+  .modal-btns button{ flex:1; padding:13px; border-radius:11px; border:none; cursor:pointer; font-weight:700; font-size:.95rem; }
+  .mcancel{ background:#e8edf4; color:#333; }
+  .mfresh{ background:#E24B4A; color:#fff; }
+</style>
+</head>
+<body>
+<!-- ===== Universal Quiz Timer (auto-injected) ===== -->
+<style>
+  #qzTimerBar { background: #ffffff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-family: 'Segoe UI', Arial, sans-serif; }
+  #qzTimerSetup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+  #qzTimerSetup label { font-weight: 700; }
+  #qzTimerInput { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+  #qzTimerStartBtn { background: #185FA5; color: #ffffff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  #qzTimerStartBtn:active { opacity: 0.8; }
+  #qzTimerRunning { display: none; align-items: center; gap: 8px; }
+  #qzTimerLabel { font-size: 0.78rem; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 0.02em; }
+  #qzTimerDisplay { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+  #qzTimerDisplay.qz-warn { color: #f5a623; }
+  #qzTimerDisplay.qz-danger { color: #E24B4A; }
+</style>
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label for="qzTimerInput">Set Time Limit:</label>
+    <input type="number" id="qzTimerInput" min="1" max="180" value="20"> min
+    <button id="qzTimerStartBtn" type="button">Start</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span id="qzTimerLabel">Time Left</span>
+    <span id="qzTimerDisplay">20:00</span>
+  </div>
+</div>
+<script>
+(function(){
+  var QZ_KEY = 'qzTimer_' + location.pathname;
+  var qz = { totalSec: null, startedAt: null };
+  try {
+    var raw = localStorage.getItem(QZ_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p.totalSec === 'number' && typeof p.startedAt === 'number') qz = p;
+    }
+  } catch(e) {}
+  var qzInterval = null;
+
+  function qzSave() { try { localStorage.setItem(QZ_KEY, JSON.stringify(qz)); } catch(e) {} }
+  function qzFormat(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60), s = sec % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function qzRender() {
+    var setupEl = document.getElementById('qzTimerSetup');
+    var runEl = document.getElementById('qzTimerRunning');
+    var disp = document.getElementById('qzTimerDisplay');
+    if (!setupEl || !runEl || !disp) return;
+    if (!qz.startedAt) {
+      setupEl.style.display = 'flex';
+      runEl.style.display = 'none';
+      return;
+    }
+    setupEl.style.display = 'none';
+    runEl.style.display = 'flex';
+    var elapsed = (Date.now() - qz.startedAt) / 1000;
+    var remaining = qz.totalSec - elapsed;
+    disp.classList.remove('qz-warn', 'qz-danger');
+    if (remaining <= 0) {
+      disp.textContent = "Time's Up";
+      disp.classList.add('qz-danger');
+      qzStopInterval();
+      return;
+    }
+    disp.textContent = qzFormat(remaining);
+    if (remaining <= qz.totalSec * 0.1) disp.classList.add('qz-danger');
+    else if (remaining <= qz.totalSec * 0.25) disp.classList.add('qz-warn');
+  }
+  function qzStartInterval() {
+    qzStopInterval();
+    qzInterval = setInterval(qzRender, 1000);
+  }
+  function qzStopInterval() {
+    if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+  }
+  function qzStart() {
+    var input = document.getElementById('qzTimerInput');
+    var minutes = parseFloat(input.value);
+    if (!minutes || minutes <= 0) minutes = 20;
+    qz.totalSec = Math.round(minutes * 60);
+    qz.startedAt = Date.now();
+    qzSave();
+    qzRender();
+    qzStartInterval();
+  }
+
+  var btn = document.getElementById('qzTimerStartBtn');
+  if (btn) btn.addEventListener('click', qzStart);
+  qzRender();
+  if (qz.startedAt) qzStartInterval();
+
+  function qzResetTimer() {
+    qz.totalSec = null;
+    qz.startedAt = null;
+    qzSave();
+    qzStopInterval();
+    qzRender();
+  }
+  var qzRetryRe = /retry|restart|reset|start\s*fresh|try\s*again|\uB2E4\uC2DC\s*\uC2DC\uC791|\uCC98\uC74C\uBD80\uD0B0/i;
+  document.addEventListener('click', function(ev) {
+    var el = ev.target, depth = 0;
+    while (el && depth < 4) {
+      if (el.id === 'qzTimerBar' || el.id === 'qzAttemptsBar') return;
+      var isClickable = el.tagName === 'BUTTON' || el.tagName === 'A' ||
+        (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) ||
+        (el.getAttribute && el.getAttribute('role') === 'button');
+      if (isClickable) {
+        var txt = (el.textContent || el.value || '').trim();
+        if (txt.length > 0 && txt.length < 40 && qzRetryRe.test(txt)) {
+          qzResetTimer();
+          return;
+        }
+      }
+      el = el.parentElement;
+      depth++;
+    }
+  }, true);
+})();
+</script>
+<!-- ===== End Universal Quiz Timer ===== -->
+
+<div class="wrap">
+  <h1>Passive Voice Quiz</h1>
+  <p class="attempts" id="attempts">Total Attempts: 0</p>
+  <div class="badge-row"><span class="badge">Passive Voice</span></div>
+
+  <div class="nav">
+    <div class="nav-row">
+      <span class="nav-count" id="navCount">0 / 10</span>
+      <div class="bar"><div class="bar-fill" id="barFill"></div></div>
+      <button class="resbtn" id="resBtn" onclick="goResults(false)">Results</button>
+      <button class="jumpbtn" id="jumpBtn" onclick="toggleJump()">Jump</button>
+    </div>
+    <div class="dots" id="dots"></div>
+  </div>
+
+  <div id="quizArea"></div>
+  <div id="resultsScreen"></div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3 id="modalTitle">Start Fresh?</h3>
+    <p id="modalText">This will erase all your answers and restart the quiz from the beginning.</p>
+    <div class="modal-btns">
+      <button class="mcancel" onclick="closeModal()">Cancel</button>
+      <button class="mfresh" id="modalConfirm" onclick="doFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+var QUESTIONS = [
+  { s:"King Sejong", v:"invented", o:"Hangeul", pBefore:"Hangeul", pAfter:"by King Sejong.",
+    options:["was invented","were invented","was inventing","was invent"], ci:0,
+    explanation:'The new subject "Hangeul" is singular and the action is in the past, so use was + the past participle "invented": was invented.' },
+
+  { s:"The teacher", v:"explains", o:"the lesson", pBefore:"The lesson", pAfter:"by the teacher.",
+    options:["are explained","is explained","is explaining","is explain"], ci:1,
+    explanation:'The new subject "the lesson" is singular and the action is in the present, so use is + the past participle "explained": is explained.' },
+
+  { s:"Workers", v:"built", o:"the bridge", pBefore:"The bridge", pAfter:"by workers.",
+    options:["were built","was built","was building","was build"], ci:1,
+    explanation:'The new subject "the bridge" is singular and the action is in the past, so use was + the past participle "built": was built.' },
+
+  { s:"The dog", v:"chased", o:"the cats", pBefore:"The cats", pAfter:"by the dog.",
+    options:["was chased","were chased","were chasing","were chase"], ci:1,
+    explanation:'The new subject "the cats" is plural and the action is in the past, so use were + the past participle "chased": were chased.' },
+
+  { s:"Farmers", v:"grow", o:"rice", pBefore:"Rice", pAfter:"by farmers.",
+    options:["is grown","are grown","is growing","is grow"], ci:0,
+    explanation:'The new subject "rice" is uncountable (treated as singular) and the action is in the present, so use is + the past participle "grown": is grown.' },
+
+  { s:"The artist", v:"painted", o:"the wall", pBefore:"The wall", pAfter:"by the artist.",
+    options:["was painted","is painted","was painting","were painted"], ci:0,
+    explanation:'The new subject "the wall" is singular and the action is in the past, so use was + the past participle "painted": was painted.' },
+
+  { s:"The company", v:"sells", o:"cars", pBefore:"Cars", pAfter:"by the company.",
+    options:["is sold","are sold","are selling","are sell"], ci:1,
+    explanation:'The new subject "cars" is plural and the action is in the present, so use are + the past participle "sold": are sold.' },
+
+  { s:"A spider", v:"caught", o:"the fly", pBefore:"The fly", pAfter:"by a spider.",
+    options:["was caught","were caught","was catching","was catch"], ci:0,
+    explanation:'The new subject "the fly" is singular and the action is in the past, so use was + the past participle "caught": was caught.' },
+
+  { s:"The children", v:"break", o:"the toys", pBefore:"The toys", pAfter:"by the children.",
+    options:["are broken","is broken","are breaking","are break"], ci:0,
+    explanation:'The new subject "the toys" is plural and the action is in the present, so use are + the past participle "broken": are broken.' },
+
+  { s:"The waiter", v:"served", o:"the guests", pBefore:"The guests", pAfter:"by the waiter.",
+    options:["was served","were served","were serving","were serve"], ci:1,
+    explanation:'The new subject "the guests" is plural and the action is in the past, so use were + the past participle "served": were served.' },
+
+  { s:"The chef", v:"cooked", o:"the meal", pBefore:"The meal", pAfter:"by the chef.",
+    options:["was cooked","were cooked","was cooking","was cook"], ci:0,
+    explanation:'The new subject "the meal" is singular and the action is in the past, so use was + the past participle "cooked": was cooked.' },
+
+  { s:"Scientists", v:"study", o:"the data", pBefore:"The data", pAfter:"by scientists.",
+    options:["is studied","are studied","is studying","is study"], ci:0,
+    explanation:'The new subject "the data" is treated as singular and the action is in the present, so use is + the past participle "studied": is studied.' },
+
+  { s:"A mechanic", v:"fixed", o:"the car", pBefore:"The car", pAfter:"by a mechanic.",
+    options:["was fixed","were fixed","was fixing","was fix"], ci:0,
+    explanation:'The new subject "the car" is singular and the action is in the past, so use was + the past participle "fixed": was fixed.' },
+
+  { s:"The students", v:"read", o:"the book", pBefore:"The book", pAfter:"by the students.",
+    options:["is read","are read","was read","were read"], ci:2,
+    explanation:'The new subject "the book" is singular and the action is in the past, so use was + the past participle "read": was read.' },
+
+  { s:"The boy", v:"kicked", o:"the ball", pBefore:"The ball", pAfter:"by the boy.",
+    options:["was kicked","were kicked","was kicking","was kick"], ci:0,
+    explanation:'The new subject "the ball" is singular and the action is in the past, so use was + the past participle "kicked": was kicked.' },
+
+  { s:"The factory", v:"produces", o:"shoes", pBefore:"Shoes", pAfter:"by the factory.",
+    options:["is produced","are produced","are producing","are produce"], ci:1,
+    explanation:'The new subject "shoes" is plural and the action is in the present, so use are + the past participle "produced": are produced.' },
+
+  { s:"Volunteers", v:"planted", o:"the trees", pBefore:"The trees", pAfter:"by volunteers.",
+    options:["was planted","were planted","were planting","were plant"], ci:1,
+    explanation:'The new subject "the trees" is plural and the action is in the past, so use were + the past participle "planted": were planted.' },
+
+  { s:"The nurse", v:"checks", o:"the patient", pBefore:"The patient", pAfter:"by the nurse.",
+    options:["are checked","is checked","is checking","is check"], ci:1,
+    explanation:'The new subject "the patient" is singular and the action is in the present, so use is + the past participle "checked": is checked.' },
+
+  { s:"The director", v:"filmed", o:"the scene", pBefore:"The scene", pAfter:"by the director.",
+    options:["was filmed","were filmed","was filming","were filming"], ci:0,
+    explanation:'The new subject "the scene" is singular and the action is in the past, so use was + the past participle "filmed": was filmed.' },
+
+  { s:"Lions", v:"hunt", o:"zebras", pBefore:"Zebras", pAfter:"by lions.",
+    options:["is hunted","are hunted","are hunting","are hunt"], ci:1,
+    explanation:'The new subject "zebras" is plural and the action is in the present, so use are + the past participle "hunted": are hunted.' },
+
+  { s:"The engineer", v:"designed", o:"the machine", pBefore:"The machine", pAfter:"by the engineer.",
+    options:["was designed","were designed","was designing","was design"], ci:0,
+    explanation:'The new subject "the machine" is singular and the action is in the past, so use was + the past participle "designed": was designed.' },
+
+  { s:"Parents", v:"love", o:"their children", pBefore:"Their children", pAfter:"by parents.",
+    options:["is loved","are loved","are loving","are love"], ci:1,
+    explanation:'The new subject "their children" is plural and the action is in the present, so use are + the past participle "loved": are loved.' },
+
+  { s:"The baker", v:"baked", o:"the bread", pBefore:"The bread", pAfter:"by the baker.",
+    options:["was baked","were baked","was baking","was bake"], ci:0,
+    explanation:'The new subject "the bread" is singular and the action is in the past, so use was + the past participle "baked": was baked.' },
+
+  { s:"The police", v:"arrested", o:"the suspect", pBefore:"The suspect", pAfter:"by the police.",
+    options:["were arrested","was arrested","was arresting","was arrest"], ci:1,
+    explanation:'The new subject "the suspect" is singular and the action is in the past, so use was + the past participle "arrested": was arrested.' },
+
+  { s:"The wind", v:"blew", o:"the leaves", pBefore:"The leaves", pAfter:"by the wind.",
+    options:["was blown","were blown","were blowing","were blow"], ci:1,
+    explanation:'The new subject "the leaves" is plural and the action is in the past, so use were + the past participle "blown": were blown.' },
+
+  { s:"The photographer", v:"takes", o:"the pictures", pBefore:"The pictures", pAfter:"by the photographer.",
+    options:["is taken","are taken","are taking","are take"], ci:1,
+    explanation:'The new subject "the pictures" is plural and the action is in the present, so use are + the past participle "taken": are taken.' },
+
+  { s:"A bee", v:"stung", o:"the boy", pBefore:"The boy", pAfter:"by a bee.",
+    options:["was stung","were stung","was stinging","was sting"], ci:0,
+    explanation:'The new subject "the boy" is singular and the action is in the past, so use was + the past participle "stung": was stung.' },
+
+  { s:"The coach", v:"trains", o:"the athletes", pBefore:"The athletes", pAfter:"by the coach.",
+    options:["is trained","are trained","are training","are train"], ci:1,
+    explanation:'The new subject "the athletes" is plural and the action is in the present, so use are + the past participle "trained": are trained.' },
+
+  { s:"The storm", v:"damaged", o:"the houses", pBefore:"The houses", pAfter:"by the storm.",
+    options:["was damaged","were damaged","were damaging","were damage"], ci:1,
+    explanation:'The new subject "the houses" is plural and the action is in the past, so use were + the past participle "damaged": were damaged.' },
+
+  { s:"The librarian", v:"organizes", o:"the books", pBefore:"The books", pAfter:"by the librarian.",
+    options:["is organized","are organized","are organizing","are organize"], ci:1,
+    explanation:'The new subject "the books" is plural and the action is in the present, so use are + the past participle "organized": are organized.' },
+
+  { s:"The surgeon", v:"performed", o:"the operation", pBefore:"The operation", pAfter:"by the surgeon.",
+    options:["was performed","were performed","was performing","was perform"], ci:0,
+    explanation:'The new subject "the operation" is singular and the action is in the past, so use was + the past participle "performed": was performed.' },
+
+  { s:"The company", v:"hired", o:"new workers", pBefore:"New workers", pAfter:"by the company.",
+    options:["was hired","were hired","were hiring","were hire"], ci:1,
+    explanation:'The new subject "new workers" is plural and the action is in the past, so use were + the past participle "hired": were hired.' },
+
+  { s:"The river", v:"carries", o:"the soil", pBefore:"The soil", pAfter:"by the river.",
+    options:["are carried","is carried","is carrying","is carry"], ci:1,
+    explanation:'The new subject "the soil" is singular and the action is in the present, so use is + the past participle "carried": is carried.' },
+
+  { s:"Robots", v:"assemble", o:"the parts", pBefore:"The parts", pAfter:"by robots.",
+    options:["is assembled","are assembled","are assembling","are assemble"], ci:1,
+    explanation:'The new subject "the parts" is plural and the action is in the present, so use are + the past participle "assembled": are assembled.' },
+
+  { s:"The president", v:"signed", o:"the law", pBefore:"The law", pAfter:"by the president.",
+    options:["was signed","were signed","was signing","was sign"], ci:0,
+    explanation:'The new subject "the law" is singular and the action is in the past, so use was + the past participle "signed": was signed.' },
+
+  { s:"The farmer", v:"harvested", o:"the crops", pBefore:"The crops", pAfter:"by the farmer.",
+    options:["was harvested","were harvested","were harvesting","were harvest"], ci:1,
+    explanation:'The new subject "the crops" is plural and the action is in the past, so use were + the past participle "harvested": were harvested.' },
+
+  { s:"The pilot", v:"landed", o:"the plane", pBefore:"The plane", pAfter:"by the pilot.",
+    options:["was landed","were landed","was landing","was land"], ci:0,
+    explanation:'The new subject "the plane" is singular and the action is in the past, so use was + the past participle "landed": was landed.' },
+
+  { s:"The kids", v:"ate", o:"the pizza", pBefore:"The pizza", pAfter:"by the kids.",
+    options:["were eaten","was eaten","was eating","was eat"], ci:1,
+    explanation:'The new subject "the pizza" is singular and the action is in the past, so use was + the past participle "eaten": was eaten.' },
+
+  { s:"Teachers", v:"grade", o:"the tests", pBefore:"The tests", pAfter:"by teachers.",
+    options:["is graded","are graded","are grading","are grade"], ci:1,
+    explanation:'The new subject "the tests" is plural and the action is in the present, so use are + the past participle "graded": are graded.' },
+
+  { s:"The workers", v:"repaired", o:"the road", pBefore:"The road", pAfter:"by the workers.",
+    options:["was repaired","were repaired","was repairing","was repair"], ci:0,
+    explanation:'The new subject "the road" is singular and the action is in the past, so use was + the past participle "repaired": was repaired.' },
+
+  { s:"The sun", v:"warms", o:"the earth", pBefore:"The earth", pAfter:"by the sun.",
+    options:["are warmed","is warmed","is warming","is warm"], ci:1,
+    explanation:'The new subject "the earth" is singular and the action is in the present, so use is + the past participle "warmed": is warmed.' },
+
+  { s:"The judge", v:"sentenced", o:"the criminal", pBefore:"The criminal", pAfter:"by the judge.",
+    options:["was sentenced","were sentenced","was sentencing","was sentence"], ci:0,
+    explanation:'The new subject "the criminal" is singular and the action is in the past, so use was + the past participle "sentenced": was sentenced.' },
+
+  { s:"Doctors", v:"treat", o:"the patients", pBefore:"The patients", pAfter:"by doctors.",
+    options:["is treated","are treated","are treating","are treat"], ci:1,
+    explanation:'The new subject "the patients" is plural and the action is in the present, so use are + the past participle "treated": are treated.' },
+
+  { s:"The cat", v:"scratched", o:"the sofa", pBefore:"The sofa", pAfter:"by the cat.",
+    options:["was scratched","were scratched","was scratching","was scratch"], ci:0,
+    explanation:'The new subject "the sofa" is singular and the action is in the past, so use was + the past participle "scratched": was scratched.' },
+
+  { s:"The editor", v:"corrects", o:"the errors", pBefore:"The errors", pAfter:"by the editor.",
+    options:["is corrected","are corrected","are correcting","are correct"], ci:1,
+    explanation:'The new subject "the errors" is plural and the action is in the present, so use are + the past participle "corrected": are corrected.' },
+
+  { s:"The thief", v:"stole", o:"the jewelry", pBefore:"The jewelry", pAfter:"by the thief.",
+    options:["was stolen","were stolen","was stealing","was steal"], ci:0,
+    explanation:'The new subject "the jewelry" is singular and the action is in the past, so use was + the past participle "stolen": was stolen.' },
+
+  { s:"The city", v:"maintains", o:"the parks", pBefore:"The parks", pAfter:"by the city.",
+    options:["is maintained","are maintained","are maintaining","are maintain"], ci:1,
+    explanation:'The new subject "the parks" is plural and the action is in the present, so use are + the past participle "maintained": are maintained.' },
+
+  { s:"The audience", v:"applauded", o:"the singer", pBefore:"The singer", pAfter:"by the audience.",
+    options:["was applauded","were applauded","was applauding","was applaud"], ci:0,
+    explanation:'The new subject "the singer" is singular and the action is in the past, so use was + the past participle "applauded": was applauded.' },
+
+  { s:"The teacher", v:"corrected", o:"the homework", pBefore:"The homework", pAfter:"by the teacher.",
+    options:["was corrected","were corrected","was correcting","was correct"], ci:0,
+    explanation:'The new subject "the homework" is singular and the action is in the past, so use was + the past participle "corrected": was corrected.' },
+
+  { s:"Bees", v:"pollinate", o:"the flowers", pBefore:"The flowers", pAfter:"by bees.",
+    options:["is pollinated","are pollinated","are pollinating","are pollinate"], ci:1,
+    explanation:'The new subject "the flowers" is plural and the action is in the present, so use are + the past participle "pollinated": are pollinated.' }
+];
+
+var N = QUESTIONS.length;
+var KEY = "quiz_passivevoice_50_v1";
+var ATTEMPTS_KEY = "quiz_passivevoice_attempts_v1";
+var ORDER_KEY = KEY + "_order_v1";
+
+function identityOrder(){ var a=[]; for(var i=0;i<N;i++) a.push(i); return a; }
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length!==N) return false;
+  var seen={};
+  for(var i=0;i<arr.length;i++){
+    var v=arr[i];
+    if(typeof v!=="number" || v<0 || v>=N || seen[v]) return false;
+    seen[v]=true;
+  }
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw=localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr=JSON.parse(raw);
+    return isValidOrder(arr) ? arr : null;
+  }catch(e){ return null; }
+}
+function saveOrder(order){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(order)); }catch(e){} }
+function shuffleOrder(arr){
+  var a=arr.slice();
+  for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; }
+  return a;
+}
+var currentOrder = loadOrder() || identityOrder();
+var pendingFreshMode = "original";
+
+var jumpOpen = false;
+
+function fresh(){ return { cur:0, answers:{}, shuffles:{}, showResults:false }; }
+
+function loadState(){
+  try{
+    var raw = localStorage.getItem(KEY);
+    if(!raw) return fresh();
+    var s = JSON.parse(raw);
+    if(typeof s.cur !== "number" || s.cur < 0 || s.cur >= N) throw 0;
+    if(typeof s.answers !== "object" || s.answers === null) throw 0;
+    if(typeof s.shuffles !== "object" || s.shuffles === null) throw 0;
+    s.showResults = !!s.showResults;
+    return s;
+  }catch(e){
+    localStorage.removeItem(KEY);
+    return fresh();
+  }
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+
+function getAttempts(){ var v = parseInt(localStorage.getItem(ATTEMPTS_KEY),10); return isNaN(v)?0:v; }
+function setAttempts(v){ try{ localStorage.setItem(ATTEMPTS_KEY, String(v)); }catch(e){} }
+
+var state = loadState();
+var retry = null;            // {list, cur, answers, shuffles}
+var view = state.showResults ? "results" : "quiz";  // quiz | results | retry | retryResults
+
+function shuffleArr(a){
+  for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; }
+  return a;
+}
+function getShuffle(store, qi){
+  if(!store[qi]){ store[qi] = shuffleArr([0,1,2,3]); if(store===state.shuffles) save(); }
+  return store[qi];
+}
+
+function session(){
+  if(view==="retry" || view==="retryResults"){
+    return { list:retry.list, cur:retry.cur, answers:retry.answers, shuffles:retry.shuffles, isRetry:true };
+  }
+  return { list:currentOrder, cur:state.cur, answers:state.answers, shuffles:state.shuffles, isRetry:false };
+}
+
+function answeredCount(sess){
+  var c=0; for(var i=0;i<sess.list.length;i++){ if(sess.answers[sess.list[i]]!==undefined) c++; } return c;
+}
+
+function toggleJump(){ jumpOpen=!jumpOpen; render(); }
+
+function renderNav(sess){
+  var total = sess.list.length;
+  var ans = answeredCount(sess);
+  document.getElementById("navCount").textContent = (view==="results"||view==="retryResults") ? "Results" : (ans + " / " + total);
+  document.getElementById("barFill").style.width = (total? Math.round(ans/total*100):0) + "%";
+
+  var jb = document.getElementById("jumpBtn");
+  jb.textContent = jumpOpen ? "Hide" : "Jump";
+
+  var rb = document.getElementById("resBtn");
+  rb.style.display = (state.showResults && view==="quiz") ? "block" : "none";
+
+  var dotsEl = document.getElementById("dots");
+  dotsEl.style.display = jumpOpen ? "flex" : "none";
+  dotsEl.innerHTML = "";
+  for(var p=0;p<sess.list.length;p++){
+    var qi = sess.list[p];
+    var b = document.createElement("button");
+    b.className = "dot";
+    b.textContent = (p+1);
+    var a = sess.answers[qi];
+    if(a!==undefined){ b.className += (a===QUESTIONS[qi].ci) ? " correct" : " wrong"; }
+    if(p===sess.cur && (view==="quiz"||view==="retry")) b.className += " cur";
+    (function(pp){ b.onclick=function(){ jumpTo(pp); }; })(p);
+    dotsEl.appendChild(b);
+  }
+}
+
+function jumpTo(p){
+  if(view==="results"){ view="quiz"; }
+  if(view==="retryResults"){ view="retry"; }
+  if(view==="quiz"){ state.cur=p; save(); }
+  else if(view==="retry"){ retry.cur=p; }
+  render();
+}
+
+function diagramHTML(q, answered){
+  var blank = answered
+    ? '<span id="pB" class="blank filled">' + q.options[q.ci] + '</span>'
+    : '<span id="pB" class="blank">&nbsp;</span>';
+  var active = '<span id="aS">' + q.s + '</span> '
+             + '<span id="aV" class="vb">' + q.v + '</span> '
+             + '<span id="aO">' + q.o + '</span>.';
+  var passive = '<span id="pS">' + q.pBefore + '</span> '
+              + blank + ' '
+              + '<span id="pBy">' + q.pAfter + '</span>';
+  return '<div class="diagram" id="diagram">'
+    + '<svg class="arrow-overlay" id="arrowSvg"></svg>'
+    + '<div class="sline"><span class="lbl">ACTIVE</span><span class="stext">' + active + '</span></div>'
+    + '<div class="gap"></div>'
+    + '<div class="sline"><span class="lbl">PASSIVE</span><span class="stext">' + passive + '</span></div>'
+    + '</div>';
+}
+
+function drawArrows(){
+  var d = document.getElementById("diagram");
+  var svg = document.getElementById("arrowSvg");
+  if(!d || !svg) return;
+  var dr = d.getBoundingClientRect();
+  var W = d.clientWidth, H = d.clientHeight;
+  function c(id){
+    var el = document.getElementById(id); if(!el) return null;
+    var r = el.getBoundingClientRect();
+    return { x:(r.left+r.right)/2 - dr.left, top:r.top - dr.top, bottom:r.bottom - dr.top };
+  }
+  var aS=c("aS"), aV=c("aV"), aO=c("aO"), pS=c("pS"), pB=c("pB"), pBy=c("pBy");
+  if(!aS||!aV||!aO||!pS||!pB||!pBy) return;
+  function line(x1,y1,x2,y2){
+    return '<line x1="'+x1.toFixed(1)+'" y1="'+y1.toFixed(1)+'" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)
+      +'" stroke="#185FA5" stroke-width="2.4" marker-end="url(#ah2)"></line>';
+  }
+  var inner = '<defs><marker id="ah2" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">'
+    + '<path d="M0,0 L10,5 L0,10 z" fill="#185FA5"></path></marker></defs>';
+  // subject (top-left) -> by-phrase (bottom-right)
+  inner += line(aS.x, aS.bottom + 3, pBy.x, pBy.top - 5);
+  // object (top-right) -> new subject (bottom-left)
+  inner += line(aO.x, aO.bottom + 3, pS.x, pS.top - 5);
+  // verb (top-center) -> blank (bottom-center): vertical
+  inner += line(aV.x, aV.bottom + 3, pB.x, pB.top - 6);
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  svg.setAttribute("width", W);
+  svg.setAttribute("height", H);
+  svg.innerHTML = inner;
+}
+
+function renderQuiz(sess){
+  var qi = sess.list[sess.cur];
+  var q = QUESTIONS[qi];
+  var sel = sess.answers[qi];
+  var answered = sel!==undefined;
+  var order = getShuffle(sess.shuffles, qi);
+
+  var html = '';
+  html += '<div id="quizCard">';
+  html += '<div class="qnum">Question ' + (sess.cur+1) + ' of ' + sess.list.length + (sess.isRetry?' (Retry)':'') + '</div>';
+  html += '<div class="qtext">Choose the correct verb form to complete the passive sentence.</div>';
+  html += diagramHTML(q, answered);
+  html += '<div class="opts">';
+  for(var d=0; d<order.length; d++){
+    var oi = order[d];
+    var cls = "opt";
+    if(answered){
+      if(oi===q.ci) cls += " correct";
+      else if(oi===sel) cls += " wrong";
+    }
+    html += '<button class="' + cls + '" ' + (answered?'disabled':'') + ' onclick="pick(' + oi + ')">' + q.options[oi] + '</button>';
+  }
+  html += '</div>';
+
+  var ex = (answered && sel!==q.ci) ? ' show' : '';
+  html += '<div class="explain' + ex + '">' + q.explanation + '</div>';
+
+  // nav buttons
+  var isLast = (sess.cur === sess.list.length-1);
+  html += '<div class="navbtns">';
+  html += '<button class="navbtn prev" ' + (sess.cur===0?'disabled':'') + ' onclick="goPrev()">Prev</button>';
+  if(isLast){
+    html += '<button class="navbtn next" onclick="goResults(' + (sess.isRetry?'true':'false') + ')">See Results &rarr;</button>';
+  } else {
+    html += '<button class="navbtn next" onclick="goNext()">Next</button>';
+  }
+  html += '</div>';
+  html += '</div>';
+
+  var qa = document.getElementById("quizArea");
+  qa.innerHTML = html;
+  qa.style.display = "block";
+  document.getElementById("resultsScreen").className = "";
+  document.getElementById("resultsScreen").style.display = "none";
+  if(window.requestAnimationFrame){ requestAnimationFrame(function(){ requestAnimationFrame(drawArrows); }); }
+  else { setTimeout(drawArrows, 30); }
+}
+
+function pick(oi){
+  var sess = session();
+  var qi = sess.list[sess.cur];
+  if(sess.answers[qi]!==undefined) return;
+  sess.answers[qi] = oi;
+  if(!sess.isRetry) save();
+  render();
+}
+function goPrev(){
+  var sess = session();
+  if(sess.cur>0){ if(sess.isRetry) retry.cur--; else { state.cur--; save(); } render(); }
+}
+function goNext(){
+  var sess = session();
+  if(sess.cur < sess.list.length-1){ if(sess.isRetry) retry.cur++; else { state.cur++; save(); } render(); }
+}
+
+function goResults(isRetry){
+  if(isRetry){ view="retryResults"; render(); return; }
+  try{ setAttempts(getAttempts()+1); }catch(e){}
+  state.showResults = true; save();
+  view="results"; jumpOpen=false; render();
+}
+
+function renderResults(){
+  var correct=0, wrong=0, skipped=0;
+  for(var i=0;i<N;i++){
+    var a = state.answers[i];
+    if(a===undefined) skipped++;
+    else if(a===QUESTIONS[i].ci) correct++;
+    else wrong++;
+  }
+  var html = '';
+  html += '<div class="score">' + correct + ' / ' + N + '</div>';
+  html += '<div class="score-sub">Correct: ' + correct + '  |  Wrong: ' + wrong + '  |  Skipped: ' + skipped + '</div>';
+  html += '<div class="grid">';
+  for(var j=0;j<N;j++){
+    var aa = state.answers[j];
+    var st, lab;
+    if(aa===undefined){ st="s"; lab="Skipped"; }
+    else if(aa===QUESTIONS[j].ci){ st="c"; lab="Correct"; }
+    else { st="w"; lab="Wrong"; }
+    html += '<div class="gcard ' + st + '" onclick="jumpFromResults(' + j + ')">'
+         + '<div class="gn">Q' + (j+1) + '</div><div class="gs">' + lab + '</div></div>';
+  }
+  html += '</div>';
+  html += '<div class="actbtns">';
+  html += '<button class="actbtn copy" onclick="copyAll()">Copy All Results</button>';
+  html += '<button class="actbtn retry" onclick="startRetry()">Retry Wrong Questions</button>';
+  html += '<button class="actbtn fresh" id="startFreshBtn" onclick="openModal(\'original\')">Start Fresh (Original Order)</button>';
+  html += '<button class="actbtn fresh" id="startFreshRandomBtn" onclick="openModal(\'random\')">Start Fresh (Random Order)</button>';
+  html += '</div>';
+
+  document.getElementById("quizArea").style.display = "none";
+  var rs = document.getElementById("resultsScreen");
+  rs.innerHTML = html;
+  rs.className = "show";
+  rs.style.display = "block";
+}
+
+function jumpFromResults(j){ view="quiz"; state.cur=j; save(); render(); }
+
+function startRetry(){
+  var list=[];
+  for(var i=0;i<N;i++){ var a=state.answers[i]; if(a!==undefined && a!==QUESTIONS[i].ci) list.push(i); }
+  if(list.length===0){ return; }
+  retry = { list:list, cur:0, answers:{}, shuffles:{} };
+  view="retry"; jumpOpen=false; render();
+}
+
+function renderRetryResults(){
+  var correct=0;
+  for(var i=0;i<retry.list.length;i++){ var qi=retry.list[i]; if(retry.answers[qi]===QUESTIONS[qi].ci) correct++; }
+  var total = retry.list.length;
+  var html='';
+  html += '<div class="score">' + correct + ' / ' + total + '</div>';
+  html += '<div class="score-sub">Retry round complete</div>';
+  html += '<div class="grid">';
+  for(var j=0;j<retry.list.length;j++){
+    var qi2=retry.list[j]; var aa=retry.answers[qi2];
+    var st,lab;
+    if(aa===undefined){ st="s"; lab="Skipped"; }
+    else if(aa===QUESTIONS[qi2].ci){ st="c"; lab="Correct"; }
+    else { st="w"; lab="Wrong"; }
+    html += '<div class="gcard ' + st + '"><div class="gn">Q' + (qi2+1) + '</div><div class="gs">' + lab + '</div></div>';
+  }
+  html += '</div>';
+  html += '<div class="actbtns">';
+  html += '<button class="actbtn retry" onclick="backToMain()">Back to Results</button>';
+  html += '</div>';
+
+  document.getElementById("quizArea").style.display="none";
+  var rs=document.getElementById("resultsScreen");
+  rs.innerHTML=html; rs.className="show"; rs.style.display="block";
+}
+function backToMain(){ retry=null; view="results"; render(); }
+
+function copyAll(){
+  var correct=0;
+  for(var i=0;i<N;i++){ if(state.answers[i]===QUESTIONS[i].ci) correct++; }
+  var lines=["Passive Voice Quiz - Results","Score: " + correct + " / " + N, ""];
+  for(var j=0;j<N;j++){
+    var q=QUESTIONS[j]; var a=state.answers[j];
+    var full = q.pBefore + " " + q.options[q.ci] + " " + q.pAfter;
+    var mark;
+    if(a===undefined) mark="SKIPPED";
+    else if(a===q.ci) mark="CORRECT";
+    else mark="WRONG (you: " + q.options[a] + ")";
+    lines.push((j+1) + ". " + mark + " - " + full);
+  }
+  var text=lines.join("\n");
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(flashCopy, fallbackCopy.bind(null,text));
+  } else { fallbackCopy(text); }
+}
+function fallbackCopy(text){
+  var ta=document.createElement("textarea");
+  ta.value=text; ta.style.position="fixed"; ta.style.top="-9999px"; ta.setAttribute("readonly","");
+  document.body.appendChild(ta); ta.focus(); ta.setSelectionRange(0,ta.value.length);
+  try{ document.execCommand("copy"); flashCopy(); }catch(e){}
+  document.body.removeChild(ta);
+}
+function flashCopy(){
+  var b=document.querySelector(".actbtn.copy"); if(!b) return;
+  var old=b.textContent; b.textContent="Copied!";
+  setTimeout(function(){ b.textContent=old; },1200);
+}
+
+function openModal(mode){
+  pendingFreshMode = mode;
+  document.getElementById("modalTitle").textContent = mode === "random" ? "Start Fresh (Random Order)?" : "Start Fresh (Original Order)?";
+  document.getElementById("modalText").textContent = mode === "random" ? "Questions will be reshuffled into a new random order, and all progress will be reset." : "Questions will return to their original order, and all progress will be reset.";
+  document.getElementById("overlay").className="overlay show";
+}
+function closeModal(){ document.getElementById("overlay").className="overlay"; }
+function doFresh(){
+  localStorage.removeItem(KEY);
+  state = fresh(); retry=null; view="quiz"; jumpOpen=false;
+  currentOrder = (pendingFreshMode === "random") ? shuffleOrder(identityOrder()) : identityOrder();
+  saveOrder(currentOrder);
+  closeModal(); render();
+}
+
+function render(){
+  try{
+    document.getElementById("attempts").textContent = "Total Attempts: " + getAttempts();
+    var sess = session();
+    renderNav(sess);
+    if(view==="results"){ renderResults(); }
+    else if(view==="retryResults"){ renderRetryResults(); }
+    else { renderQuiz(sess); }
+  }catch(e){
+    var qa=document.getElementById("quizArea");
+    qa.style.display="block";
+    qa.innerHTML='<div style="padding:20px;text-align:center;color:#501313;background:#FCEBEB;border-radius:12px;">Something went wrong rendering this screen. Tap below to restart.<br><br><button class="actbtn fresh" onclick="doFresh()">Restart</button></div>';
+  }
+}
+
+var _rt;
+window.addEventListener("resize", function(){
+  clearTimeout(_rt);
+  _rt = setTimeout(function(){
+    if((view==="quiz"||view==="retry") && document.getElementById("diagram")) drawArrows();
+  }, 120);
+});
+
+render();
+</script>
+</body>
+</html>

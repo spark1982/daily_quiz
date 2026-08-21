@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vocabulary Quiz</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4fa; min-height: 100vh; }
+
+  .due-date {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #185FA5;
+    background: white;
+    padding: 10px 0 6px;
+  }
+
+  .quiz-header {
+    background: #185FA5;
+    color: white;
+    text-align: center;
+    padding: 14px 16px 10px;
+  }
+  .quiz-header h1 { font-size: 1.3rem; font-weight: 700; }
+  .quiz-header .subtitle { font-size: 0.85rem; opacity: 0.85; margin-top: 2px; }
+
+  /* DOT NAV */
+  .dot-nav {
+    display: flex; flex-wrap: wrap; gap: 5px;
+    justify-content: center;
+    padding: 10px 12px 6px;
+    background: white;
+    border-bottom: 1px solid #dde3ee;
+  }
+  .dot {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 700; cursor: pointer;
+    border: 2px solid #ccc; background: #f5f6fa; color: #555;
+    transition: transform 0.1s;
+  }
+  .dot:hover { transform: scale(1.1); }
+  .dot.current { border-color: #185FA5; background: #185FA5; color: white; }
+  .dot.correct { border-color: #1D9E75; background: #1D9E75; color: white; }
+  .dot.wrong { border-color: #E24B4A; background: #E24B4A; color: white; }
+  .dot.skipped { border-color: #aaa; background: #ddd; color: #555; }
+
+  .dot-nav {
+    display: none;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+
+  #nav-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px 0;
+    background: white;
+  }
+  #nav-count { font-size: 13px; white-space: nowrap; color: #555; }
+  .prog-track { background: #e8edf4; border-radius: 3px; height: 6px; flex: 1; margin: 0; }
+  .prog-fill { background: #185FA5; border-radius: 3px; height: 6px; width: 0%; transition: width 0.2s; }
+  #jump-btn {
+    font-size: 12px; padding: 4px 10px; border: 1px solid #185FA5;
+    border-radius: 14px; background: #fff; color: #185FA5;
+    cursor: pointer; white-space: nowrap;
+  }
+
+  .results-pill {
+    display: none; align-items: center; justify-content: center;
+    margin: 6px auto 0;
+    background: #185FA5; color: white;
+    border-radius: 20px; padding: 4px 18px;
+    font-size: 0.85rem; font-weight: 700;
+    width: fit-content;
+  }
+  .results-pill.show { display: flex; }
+
+  /* QUESTION AREA */
+  .quiz-area { display: none; max-width: 680px; margin: 0 auto; padding: 18px 14px 80px; }
+  .quiz-area.show { display: block; }
+
+  .q-counter { font-size: 0.82rem; color: #185FA5; font-weight: 600; margin-bottom: 8px; text-align: right; }
+
+  .word-box {
+    background: white;
+    border-radius: 12px;
+    padding: 22px 18px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    text-align: center;
+  }
+  .word-row {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+  }
+  .word-text { font-size: 2rem; font-weight: 800; color: #185FA5; }
+  .speaker-btn {
+    background: #e8edf4; border: none; border-radius: 50%;
+    width: 38px; height: 38px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; transition: background 0.15s;
+    flex-shrink: 0;
+  }
+  .speaker-btn:hover { background: #cddaf0; }
+  .speaker-btn:active { transform: scale(0.93); }
+
+  .type-badge {
+    display: inline-block;
+    background: #185FA5; color: white;
+    border-radius: 20px; padding: 2px 12px;
+    font-size: 0.75rem; font-weight: 600; margin-top: 8px;
+  }
+
+  .q-prompt { font-size: 1rem; color: #444; margin-bottom: 14px; font-weight: 500; }
+
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .opt-btn {
+    width: 100%; padding: 13px 16px;
+    border-radius: 10px; border: 2px solid transparent;
+    background: #e8edf4; color: #111111;
+    font-size: 0.95rem; text-align: left; cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+    line-height: 1.4;
+  }
+  .opt-btn:hover:not(:disabled) { background: #cddaf0; }
+  .opt-btn.correct-ans  { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .opt-btn.wrong-ans    { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+  .opt-btn.revealed-ans { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+
+  .explanation {
+    display: none; margin-top: 12px;
+    background: #fff8e1; border-left: 4px solid #f5a623;
+    border-radius: 6px; padding: 10px 14px;
+    font-size: 0.9rem; color: #5a3e00; line-height: 1.5;
+  }
+  .explanation.show { display: block; }
+
+  /* NAV BUTTONS */
+  .nav-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: white; border-top: 1px solid #dde3ee;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 20px; max-width: 680px; margin: 0 auto;
+    left: 50%; transform: translateX(-50%); width: 100%;
+  }
+  .nav-btn {
+    padding: 10px 28px; border-radius: 8px; border: none;
+    font-size: 1rem; font-weight: 700; cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .nav-btn.prev { background: #e8edf4; color: #185FA5; }
+  .nav-btn.next { background: #185FA5; color: white; }
+  .nav-btn:disabled { opacity: 0.35; cursor: default; }
+
+  /* RESULTS */
+  .results-screen { display: none; max-width: 680px; margin: 0 auto; padding: 18px 14px 100px; }
+  .results-screen.show { display: block; }
+  .results-title { font-size: 1.4rem; font-weight: 800; color: #185FA5; text-align: center; margin-bottom: 6px; }
+  .results-score { font-size: 1.1rem; text-align: center; color: #444; margin-bottom: 16px; }
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px; margin-bottom: 20px; }
+  .sg-card {
+    border-radius: 8px; padding: 6px 4px; text-align: center;
+    font-size: 0.75rem; font-weight: 700; cursor: pointer;
+    border: 2px solid transparent;
+  }
+  .sg-card.correct  { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .sg-card.wrong    { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+  .sg-card.skipped  { background: #f0f0f0; border-color: #aaa; color: #555; }
+
+  .wrong-list { margin-bottom: 20px; }
+  .wrong-item {
+    background: white; border-radius: 10px; padding: 12px 14px;
+    margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    font-size: 0.88rem; line-height: 1.5;
+  }
+  .wrong-item .wi-word { font-weight: 800; color: #185FA5; font-size: 1rem; }
+  .wrong-item .wi-your { color: #E24B4A; }
+  .wrong-item .wi-correct { color: #1D9E75; }
+
+  .res-btn {
+    display: block; width: 100%; padding: 13px;
+    border-radius: 10px; border: none; font-size: 1rem; font-weight: 700;
+    cursor: pointer; margin-bottom: 10px; text-align: center;
+  }
+  .res-btn.copy { background: #185FA5; color: white; }
+  .res-btn.retry { background: #1D9E75; color: white; }
+  .res-btn.fresh { background: #e8edf4; color: #185FA5; }
+
+  /* RETRY RESULTS */
+  .retry-results { display: none; max-width: 680px; margin: 0 auto; padding: 18px 14px 100px; }
+  .retry-results.show { display: block; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); z-index: 999;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: white; border-radius: 14px; padding: 24px 20px;
+    max-width: 320px; width: 90%; text-align: center;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  }
+  .modal-box h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; color: #222; }
+  .modal-box p  { font-size: 0.9rem; color: #555; margin-bottom: 20px; }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btns button { flex: 1; padding: 11px; border-radius: 8px; border: none; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+  .modal-btns .m-cancel { background: #e8edf4; color: #333; }
+  .modal-btns .m-confirm { background: #E24B4A; color: white; }
+</style>
+</head>
+<body>
+<!-- ===== Universal Quiz Timer (auto-injected) ===== -->
+<style>
+  #qzTimerBar { background: #ffffff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-family: 'Segoe UI', Arial, sans-serif; }
+  #qzTimerSetup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+  #qzTimerSetup label { font-weight: 700; }
+  #qzTimerInput { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+  #qzTimerStartBtn { background: #185FA5; color: #ffffff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  #qzTimerStartBtn:active { opacity: 0.8; }
+  #qzTimerRunning { display: none; align-items: center; gap: 8px; }
+  #qzTimerLabel { font-size: 0.78rem; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 0.02em; }
+  #qzTimerDisplay { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+  #qzTimerDisplay.qz-warn { color: #f5a623; }
+  #qzTimerDisplay.qz-danger { color: #E24B4A; }
+</style>
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label for="qzTimerInput">Set Time Limit:</label>
+    <input type="number" id="qzTimerInput" min="1" max="180" value="20"> min
+    <button id="qzTimerStartBtn" type="button">Start</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span id="qzTimerLabel">Time Left</span>
+    <span id="qzTimerDisplay">20:00</span>
+  </div>
+</div>
+<script>
+(function(){
+  var QZ_KEY = 'qzTimer_' + location.pathname;
+  var qz = { totalSec: null, startedAt: null };
+  try {
+    var raw = localStorage.getItem(QZ_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p.totalSec === 'number' && typeof p.startedAt === 'number') qz = p;
+    }
+  } catch(e) {}
+  var qzInterval = null;
+
+  function qzSave() { try { localStorage.setItem(QZ_KEY, JSON.stringify(qz)); } catch(e) {} }
+  function qzFormat(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60), s = sec % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function qzRender() {
+    var setupEl = document.getElementById('qzTimerSetup');
+    var runEl = document.getElementById('qzTimerRunning');
+    var disp = document.getElementById('qzTimerDisplay');
+    if (!setupEl || !runEl || !disp) return;
+    if (!qz.startedAt) {
+      setupEl.style.display = 'flex';
+      runEl.style.display = 'none';
+      return;
+    }
+    setupEl.style.display = 'none';
+    runEl.style.display = 'flex';
+    var elapsed = (Date.now() - qz.startedAt) / 1000;
+    var remaining = qz.totalSec - elapsed;
+    disp.classList.remove('qz-warn', 'qz-danger');
+    if (remaining <= 0) {
+      disp.textContent = "Time's Up";
+      disp.classList.add('qz-danger');
+      qzStopInterval();
+      return;
+    }
+    disp.textContent = qzFormat(remaining);
+    if (remaining <= qz.totalSec * 0.1) disp.classList.add('qz-danger');
+    else if (remaining <= qz.totalSec * 0.25) disp.classList.add('qz-warn');
+  }
+  function qzStartInterval() {
+    qzStopInterval();
+    qzInterval = setInterval(qzRender, 1000);
+  }
+  function qzStopInterval() {
+    if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+  }
+  function qzStart() {
+    var input = document.getElementById('qzTimerInput');
+    var minutes = parseFloat(input.value);
+    if (!minutes || minutes <= 0) minutes = 20;
+    qz.totalSec = Math.round(minutes * 60);
+    qz.startedAt = Date.now();
+    qzSave();
+    qzRender();
+    qzStartInterval();
+  }
+
+  var btn = document.getElementById('qzTimerStartBtn');
+  if (btn) btn.addEventListener('click', qzStart);
+  qzRender();
+  if (qz.startedAt) qzStartInterval();
+
+  function qzResetTimer() {
+    qz.totalSec = null;
+    qz.startedAt = null;
+    qzSave();
+    qzStopInterval();
+    qzRender();
+  }
+  var qzRetryRe = /retry|restart|reset|start\s*fresh|try\s*again|\uB2E4\uC2DC\s*\uC2DC\uC791|\uCC98\uC74C\uBD80\uD0B0/i;
+  document.addEventListener('click', function(ev) {
+    var el = ev.target, depth = 0;
+    while (el && depth < 4) {
+      if (el.id === 'qzTimerBar' || el.id === 'qzAttemptsBar') return;
+      var isClickable = el.tagName === 'BUTTON' || el.tagName === 'A' ||
+        (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) ||
+        (el.getAttribute && el.getAttribute('role') === 'button');
+      if (isClickable) {
+        var txt = (el.textContent || el.value || '').trim();
+        if (txt.length > 0 && txt.length < 40 && qzRetryRe.test(txt)) {
+          qzResetTimer();
+          return;
+        }
+      }
+      el = el.parentElement;
+      depth++;
+    }
+  }, true);
+})();
+</script>
+<!-- ===== End Universal Quiz Timer ===== -->
+<!-- ===== Universal Total Attempts Counter (auto-injected) ===== -->
+<style>
+  #qzAttemptsBar { background: #f5f8fc; border-bottom: 1px solid #d0dce8; padding: 6px 12px; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', Arial, sans-serif; font-size: 0.82rem; color: #4a6fa5; font-weight: 700; letter-spacing: 0.01em; }
+  #qzAttemptsBar span { color: #185FA5; font-weight: 900; margin-left: 4px; }
+</style>
+<div id="qzAttemptsBar">Total Attempts:<span id="qzAttemptsCount">0</span></div>
+<script>
+(function(){
+  var QA_KEY = 'qzAttempts_' + location.pathname;
+  function qaGet(){ try { return parseInt(localStorage.getItem(QA_KEY)||'0',10) || 0; } catch(e){ return 0; } }
+  function qaSet(n){ try { localStorage.setItem(QA_KEY, String(n)); } catch(e){} }
+  function qaRenderCount(){
+    var el = document.getElementById('qzAttemptsCount');
+    if (el) el.textContent = qaGet();
+  }
+  function qaIsVisible(el){
+    if (!el) return false;
+    var r = el.getBoundingClientRect();
+    if (r.width < 80 || r.height < 30) return false;
+    var cs = window.getComputedStyle(el);
+    return cs.display !== 'none' && cs.visibility !== 'hidden';
+  }
+  function qaResultsShowing(){
+    var els = document.querySelectorAll('[id*="result" i],[class*="result" i],[id*="score" i],[class*="score" i]');
+    for (var i=0;i<els.length;i++){ if (qaIsVisible(els[i])) return true; }
+    return false;
+  }
+  var qaWasShowing = false;
+  function qaCheck(){
+    var showing = qaResultsShowing();
+    if (showing && !qaWasShowing) {
+      qaSet(qaGet()+1);
+      qaRenderCount();
+    }
+    qaWasShowing = showing;
+  }
+  qaRenderCount();
+  setInterval(qaCheck, 800);
+  function qaObserve(){
+    if (!document.body) return;
+    var mo = new MutationObserver(function(){ qaCheck(); });
+    mo.observe(document.body, { attributes: true, childList: true, subtree: true });
+  }
+  if (document.body) qaObserve();
+  else document.addEventListener('DOMContentLoaded', qaObserve);
+  setTimeout(qaCheck, 1500);
+})();
+</script>
+<!-- ===== End Universal Total Attempts Counter ===== -->
+
+
+
+
+<div class="quiz-header">
+  <h1>Vocabulary Quiz</h1>
+  <div class="subtitle">50 Words · Choose the correct meaning</div>
+</div>
+
+<div id="nav-bar">
+  <span id="nav-count">0 / 50</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button>
+</div>
+<div class="dot-nav" id="dotNav"></div>
+<div class="results-pill" id="resultsPill">Results</div>
+
+<div class="quiz-area" id="quizArea">
+  <div class="q-counter" id="qCounter"></div>
+  <div class="word-box">
+    <div class="word-row">
+      <div class="word-text" id="wordText"></div>
+      <button class="speaker-btn" id="speakerBtn" onclick="speakWord()" title="Pronounce">🔊</button>
+    </div>
+    <div class="type-badge">Vocabulary</div>
+  </div>
+  <div class="q-prompt">Choose the correct meaning of the word above:</div>
+  <div class="options" id="optionsDiv"></div>
+  <div class="explanation" id="explanation"></div>
+</div>
+
+<div class="results-screen" id="resultsScreen">
+  <div class="results-title">Quiz Results</div>
+  <div class="results-score" id="resultsScore"></div>
+  <div class="summary-grid" id="summaryGrid"></div>
+  <div class="wrong-list" id="wrongList"></div>
+  <button class="res-btn retry" id="retryBtn" onclick="startRetry()">🔁 Retry Wrong Questions</button>
+  <button class="res-btn copy" onclick="copyResults()">📋 Copy All Results</button>
+  <button class="res-btn fresh" id="fresh-btn" onclick="askStartFresh('original')">↺ Start Fresh (Original Order)</button>
+  <button class="res-btn fresh" id="fresh-btn-random" onclick="askStartFresh('random')">↺ Start Fresh (Random Order)</button>
+</div>
+
+<div class="retry-results" id="retryResults">
+  <div class="results-title">Retry Results</div>
+  <div class="results-score" id="retryScore"></div>
+  <div class="summary-grid" id="retrySummaryGrid"></div>
+  <div class="wrong-list" id="retryWrongList"></div>
+  <button class="res-btn fresh" style="background:#185FA5;color:white;" onclick="backToResults()">← Back to Full Results</button>
+</div>
+
+<div class="nav-bar" id="navBar">
+  <button class="nav-btn prev" id="prevBtn" onclick="go(-1)">← Prev</button>
+  <button class="nav-btn next" id="nextBtn" onclick="goNext()">Next →</button>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <h3 id="modalTitle">Start Fresh?</h3>
+    <p id="modalText">All your progress will be cleared. This cannot be undone.</p>
+    <div class="modal-btns">
+      <button class="m-cancel" onclick="closeModal()">Cancel</button>
+      <button class="m-confirm" id="modal-confirm" onclick="confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [{"word":"anthropology","options":["to produce offspring or copies","the study of human societies and cultures","for the most part; chiefly","established in a fixed place or routine"],"correct":1,"explanation":"\"anthropology\" means \"the study of human societies and cultures\"."},{"word":"stimulate","options":["to encourage activity or growth","a large group of people sharing the same government","to give information or facts to someone","firmly determined to do something"],"correct":0,"explanation":"\"stimulate\" means \"to encourage activity or growth\"."},{"word":"provoke","options":["to move from one place to another","in an extremely ugly or unpleasant way","a large group of people sharing the same government","to cause a reaction or feeling"],"correct":3,"explanation":"\"provoke\" means \"to cause a reaction or feeling\"."},{"word":"irritate","options":["most violent or intense in nature","a label for years after the birth of Christ","to make someone annoyed or angry","a snake, especially a large one"],"correct":2,"explanation":"\"irritate\" means \"to make someone annoyed or angry\"."},{"word":"component","options":["most violent or intense in nature","a part or element of something larger","an area with particular characteristics","a social group sharing common ancestry or culture"],"correct":1,"explanation":"\"component\" means \"a part or element of something larger\"."},{"word":"neat","options":["a narrow boat propelled by paddling","a snake, especially a large one","originating naturally in a particular place","arranged in a tidy and orderly way"],"correct":3,"explanation":"\"neat\" means \"arranged in a tidy and orderly way\"."},{"word":"recur","options":["to encourage activity or growth","to happen again repeatedly","a person or animal that lives in a place","to give information or facts to someone"],"correct":1,"explanation":"\"recur\" means \"to happen again repeatedly\"."},{"word":"bud","options":["the study of human societies and cultures","a small growth on a plant that develops into a flower or leaf","established in a fixed place or routine","extremely ugly or unpleasant"],"correct":1,"explanation":"\"bud\" means \"a small growth on a plant that develops into a flower or leaf\"."},{"word":"glance","options":["a brief or quick look","not bright or clear; faintly lit","relating to a particular area or region","having a violent or intense nature"],"correct":0,"explanation":"\"glance\" means \"a brief or quick look\"."},{"word":"cinch","options":["to encourage activity or growth","a large group of people sharing the same government","a snake, especially a large one","something very easy to do"],"correct":3,"explanation":"\"cinch\" means \"something very easy to do\"."},{"word":"inform","options":["firmly determined to do something","having a refined and complex understanding","to give information or facts to someone","in an extremely ugly or unpleasant way"],"correct":2,"explanation":"\"inform\" means \"to give information or facts to someone\"."},{"word":"informal","options":["having a refined and complex understanding","to form an explanation or theory","to produce offspring or copies","relaxed and casual, not official"],"correct":3,"explanation":"\"informal\" means \"relaxed and casual, not official\"."},{"word":"resolved","options":["to move from one place to another","firmly determined to do something","something very easy to do","having a strong will to achieve something"],"correct":1,"explanation":"\"resolved\" means \"firmly determined to do something\"."},{"word":"determined","options":["in an extremely ugly or unpleasant way","established in a fixed place or routine","a small growth on a plant that develops into a flower or leaf","having a strong will to achieve something"],"correct":3,"explanation":"\"determined\" means \"having a strong will to achieve something\"."},{"word":"aggressive","options":["ready to attack or confront","a snake, especially a large one","a brief or quick look","extremely ugly or unpleasant"],"correct":0,"explanation":"\"aggressive\" means \"ready to attack or confront\"."},{"word":"ferocious","options":["a part or element of something larger","to give information or facts to someone","established in a fixed place or routine","very fierce and violent"],"correct":3,"explanation":"\"ferocious\" means \"very fierce and violent\"."},{"word":"probe","options":["to investigate or examine closely","a large group of people sharing the same government","a narrow boat propelled by paddling","established in a fixed place or routine"],"correct":0,"explanation":"\"probe\" means \"to investigate or examine closely\"."},{"word":"adaptation","options":["to seize and hold firmly; to understand","firmly determined to do something","a place where a dead person is buried","the process of changing to suit new conditions"],"correct":3,"explanation":"\"adaptation\" means \"the process of changing to suit new conditions\"."},{"word":"theorize","options":["taking a quick look at something","to form an explanation or theory","a fine powder produced by flowers for fertilization","an area with particular characteristics"],"correct":1,"explanation":"\"theorize\" means \"to form an explanation or theory\"."},{"word":"sophisticated","options":["a snake, especially a large one","the customs and beliefs of a particular group","the process of changing to suit new conditions","having a refined and complex understanding"],"correct":3,"explanation":"\"sophisticated\" means \"having a refined and complex understanding\"."},{"word":"mound","options":["not bright or clear; faintly lit","a fine powder produced by flowers for fertilization","a raised pile of earth or stones","to encourage activity or growth"],"correct":2,"explanation":"\"mound\" means \"a raised pile of earth or stones\"."},{"word":"burial","options":["not bright or clear; faintly lit","a label for years before the birth of Christ","to encourage activity or growth","the act of placing a dead body in the ground"],"correct":3,"explanation":"\"burial\" means \"the act of placing a dead body in the ground\"."},{"word":"serpent","options":["a snake, especially a large one","to move from one place to another","to produce offspring or copies","a social group sharing common ancestry or culture"],"correct":0,"explanation":"\"serpent\" means \"a snake, especially a large one\"."},{"word":"culture","options":["ready to attack or confront","a narrow boat propelled by paddling","the customs and beliefs of a particular group","a raised pile of earth or stones"],"correct":2,"explanation":"\"culture\" means \"the customs and beliefs of a particular group\"."},{"word":"grave","options":["a brief or quick look","to investigate or examine closely","a place where a dead person is buried","a snake, especially a large one"],"correct":2,"explanation":"\"grave\" means \"a place where a dead person is buried\"."},{"word":"regional","options":["relating to a particular area or region","to grab something quickly and roughly","not bright or clear; faintly lit","an area with particular characteristics"],"correct":0,"explanation":"\"regional\" means \"relating to a particular area or region\"."},{"word":"tribe","options":["a snake, especially a large one","a social group sharing common ancestry or culture","relaxed and casual, not official","a fine powder produced by flowers for fertilization"],"correct":1,"explanation":"\"tribe\" means \"a social group sharing common ancestry or culture\"."},{"word":"nation","options":["having a refined and complex understanding","to form an explanation or theory","a large group of people sharing the same government","in an extremely ugly or unpleasant way"],"correct":2,"explanation":"\"nation\" means \"a large group of people sharing the same government\"."},{"word":"migrate","options":["to investigate or examine closely","to move from one place to another","a snake, especially a large one","originating naturally in a particular place"],"correct":1,"explanation":"\"migrate\" means \"to move from one place to another\"."},{"word":"region","options":["something very easy to do","relaxed and casual, not official","to form an explanation or theory","an area with particular characteristics"],"correct":3,"explanation":"\"region\" means \"an area with particular characteristics\"."},{"word":"canoe","options":["a narrow boat propelled by paddling","to happen again repeatedly","a short time ago","extremely ugly or unpleasant"],"correct":0,"explanation":"\"canoe\" means \"a narrow boat propelled by paddling\"."},{"word":"primarily","options":["established in a fixed place or routine","relating to a particular area or region","to happen again repeatedly","mainly or mostly"],"correct":3,"explanation":"\"primarily\" means \"mainly or mostly\"."},{"word":"AD","options":["relating to a particular area or region","a fine powder produced by flowers for fertilization","extremely ugly or unpleasant","a label for years after the birth of Christ"],"correct":3,"explanation":"\"AD\" means \"a label for years after the birth of Christ\"."},{"word":"BC","options":["a label for years before the birth of Christ","relating to a particular area or region","relaxed and casual, not official","something very easy to do"],"correct":0,"explanation":"\"BC\" means \"a label for years before the birth of Christ\"."},{"word":"mainly","options":["for the most part; chiefly","to grab something quickly and roughly","originating naturally in a particular place","a part or element of something larger"],"correct":0,"explanation":"\"mainly\" means \"for the most part; chiefly\"."},{"word":"settled","options":["extremely ugly or unpleasant","established in a fixed place or routine","a raised pile of earth or stones","the act of placing a dead body in the ground"],"correct":1,"explanation":"\"settled\" means \"established in a fixed place or routine\"."},{"word":"indigenous","options":["a small growth on a plant that develops into a flower or leaf","originating naturally in a particular place","to tie or fasten something tightly","having a strong will to achieve something"],"correct":1,"explanation":"\"indigenous\" means \"originating naturally in a particular place\"."},{"word":"inhabitant","options":["not bright or clear; faintly lit","mainly or mostly","a person or animal that lives in a place","to grab something quickly and roughly"],"correct":2,"explanation":"\"inhabitant\" means \"a person or animal that lives in a place\"."},{"word":"pollen","options":["a fine powder produced by flowers for fertilization","a brief or quick look","to investigate or examine closely","in an extremely ugly or unpleasant way"],"correct":0,"explanation":"\"pollen\" means \"a fine powder produced by flowers for fertilization\"."},{"word":"reproduce","options":["taking a quick look at something","relaxed and casual, not official","to produce offspring or copies","the act of placing a dead body in the ground"],"correct":2,"explanation":"\"reproduce\" means \"to produce offspring or copies\"."},{"word":"snatch","options":["the study of human societies and cultures","a brief or quick look","to make someone annoyed or angry","to grab something quickly and roughly"],"correct":3,"explanation":"\"snatch\" means \"to grab something quickly and roughly\"."},{"word":"fierce","options":["established in a fixed place or routine","taking a quick look at something","to produce offspring or copies","having a violent or intense nature"],"correct":3,"explanation":"\"fierce\" means \"having a violent or intense nature\"."},{"word":"fiercest","options":["to grab something quickly and roughly","firmly determined to do something","a small growth on a plant that develops into a flower or leaf","most violent or intense in nature"],"correct":3,"explanation":"\"fiercest\" means \"most violent or intense in nature\"."},{"word":"dim","options":["to seize and hold firmly; to understand","a fine powder produced by flowers for fertilization","not bright or clear; faintly lit","taking a quick look at something"],"correct":2,"explanation":"\"dim\" means \"not bright or clear; faintly lit\"."},{"word":"recently","options":["to tie or fasten something tightly","very fierce and violent","a short time ago","a person or animal that lives in a place"],"correct":2,"explanation":"\"recently\" means \"a short time ago\"."},{"word":"grasp","options":["a person or animal that lives in a place","to grab something quickly and roughly","to seize and hold firmly; to understand","relaxed and casual, not official"],"correct":2,"explanation":"\"grasp\" means \"to seize and hold firmly; to understand\"."},{"word":"glancing","options":["taking a quick look at something","established in a fixed place or routine","a label for years after the birth of Christ","a person or animal that lives in a place"],"correct":0,"explanation":"\"glancing\" means \"taking a quick look at something\"."},{"word":"hideous","options":["extremely ugly or unpleasant","a raised pile of earth or stones","to form an explanation or theory","a short time ago"],"correct":0,"explanation":"\"hideous\" means \"extremely ugly or unpleasant\"."},{"word":"bind","options":["firmly determined to do something","extremely ugly or unpleasant","the study of human societies and cultures","to tie or fasten something tightly"],"correct":3,"explanation":"\"bind\" means \"to tie or fasten something tightly\"."},{"word":"hideously","options":["in an extremely ugly or unpleasant way","the customs and beliefs of a particular group","relating to a particular area or region","having a violent or intense nature"],"correct":0,"explanation":"\"hideously\" means \"in an extremely ugly or unpleasant way\"."}];
+
+const LS_KEY = 'quiz_vocab50_50_v1';
+
+const ORDER_KEY = LS_KEY + '_order_v1';
+function identityOrder() { const arr = []; for (let i = 0; i < QUESTIONS.length; i++) arr.push(i); return arr; }
+function isValidOrder(arr) {
+  if (!Array.isArray(arr) || arr.length !== QUESTIONS.length) return false;
+  const seen = {};
+  for (let i = 0; i < arr.length; i++) {
+    if (typeof arr[i] !== 'number' || arr[i] < 0 || arr[i] >= QUESTIONS.length || seen[arr[i]]) return false;
+    seen[arr[i]] = true;
+  }
+  return true;
+}
+function loadOrder() {
+  try {
+    const raw = localStorage.getItem(ORDER_KEY);
+    if (raw) { const arr = JSON.parse(raw); if (isValidOrder(arr)) return arr; }
+  } catch(e) {}
+  return null;
+}
+function saveOrder(order) {
+  try { localStorage.setItem(ORDER_KEY, JSON.stringify(order)); } catch(e) {}
+}
+function randomOrder() {
+  const arr = identityOrder();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+let currentOrder = loadOrder() || identityOrder();
+saveOrder(currentOrder);
+let pendingFreshMode = 'original';
+function Q(i) { return QUESTIONS[currentOrder[i]]; }
+
+function defaultState() {
+  return {
+    cur: 0,
+    answers: {},
+    shuffles: {},
+    showResults: false,
+    retryMode: false,
+    retryQuestions: [],
+    retryCur: 0,
+    retryAnswers: {},
+    showRetryResults: false
+  };
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return defaultState();
+    const s = JSON.parse(raw);
+    if (typeof s.cur !== 'number' || s.cur < 0 || s.cur >= QUESTIONS.length) throw new Error();
+    if (!s.answers || typeof s.answers !== 'object') throw new Error();
+    if (!s.shuffles || typeof s.shuffles !== 'object') throw new Error();
+    return { ...defaultState(), ...s };
+  } catch(e) {
+    localStorage.removeItem(LS_KEY);
+    return defaultState();
+  }
+}
+
+function saveState() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+let state = loadState();
+
+// Ensure shuffles exist for all questions
+QUESTIONS.forEach((q, i) => {
+  if (!state.shuffles[i]) {
+    const order = [0,1,2,3];
+    for (let j = order.length - 1; j > 0; j--) {
+      const k = Math.floor(Math.random() * (j+1));
+      [order[j], order[k]] = [order[k], order[j]];
+    }
+    state.shuffles[i] = order;
+  }
+});
+saveState();
+
+function speakWord() {
+  const word = state.retryMode
+    ? QUESTIONS[state.retryQuestions[state.retryCur]].word
+    : Q(state.cur).word;
+  if ('speechSynthesis' in window) {
+    const utt = new SpeechSynthesisUtterance(word);
+    utt.lang = 'en-US'; utt.rate = 0.9;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utt);
+  }
+}
+
+function buildDots(isRetry) {
+  const nav = document.getElementById('dotNav');
+  nav.innerHTML = '';
+  const total = isRetry ? state.retryQuestions.length : QUESTIONS.length;
+  const cur = isRetry ? state.retryCur : state.cur;
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    d.textContent = i + 1;
+    const qIdx = isRetry ? state.retryQuestions[i] : i;
+    const ans = isRetry ? state.retryAnswers[i] : state.answers[i];
+    const qObj = isRetry ? QUESTIONS[qIdx] : Q(qIdx);
+    if (i === cur && !state.showResults && !state.showRetryResults) d.classList.add('current');
+    else if (ans !== undefined) {
+      d.classList.add(ans === qObj.correct ? 'correct' : 'wrong');
+    } else {
+      d.classList.add('skipped');
+    }
+    const ii = i;
+    d.onclick = () => {
+      if (state.showResults) { state.showResults = false; }
+      if (state.showRetryResults) { state.showRetryResults = false; }
+      if (isRetry) state.retryCur = ii;
+      else state.cur = ii;
+      saveState(); render();
+    };
+    nav.appendChild(d);
+  }
+}
+
+function updateNavBar() {
+  const ans = Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent = ans + ' / ' + QUESTIONS.length;
+  document.getElementById('prog-fill').style.width = (ans / QUESTIONS.length * 100).toFixed(1) + '%';
+}
+
+function toggleJump() {
+  const p = document.getElementById('dotNav');
+  const b = document.getElementById('jump-btn');
+  if (p.style.display === 'flex') { p.style.display = 'none'; b.innerHTML = 'Jump &#9662;'; }
+  else { p.style.display = 'flex'; b.innerHTML = 'Hide &#9652;'; }
+}
+
+function render() {
+  try {
+    updateNavBar();
+    const qa = document.getElementById('quizArea');
+    const rs = document.getElementById('resultsScreen');
+    const rr = document.getElementById('retryResults');
+    const pill = document.getElementById('resultsPill');
+    const nb = document.getElementById('navBar');
+
+    qa.classList.remove('show');
+    rs.classList.remove('show');
+    rr.classList.remove('show');
+    pill.classList.remove('show');
+
+    if (state.showRetryResults) {
+      buildDots(true);
+      pill.classList.add('show');
+      renderRetryResults();
+      rr.classList.add('show');
+      nb.style.display = 'none';
+      return;
+    }
+    if (state.showResults) {
+      buildDots(false);
+      pill.classList.add('show');
+      renderResults();
+      rs.classList.add('show');
+      nb.style.display = 'none';
+      return;
+    }
+    nb.style.display = 'flex';
+    const isRetry = state.retryMode && state.retryQuestions.length > 0;
+    buildDots(isRetry);
+    const qIdx = isRetry ? state.retryQuestions[state.retryCur] : currentOrder[state.cur];
+    const localIdx = isRetry ? state.retryCur : state.cur;
+    const total = isRetry ? state.retryQuestions.length : QUESTIONS.length;
+    const q = QUESTIONS[qIdx];
+    const shuffle = state.shuffles[qIdx];
+    const answered = isRetry ? state.retryAnswers[localIdx] : state.answers[state.cur];
+
+    document.getElementById('qCounter').textContent = `Question ${localIdx + 1} / ${total}`;
+    document.getElementById('wordText').textContent = q.word;
+    qa.classList.add('show');
+
+    const opts = document.getElementById('optionsDiv');
+    opts.innerHTML = '';
+    shuffle.forEach((origIdx, pos) => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.textContent = q.options[origIdx];
+      btn.disabled = answered !== undefined;
+      if (answered !== undefined) {
+        if (origIdx === q.correct) btn.classList.add('revealed-ans');
+        if (origIdx === answered && answered !== q.correct) btn.classList.add('wrong-ans');
+        if (origIdx === answered && answered === q.correct) btn.classList.add('correct-ans');
+      }
+      btn.onclick = () => answer(origIdx, isRetry, localIdx);
+      opts.appendChild(btn);
+    });
+
+    const expl = document.getElementById('explanation');
+    if (answered !== undefined && answered !== q.correct) {
+      expl.textContent = q.explanation;
+      expl.classList.add('show');
+    } else {
+      expl.textContent = '';
+      expl.classList.remove('show');
+    }
+
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    prevBtn.disabled = localIdx === 0;
+    if (localIdx === total - 1) {
+      nextBtn.textContent = 'See Results →';
+    } else {
+      nextBtn.textContent = 'Next →';
+    }
+  } catch(e) {
+    document.body.innerHTML = '<p style="padding:20px;color:red;">Error rendering quiz. Please refresh.</p>';
+  }
+}
+
+function answer(chosenOrig, isRetry, localIdx) {
+  if (isRetry) {
+    if (state.retryAnswers[localIdx] !== undefined) return;
+    state.retryAnswers[localIdx] = chosenOrig;
+  } else {
+    if (state.answers[state.cur] !== undefined) return;
+    state.answers[state.cur] = chosenOrig;
+  }
+  saveState(); render();
+}
+
+function go(dir) {
+  const isRetry = state.retryMode && state.retryQuestions.length > 0;
+  if (isRetry) {
+    state.retryCur = Math.max(0, Math.min(state.retryQuestions.length - 1, state.retryCur + dir));
+  } else {
+    state.cur = Math.max(0, Math.min(QUESTIONS.length - 1, state.cur + dir));
+  }
+  saveState(); render();
+}
+
+function goNext() {
+  const isRetry = state.retryMode && state.retryQuestions.length > 0;
+  const total = isRetry ? state.retryQuestions.length : QUESTIONS.length;
+  const cur = isRetry ? state.retryCur : state.cur;
+  if (cur === total - 1) {
+    if (isRetry) { state.showRetryResults = true; }
+    else { state.showResults = true; }
+    saveState(); render();
+  } else {
+    go(1);
+  }
+}
+
+function renderResults() {
+  let c = 0, w = 0;
+  for (let i = 0; i < QUESTIONS.length; i++) {
+    const q = Q(i);
+    if (state.answers[i] === q.correct) c++;
+    else if (state.answers[i] !== undefined) w++;
+  }
+  const sk = QUESTIONS.length - c - w;
+  document.getElementById('resultsScore').textContent = `✅ ${c} Correct  ❌ ${w} Wrong  ⬜ ${sk} Skipped  (${c} / ${QUESTIONS.length})`;
+
+  const grid = document.getElementById('summaryGrid');
+  grid.innerHTML = '';
+  for (let i = 0; i < QUESTIONS.length; i++) {
+    const q = Q(i);
+    const card = document.createElement('div');
+    card.className = 'sg-card';
+    const ans = state.answers[i];
+    if (ans === q.correct) card.classList.add('correct');
+    else if (ans !== undefined) card.classList.add('wrong');
+    else card.classList.add('skipped');
+    card.innerHTML = `Q${i+1}<br>${ans===q.correct?'✓':ans!==undefined?'✗':'–'}`;
+    card.onclick = () => { state.showResults = false; state.cur = i; saveState(); render(); };
+    grid.appendChild(card);
+  }
+
+  const wl = document.getElementById('wrongList');
+  wl.innerHTML = '';
+  let wrongCount = 0;
+  for (let i = 0; i < QUESTIONS.length; i++) {
+    const q = Q(i);
+    if (state.answers[i] === undefined || state.answers[i] === q.correct) continue;
+    wrongCount++;
+    const div = document.createElement('div');
+    div.className = 'wrong-item';
+    const yourAns = q.options[state.answers[i]];
+    div.innerHTML = `<div class="wi-word">Q${i+1}: ${q.word}</div>
+      <div class="wi-your">✗ Your answer: ${yourAns}</div>
+      <div class="wi-correct">✓ Correct: ${q.options[q.correct]}</div>
+      <div style="color:#555;font-size:0.83rem;margin-top:3px;">${q.explanation}</div>`;
+    wl.appendChild(div);
+  }
+  const retryBtn = document.getElementById('retryBtn');
+  retryBtn.style.display = wrongCount > 0 ? 'block' : 'none';
+}
+
+function startRetry() {
+  const wrongs = [];
+  for (let i = 0; i < QUESTIONS.length; i++) {
+    const q = Q(i);
+    if (state.answers[i] !== undefined && state.answers[i] !== q.correct) wrongs.push(currentOrder[i]);
+  }
+  if (wrongs.length === 0) return;
+  state.retryQuestions = wrongs;
+  state.retryCur = 0;
+  state.retryAnswers = {};
+  state.retryMode = true;
+  state.showResults = false;
+  state.showRetryResults = false;
+  saveState(); render();
+}
+
+function renderRetryResults() {
+  const total = state.retryQuestions.length;
+  let c = 0, w = 0;
+  state.retryQuestions.forEach((qIdx, i) => {
+    const q = QUESTIONS[qIdx];
+    if (state.retryAnswers[i] === q.correct) c++;
+    else if (state.retryAnswers[i] !== undefined) w++;
+  });
+  const sk = total - c - w;
+  document.getElementById('retryScore').textContent = `Retry: ✅ ${c} Correct  ❌ ${w} Wrong  ⬜ ${sk} Skipped  (${c} / ${total})`;
+
+  const grid = document.getElementById('retrySummaryGrid');
+  grid.innerHTML = '';
+  state.retryQuestions.forEach((qIdx, i) => {
+    const q = QUESTIONS[qIdx];
+    const card = document.createElement('div');
+    card.className = 'sg-card';
+    const ans = state.retryAnswers[i];
+    if (ans === q.correct) card.classList.add('correct');
+    else if (ans !== undefined) card.classList.add('wrong');
+    else card.classList.add('skipped');
+    card.innerHTML = `Q${i+1}<br>${ans===q.correct?'✓':ans!==undefined?'✗':'–'}`;
+    card.onclick = () => { state.showRetryResults = false; state.retryCur = i; saveState(); render(); };
+    grid.appendChild(card);
+  });
+
+  const wl = document.getElementById('retryWrongList');
+  wl.innerHTML = '';
+  state.retryQuestions.forEach((qIdx, i) => {
+    const q = QUESTIONS[qIdx];
+    if (state.retryAnswers[i] !== undefined && state.retryAnswers[i] !== q.correct) {
+      const div = document.createElement('div');
+      div.className = 'wrong-item';
+      div.innerHTML = `<div class="wi-word">${q.word}</div>
+        <div class="wi-your">✗ Your answer: ${q.options[state.retryAnswers[i]]}</div>
+        <div class="wi-correct">✓ Correct: ${q.options[q.correct]}</div>
+        <div style="color:#555;font-size:0.83rem;margin-top:3px;">${q.explanation}</div>`;
+      wl.appendChild(div);
+    }
+  });
+}
+
+function backToResults() {
+  state.retryMode = false;
+  state.showRetryResults = false;
+  state.showResults = true;
+  saveState(); render();
+}
+
+function copyResults() {
+  let txt = `Vocabulary Quiz Results\n${'='.repeat(30)}\n`;
+  let c=0, w=0, sk=0;
+  for (let i = 0; i < QUESTIONS.length; i++) {
+    const q = Q(i);
+    const ans = state.answers[i];
+    let status;
+    if (ans === q.correct) { status = '✅ Correct'; c++; }
+    else if (ans !== undefined) { status = `❌ Wrong (Your: ${q.options[ans]} | Correct: ${q.options[q.correct]})`; w++; }
+    else { status = '⬜ Skipped'; sk++; }
+    txt += `Q${i+1} [${q.word}]: ${status}\n`;
+  }
+  txt += `\nScore: ${c}/${QUESTIONS.length} | Wrong: ${w} | Skipped: ${sk}`;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(() => alert('Results copied!')).catch(() => fallbackCopy(txt));
+  } else { fallbackCopy(txt); }
+}
+function fallbackCopy(txt) {
+  const ta = document.createElement('textarea');
+  ta.value = txt; document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); alert('Results copied!'); } catch(e) { alert('Copy failed.'); }
+  document.body.removeChild(ta);
+}
+
+function askStartFresh(mode) {
+  pendingFreshMode = mode;
+  document.getElementById('modalTitle').textContent = mode === 'random' ? 'Start Fresh (Random Order)?' : 'Start Fresh (Original Order)?';
+  document.getElementById('modalText').textContent = mode === 'random' ? 'Questions will be reshuffled into a new random order, and all progress will be reset.' : 'Questions will return to their original order, and all progress will be reset.';
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+function confirmFresh() {
+  closeModal();
+  localStorage.removeItem(LS_KEY);
+  currentOrder = (pendingFreshMode === 'random') ? randomOrder() : identityOrder();
+  saveOrder(currentOrder);
+  state = defaultState();
+  QUESTIONS.forEach((q, i) => {
+    const order = [0,1,2,3];
+    for (let j = order.length - 1; j > 0; j--) {
+      const k = Math.floor(Math.random() * (j+1));
+      [order[j], order[k]] = [order[k], order[j]];
+    }
+    state.shuffles[i] = order;
+  });
+  saveState(); render();
+}
+
+render();
+</script>
+</body>
+</html>

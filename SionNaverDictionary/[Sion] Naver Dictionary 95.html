@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>[Sion] Naver Dictionary 95</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh;padding:0 0 40px;}
+h1{text-align:center;font-size:1.35rem;font-weight:800;color:#1D9E75;background:#fff;padding:4px 16px 2px;}
+#att-display{text-align:center;font-size:0.82rem;color:#555;background:#fff;padding:2px 0 8px;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:4px 0 10px;}
+#top-nav{background:#fff;border:2px solid #1D9E75;border-radius:10px;margin:10px 12px 0;padding:7px 10px 5px;}
+#nav-row{display:flex;align-items:center;gap:8px;}
+#count-display{font-size:0.88rem;font-weight:700;color:#333;white-space:nowrap;}
+#progress-bar-wrap{flex:1;height:7px;background:#d7dde6;border-radius:4px;overflow:hidden;}
+#progress-bar-fill{height:100%;background:#1D9E75;border-radius:4px;transition:width 0.3s;}
+#jump-btn{font-size:0.78rem;font-weight:700;color:#1D9E75;background:#fff;border:1.5px solid #1D9E75;border-radius:6px;padding:3px 10px;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:7px 2px 2px;display:none;flex-wrap:wrap;gap:5px;margin-top:6px;}
+#dot-panel.open{display:flex;}
+.nav-dot{width:26px;height:26px;border-radius:50%;border:none;font-size:0.72rem;font-weight:700;cursor:pointer;color:#fff;background:#d7dde6;color:#333;}
+.nav-dot.correct{background:#1D9E75;color:#fff;}
+.nav-dot.wrong{background:#E24B4A;color:#fff;}
+.nav-dot.results-pill{width:auto;border-radius:13px;padding:0 12px;background:#185FA5;color:#fff;font-size:0.72rem;}
+#quiz-area{display:none;padding:14px 14px 0;}
+.q-card{background:#fff;border-radius:12px;padding:18px 16px 14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.07);}
+.q-word-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.q-word{font-size:1.45rem;font-weight:800;color:#185FA5;}
+.tts-btn{background:none;border:none;cursor:pointer;font-size:1.3rem;padding:2px 4px;color:#1D9E75;line-height:1;}
+.opts{display:flex;flex-direction:column;gap:9px;}
+.opt-btn{width:100%;text-align:left;padding:12px 14px;font-size:1rem;border-radius:8px;border:2px solid transparent;background:#e8edf4;color:#111111;cursor:pointer;transition:background 0.15s,border 0.15s;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.explain-box{margin-top:12px;border:2px solid #f5a623;background:#fffbe6;border-radius:8px;padding:10px 12px;font-size:0.9rem;color:#333;line-height:1.5;}
+#btn-row{display:flex;gap:10px;margin:8px 14px 0;}
+#prev-btn{flex:1;padding:12px;font-size:1rem;font-weight:700;border-radius:8px;border:none;background:#e8edf4;color:#333;cursor:pointer;}
+#next-btn{flex:2;padding:12px;font-size:1rem;font-weight:700;border-radius:8px;border:none;background:#1D9E75;color:#fff;cursor:pointer;}
+#results-screen{display:none;padding:14px;}
+#results-screen.show{display:block;}
+.results-heading{text-align:center;font-size:1.4rem;font-weight:800;color:#1D9E75;margin-bottom:4px;}
+.results-sub{text-align:center;font-size:0.9rem;color:#555;margin-bottom:14px;}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:7px;margin-bottom:16px;}
+.summary-card{border-radius:8px;padding:8px 4px 6px;text-align:center;cursor:pointer;font-size:0.78rem;font-weight:700;}
+.summary-card.c{background:#E1F5EE;color:#085041;border:2px solid #1D9E75;}
+.summary-card.w{background:#FCEBEB;color:#501313;border:2px solid #E24B4A;}
+.summary-card.s{background:#f5f7fa;color:#555;border:2px solid #d7dde6;}
+.summary-card .sq{font-size:1rem;font-weight:800;}
+#results-btns{display:flex;flex-direction:column;gap:10px;}
+#retry-btn{padding:13px;font-size:1rem;font-weight:700;border-radius:8px;border:none;background:#1D9E75;color:#fff;cursor:pointer;}
+#copy-btn{padding:13px;font-size:1rem;font-weight:700;border-radius:8px;border:none;background:#185FA5;color:#fff;cursor:pointer;}
+.fresh-btn{display:block;width:100%;padding:13px;font-size:1rem;font-weight:700;border-radius:8px;border:none;background:#e8edf4;color:#333;cursor:pointer;margin-bottom:8px;}
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+#modal-overlay.open{display:flex;}
+#modal-box{background:#fff;border-radius:14px;padding:28px 22px 20px;max-width:320px;width:90%;text-align:center;}
+#modal-box h3{font-size:1.1rem;font-weight:800;margin-bottom:10px;}
+#modal-box p{font-size:0.92rem;color:#555;margin-bottom:18px;}
+#modal-btns{display:flex;gap:10px;}
+#modal-cancel{flex:1;padding:11px;border-radius:8px;border:none;background:#e8edf4;color:#333;font-weight:700;font-size:0.95rem;cursor:pointer;}
+#modal-confirm{flex:1;padding:11px;border-radius:8px;border:none;background:#E24B4A;color:#fff;font-weight:700;font-size:0.95rem;cursor:pointer;}
+</style>
+</head>
+<body>
+<h1>[Sion] Naver Dictionary 95</h1>
+<div id="att-display">English Vocabulary | Total Attempts: <span id="att-num">0</span></div>
+<div class="instruction">Choose the correct meaning for each word.</div>
+<div id="top-nav">
+  <div id="nav-row">
+    <span id="count-display">1 / 50</span>
+    <div id="progress-bar-wrap"><div id="progress-bar-fill" style="width:0%"></div></div>
+    <button id="jump-btn" onclick="window.toggleDots()">Jump</button>
+  </div>
+  <div id="dot-panel"></div>
+</div>
+<div id="quiz-area"></div>
+<div id="btn-row">
+  <button id="prev-btn" onclick="window.goPrev()">Prev</button>
+  <button id="next-btn" onclick="window.goNext()">Next</button>
+</div>
+<div id="results-screen">
+  <div class="results-heading">Results</div>
+  <div class="results-sub" id="results-sub"></div>
+  <div class="summary-grid" id="summary-grid"></div>
+  <div id="results-btns">
+    <button id="retry-btn" onclick="window.retryWrong()">Retry Wrong Ones</button>
+    <button id="copy-btn" onclick="window.copyResults()">Copy All Results</button>
+    <button id="fresh-btn-original" class="fresh-btn" onclick="window.askFresh('original')">Start Fresh (Original Order)</button>
+    <button id="fresh-btn-random" class="fresh-btn" onclick="window.askFresh('random')">Start Fresh (Random Order)</button>
+  </div>
+</div>
+<div id="modal-overlay">
+  <div id="modal-box">
+    <h3 id="modal-title">Start Fresh (Original Order)?</h3>
+    <p id="modal-text">Questions will return to their original order, and all progress will be reset.</p>
+    <div id="modal-btns">
+      <button id="modal-cancel" onclick="window.closeModal()">Cancel</button>
+      <button id="modal-confirm" onclick="window.doFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+'use strict';
+
+var STORAGE_KEY = 'quiz_sionnaver95_v1';
+var ATT_KEY = 'quiz_sionnaver95_att_v1';
+
+var QUESTIONS = [
+  {word:'defer',ci:1,opts:['showing a superior attitude toward others','to delay or postpone something','having a strong wish or desire for something','to emphasize or highlight something'],exp:'To defer means to put something off to a later time; to postpone a decision or action.'},
+  {word:'shilling',ci:0,opts:['a former British coin worth one twentieth of a pound','a decisive defeat; severe criticism','a great difference or inequality','threats or force used to make someone do something'],exp:'A shilling was a unit of British currency equal to one-twentieth of a pound, used until decimalization in 1971.'},
+  {word:'underscore',ci:0,opts:['to emphasize or highlight something','the quality of being appropriate or suitable','seeming contradictory but possibly true','a former British coin worth one twentieth of a pound'],exp:'To underscore means to emphasize or draw special attention to something; to stress or underline a point.'},
+  {word:'paradoxical',ci:3,opts:['familiar with or knowledgeable about something','to struggle or compete; to assert strongly','dignity and seriousness of manner','seeming contradictory but possibly true'],exp:'Paradoxical describes something that appears self-contradictory or absurd on the surface but may nonetheless be true.'},
+  {word:'peter',ci:1,opts:['very attentive to accuracy and detail; difficult to please','to gradually diminish and come to an end','to delay or postpone something','a humble and earnest prayer or request'],exp:'To peter out means to gradually diminish and finally come to an end; to fade away slowly over time.'},
+  {word:'foible',ci:2,opts:['a question asked for effect, not expecting an answer','the process of bringing someone into a position or group','a minor weakness or character flaw','a humble and earnest prayer or request'],exp:'A foible is a minor personal weakness or character flaw, usually regarded with amusement rather than serious condemnation.'},
+  {word:'aptness',ci:1,opts:['a minor weakness or character flaw','the quality of being appropriate or suitable','a prediction or forecast about the future','a great difference or inequality'],exp:'Aptness is the quality of being exactly right or fitting for a particular situation; appropriateness or suitability.'},
+  {word:'disparity',ci:1,opts:['a rigid ornamental bracelet or anklet','a great difference or inequality','a wrongful or wicked act','to emphasize or highlight something'],exp:'Disparity refers to a noticeable and significant difference or inequality between two or more things.'},
+  {word:'condescending',ci:2,opts:['the act of bringing under control or dominance','dignity and seriousness of manner','showing a superior attitude toward others','having a strong wish or desire for something'],exp:'Condescending describes behavior that shows a feeling of superiority toward others; treating people as if they are inferior.'},
+  {word:'duress',ci:2,opts:['to emphasize or highlight something','familiar with or knowledgeable about something','threats or force used to make someone do something','to gradually diminish and come to an end'],exp:'Duress refers to threats, pressure, or force used to compel someone to act against their will.'},
+  {word:'rhetorical question',ci:1,opts:['to beg someone earnestly and desperately','a question asked for effect, not expecting an answer','the quality of being appropriate or suitable','a prediction or forecast about the future'],exp:'A rhetorical question is asked for persuasive effect or to make a point, not because an actual answer is expected.'},
+  {word:'idealist',ci:1,opts:['a question asked for effect, not expecting an answer','a person who believes in high principles and perfection','a trace or remnant of something that once existed','to put forward as fact or assumption'],exp:'An idealist is a person who believes strongly in high moral principles and ideals, often to an unrealistic degree.'},
+  {word:'supine',ci:1,opts:['showing excessive pride in one\'s achievements','lying face upward; passive and inactive','to strongly urge or encourage someone to do something','feeling or expressing regret or sorrow'],exp:'Supine means lying on one\'s back with the face upward; figuratively, it describes passive or lazy behavior.'},
+  {word:'contend',ci:2,opts:['splendor and impressiveness of appearance','lying stretched out on the ground face downward','to struggle or compete; to assert strongly','a wrongful or wicked act'],exp:'To contend means to struggle or compete against someone; also to assert or maintain a position firmly.'},
+  {word:'interposition',ci:1,opts:['a humble and earnest prayer or request','placing something between two things; intervention','feeling or expressing regret or sorrow','having a strong wish or desire for something'],exp:'Interposition is the act of placing something between two other things; also used to mean intervention or interference.'},
+  {word:'implore',ci:1,opts:['seeming contradictory but possibly true','to beg someone earnestly and desperately','placing something between two things; intervention','to emphasize or highlight something'],exp:'To implore means to beg someone urgently and desperately, with great emotional intensity.'},
+  {word:'prostrate',ci:0,opts:['lying stretched out on the ground face downward','to struggle or compete; to assert strongly','to gradually diminish and come to an end','excessively particular about details; hard to please'],exp:'Prostrate means lying stretched out face downward on the ground; it also means to make oneself appear completely submissive.'},
+  {word:'remonstrate',ci:2,opts:['a rigid ornamental bracelet or anklet','suffering from a condition or problem','to protest or object firmly','to strongly urge or encourage someone to do something'],exp:'To remonstrate means to protest or object firmly and earnestly; to argue strongly against a course of action.'},
+  {word:'supplication',ci:2,opts:['to beg someone earnestly and desperately','a decisive defeat; severe criticism','a humble and earnest prayer or request','dignity and seriousness of manner'],exp:'A supplication is a humble and earnest prayer, appeal, or petition, especially one made to a higher power or authority.'},
+  {word:'subjugation',ci:1,opts:['to put forward as fact or assumption','the act of bringing under control or dominance','very attentive to accuracy and detail; difficult to please','suffering from a condition or problem'],exp:'Subjugation is the act of bringing a person, group, or territory under complete control or dominance, often by force.'},
+  {word:'comport',ci:2,opts:['lacking skill or ability; incompetent','seeming contradictory but possibly true','to conduct or behave oneself in a certain way','a minor weakness or character flaw'],exp:'To comport means to conduct or carry oneself in a particular way; to behave according to expected standards.'},
+  {word:'insidious',ci:0,opts:['proceeding harmfully in a subtle and gradual way','to involve someone in a difficult situation or conflict','showing smug self-satisfaction; uncritically content','showing excessive pride in one\'s achievements'],exp:'Insidious describes something that develops or spreads harmfully in a slow, subtle way that is not immediately obvious.'},
+  {word:'induction',ci:2,opts:['a rigid ornamental bracelet or anklet','to involve someone in a difficult situation or conflict','the process of bringing someone into a position or group','a young or female shark; informal term'],exp:'Induction is the formal process of introducing or officially installing someone into a new position, role, or organization.'},
+  {word:'vestige',ci:2,opts:['showing excessive pride in one\'s achievements','a wrongful or wicked act','a trace or remnant of something that once existed','a great difference or inequality'],exp:'A vestige is a small trace, remnant, or surviving piece of evidence of something that once existed but has largely disappeared.'},
+  {word:'posit',ci:2,opts:['showing smug self-satisfaction; uncritically content','a great difference or inequality','to put forward as fact or assumption','a humble and earnest prayer or request'],exp:'To posit means to put something forward as a fact or as a basis for argument; to assume or assert as a starting premise.'},
+  {word:'prognostication',ci:0,opts:['a prediction or forecast about the future','a wrongful or wicked act','a lively Brazilian dance of African origin','lying stretched out on the ground face downward'],exp:'A prognostication is a forecast or prediction about what will happen in the future, often based on signs or evidence.'},
+  {word:'afflicted',ci:1,opts:['a lively Brazilian dance of African origin','suffering from a condition or problem','having a strong wish or desire for something','the act of bringing under control or dominance'],exp:'To be afflicted means to be affected by or suffering from a disease, condition, or other serious difficulty.'},
+  {word:'insinuate',ci:0,opts:['to suggest something unpleasant in an indirect way','a question asked for effect, not expecting an answer','splendor and impressiveness of appearance','lacking skill or ability; incompetent'],exp:'To insinuate means to suggest or hint at something unpleasant or negative in an indirect and subtle way.'},
+  {word:'complacent',ci:0,opts:['showing smug self-satisfaction; uncritically content','a member of a particular church parish','a former British coin worth one twentieth of a pound','a great difference or inequality'],exp:'Complacent means showing uncritical satisfaction with oneself or one\'s achievements, often failing to recognize potential problems.'},
+  {word:'maternal',ci:2,opts:['excessively particular about details; hard to please','to beg someone earnestly and desperately','relating to or characteristic of a mother','seeming contradictory but possibly true'],exp:'Maternal means relating to or characteristic of a mother; showing qualities associated with motherhood and nurturing.'},
+  {word:'bangle',ci:1,opts:['splendor and impressiveness of appearance','a rigid ornamental bracelet or anklet','to gradually diminish and come to an end','lacking skill or ability; incompetent'],exp:'A bangle is a rigid bracelet or anklet, typically made of metal or plastic, worn as decorative jewelry.'},
+  {word:'tithe',ci:3,opts:['a question asked for effect, not expecting an answer','lying stretched out on the ground face downward','dignity and seriousness of manner','a tenth part of income given as a contribution'],exp:'A tithe is one-tenth of a person\'s income, historically required to be paid to support a church or religious institution.'},
+  {word:'parishioner',ci:1,opts:['familiar with or knowledgeable about something','a member of a particular church parish','the act of bringing under control or dominance','a prediction or forecast about the future'],exp:'A parishioner is a person who lives within and belongs to a specific church parish; a regular member of a congregation.'},
+  {word:'samba',ci:1,opts:['placing something between two things; intervention','a lively Brazilian dance of African origin','to beg someone earnestly and desperately','a great difference or inequality'],exp:'The samba is a lively, rhythmical dance and music style of Brazilian origin with strong African influences.'},
+  {word:'sharkette',ci:0,opts:['a young or female shark; informal term','placing something between two things; intervention','very attentive to accuracy and detail; difficult to please','dignity and seriousness of manner'],exp:'Sharkette is an informal or colloquial term for a young or female shark.'},
+  {word:'grandeur',ci:0,opts:['splendor and impressiveness of appearance','seeming contradictory but possibly true','familiar with or knowledgeable about something','having a strong wish or desire for something'],exp:'Grandeur is the quality of being impressively large, magnificent, or splendid in appearance or scale.'},
+  {word:'gravitas',ci:2,opts:['proceeding harmfully in a subtle and gradual way','a member of a particular church parish','dignity and seriousness of manner','to gradually diminish and come to an end'],exp:'Gravitas is a dignified, serious, and authoritative manner or quality that commands respect and conveys importance.'},
+  {word:'finicky',ci:3,opts:['showing a superior attitude toward others','a young or female shark; informal term','to struggle or compete; to assert strongly','excessively particular about details; hard to please'],exp:'Finicky means extremely fussy, picky, or hard to please, especially regarding food, details, or quality standards.'},
+  {word:'fastidious',ci:0,opts:['very attentive to accuracy and detail; difficult to please','lying face upward; passive and inactive','the quality of being appropriate or suitable','suffering from a condition or problem'],exp:'Fastidious describes someone who pays very careful attention to accuracy and detail and has high standards that are hard to satisfy.'},
+  {word:'embroil',ci:3,opts:['to suggest something unpleasant in an indirect way','the process of bringing someone into a position or group','suffering from a condition or problem','to involve someone in a difficult situation or conflict'],exp:'To embroil means to involve someone deeply in a difficult, complicated, or controversial situation or conflict.'},
+  {word:'bashful',ci:0,opts:['reluctant to draw attention to oneself; shy','the quality of being appropriate or suitable','to strongly urge or encourage someone to do something','showing excessive pride in one\'s achievements'],exp:'Bashful means reluctant to draw attention to oneself; easily embarrassed and shy in social situations.'},
+  {word:'desirous',ci:1,opts:['the quality of being appropriate or suitable','having a strong wish or desire for something','lying face upward; passive and inactive','to beg someone earnestly and desperately'],exp:'Desirous means having a strong wish, longing, or desire for something; eagerly wanting something.'},
+  {word:'exhort',ci:0,opts:['to strongly urge or encourage someone to do something','showing a superior attitude toward others','to suggest something unpleasant in an indirect way','a person who believes in high principles and perfection'],exp:'To exhort means to strongly urge, advise, or encourage someone to take a particular course of action.'},
+  {word:'contrite',ci:2,opts:['showing smug self-satisfaction; uncritically content','splendor and impressiveness of appearance','feeling or expressing remorse or guilt','to gradually diminish and come to an end'],exp:'Contrite means feeling or showing genuine sorrow and remorse for having done something wrong; sincerely repentant.'},
+  {word:'boastful',ci:2,opts:['a minor weakness or character flaw','to beg someone earnestly and desperately','showing excessive pride in one\'s achievements','lacking skill or ability; incompetent'],exp:'Boastful describes someone who talks with excessive pride and self-satisfaction about their own accomplishments.'},
+  {word:'rueful',ci:2,opts:['a prediction or forecast about the future','to struggle or compete; to assert strongly','feeling or expressing regret or sorrow','a rigid ornamental bracelet or anklet'],exp:'Rueful means expressing sorrow, regret, or disappointment, often with a wry or self-deprecating sense of humor.'},
+  {word:'conversant',ci:3,opts:['to delay or postpone something','lying stretched out on the ground face downward','to put forward as fact or assumption','familiar with or knowledgeable about something'],exp:'Conversant means well-acquainted with or knowledgeable about a subject; having a good working familiarity with it.'},
+  {word:'misdeed',ci:3,opts:['familiar with or knowledgeable about something','splendor and impressiveness of appearance','showing excessive pride in one\'s achievements','a wrongful or wicked act'],exp:'A misdeed is a wrongful, improper, or wicked act; an offense or transgression, especially a minor one.'},
+  {word:'trouncing',ci:0,opts:['a decisive defeat; severe criticism','to struggle or compete; to assert strongly','seeming contradictory but possibly true','a humble and earnest prayer or request'],exp:'A trouncing is a decisive and overwhelming defeat; also used informally to mean a severe reprimand or harsh criticism.'},
+  {word:'inept',ci:0,opts:['lacking skill or ability; incompetent','a rigid ornamental bracelet or anklet','seeming contradictory but possibly true','excessively particular about details; hard to please'],exp:'Inept means lacking the skill, ability, or competence required to do something well; clumsy or bungling.'}
+];
+
+var TOTAL=QUESTIONS.length;
+var ORDER_KEY=STORAGE_KEY+'_order_v1';
+function identityOrder(){var a=[];for(var i=0;i<TOTAL;i++)a.push(i);return a;}
+function isValidOrder(o){if(!Array.isArray(o)||o.length!==TOTAL)return false;var seen={};for(var i=0;i<o.length;i++){if(typeof o[i]!=='number'||o[i]<0||o[i]>=TOTAL||seen[o[i]])return false;seen[o[i]]=true;}return true;}
+function loadOrder(){try{var o=JSON.parse(localStorage.getItem(ORDER_KEY)||'null');return isValidOrder(o)?o:null;}catch(e){return null;}}
+function saveOrder(o){localStorage.setItem(ORDER_KEY,JSON.stringify(o));}
+function randomOrder(){var a=identityOrder();for(var k=a.length-1;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}return a;}
+var currentOrder=loadOrder()||identityOrder();
+saveOrder(currentOrder);
+var pendingFreshMode='original';
+
+var state=loadState();
+var dotsOpen=false;
+
+function defaultState(){
+  var shuffles={};
+  var answers={};
+  QUESTIONS.forEach(function(q,i){
+    var arr=q.opts.map(function(_,j){return j;});
+    shuffleArr(arr);
+    shuffles[i]=arr;
+    answers[i]=null;
+  });
+  return {cur:0,answers:answers,shuffles:shuffles,showResults:false,retryMode:false,retryList:[]};
+}
+
+function getList(){
+  return state.retryMode?state.retryList:currentOrder;
+}
+
+function shuffleArr(arr){
+  for(var i=arr.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var t=arr[i];arr[i]=arr[j];arr[j]=t;
+  }
+}
+
+function loadState(){
+  try{
+    var raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw)return defaultState();
+    var s=JSON.parse(raw);
+    if(s.retryMode&&!Array.isArray(s.retryList)){throw 0;}
+    var listLen=s.retryMode?s.retryList.length:QUESTIONS.length;
+    if(typeof s.cur!=='number'||s.cur<0||s.cur>=listLen){throw 0;}
+    if(typeof s.answers!=='object'||typeof s.shuffles!=='object'){throw 0;}
+    return s;
+  }catch(e){
+    localStorage.removeItem(STORAGE_KEY);
+    return defaultState();
+  }
+}
+
+function saveState(){
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+}
+
+function getAtt(){return parseInt(localStorage.getItem(ATT_KEY)||'0',10);}
+function incAtt(){var n=getAtt()+1;localStorage.setItem(ATT_KEY,String(n));return n;}
+
+function render(){
+  var qa=document.getElementById('quiz-area');
+  var rs=document.getElementById('results-screen');
+  var btnRow=document.getElementById('btn-row');
+
+  if(state.showResults){
+    qa.style.display='none';
+    btnRow.style.display='none';
+    rs.classList.add('show');
+    rs.style.display='block';
+    renderResults();
+    renderDots();
+    renderNav();
+    return;
+  }
+
+  rs.classList.remove('show');
+  rs.style.display='none';
+  qa.style.display='block';
+  btnRow.style.display='flex';
+
+  var list=getList();
+  var pos=state.cur;
+  var i=list[pos];
+  var q=QUESTIONS[i];
+  var shuf=state.shuffles[i];
+  var ans=state.answers[i];
+  var answered=(ans!==null);
+
+  var html='<div class="q-card">';
+  html+='<div class="q-word-row">';
+  html+='<span class="q-word">'+q.word+'</span>';
+  html+='<button class="tts-btn" onclick="window.speakWord(\''+q.word+'\')" title="Listen">&#128264;</button>';
+  html+='</div>';
+  html+='<div class="opts">';
+  shuf.forEach(function(origIdx){
+    var txt=q.opts[origIdx];
+    var cls='opt-btn';
+    var dis='';
+    if(answered){
+      dis='disabled';
+      if(origIdx===q.ci){cls+=' correct';}
+      else if(ans===origIdx){cls+=' wrong';}
+    }
+    html+='<button class="'+cls+'" '+dis+' onclick="window.pickAns('+origIdx+')">'+txt+'</button>';
+  });
+  html+='</div>';
+  if(answered&&ans!==q.ci&&q.exp){
+    html+='<div class="explain-box">'+q.exp+'</div>';
+  }
+  html+='</div>';
+  qa.innerHTML=html;
+
+  var prevBtn=document.getElementById('prev-btn');
+  var nextBtn=document.getElementById('next-btn');
+  prevBtn.disabled=(pos===0);
+  prevBtn.style.opacity=(pos===0)?'0.4':'1';
+  var isLast=(pos===list.length-1);
+  nextBtn.textContent=isLast?'See Results':'Next';
+
+  renderDots();
+  renderNav();
+  document.getElementById('att-num').textContent=getAtt();
+}
+
+function renderNav(){
+  var list=getList();
+  var total=list.length;
+  var answered=0;
+  for(var k=0;k<list.length;k++){if(state.answers[list[k]]!==null)answered++;}
+  document.getElementById('count-display').textContent=(state.showResults?'Results':((state.cur+1)+' / '+total));
+  var pct=total?Math.round(answered/total*100):0;
+  document.getElementById('progress-bar-fill').style.width=pct+'%';
+}
+
+function renderDots(){
+  var panel=document.getElementById('dot-panel');
+  var list=getList();
+  var html='';
+  for(var pos=0;pos<list.length;pos++){
+    var qi=list[pos];
+    var q=QUESTIONS[qi];
+    var ans=state.answers[qi];
+    var cls='nav-dot';
+    if(ans!==null){cls+=ans===q.ci?' correct':' wrong';}
+    html+='<button class="'+cls+'" onclick="window.jumpTo('+pos+')">'+(pos+1)+'</button>';
+  }
+  var allDone=list.every(function(qi){return state.answers[qi]!==null;});
+  if(allDone){html+='<button class="nav-dot results-pill" onclick="window.goResults()">Results</button>';}
+  panel.innerHTML=html;
+}
+
+function renderResults(){
+  var list=getList();
+  var heading=document.querySelector('.results-heading');
+  if(heading)heading.textContent=state.retryMode?'Retry Results':'Results';
+  var correct=0,wrong=0,skip=0;
+  list.forEach(function(qi){
+    var a=state.answers[qi];
+    if(a===null)skip++;
+    else if(a===QUESTIONS[qi].ci)correct++;
+    else wrong++;
+  });
+  document.getElementById('results-sub').textContent='Correct: '+correct+' / Wrong: '+wrong+' / Skipped: '+skip;
+  var grid=document.getElementById('summary-grid');
+  var html='';
+  for(var pos=0;pos<list.length;pos++){
+    var qi=list[pos];
+    var a=state.answers[qi];
+    var cls='summary-card '+(a===null?'s':a===QUESTIONS[qi].ci?'c':'w');
+    var lbl=a===null?'Skip':a===QUESTIONS[qi].ci?'Correct':'Wrong';
+    html+='<div class="'+cls+'" onclick="window.jumpTo('+pos+')"><div class="sq">Q'+(pos+1)+'</div><div>'+lbl+'</div></div>';
+  }
+  grid.innerHTML=html;
+  document.getElementById('att-num').textContent=getAtt();
+}
+
+window.pickAns=function(origIdx){
+  var list=getList();
+  var qi=list[state.cur];
+  if(state.answers[qi]!==null)return;
+  state.answers[qi]=origIdx;
+  saveState();
+  render();
+};
+
+window.goPrev=function(){
+  if(state.cur>0){state.cur--;saveState();render();}
+};
+
+window.goNext=function(){
+  var list=getList();
+  if(state.cur<list.length-1){state.cur++;saveState();render();}
+  else{window.goResults();}
+};
+
+window.goResults=function(){
+  if(!state.retryMode){incAtt();}
+  state.showResults=true;
+  saveState();
+  render();
+};
+
+window.jumpTo=function(i){
+  state.showResults=false;
+  state.cur=i;
+  saveState();
+  if(dotsOpen){dotsOpen=false;document.getElementById('dot-panel').classList.remove('open');}
+  render();
+};
+
+window.toggleDots=function(){
+  dotsOpen=!dotsOpen;
+  var panel=document.getElementById('dot-panel');
+  if(dotsOpen)panel.classList.add('open');else panel.classList.remove('open');
+};
+
+window.retryWrong=function(){
+  var list=getList();
+  var wrongQi=[];
+  for(var pos=0;pos<list.length;pos++){
+    var qi=list[pos];
+    var a=state.answers[qi];
+    if(a!==null&&a!==QUESTIONS[qi].ci){wrongQi.push(qi);}
+  }
+  if(wrongQi.length===0)return;
+  wrongQi.forEach(function(qi){state.answers[qi]=null;});
+  state.retryMode=true;
+  state.retryList=wrongQi;
+  state.showResults=false;
+  state.cur=0;
+  saveState();
+  render();
+};
+
+window.copyResults=function(){
+  var list=getList();
+  var lines=['[Sion] Naver Dictionary 95'];
+  for(var pos=0;pos<list.length;pos++){
+    var qi=list[pos];
+    var q=QUESTIONS[qi];
+    var a=state.answers[qi];
+    var lbl=a===null?'Skipped':a===q.ci?'Correct':'Wrong';
+    lines.push('Q'+(pos+1)+' '+q.word+': '+lbl);
+  }
+  var txt=lines.join('\n');
+  try{
+    navigator.clipboard.writeText(txt);
+    document.getElementById('copy-btn').textContent='Copied!';
+    setTimeout(function(){document.getElementById('copy-btn').textContent='Copy All Results';},1500);
+  }catch(e){}
+};
+
+window.askFresh=function(mode){
+  pendingFreshMode=mode;
+  var title=document.getElementById('modal-title');
+  var text=document.getElementById('modal-text');
+  if(mode==='random'){
+    title.textContent='Start Fresh (Random Order)?';
+    text.textContent='Questions will be reshuffled into a new random order, and all progress will be reset.';
+  }else{
+    title.textContent='Start Fresh (Original Order)?';
+    text.textContent='Questions will return to their original order, and all progress will be reset.';
+  }
+  document.getElementById('modal-overlay').classList.add('open');
+};
+
+window.closeModal=function(){
+  document.getElementById('modal-overlay').classList.remove('open');
+};
+
+window.doFresh=function(){
+  localStorage.removeItem(STORAGE_KEY);
+  currentOrder=(pendingFreshMode==='random')?randomOrder():identityOrder();
+  saveOrder(currentOrder);
+  state=defaultState();
+  saveState();
+  document.getElementById('modal-overlay').classList.remove('open');
+  render();
+};
+
+window.speakWord=function(word){
+  try{
+    var u=new SpeechSynthesisUtterance(word);
+    u.lang='en-US';
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  }catch(e){}
+};
+
+render();
+})();
+</script>
+</body>
+</html>
