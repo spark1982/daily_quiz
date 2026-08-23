@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Advanced SAT Reading</title>
+<style>
+  :root{
+    --blue:#185FA5;
+    --track:#d7dde6;
+    --red:#E24B4A;
+    --green:#1D9E75;
+    --purple:#7b61ff;
+    --orange:#e8912d;
+    --text:#1f2937;
+    --sub:#5b6472;
+    --bg:#ffffff;
+    --card:#f7f9fc;
+    --border:#e2e8f0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--text);
+    background:var(--bg);
+    max-width:760px;
+    margin:0 auto;
+    padding:20px 16px 60px;
+    line-height:1.5;
+  }
+  h1{font-size:1.4rem;margin:0 0 4px;}
+  .instr{color:var(--sub);font-size:0.95rem;margin:0 0 18px;}
+  .timer-widget{
+    border:1px solid var(--border);
+    background:var(--card);
+    border-radius:10px;
+    padding:12px 14px;
+    margin-bottom:16px;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:10px;
+    font-size:0.9rem;
+  }
+  .timer-widget input[type=number]{
+    width:64px;
+    padding:6px 8px;
+    border:1px solid var(--border);
+    border-radius:6px;
+    font-size:0.9rem;
+  }
+  .timer-widget button{
+    padding:7px 14px;
+    border:none;
+    border-radius:6px;
+    background:var(--blue);
+    color:#fff;
+    font-size:0.85rem;
+    cursor:pointer;
+  }
+  .timer-display{
+    font-weight:700;
+    font-size:1.05rem;
+    padding:4px 10px;
+    border-radius:6px;
+    background:var(--track);
+    color:var(--text);
+  }
+  .timer-display.orange{background:var(--orange);color:#fff;}
+  .timer-display.red{background:var(--red);color:#fff;}
+  .progress-wrap{margin-bottom:10px;}
+  .progress-label{font-size:0.85rem;color:var(--sub);margin-bottom:6px;}
+  .progress-track{
+    width:100%;
+    height:10px;
+    background:var(--track);
+    border-radius:6px;
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    background:var(--blue);
+    width:0%;
+    transition:width .2s ease;
+  }
+  .jump-toggle{
+    background:none;
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:6px 10px;
+    font-size:0.8rem;
+    cursor:pointer;
+    margin:8px 0;
+    color:var(--blue);
+  }
+  .jump-panel{
+    display:none;
+    flex-wrap:wrap;
+    gap:8px;
+    padding:10px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    margin-bottom:14px;
+  }
+  .jump-panel.open{display:flex;}
+  .jump-dot{
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    background:var(--track);
+    color:var(--text);
+    border:2px solid transparent;
+    font-size:0.75rem;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+  .jump-dot.answered{background:var(--blue);color:#fff;}
+  .jump-dot.wrong{background:var(--red);color:#fff;}
+  .jump-dot.current{border-color:var(--text);}
+  .slot-tag{
+    display:inline-block;
+    font-size:0.72rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    color:var(--blue);
+    background:#eaf2fb;
+    padding:3px 8px;
+    border-radius:5px;
+    margin-bottom:10px;
+  }
+  .card{
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:18px;
+    background:var(--bg);
+    margin-bottom:16px;
+  }
+  .box-ctx{
+    background:var(--card);
+    border-left:4px solid var(--blue);
+    border-radius:8px;
+    padding:12px 14px;
+    margin:10px 0 16px;
+    font-size:0.95rem;
+  }
+  .qtext{font-weight:600;margin-bottom:14px;font-size:1.02rem;}
+  .opt{
+    display:block;
+    width:100%;
+    text-align:left;
+    padding:11px 14px;
+    margin-bottom:10px;
+    border:1.5px solid var(--border);
+    border-radius:9px;
+    background:#fff;
+    cursor:pointer;
+    font-size:0.94rem;
+    color:var(--text);
+  }
+  .opt:hover{border-color:var(--blue);}
+  .opt.selected{border-color:var(--blue);background:#eaf2fb;}
+  .opt.correct{border-color:var(--green);background:#e7f8f2;}
+  .opt.incorrect{border-color:var(--red);background:#fdeceb;}
+  .opt:disabled{cursor:default;}
+  .nav-row{display:flex;justify-content:space-between;gap:10px;margin-top:16px;}
+  .nav-row button{
+    padding:10px 18px;
+    border:none;
+    border-radius:8px;
+    background:var(--blue);
+    color:#fff;
+    font-size:0.92rem;
+    cursor:pointer;
+  }
+  .nav-row button:disabled{background:var(--track);color:var(--sub);cursor:default;}
+  .explain{
+    margin-top:14px;
+    padding:12px 14px;
+    background:#fbfbfb;
+    border:1px dashed var(--border);
+    border-radius:8px;
+    font-size:0.9rem;
+    display:none;
+  }
+  .explain.show{display:block;}
+  #resultsScreen{display:none;}
+  .score-big{font-size:2rem;font-weight:800;color:var(--blue);margin:6px 0;}
+  .btn-row{display:flex;flex-direction:column;gap:10px;margin-top:20px;}
+  .btn-row button{
+    padding:12px 16px;
+    border:none;
+    border-radius:9px;
+    font-size:0.95rem;
+    cursor:pointer;
+    color:#fff;
+  }
+  .btn-copy{background:var(--blue);}
+  .btn-retry{background:var(--green);}
+  .btn-save{background:var(--purple);}
+  .btn-fresh1{background:var(--text);}
+  .btn-fresh2{background:var(--sub);}
+  .attempts-line{font-size:0.85rem;color:var(--sub);margin-top:10px;}
+  .modal-overlay{
+    display:none;
+    position:fixed;top:0;left:0;right:0;bottom:0;
+    background:rgba(0,0,0,0.45);
+    align-items:center;
+    justify-content:center;
+    z-index:50;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-box{
+    background:#fff;
+    border-radius:12px;
+    padding:22px;
+    max-width:340px;
+    width:90%;
+    text-align:center;
+  }
+  .modal-box p{margin:0 0 16px;font-size:0.95rem;}
+  .modal-btns{display:flex;gap:10px;justify-content:center;}
+  .modal-btns button{
+    padding:9px 16px;
+    border:none;
+    border-radius:7px;
+    cursor:pointer;
+    font-size:0.9rem;
+  }
+  .modal-confirm{background:var(--red);color:#fff;}
+  .modal-cancel{background:var(--track);color:var(--text);}
+  svg{max-width:100%;height:auto;}
+  .review-item{border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:10px;font-size:0.88rem;}
+  .review-item.bad{border-color:var(--red);}
+</style>
+</head>
+<body>
+
+<h1>[Sion] Advanced SAT Reading</h1>
+<p class="instr">Read the passages and answer the questions.</p>
+
+<div class="timer-widget" id="timerWidget">
+  <label for="timeLimitInput">Set Time Limit (min):</label>
+  <input type="number" id="timeLimitInput" min="1" max="180" value="20">
+  <button id="startTimerBtn" type="button">Start</button>
+  <span class="timer-display" id="timerDisplay">--:--</span>
+</div>
+
+<div id="quizScreen">
+  <div class="progress-wrap">
+    <div class="progress-label" id="progressLabel">Answered 0 / 12</div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+  <button class="jump-toggle" id="jumpToggle" type="button">Jump to Question &#9660;</button>
+  <div class="jump-panel" id="jumpPanel"></div>
+
+  <div class="card">
+    <div class="slot-tag" id="slotTag"></div>
+    <div class="qtext" id="qText"></div>
+    <div class="box-ctx" id="boxCtx"></div>
+    <div id="optsWrap"></div>
+    <div class="explain" id="explainWrap"></div>
+  </div>
+
+  <div class="nav-row">
+    <button id="prevBtn" type="button">&#8592; Previous</button>
+    <button id="nextBtn" type="button">Next &#8594;</button>
+  </div>
+</div>
+
+<div id="resultsScreen">
+  <div class="card">
+    <h2>Results</h2>
+    <div class="score-big" id="scoreBig"></div>
+    <div id="reviewList"></div>
+    <div class="attempts-line" id="attemptsLine"></div>
+    <div class="btn-row">
+      <button class="btn-copy" id="copyAllBtn" type="button">Copy All Results</button>
+      <button class="btn-retry" id="retryWrongBtn" type="button">Retry Wrong Ones</button>
+      <button class="btn-save" id="saveWrongBtn" type="button">Save Wrong Answers</button>
+      <button class="btn-fresh1" id="freshOrigBtn" type="button">Start Fresh (Original Order)</button>
+      <button class="btn-fresh2" id="freshRandBtn" type="button">Start Fresh (Random Order)</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <p id="modalText">Are you sure?</p>
+    <div class="modal-btns">
+      <button class="modal-cancel" id="modalCancelBtn" type="button">Cancel</button>
+      <button class="modal-confirm" id="modalConfirmBtn" type="button">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var QUIZ_KEY = "quiz_sionadvsatreading_12_20260822_v1";
+  var ATT_KEY = "quiz_sionadvsatreading_20260822_att_v1";
+  var ORDER_KEY = "quiz_sionadvsatreading_ordermode_20260822_v1";
+
+  var CHART_SVG = '<svg viewBox="0 0 320 210" xmlns="http://www.w3.org/2000/svg">' +
+    '<line x1="20" y1="180" x2="310" y2="180" stroke="#5b6472" stroke-width="1.5"/>' +
+    '<line x1="180" y1="15" x2="180" y2="180" stroke="#E24B4A" stroke-width="1.5" stroke-dasharray="5,4"/>' +
+    '<text x="182" y="14" font-size="10" fill="#E24B4A">Drip irrigation installed</text>' +
+    '<rect x="40" y="95" width="50" height="85" fill="#185FA5"/>' +
+    '<text x="65" y="89" font-size="11" text-anchor="middle" fill="#1f2937">3.2</text>' +
+    '<text x="65" y="196" font-size="10" text-anchor="middle" fill="#5b6472">Year 1</text>' +
+    '<rect x="110" y="89" width="50" height="91" fill="#185FA5"/>' +
+    '<text x="135" y="83" font-size="11" text-anchor="middle" fill="#1f2937">3.4</text>' +
+    '<text x="135" y="196" font-size="10" text-anchor="middle" fill="#5b6472">Year 2</text>' +
+    '<rect x="180" y="52" width="50" height="128" fill="#1D9E75"/>' +
+    '<text x="205" y="46" font-size="11" text-anchor="middle" fill="#1f2937">4.8</text>' +
+    '<text x="205" y="196" font-size="10" text-anchor="middle" fill="#5b6472">Year 3</text>' +
+    '<rect x="250" y="44" width="50" height="136" fill="#1D9E75"/>' +
+    '<text x="275" y="38" font-size="11" text-anchor="middle" fill="#1f2937">5.1</text>' +
+    '<text x="275" y="196" font-size="10" text-anchor="middle" fill="#5b6472">Year 4</text>' +
+    '<text x="20" y="205" font-size="10" fill="#5b6472">Grape yield, tons per acre</text>' +
+    '</svg>';
+
+  var QUESTIONS = [
+    {
+      slot: "Command of Evidence: If True",
+      q: "A vineyard owner installed a drip irrigation system at the start of Year 3, shown in the graph. The owner claims the irrigation system was the primary cause of the increase in grape yield. Which finding, if true, would most undermine the owner's claim?",
+      box: CHART_SVG,
+      opts: [
+        "Regional weather records show that Year 3 and Year 4 had significantly higher rainfall and more moderate summer temperatures than Year 1 and Year 2 across the entire growing region.",
+        "The drip irrigation system used significantly less water per week than the vineyard's previous sprinkler system.",
+        "The vineyard's head grower personally believed the irrigation system was responsible for the higher yields.",
+        "The vineyard's overall revenue also increased during Year 3 and Year 4."
+      ],
+      ci: 0,
+      exp: "A region-wide shift toward higher rainfall and milder summers gives an alternative explanation that lines up exactly with when the yield increase began, so it directly undermines the claim that the irrigation system caused the change. The detail about using less water per week only describes an efficiency feature of the new system, without addressing what caused the higher yields. The head grower's personal belief is an opinion, not evidence, so it does not undermine or support the claim. The rise in overall revenue does not undermine the claim; if anything, it is consistent with higher yields, so it does not point to an alternative cause."
+    },
+    {
+      slot: "Command of Evidence: If True",
+      q: "Which additional finding, if true, would most strongly support the product managers' claim that the redesigned tutorial caused the increase in retention?",
+      box: "A mobile app company introduced a redesigned onboarding tutorial for new users in March. Comparing the two months before and after the redesign, the company found that 30-day user retention rose from 41 percent to 58 percent. Product managers attribute the improvement primarily to the new tutorial helping users understand key features faster.",
+      opts: [
+        "An internal analysis tracking individual users found that those who completed the new tutorial in full were retained at nearly twice the rate of those who skipped or abandoned it partway through.",
+        "The company also updated its customer support chat feature to respond more quickly during the same two-month period.",
+        "A competitor app released a major update that some users found confusing, around the same time.",
+        "Employees on the product team said they found the new tutorial easier to build than the old one."
+      ],
+      ci: 0,
+      exp: "Directly linking tutorial completion to a nearly doubled retention rate, at the individual user level, provides strong evidence that the tutorial itself, rather than some other factor, drove the improvement. The faster support chat introduces a separate, unaddressed factor that could explain the retention increase instead of the tutorial, so it does not support the product managers' specific claim. The competitor's confusing update describes an outside event unrelated to the tutorial's own effect on users. The product team's opinion that the tutorial was easier to build says nothing about whether it actually improved user retention."
+    },
+    {
+      slot: "Central Ideas / Textual Evidence",
+      q: "Which quotation from the text most directly supports the claim that Ashworth believed the process behind a piece of work mattered more than its finished appearance?",
+      box: "Thomas Ashworth had trained a dozen apprentices over the years in the same cramped forge his own master once used. Newcomers to the trade often assumed that raw talent was what separated a fine blacksmith from a mediocre one. But Ashworth judged his apprentices by a different standard entirely: 'A blade rushed to the fire,' he told them, 'remembers the rush forever, no matter how it gleams when it is done.' Three of his former apprentices went on to win regional forging competitions, each crediting the years they spent redoing failed work under his watch.",
+      opts: [
+        "'A blade rushed to the fire,' he told them, 'remembers the rush forever, no matter how it gleams when it is done.'",
+        "Thomas Ashworth had trained a dozen apprentices over the years in the same cramped forge his own master once used.",
+        "Newcomers to the trade often assumed that raw talent was what separated a fine blacksmith from a mediocre one.",
+        "Three of his former apprentices went on to win regional forging competitions, each crediting the years they spent redoing failed work under his watch."
+      ],
+      ci: 0,
+      exp: "This is Ashworth's own quoted statement, and it makes exactly the comparison the claim describes: a hastily made blade still carries the flaw of that rushed process no matter how good it looks, or 'gleams,' once finished. The sentence about training a dozen apprentices only describes background about the forge, not Ashworth's stated reasoning. The sentence about newcomers' assumption describes a mistaken belief about raw talent, a different topic from process versus appearance, not Ashworth's own view. The sentence about former apprentices winning competitions describes an outcome of his teaching, not the belief itself."
+    },
+    {
+      slot: "Central Ideas / Textual Evidence",
+      q: "Which quotation from the text most directly supports the claim that Bonnard believed solitude had sharpened her perception rather than diminished it?",
+      box: "Mireille Bonnard had kept the lighthouse alone for eleven years, ever since the last assistant keeper retired without being replaced. Visitors who climbed the tower often assumed the isolation must dull a person's senses over time. But Bonnard insisted that solitude had done the opposite: 'Silence does not empty the mind,' she said. 'It simply makes room for what was always there to be heard.' Her logbooks, unusually detailed even by lighthouse-keeping standards, recorded weather patterns other keepers along the coast had never thought to track.",
+      opts: [
+        "'Silence does not empty the mind,' she said. 'It simply makes room for what was always there to be heard.'",
+        "Mireille Bonnard had kept the lighthouse alone for eleven years, ever since the last assistant keeper retired without being replaced.",
+        "Visitors who climbed the tower often assumed the isolation must dull a person's senses over time.",
+        "Her logbooks, unusually detailed even by lighthouse-keeping standards, recorded weather patterns other keepers along the coast had never thought to track."
+      ],
+      ci: 0,
+      exp: "This is Bonnard's own quoted statement, and it directly makes the comparison the claim describes: silence does not empty the mind but instead makes room for what can be perceived, meaning solitude sharpens rather than dulls awareness. The sentence about keeping the lighthouse alone for eleven years only gives background on how she came to be isolated, not her stated belief. The sentence about visitors' assumption describes the opposite view, held by other people, not Bonnard's own belief. The sentence about her detailed logbooks describes a result of her heightened attention, not the belief itself."
+    },
+    {
+      slot: "Inferences",
+      q: "Which choice is the most reasonable inference based on the text?",
+      box: "Every Sunday morning, without fail, Mr. Halloway walked to the same bench at the edge of Riverside Park, set a neatly folded newspaper on the seat, and walked away without ever sitting down himself. He had done this for as long as anyone in the neighborhood could remember, through rain, through snow, through the bench's slow decay into splinters and rust. When the parks department finally removed the ruined bench last spring, Mr. Halloway kept coming anyway, setting the newspaper down on the bare patch of grass where it had once stood.",
+      opts: [
+        "The newspaper ritual likely commemorates someone or something connected to that specific bench, since Mr. Halloway continues the gesture even after the bench itself is gone.",
+        "Mr. Halloway is waiting for a friend who reads the newspaper but has never shown up on time.",
+        "Mr. Halloway believes the parks department will eventually replace the bench if he keeps visiting the site.",
+        "Mr. Halloway is unaware that the bench has been removed and continues to visit out of confusion."
+      ],
+      ci: 0,
+      exp: "The ritual's unbroken continuation at the exact spot where the bench once stood, even after the bench itself is gone, most reasonably suggests the gesture is tied to the location or a memory rather than to the bench as an object. The choice about waiting for a tardy friend is a tempting but unsupported guess; the text never mentions anyone Mr. Halloway is expecting, and continuing the ritual on bare grass after the bench is removed makes waiting for a visitor implausible. The choice about hoping the parks department will replace the bench is also tempting, but nothing in the text connects his visits to an expectation about a replacement; marking the bare spot reads as personal or symbolic rather than a bid to prompt city action. The choice about confusion is directly contradicted by the text, since setting the newspaper down precisely on 'the bare patch of grass where it had once stood' shows he knows exactly what happened to the bench."
+    },
+    {
+      slot: "Inferences",
+      q: "Which choice is the most reasonable inference based on the text?",
+      box: "After a public library system eliminated late fees entirely, the percentage of overdue books returned within one month rose from 61 percent to 79 percent. During that same six-month period, the library also installed self-checkout kiosks at every branch and extended weekend hours by four hours.",
+      opts: [
+        "The rise in the on-time return rate may not be attributable to the elimination of late fees alone, since the self-checkout kiosks and extended hours were introduced during the same period.",
+        "Eliminating late fees was clearly the single most effective way to encourage patrons to return books on time.",
+        "The self-checkout kiosks were more responsible for the increase in returns than the elimination of late fees.",
+        "Patrons were dissatisfied with the library's hours before they were extended."
+      ],
+      ci: 0,
+      exp: "Because self-checkout kiosks and extended hours were also introduced during the same six-month period as the fee elimination, the rise in on-time returns cannot be confidently attributed to eliminating late fees alone. The choice asserting fee elimination was 'clearly the single most effective way' overstates what the text supports, since multiple changes happened simultaneously. The choice ranking the kiosks as more responsible than the fee elimination is equally unsupported speculation in the opposite direction; the text gives no basis for ordering the causes. The choice about patrons being dissatisfied with the old hours is not supported, since the text only reports a return-rate statistic, not patron sentiment about hours."
+    },
+    {
+      slot: "Cross-Text Connections",
+      q: "How would the author of Text 2 most likely respond to the claim in Text 1?",
+      box: "Text 1: Urban planners have promoted green roofs, rooftops covered in vegetation, as an effective way to reduce a city's overall temperature during heat waves, citing their ability to absorb sunlight rather than reflect it as heat.<br><br>Text 2: A three-year study across several mid-sized cities found that green roofs measurably cooled the buildings directly beneath them but had little detectable effect on street-level air temperature more than fifty meters away, suggesting their citywide cooling impact may be far more limited than planners have assumed.",
+      opts: [
+        "By suggesting that green roofs' impact on citywide temperature is likely overstated, since their cooling effect appears confined to the immediate building rather than the surrounding city.",
+        "By agreeing that green roofs are the most effective method available for cooling an entire city during heat waves.",
+        "By arguing that green roofs should be replaced with a different, more effective vegetation-based cooling technology.",
+        "By denying that green roofs have any cooling effect whatsoever, even on the buildings where they are installed."
+      ],
+      ci: 0,
+      exp: "Text 2 directly states that green roofs cooled the buildings beneath them but had 'little detectable effect' at street level, and that citywide impact 'may be far more limited than planners have assumed,' which is exactly this response. The choice claiming agreement that green roofs are the most effective citywide method contradicts Text 2's explicit finding of a limited citywide effect. The choice about replacing green roofs with another technology proposes something neither text discusses. The choice claiming green roofs have no cooling effect 'whatsoever' contradicts Text 2, which affirms measurable cooling directly beneath the roofs."
+    },
+    {
+      slot: "Cross-Text Connections",
+      q: "How does Text 2 relate to the claim presented in Text 1?",
+      box: "Text 1: Economists have observed that a growing number of young adults are delaying homeownership, and many attribute this trend primarily to rising home prices outpacing wage growth.<br><br>Text 2: A recent survey of adults under thirty-five found that while affordability was frequently cited as a barrier, an even larger share of respondents said they were delaying homeownership because they valued the flexibility to relocate for career opportunities without being tied to a mortgage.",
+      opts: [
+        "It complicates Text 1's claim by suggesting that a factor other than affordability, namely a preference for career flexibility, may play an even larger role in the trend.",
+        "It confirms Text 1's claim by showing that rising home prices are the only factor influencing young adults' housing decisions.",
+        "It shifts focus away from homeownership entirely to examine rental market trends instead.",
+        "It disputes whether young adults are actually delaying homeownership at all."
+      ],
+      ci: 0,
+      exp: "Text 2 complicates Text 1's affordability-focused claim by reporting that an even larger share of respondents pointed to a preference for career flexibility, introducing a factor Text 1 does not mention. The choice claiming confirmation that price is the 'only factor' contradicts Text 2, which identifies a different, larger factor. The choice about shifting to rental market trends is unsupported, since Text 2 remains focused on homeownership decisions. The choice about disputing whether delay is happening at all is unsupported, since Text 2 assumes the same delaying trend and instead investigates its causes."
+    },
+    {
+      slot: "Transitions",
+      q: "Which choice completes the text with the most logically precise transition?",
+      box: "In the early 2000s, most classical musicians dismissed streaming platforms as a passing trend unlikely to affect ticket sales for live performances. ____ several major orchestras now report that listeners who discover a piece through streaming are significantly more likely to attend a live performance of that same piece within a year.",
+      opts: [
+        "Notwithstanding this skepticism,",
+        "In a similar vein,",
+        "By extension,",
+        "Correspondingly,"
+      ],
+      ci: 0,
+      exp: "'Notwithstanding this skepticism' correctly signals the contrast between musicians' early dismissal of streaming and the later finding that streaming actually boosts attendance at live performances. 'In a similar vein' is wrong because it implies the second sentence resembles or agrees with the first, rather than contrasting with it. 'By extension' is wrong because it implies the finding is a logical extension of the earlier skepticism, rather than a contradiction of it. 'Correspondingly' is wrong because it implies the two ideas align or match, rather than standing in tension with each other."
+    },
+    {
+      slot: "Transitions",
+      q: "Which choice completes the text with the most logically precise transition?",
+      box: "Historians once treated oral traditions as unreliable sources, prone to distortion with each retelling. ____ archivists studying written court records from the same era have found numerous factual errors introduced by scribes who misheard testimony or simplified complex accounts.",
+      opts: [
+        "By the same token,",
+        "Conversely,",
+        "Nevertheless,",
+        "As a result,"
+      ],
+      ci: 0,
+      exp: "'By the same token' correctly draws a parallel, extending the same skepticism historians held about oral traditions to a comparable weakness now found in written court records. 'Conversely' is wrong because it signals an opposite or contrasting point, when the second sentence actually reinforces the first sentence's underlying concern about source reliability. 'Nevertheless' is wrong because it implies the second sentence holds despite the first, rather than paralleling it. 'As a result' is wrong because it implies the scribal errors were caused by historians' skepticism of oral tradition, when the two are simply analogous findings about different types of sources."
+    },
+    {
+      slot: "Inferences",
+      q: "Which choice is the most reasonable inference based on the text?",
+      box: "Ms. Okonkwo had retired from teaching grammar school five years ago, yet she still caught herself mouthing silent corrections whenever she overheard a stranger misuse a word in the grocery store or on the bus. She never once corrected anyone aloud, not even when her own grandchildren begged her to relax, insisting that retirement meant she no longer had to notice such things. She would only smile and say that noticing was not something a person could simply decide to stop doing.",
+      opts: [
+        "Ms. Okonkwo's habit of noticing grammar errors has become an ingrained part of how she perceives language, independent of her professional role or her own efforts to set it aside.",
+        "Ms. Okonkwo secretly wishes she could return to teaching so that she could correct people's grammar openly again.",
+        "Ms. Okonkwo believes her grandchildren use poor grammar more often than strangers she encounters in public.",
+        "Ms. Okonkwo has decided to stop noticing grammar mistakes now that she is retired."
+      ],
+      ci: 0,
+      exp: "Continuing to silently notice and mouth corrections five years into retirement, and describing noticing as something a person cannot simply decide to stop, most reasonably suggests the habit is now built into how she perceives language rather than tied to her old job. The choice about secretly wishing to return to teaching is a tempting but unsupported guess; the text never mentions any wish to resume teaching, only that she keeps noticing errors silently. The choice comparing her grandchildren's grammar to strangers' grammar is also tempting but unsupported, since the text never compares the two groups' language use. The choice claiming she has decided to stop noticing mistakes is directly contradicted by the text, which states she 'still caught herself' correcting errors and that noticing 'was not something a person could simply decide to stop doing.'"
+    },
+    {
+      slot: "Inferences",
+      q: "Which choice is the most reasonable inference based on the text?",
+      box: "A technology company found that employees who participated in its voluntary mentorship program stayed at the company an average of 14 months longer than those who did not participate. The company also noted that participation in the mentorship program was voluntary, and that employees who signed up tended to already have stronger performance reviews than the average employee before the program began.",
+      opts: [
+        "The longer retention among mentorship participants may be partly explained by their already-stronger performance before joining, rather than by the mentorship program alone.",
+        "The mentorship program is clearly the primary reason employees stayed at the company longer.",
+        "Employees who did not join the mentorship program were performing poorly and were likely to be let go regardless.",
+        "The company plans to make the mentorship program mandatory for all employees."
+      ],
+      ci: 0,
+      exp: "Because participants already tended to have stronger performance reviews before the program began, their longer retention may be partly explained by that pre-existing difference rather than by the mentorship program alone. The choice asserting the program is 'clearly the primary reason' overstates what the text supports, since participation was self-selected among already stronger performers. The choice claiming non-participants were 'performing poorly and were likely to be let go' overreaches; the text only says participants had stronger reviews than average, not that non-participants performed poorly or faced dismissal. The choice about making the program mandatory is not supported, since the text says nothing about the company's future plans."
+    }
+  ];
+
+  var TOTAL = QUESTIONS.length;
+
+  function safeGet(key){
+    try{ var v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
+    catch(e){ return null; }
+  }
+  function safeSet(key, val){
+    try{ localStorage.setItem(key, JSON.stringify(val)); }
+    catch(e){ /* ignore */ }
+  }
+
+  function shuffleArr(arr){
+    var a = arr.slice();
+    for(var i=a.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var tmp=a[i]; a[i]=a[j]; a[j]=tmp;
+    }
+    return a;
+  }
+
+  function buildOptShuffles(){
+    var out = [];
+    for(var i=0;i<TOTAL;i++){
+      out.push(shuffleArr([0,1,2,3]));
+    }
+    return out;
+  }
+
+  function freshState(orderMode){
+    var baseOrder = [];
+    for(var i=0;i<TOTAL;i++) baseOrder.push(i);
+    var order = orderMode === "random" ? shuffleArr(baseOrder) : baseOrder;
+    return {
+      orderMode: orderMode,
+      order: order,
+      optShuffle: buildOptShuffles(),
+      answers: new Array(TOTAL).fill(null),
+      current: 0,
+      timeLimitMin: null,
+      deadline: null,
+      timerRunning: false,
+      retryMode: false,
+      retryQuestionIds: null
+    };
+  }
+
+  var state = safeGet(QUIZ_KEY);
+  if(!state){
+    var savedOrderMode = safeGet(ORDER_KEY);
+    state = freshState(savedOrderMode && savedOrderMode.mode ? savedOrderMode.mode : "original");
+  }
+
+  function persist(){
+    safeSet(QUIZ_KEY, state);
+  }
+
+  // ---------- DOM refs ----------
+  var quizScreen = document.getElementById("quizScreen");
+  var resultsScreen = document.getElementById("resultsScreen");
+  var slotTag = document.getElementById("slotTag");
+  var qText = document.getElementById("qText");
+  var boxCtx = document.getElementById("boxCtx");
+  var optsWrap = document.getElementById("optsWrap");
+  var explainWrap = document.getElementById("explainWrap");
+  var prevBtn = document.getElementById("prevBtn");
+  var nextBtn = document.getElementById("nextBtn");
+  var progressLabel = document.getElementById("progressLabel");
+  var progressFill = document.getElementById("progressFill");
+  var jumpToggle = document.getElementById("jumpToggle");
+  var jumpPanel = document.getElementById("jumpPanel");
+  var timeLimitInput = document.getElementById("timeLimitInput");
+  var startTimerBtn = document.getElementById("startTimerBtn");
+  var timerDisplay = document.getElementById("timerDisplay");
+  var scoreBig = document.getElementById("scoreBig");
+  var reviewList = document.getElementById("reviewList");
+  var attemptsLine = document.getElementById("attemptsLine");
+  var modalOverlay = document.getElementById("modalOverlay");
+  var modalText = document.getElementById("modalText");
+  var modalCancelBtn = document.getElementById("modalCancelBtn");
+  var modalConfirmBtn = document.getElementById("modalConfirmBtn");
+
+  function activeOrder(){
+    return state.retryMode ? state.retryQuestionIds : state.order;
+  }
+
+  function currentQIndex(){
+    return activeOrder()[state.current];
+  }
+
+  // ---------- Rendering ----------
+  function renderJumpPanel(){
+    jumpPanel.innerHTML = "";
+    var ord = activeOrder();
+    for(var pos=0; pos<ord.length; pos++){
+      var qIdx = ord[pos];
+      var dot = document.createElement("div");
+      dot.className = "jump-dot";
+      dot.textContent = (pos+1);
+      if(state.answers[qIdx] !== null){
+        dot.classList.add("answered");
+        if(state.answers[qIdx] !== QUESTIONS[qIdx].ci){
+          dot.classList.add("wrong");
+        }
+      }
+      if(pos === state.current){
+        dot.classList.add("current");
+      }
+      (function(p){
+        dot.addEventListener("click", function(){
+          state.current = p;
+          persist();
+          renderQuestion();
+        });
+      })(pos);
+      jumpPanel.appendChild(dot);
+    }
+  }
+
+  function renderProgress(){
+    var answeredCount = 0;
+    var ord = activeOrder();
+    for(var i=0;i<ord.length;i++){
+      if(state.answers[ord[i]] !== null) answeredCount++;
+    }
+    progressLabel.textContent = "Answered " + answeredCount + " / " + ord.length;
+    progressFill.style.width = Math.round((answeredCount/ord.length)*100) + "%";
+  }
+
+  function renderQuestion(){
+    var ord = activeOrder();
+    var qIdx = ord[state.current];
+    var qd = QUESTIONS[qIdx];
+    slotTag.textContent = qd.slot;
+    qText.textContent = qd.q;
+    boxCtx.innerHTML = qd.box;
+
+    var order4 = state.optShuffle[qIdx];
+    optsWrap.innerHTML = "";
+    var picked = state.answers[qIdx];
+
+    for(var p=0; p<4; p++){
+      var underlyingIdx = order4[p];
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "opt";
+      btn.textContent = qd.opts[underlyingIdx];
+      if(picked !== null){
+        btn.disabled = true;
+        if(underlyingIdx === qd.ci){
+          btn.classList.add("correct");
+        } else if(underlyingIdx === picked){
+          btn.classList.add("incorrect");
+        }
+        if(underlyingIdx === picked){
+          btn.classList.add("selected");
+        }
+      }
+      (function(uIdx){
+        btn.addEventListener("click", function(){
+          window.selectOption(qIdx, uIdx);
+        });
+      })(underlyingIdx);
+      optsWrap.appendChild(btn);
+    }
+
+    if(picked !== null){
+      explainWrap.innerHTML = "<strong>Explanation:</strong> " + qd.exp;
+      explainWrap.classList.add("show");
+    } else {
+      explainWrap.innerHTML = "";
+      explainWrap.classList.remove("show");
+    }
+
+    prevBtn.disabled = (state.current === 0);
+    if(state.current === ord.length - 1){
+      nextBtn.textContent = "Show Results →";
+      nextBtn.disabled = false;
+    } else {
+      nextBtn.textContent = "Next →";
+      nextBtn.disabled = false;
+    }
+
+    renderProgress();
+    renderJumpPanel();
+  }
+
+  window.selectOption = function(qIdx, underlyingIdx){
+    if(state.answers[qIdx] !== null) return;
+    state.answers[qIdx] = underlyingIdx;
+    persist();
+    renderQuestion();
+  };
+
+  prevBtn.addEventListener("click", function(){
+    if(state.current > 0){
+      state.current--;
+      persist();
+      renderQuestion();
+    }
+  });
+
+  nextBtn.addEventListener("click", function(){
+    var ord = activeOrder();
+    if(state.current < ord.length - 1){
+      state.current++;
+      persist();
+      renderQuestion();
+    } else {
+      goToResults();
+    }
+  });
+
+  jumpToggle.addEventListener("click", function(){
+    jumpPanel.classList.toggle("open");
+  });
+
+  // ---------- Timer ----------
+  var timerInterval = null;
+
+  function formatTime(ms){
+    if(ms < 0) ms = 0;
+    var totalSec = Math.floor(ms/1000);
+    var m = Math.floor(totalSec/60);
+    var s = totalSec % 60;
+    return (m<10?"0":"")+m+":"+(s<10?"0":"")+s;
+  }
+
+  function tickTimer(){
+    if(!state.timerRunning || !state.deadline){
+      timerDisplay.textContent = "--:--";
+      timerDisplay.classList.remove("orange","red");
+      return;
+    }
+    var remaining = state.deadline - Date.now();
+    var totalMs = state.timeLimitMin * 60000;
+    if(remaining <= 0){
+      timerDisplay.textContent = "Time's Up";
+      timerDisplay.classList.add("red");
+      state.timerRunning = false;
+      persist();
+      if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
+      return;
+    }
+    timerDisplay.textContent = formatTime(remaining);
+    var pct = remaining / totalMs;
+    timerDisplay.classList.remove("orange","red");
+    if(pct <= 0.10){ timerDisplay.classList.add("red"); }
+    else if(pct <= 0.25){ timerDisplay.classList.add("orange"); }
+  }
+
+  startTimerBtn.addEventListener("click", function(){
+    var mins = parseFloat(timeLimitInput.value);
+    if(!mins || mins <= 0) mins = 20;
+    state.timeLimitMin = mins;
+    state.deadline = Date.now() + mins*60000;
+    state.timerRunning = true;
+    persist();
+    if(timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(tickTimer, 1000);
+    tickTimer();
+  });
+
+  function resumeTimerIfNeeded(){
+    if(state.timerRunning && state.deadline){
+      if(timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(tickTimer, 1000);
+      tickTimer();
+      if(state.timeLimitMin){
+        timeLimitInput.value = state.timeLimitMin;
+      }
+    }
+  }
+
+  // ---------- Results ----------
+  function computeScore(){
+    var correct = 0;
+    var ord = activeOrder();
+    for(var i=0;i<ord.length;i++){
+      var qIdx = ord[i];
+      if(state.answers[qIdx] === QUESTIONS[qIdx].ci) correct++;
+    }
+    return { correct: correct, total: ord.length };
+  }
+
+  function goToResults(){
+    quizScreen.style.display = "none";
+    resultsScreen.style.display = "block";
+
+    var sc = computeScore();
+    scoreBig.textContent = sc.correct + " / " + sc.total + " correct";
+
+    reviewList.innerHTML = "";
+    var ord = activeOrder();
+    for(var i=0;i<ord.length;i++){
+      var qIdx = ord[i];
+      var qd = QUESTIONS[qIdx];
+      var picked = state.answers[qIdx];
+      var isCorrect = picked === qd.ci;
+      var div = document.createElement("div");
+      div.className = "review-item" + (isCorrect ? "" : " bad");
+      var pickedText = picked !== null ? qd.opts[picked] : "(not answered)";
+      var correctText = qd.opts[qd.ci];
+      div.innerHTML = "<strong>Q" + (i+1) + " (" + qd.slot + "):</strong> " + qd.q +
+        "<br><em>Your answer:</em> " + pickedText +
+        (isCorrect ? "" : ("<br><em>Correct answer:</em> " + correctText));
+      reviewList.appendChild(div);
+    }
+
+    var attempts = safeGet(ATT_KEY);
+    var count = (typeof attempts === "number") ? attempts : 0;
+    count += 1;
+    safeSet(ATT_KEY, count);
+    attemptsLine.textContent = "Total Attempts: " + count;
+
+    if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
+  }
+
+  window.saveWrongAnswers = function(){
+    try{
+      var ord = activeOrder();
+      var wrong = [];
+      for(var i=0;i<ord.length;i++){
+        var qIdx = ord[i];
+        var qd = QUESTIONS[qIdx];
+        var picked = state.answers[qIdx];
+        if(picked !== qd.ci){
+          wrong.push({
+            q: qd.q,
+            opts: qd.opts,
+            ci: qd.ci,
+            picked: picked
+          });
+        }
+      }
+      if(wrong.length === 0){
+        alert("No wrong answers to save. Great job!");
+        return;
+      }
+      var payload = {
+        child: "Sion",
+        subject: "[Sion] Advanced SAT Reading",
+        date: "2026-08-22",
+        wrong: wrong
+      };
+      var blob = new Blob([JSON.stringify(payload, null, 2)], {type: "application/json"});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "sion_advanced_sat_reading_wrong_answers.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }catch(err){
+      alert("Could not save wrong answers.");
+    }
+  };
+
+  document.getElementById("saveWrongBtn").addEventListener("click", function(){
+    window.saveWrongAnswers();
+  });
+
+  window.copyAllResults = function(){
+    var ord = activeOrder();
+    var lines = [];
+    lines.push("[Sion] Advanced SAT Reading - Results");
+    var sc = computeScore();
+    lines.push("Score: " + sc.correct + " / " + sc.total);
+    for(var i=0;i<ord.length;i++){
+      var qIdx = ord[i];
+      var qd = QUESTIONS[qIdx];
+      var picked = state.answers[qIdx];
+      var pickedText = picked !== null ? qd.opts[picked] : "(not answered)";
+      var correctText = qd.opts[qd.ci];
+      lines.push((i+1) + ". " + qd.q);
+      lines.push("   Your answer: " + pickedText);
+      lines.push("   Correct answer: " + correctText);
+    }
+    var text = lines.join("\n");
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){
+          alert("Results copied to clipboard.");
+        }, function(){
+          fallbackCopy(text);
+        });
+      } else {
+        fallbackCopy(text);
+      }
+    }catch(err){
+      fallbackCopy(text);
+    }
+  };
+
+  function fallbackCopy(text){
+    try{
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      alert("Results copied to clipboard.");
+    }catch(e){
+      alert("Could not copy results automatically. Please copy manually.");
+    }
+  }
+
+  document.getElementById("copyAllBtn").addEventListener("click", function(){
+    window.copyAllResults();
+  });
+
+  window.retryWrongOnes = function(){
+    var ord = activeOrder();
+    var wrongIds = [];
+    for(var i=0;i<ord.length;i++){
+      var qIdx = ord[i];
+      var qd = QUESTIONS[qIdx];
+      if(state.answers[qIdx] !== qd.ci){
+        wrongIds.push(qIdx);
+      }
+    }
+    if(wrongIds.length === 0){
+      alert("No wrong answers to retry. Great job!");
+      return;
+    }
+    state.retryMode = true;
+    state.retryQuestionIds = wrongIds;
+    for(var j=0;j<wrongIds.length;j++){
+      state.answers[wrongIds[j]] = null;
+    }
+    state.current = 0;
+    persist();
+    resultsScreen.style.display = "none";
+    quizScreen.style.display = "block";
+    renderQuestion();
+  };
+
+  document.getElementById("retryWrongBtn").addEventListener("click", function(){
+    window.retryWrongOnes();
+  });
+
+  // ---------- Start Fresh (custom modal) ----------
+  var pendingFreshMode = null;
+
+  function openModal(msg, onConfirm){
+    modalText.textContent = msg;
+    modalOverlay.classList.add("show");
+    modalConfirmBtn.onclick = function(){
+      modalOverlay.classList.remove("show");
+      onConfirm();
+    };
+    modalCancelBtn.onclick = function(){
+      modalOverlay.classList.remove("show");
+    };
+  }
+
+  function doStartFresh(mode){
+    if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
+    state = freshState(mode);
+    persist();
+    safeSet(ORDER_KEY, {mode: mode});
+    resultsScreen.style.display = "none";
+    quizScreen.style.display = "block";
+    jumpPanel.classList.remove("open");
+    timerDisplay.textContent = "--:--";
+    timerDisplay.classList.remove("orange","red");
+    timeLimitInput.value = 20;
+    renderQuestion();
+  }
+
+  document.getElementById("freshOrigBtn").addEventListener("click", function(){
+    openModal("Start fresh with questions in original order? This will erase your current progress.", function(){
+      doStartFresh("original");
+    });
+  });
+
+  document.getElementById("freshRandBtn").addEventListener("click", function(){
+    openModal("Start fresh with questions in random order? This will erase your current progress.", function(){
+      doStartFresh("random");
+    });
+  });
+
+  // ---------- Init ----------
+  function init(){
+    if(state.current === undefined || state.current === null) state.current = 0;
+    if(!state.optShuffle || state.optShuffle.length !== TOTAL){
+      state.optShuffle = buildOptShuffles();
+    }
+    persist();
+    resumeTimerIfNeeded();
+    renderQuestion();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

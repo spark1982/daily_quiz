@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT Grammar</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px 18px 60px 18px;
+    background: #f4f6f9;
+    color: #1f2530;
+  }
+  h1 {
+    font-size: 26px;
+    margin: 10px 0 4px 0;
+    color: #14213d;
+  }
+  .instructions {
+    font-size: 15px;
+    color: #4a5568;
+    margin: 0 0 18px 0;
+  }
+  .topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: #ffffff;
+    border: 1px solid #d7dde6;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+  .attempts {
+    font-size: 14px;
+    font-weight: 600;
+    color: #14213d;
+  }
+  .timer-widget {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+  }
+  .timer-widget input {
+    width: 56px;
+    padding: 5px 6px;
+    border: 1px solid #d7dde6;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .timer-widget button {
+    background: #14213d;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  #timerDisplay {
+    font-weight: 700;
+    font-size: 16px;
+    min-width: 58px;
+    display: inline-block;
+    color: #14213d;
+  }
+  #timerDisplay.orange { color: #FF9500; }
+  #timerDisplay.red { color: #D93025; }
+  .navwrap {
+    background: #ffffff;
+    border: 1px solid #d7dde6;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+  .navline {
+    font-size: 14px;
+    font-weight: 600;
+    color: #14213d;
+    margin-bottom: 8px;
+  }
+  .progressbar {
+    height: 10px;
+    width: 100%;
+    background: #d7dde6;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .progressfill {
+    height: 100%;
+    background: #185FA5;
+    width: 0%;
+    transition: width 0.2s ease;
+  }
+  #toggleDotsBtn {
+    background: #eef2f7;
+    color: #14213d;
+    border: 1px solid #d7dde6;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .dots-panel {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 26px);
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .dots-panel.hidden { display: none; }
+  .dot {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #d7dde6;
+    color: #14213d;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    font-weight: 700;
+  }
+  .dot.correct { background: #185FA5; color: #ffffff; }
+  .dot.wrong { background: #E24B4A; color: #ffffff; }
+  .card {
+    background: #ffffff;
+    border: 1px solid #d7dde6;
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .qcount {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .context-box {
+    background: #f0f4fa;
+    border-left: 4px solid #185FA5;
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-size: 15px;
+    line-height: 1.55;
+    color: #1f2530;
+    margin-bottom: 16px;
+  }
+  .qtext {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    color: #14213d;
+  }
+  .opt {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: #ffffff;
+    border: 1.5px solid #d7dde6;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    font-size: 14.5px;
+    cursor: pointer;
+    color: #1f2530;
+  }
+  .opt:hover { border-color: #185FA5; }
+  .opt.selected { border-color: #185FA5; background: #eaf1fb; }
+  .opt.correctPick { border-color: #1D9E75; background: #e5f7f0; }
+  .opt.wrongPick { border-color: #E24B4A; background: #fbe9e9; }
+  .opt.revealCorrect { border-color: #1D9E75; background: #e5f7f0; }
+  .opt:disabled { cursor: default; }
+  .explanation {
+    margin-top: 8px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: #f7f8fa;
+    border: 1px solid #d7dde6;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333c48;
+    display: none;
+  }
+  .explanation.show { display: block; }
+  .navbtns {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 18px;
+    gap: 10px;
+  }
+  .navbtns button {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14.5px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  #prevBtn { background: #eef2f7; color: #14213d; }
+  #nextBtn { background: #185FA5; color: #ffffff; }
+  #nextBtn:disabled { background: #b9c6d6; cursor: not-allowed; }
+  .resultsBtns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .resultsBtns button {
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #ffffff;
+  }
+  #copyBtn { background: #14213d; }
+  #retryBtn { background: #1D9E75; }
+  #saveWrongBtn { background: #7b61ff; }
+  #freshOrigBtn { background: #34495E; }
+  #freshRandBtn { background: #2C3E50; }
+  .scoreLine {
+    font-size: 20px;
+    font-weight: 700;
+    color: #14213d;
+    margin-bottom: 14px;
+  }
+  .reviewItem {
+    border-bottom: 1px solid #e5e9ef;
+    padding: 12px 0;
+    font-size: 14px;
+  }
+  .reviewItem:last-child { border-bottom: none; }
+  .reviewItem .rq { font-weight: 600; margin-bottom: 4px; color: #14213d; }
+  .reviewItem .rline { margin: 2px 0; }
+  .rcorrect { color: #1D9E75; font-weight: 700; }
+  .rwrong { color: #E24B4A; font-weight: 700; }
+  .hidden { display: none !important; }
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(20,33,61,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+  }
+  .modal-box {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 22px;
+    max-width: 360px;
+    width: 90%;
+    text-align: center;
+  }
+  .modal-box p { font-size: 15px; color: #14213d; margin-bottom: 18px; }
+  .modal-box button {
+    padding: 9px 16px;
+    border-radius: 7px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin: 0 6px;
+  }
+  #modalYesBtn { background: #185FA5; color: #ffffff; }
+  #modalNoBtn { background: #eef2f7; color: #14213d; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>[Sion] SAT Grammar</h1>
+  <p class="instructions">Choose the best answer to complete each sentence.</p>
+
+  <div class="topbar">
+    <div class="attempts">Total Attempts: <span id="attemptsCount">0</span></div>
+    <div class="timer-widget">
+      <label for="timeLimitInput">Set Time Limit (min):</label>
+      <input type="number" id="timeLimitInput" min="1" max="180" value="20">
+      <button onclick="startTimer()">Start</button>
+      <span id="timerDisplay">20:00</span>
+    </div>
+  </div>
+
+  <div class="navwrap" id="navwrap">
+    <div class="navline"><span id="answeredCount">0</span>/<span id="totalCount">20</span> answered</div>
+    <div class="progressbar"><div class="progressfill" id="progressFill"></div></div>
+    <button id="toggleDotsBtn" onclick="toggleDots()">Jump to Question</button>
+    <div id="dotsPanel" class="dots-panel hidden"></div>
+  </div>
+
+  <div id="quizArea"></div>
+  <div id="resultsArea" class="hidden"></div>
+</div>
+
+<div id="modalOverlay" class="modal-overlay hidden">
+  <div class="modal-box">
+    <p id="modalText">Are you sure?</p>
+    <button id="modalYesBtn" onclick="modalConfirmYes()">Yes, Start Fresh</button>
+    <button id="modalNoBtn" onclick="modalConfirmNo()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var QUESTIONS = [
+  {
+    q: "Which choice most logically introduces the second sentence, given its relationship to the first?",
+    context: "The committee had unanimously endorsed the proposal at its initial reading. _____ several members expressed serious reservations once the budget details were made public.",
+    opts: ["However,", "In contrast,", "As a result,", "Similarly,"],
+    ci: 0,
+    exp: "\"However,\" correctly signals a contrast within the committee's own position, from initial unanimous endorsement to later reservations among its members. \"In contrast,\" is typically used to compare two separate people or groups rather than to show a single group's change of position over time, so it does not fit here. \"As a result,\" wrongly implies that the members' reservations were caused by the earlier endorsement rather than by the budget details becoming public. \"Similarly,\" wrongly treats the two sentences as expressing the same idea rather than opposing ones."
+  },
+  {
+    q: "Which choice completes the sentence with the verb form that agrees with its subject?",
+    context: "Scattered across the abandoned factory floor _____ hundreds of documents that the previous owners had never bothered to shred.",
+    opts: ["was", "were", "has been", "is"],
+    ci: 1,
+    exp: "\"were\" agrees with the plural subject \"hundreds of documents,\" which appears after the verb in this inverted sentence beginning with \"Scattered across the abandoned factory floor.\" \"was\" incorrectly treats the subject as singular, likely by focusing on the nearby singular noun \"floor\" instead of the true subject \"documents.\" \"has been\" mismatches the plural subject in number and also shifts into present perfect tense, which does not fit the sentence's past-tense description. \"is\" mismatches the plural subject in number and incorrectly shifts into the present tense."
+  },
+  {
+    q: "Which choice best maintains both subject-verb agreement and the parallel structure established by the correlative conjunction?",
+    context: "The revised policy not only requires managers to document every disciplinary action but also _____ them to notify human resources within 48 hours.",
+    opts: ["oblige", "obliges", "obliging", "will oblige"],
+    ci: 1,
+    exp: "\"obliges\" matches both the singular subject \"The revised policy\" and the finite present-tense verb form \"requires\" used in the first half of the \"not only...but also\" construction, keeping the two halves grammatically parallel. \"oblige\" drops the required -s ending, breaking agreement with the singular subject \"The revised policy\" even though it keeps the plain verb form. \"obliging\" shifts unexpectedly into a gerund, which cannot stand as the main verb of the second half and breaks the parallel with \"requires.\" \"will oblige\" adds an unnecessary modal verb that does not match the plain present-tense form \"requires\" used in the first half."
+  },
+  {
+    q: "Which choice provides the punctuation needed to correctly close the nonrestrictive appositive that begins with \"a mass spectrometer\"?",
+    context: "The lab's newest instrument, a mass spectrometer capable of detecting trace contaminants at parts-per-trillion levels_____ arrived three weeks after the renovation was completed.",
+    opts: [",", ";", ":", " that"],
+    ci: 0,
+    exp: "A comma is needed to close the nonrestrictive appositive that began after \"instrument,\" matching the comma that opened it and correctly setting the descriptive phrase off from the rest of the sentence. A semicolon is used to join two independent clauses, but \"a mass spectrometer capable of detecting trace contaminants at parts-per-trillion levels\" is not an independent clause, so a semicolon does not belong here. A colon is used to introduce a list or explanation, not to close an appositive phrase already in progress. Adding \"that\" instead of punctuation would turn the ending of the appositive into a relative clause, illogically suggesting that the parts-per-trillion levels themselves arrived three weeks after the renovation."
+  },
+  {
+    q: "Which choice most clearly resolves the ambiguous pronoun reference in the sentence?",
+    context: "When the researchers shared their preliminary results with the board members, _____ raised several methodological concerns that had not been addressed in the original proposal.",
+    opts: ["they", "the researchers", "the board members", "these people"],
+    ci: 2,
+    exp: "\"the board members\" resolves the ambiguity created by a pronoun, since the sentence names two plural groups, the researchers and the board members, and it is the board members reviewing the results who would logically raise concerns about the proposal's methodology. \"they\" is ambiguous because it could grammatically refer to either the researchers or the board members. \"the researchers\" is grammatically unambiguous but illogical, since it would mean the researchers raised concerns about their own results immediately after presenting them, which does not fit the context of a review. \"these people\" remains vague and fails to specify which of the two groups is meant, much like the original pronoun."
+  },
+  {
+    q: "Which choice most logically completes the sentence without creating a dangling modifier?",
+    context: "_____ the museum's newest exhibit finally opened to the public after months of delay.",
+    opts: ["Having overcome numerous funding setbacks,", "After overcoming numerous funding setbacks,", "Numerous funding setbacks having been overcome,", "Overcoming numerous funding setbacks,"],
+    ci: 2,
+    exp: "\"Numerous funding setbacks having been overcome,\" is a self-contained construction with its own subject, \"funding setbacks,\" so it does not require the following clause's subject, \"the museum's newest exhibit,\" to have performed the overcoming, avoiding a dangling modifier. \"Having overcome numerous funding setbacks,\" has no stated subject of its own and would illogically suggest that the exhibit itself overcame the setbacks. \"After overcoming numerous funding setbacks,\" has the same problem, since the implied subject of \"overcoming\" would be the exhibit that immediately follows. \"Overcoming numerous funding setbacks,\" likewise lacks its own subject and illogically attaches the overcoming to the exhibit."
+  },
+  {
+    q: "Which choice completes the sentence with the possessive form that matches the fact that the mayor and the city council each defended their own separate handling of the crisis?",
+    context: "Both the mayor and the city council issued statements defending _____ handling of the water contamination crisis.",
+    opts: ["the mayor's and the city council's", "the mayor and the city council's", "the mayors' and the city councils'", "the mayor's and the city councils"],
+    ci: 0,
+    exp: "\"the mayor's and the city council's\" correctly marks possession on both nouns, showing that the mayor and the city council each defended their own separate handling of the crisis. \"the mayor and the city council's\" places an apostrophe only on the second noun, which would incorrectly suggest a single handling jointly shared by both rather than two separate ones. \"the mayors' and the city councils'\" incorrectly pluralizes both nouns, even though the sentence refers to only one mayor and one city council. \"the mayor's and the city councils\" leaves off the apostrophe on the second noun entirely, making it grammatically inconsistent with the correctly formed \"mayor's\" beside it."
+  },
+  {
+    q: "Which choice most effectively revises the sentence to eliminate unnecessary wordiness while retaining its essential meaning?",
+    context: "The report concluded that the new policy, which was designed and created specifically to reduce redundant paperwork, ultimately increased the amount of forms employees were required to submit and fill out.",
+    opts: ["The report concluded that the new policy, designed to reduce redundant paperwork, ultimately increased the number of forms employees were required to submit.", "The report concluded that the new policy, which was designed and created to reduce redundant paperwork, ultimately increased the amount of forms employees had to submit and fill out.", "The report concluded that the new policy, designed to reduce redundant paperwork, ultimately increased the amount of forms employees were required to submit and fill out.", "The report concluded that the new policy, which was designed specifically to reduce paperwork that was redundant, ultimately increased the number of forms employees submitted."],
+    ci: 0,
+    exp: "The first revision removes the redundant pairing \"designed and created,\" shortens \"which was designed\" to the more concise \"designed,\" removes the redundant pairing \"submit and fill out,\" and correctly uses \"number\" rather than \"amount\" before the countable noun \"forms,\" all while keeping the sentence's essential meaning. The version that keeps \"which was designed and created\" and \"submit and fill out\" retains two redundant pairings and also incorrectly uses \"amount\" with the countable noun \"forms.\" The version that keeps \"amount of forms\" and \"submit and fill out\" corrects only the \"which was designed and created\" redundancy but leaves the other two problems in place. The version using \"which was designed specifically to reduce paperwork that was redundant\" is wordier than necessary and awkwardly reorders the description of the paperwork instead of simply trimming it."
+  },
+  {
+    q: "Which choice completes the sentence with the verb tense that best reflects the sequence of events described?",
+    context: "By the time the auditors finished reviewing the accounts, the finance director _____ three separate memos disputing the initial findings, each contradicting the one before it.",
+    opts: ["had already sent", "has already sent", "was already sending", "already sent"],
+    ci: 0,
+    exp: "\"had already sent\" uses the past perfect to show that the finance director finished sending all three memos before the auditors finished reviewing the accounts, a later point in the past. \"has already sent\" incorrectly uses the present perfect, which would tie the sending to the present moment rather than to the auditors' past completion of their review. \"was already sending\" incorrectly suggests the memos were still in progress at the time the auditors finished, rather than already completed. \"already sent\" uses the simple past, which does not clearly establish that the sending was finished before the auditors' review was finished."
+  },
+  {
+    q: "Which choice completes the sentence with the verb form that agrees with its subject?",
+    context: "The number of applicants who withdrew their submissions after the deadline extension _____ significantly higher than university officials had anticipated.",
+    opts: ["was", "were", "have been", "are"],
+    ci: 0,
+    exp: "\"was\" agrees with the singular subject \"The number,\" since phrases like \"of applicants who withdrew their submissions\" describe the number without changing its singular status. \"were\" incorrectly treats the subject as plural, likely by agreeing with the nearby plural noun \"applicants\" instead of the true subject \"number.\" \"have been\" mismatches the singular subject in number and shifts into a tense that does not fit the sentence's past-tense framing. \"are\" mismatches the singular subject in number and incorrectly shifts into the present tense despite the past-tense context established by \"had anticipated.\""
+  },
+  {
+    q: "Which choice most logically introduces the second sentence, given its relationship to the first?",
+    context: "Enrollment in the district's vocational programs dropped by nearly a third after state funding was cut in 2019. _____ within two years enrollment had rebounded to its highest level in over a decade, following a surge of private grants.",
+    opts: ["However,", "As a result,", "For instance,", "In the same way,"],
+    ci: 0,
+    exp: "\"However,\" correctly signals the contrast between the initial drop in enrollment described in the first sentence and the unexpected rebound described in the second. \"As a result,\" wrongly implies that the rebound was a direct consequence of the funding cut, when the sentence actually attributes it to a later surge of private grants. \"For instance,\" wrongly frames the second sentence as an example of the first, but it actually presents a contrasting outcome rather than an illustration. \"In the same way,\" wrongly treats the two sentences as describing similar, parallel trends rather than opposite ones."
+  },
+  {
+    q: "Which choice provides the punctuation needed to correctly set off the nonrestrictive clause describing the proposal?",
+    context: "The proposal_____ approval after the developers agreed to reduce the building's height.",
+    opts: ["which had been rejected twice by the zoning board, finally received", ", which had been rejected twice by the zoning board, finally received", "which had been rejected twice by the zoning board finally received", ", which had been rejected twice by the zoning board finally received"],
+    ci: 1,
+    exp: "The nonrestrictive clause \"which had been rejected twice by the zoning board\" needs a comma both before it and after it to be properly set off from the rest of the sentence, as in \", which had been rejected twice by the zoning board, finally received.\" Leaving out the comma before \"which\" creates a version that opens the clause without any punctuation while still closing it, an inconsistent pairing. Leaving out both commas creates a run-on that fails to mark the clause as extra, nonessential information at all. Leaving out the comma after \"board\" opens the clause correctly but fails to close it, leaving the nonrestrictive clause improperly punctuated on one side."
+  },
+  {
+    q: "Which choice completes the sentence with the possessive form that agrees with its antecedent?",
+    context: "The research team spent six months compiling data on urban heat islands, and _____ findings were published in a peer-reviewed journal last month.",
+    opts: ["its", "their", "the team's own", "one's own"],
+    ci: 0,
+    exp: "\"its\" agrees with \"The research team,\" a collective noun that is treated as a single unit in this sentence rather than as a group of separately acting individuals. \"their\" incorrectly treats the collective noun \"team\" as plural, when the sentence describes the team acting and being referred to as one unit. \"the team's own\" needlessly repeats the noun \"team,\" which was just named in the same sentence, instead of using a pronoun. \"one's own\" is a generic indefinite possessive that does not clearly connect back to \"The research team\" at all."
+  },
+  {
+    q: "Which choice most clearly conveys that the sensor, not the control panel, had been malfunctioning?",
+    context: "The technician replaced the sensor in the control panel that had been malfunctioning for weeks.",
+    opts: ["The technician replaced the sensor, which had been malfunctioning for weeks, in the control panel.", "The technician replaced the sensor in the control panel that had been malfunctioning for weeks.", "The technician replaced the sensor in the control panel, which had been malfunctioning for weeks.", "Malfunctioning for weeks, the technician replaced the sensor in the control panel."],
+    ci: 0,
+    exp: "Placing \", which had been malfunctioning for weeks,\" directly after \"the sensor\" makes clear that the sensor, not the control panel, is the thing that had been malfunctioning. Leaving the clause \"that had been malfunctioning for weeks\" at the end of the sentence places it right next to \"the control panel,\" making it unclear whether the sensor or the panel had been malfunctioning. Moving the comma so that \", which had been malfunctioning for weeks,\" follows \"the control panel\" reverses the intended meaning, now suggesting that the control panel itself had been malfunctioning. Beginning the sentence with \"Malfunctioning for weeks,\" creates a dangling modifier that illogically suggests the technician, rather than the sensor, had been malfunctioning."
+  },
+  {
+    q: "Which choice most effectively completes the sentence while maintaining the parallel structure established earlier in the list?",
+    context: "The wellness program encourages employees to manage stress through daily meditation, regular exercise, and _____ nutritious meals with colleagues.",
+    opts: ["sharing", "to share", "share", "the sharing of"],
+    ci: 0,
+    exp: "\"sharing\" creates a gerund phrase, \"sharing nutritious meals,\" that functions as a noun phrase parallel to \"daily meditation\" and \"regular exercise,\" the two earlier items following \"through.\" \"to share\" introduces an infinitive phrase, which does not match the noun-phrase pattern established by \"daily meditation\" and \"regular exercise.\" \"share\" is a bare verb form that cannot function as the object of the preposition \"through\" alongside the other two noun phrases. \"the sharing of\" adds an unnecessary article and preposition that make the third item structurally inconsistent with the plain noun phrases used for the first two items."
+  },
+  {
+    q: "Which choice completes the sentence with the verb form required after \"recommended that\"?",
+    context: "The safety board recommended that every warehouse manager _____ a full inspection before reopening any facility damaged by the storm.",
+    opts: ["conduct", "conducts", "will conduct", "conducted"],
+    ci: 0,
+    exp: "\"conduct\" uses the base form required in this type of clause after a verb like \"recommended that,\" regardless of the subject's number. \"conducts\" incorrectly adds the third-person singular ending, which this construction does not take even though \"every warehouse manager\" is singular. \"will conduct\" adds an unnecessary modal verb that does not fit the required base-form construction. \"conducted\" uses the simple past tense, which does not match the required form in this type of clause."
+  },
+  {
+    q: "Which choice most effectively edits the sentence to eliminate unnecessary redundancy while retaining its essential meaning?",
+    context: "The panel's final decision was completely unanimous, with every single member voting in exact agreement without any dissent whatsoever.",
+    opts: ["The panel's final decision was unanimous, with every member voting in agreement.", "The panel's final decision was completely unanimous, with every member voting in agreement without dissent.", "The panel's decision was unanimous, with every single member voting in exact agreement.", "The panel's final decision was unanimous."],
+    ci: 0,
+    exp: "The first revision removes the redundant intensifiers \"completely,\" \"single,\" \"exact,\" and \"without any dissent whatsoever,\" which all restate the meaning already carried by \"unanimous,\" while still keeping the meaningful detail that every member voted in agreement. The version that keeps \"completely\" and \"without dissent\" still restates the meaning of \"unanimous\" twice more. The version that keeps \"every single\" and \"in exact agreement\" still pairs redundant words that add no information beyond what \"unanimous\" already conveys. The shortest version removes so much detail that it loses the meaningful information about every member voting in agreement, cutting more than the redundancy alone requires."
+  },
+  {
+    q: "Which choice completes the sentence with the verb form that agrees with the noun the relative pronoun \"that\" refers to?",
+    context: "Of the dozens of manuscripts submitted this year, this novel is one of the only submissions that _____ both a distinct narrative voice and a fully realized secondary cast.",
+    opts: ["combine", "combines", "has combined", "is combining"],
+    ci: 0,
+    exp: "\"combine\" agrees with the plural noun \"submissions,\" which is what the relative pronoun \"that\" refers to in the phrase \"one of the only submissions that.\" \"combines\" incorrectly treats \"that\" as referring back to the singular \"this novel\" or \"one\" rather than to the plural \"submissions\" the phrase actually describes. \"has combined\" both mismatches the required plural agreement and shifts unnecessarily into the present perfect tense. \"is combining\" both mismatches the required plural agreement and shifts unnecessarily into the present progressive tense."
+  },
+  {
+    q: "Which choice provides the most effective punctuation for the underlined portion?",
+    context: "The city had promised to repave every residential street by the end of the year <u>the project stalled</u> after the contractor declared bankruptcy in the spring.",
+    opts: ["; the project stalled", ", the project stalled", "the project stalled", ", so the project stalled"],
+    ci: 0,
+    exp: "A semicolon correctly joins the two independent clauses, \"The city had promised to repave every residential street by the end of the year\" and \"the project stalled after the contractor declared bankruptcy in the spring,\" without suggesting a cause-and-effect relationship that the sentence does not support. Using only a comma before \"the project stalled\" creates a comma splice, since both sides of the comma are independent clauses. Leaving out punctuation entirely creates a run-on sentence joining the two independent clauses with no separation at all. Adding \"so\" after a comma wrongly implies that the project stalling was a direct result of the city's promise, when the sentence actually attributes the stall to the contractor's bankruptcy."
+  },
+  {
+    q: "Which choice completes the sentence with the pronoun that agrees with its antecedent?",
+    context: "Meridian Robotics, the startup that developed the warehouse automation system, announced that _____ would begin manufacturing the units domestically starting next year.",
+    opts: ["it", "they", "its team", "their team"],
+    ci: 0,
+    exp: "\"it\" agrees with \"Meridian Robotics,\" a company name that is treated as a singular entity in formal writing even though the name itself does not end in a typical singular form. \"they\" incorrectly treats the singular company name as a plural entity. \"its team\" introduces a new noun, \"team,\" that was never established as the one making the announcement or beginning manufacturing, shifting the sentence's meaning. \"their team\" both mismatches the singular antecedent with the plural possessive \"their\" and introduces the same unestablished \"team\" noun."
+  }
+];
+
+var STORAGE_STATE = "quiz_sionsatgrammar_20_20260822_v1";
+var STORAGE_ATT = "quiz_sionsatgrammar_20260822_att_v1";
+var STORAGE_ORDER = "quiz_sionsatgrammar_order_20260822_v1";
+
+var state = null;
+var timerInterval = null;
+var pendingModalAction = null;
+
+function defaultOrder() {
+  var arr = [];
+  for (var i = 0; i < QUESTIONS.length; i++) arr.push(i);
+  return arr;
+}
+
+function defaultState() {
+  return {
+    order: defaultOrder(),
+    answers: new Array(QUESTIONS.length).fill(null),
+    current: 0,
+    mode: "normal",
+    retryQueue: [],
+    retryAnswers: {},
+    retryCurrent: 0,
+    timer: { limitMin: 20, startTs: null, running: false },
+    resultsShown: false
+  };
+}
+
+function loadOrder() {
+  try {
+    var raw = localStorage.getItem(STORAGE_ORDER);
+    if (raw) {
+      var arr = JSON.parse(raw);
+      if (Array.isArray(arr) && arr.length === QUESTIONS.length) return arr;
+    }
+  } catch (e) {}
+  return defaultOrder();
+}
+
+function saveOrder(order) {
+  try { localStorage.setItem(STORAGE_ORDER, JSON.stringify(order)); } catch (e) {}
+}
+
+function loadState() {
+  try {
+    var raw = localStorage.getItem(STORAGE_STATE);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      var d = defaultState();
+      for (var k in d) { if (parsed[k] === undefined) parsed[k] = d[k]; }
+      if (!Array.isArray(parsed.answers) || parsed.answers.length !== QUESTIONS.length) {
+        parsed.answers = new Array(QUESTIONS.length).fill(null);
+      }
+      return parsed;
+    }
+  } catch (e) {}
+  return defaultState();
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_STATE, JSON.stringify(state)); } catch (e) {}
+}
+
+function loadAttempts() {
+  try {
+    var raw = localStorage.getItem(STORAGE_ATT);
+    var n = parseInt(raw, 10);
+    if (!isNaN(n)) return n;
+  } catch (e) {}
+  return 0;
+}
+
+function saveAttempts(n) {
+  try { localStorage.setItem(STORAGE_ATT, String(n)); } catch (e) {}
+}
+
+function incrementAttempts() {
+  var n = loadAttempts() + 1;
+  saveAttempts(n);
+  updateAttemptsDisplay();
+}
+
+function updateAttemptsDisplay() {
+  var el = document.getElementById("attemptsCount");
+  if (el) el.textContent = String(loadAttempts());
+}
+
+function shuffleArray(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+
+function activeList() {
+  if (state.mode === "retry") {
+    return {
+      positions: state.retryQueue,
+      getAnswer: function (pos) { return state.retryAnswers[pos] || null; },
+      setAnswer: function (pos, val) { state.retryAnswers[pos] = val; state.answers[pos] = val; },
+      getPointer: function () { return state.retryCurrent; },
+      setPointer: function (p) { state.retryCurrent = p; }
+    };
+  }
+  return {
+    positions: state.order.map(function (_, i) { return i; }),
+    getAnswer: function (pos) { return state.answers[pos]; },
+    setAnswer: function (pos, val) { state.answers[pos] = val; },
+    getPointer: function () { return state.current; },
+    setPointer: function (p) { state.current = p; }
+  };
+}
+
+function init() {
+  state = loadState();
+  state.order = loadOrder();
+  updateAttemptsDisplay();
+  bindTimerResume();
+  if (state.resultsShown) {
+    renderResults(false);
+  } else {
+    renderQuestion();
+  }
+}
+
+function renderQuestion() {
+  document.getElementById("resultsArea").classList.add("hidden");
+  document.getElementById("navwrap").classList.remove("hidden");
+  var quizArea = document.getElementById("quizArea");
+  quizArea.classList.remove("hidden");
+
+  var al = activeList();
+  var posList = al.positions;
+  var pointer = al.getPointer();
+
+  if (posList.length === 0) {
+    quizArea.innerHTML = "<div class=\"card\"><p>No questions to show.</p></div>";
+    return;
+  }
+  if (pointer >= posList.length) {
+    finishRun();
+    return;
+  }
+
+  var pos = posList[pointer];
+  var qIndex = state.order[pos];
+  var question = QUESTIONS[qIndex];
+  var existing = al.getAnswer(pos);
+  var isLast = (pointer === posList.length - 1);
+
+  var html = "";
+  html += "<div class=\"card\">";
+  html += "<div class=\"qcount\">Question " + (pointer + 1) + " of " + posList.length + "</div>";
+  html += "<div class=\"context-box\">" + question.context + "</div>";
+  html += "<div class=\"qtext\">" + escapeHtml(question.q) + "</div>";
+  html += "<div id=\"optsWrap\">";
+  for (var i = 0; i < question.opts.length; i++) {
+    var cls = "opt";
+    if (existing) {
+      if (i === question.ci) cls += " revealCorrect";
+      else if (i === existing.picked) cls += " wrongPick";
+    }
+    html += "<button class=\"" + cls + "\" " + (existing ? "disabled" : "") + " onclick=\"selectOption(" + i + ")\">" + escapeHtml(question.opts[i]) + "</button>";
+  }
+  html += "</div>";
+  html += "<div class=\"explanation" + (existing ? " show" : "") + "\" id=\"expBox\">" + (existing ? escapeHtml(question.exp) : "") + "</div>";
+  html += "<div class=\"navbtns\">";
+  html += "<button id=\"prevBtn\" onclick=\"prevQuestion()\" " + (pointer === 0 ? "disabled" : "") + ">&larr; Prev</button>";
+  var nextDisabled = (!isLast && !existing) ? "disabled" : "";
+  var nextLabel = isLast ? "Show Results →" : "Next →";
+  html += "<button id=\"nextBtn\" onclick=\"nextQuestion()\" " + nextDisabled + ">" + nextLabel + "</button>";
+  html += "</div>";
+  html += "</div>";
+
+  quizArea.innerHTML = html;
+  updateNav();
+  renderDots();
+}
+
+function selectOption(i) {
+  var al = activeList();
+  var posList = al.positions;
+  var pointer = al.getPointer();
+  var pos = posList[pointer];
+  var qIndex = state.order[pos];
+  var question = QUESTIONS[qIndex];
+  if (al.getAnswer(pos)) return;
+  var correct = (i === question.ci);
+  al.setAnswer(pos, { picked: i, correct: correct });
+  saveState();
+  renderQuestion();
+}
+
+function nextQuestion() {
+  var al = activeList();
+  var pointer = al.getPointer();
+  al.setPointer(pointer + 1);
+  saveState();
+  renderQuestion();
+}
+
+function prevQuestion() {
+  var al = activeList();
+  var pointer = al.getPointer();
+  if (pointer > 0) {
+    al.setPointer(pointer - 1);
+    saveState();
+    renderQuestion();
+  }
+}
+
+function jumpTo(pos) {
+  var al = activeList();
+  var idx = al.positions.indexOf(pos);
+  if (idx === -1) return;
+  al.setPointer(idx);
+  saveState();
+  renderQuestion();
+}
+
+function toggleDots() {
+  var panel = document.getElementById("dotsPanel");
+  var btn = document.getElementById("toggleDotsBtn");
+  if (panel.classList.contains("hidden")) {
+    panel.classList.remove("hidden");
+    btn.textContent = "Hide Questions";
+  } else {
+    panel.classList.add("hidden");
+    btn.textContent = "Jump to Question";
+  }
+}
+
+function renderDots() {
+  var al = activeList();
+  var posList = al.positions;
+  var panel = document.getElementById("dotsPanel");
+  var html = "";
+  for (var i = 0; i < posList.length; i++) {
+    var pos = posList[i];
+    var ans = al.getAnswer(pos);
+    var cls = "dot";
+    if (ans) cls += ans.correct ? " correct" : " wrong";
+    html += "<button class=\"" + cls + "\" onclick=\"jumpTo(" + pos + ")\">" + (i + 1) + "</button>";
+  }
+  panel.innerHTML = html;
+}
+
+function updateNav() {
+  var al = activeList();
+  var posList = al.positions;
+  var answeredCount = 0;
+  for (var i = 0; i < posList.length; i++) {
+    if (al.getAnswer(posList[i])) answeredCount++;
+  }
+  document.getElementById("answeredCount").textContent = String(answeredCount);
+  document.getElementById("totalCount").textContent = String(posList.length);
+  var pct = posList.length ? (answeredCount / posList.length) * 100 : 0;
+  document.getElementById("progressFill").style.width = pct + "%";
+}
+
+function finishRun() {
+  incrementAttempts();
+  state.resultsShown = true;
+  saveState();
+  renderResults(true);
+}
+
+function renderResults(justFinished) {
+  document.getElementById("quizArea").classList.add("hidden");
+  document.getElementById("navwrap").classList.add("hidden");
+  var resultsArea = document.getElementById("resultsArea");
+  resultsArea.classList.remove("hidden");
+
+  var total = state.order.length;
+  var correctCount = 0;
+  for (var i = 0; i < state.answers.length; i++) {
+    if (state.answers[i] && state.answers[i].correct) correctCount++;
+  }
+
+  var html = "";
+  html += "<div class=\"card\">";
+  html += "<div class=\"scoreLine\">Score: " + correctCount + " / " + total + "</div>";
+  html += "<div class=\"resultsBtns\">";
+  html += "<button id=\"copyBtn\" onclick=\"copyAllResults()\">Copy All Results</button>";
+  html += "<button id=\"retryBtn\" onclick=\"retryWrongOnes()\">Retry Wrong Ones</button>";
+  html += "<button id=\"saveWrongBtn\" onclick=\"saveWrongAnswers()\">틀린 문제 저장</button>";
+  html += "<button id=\"freshOrigBtn\" onclick=\"startFreshOriginal()\">Start Fresh (Original Order)</button>";
+  html += "<button id=\"freshRandBtn\" onclick=\"startFreshRandom()\">Start Fresh (Random Order)</button>";
+  html += "</div>";
+  html += "<div id=\"reviewList\">";
+  for (var p = 0; p < state.order.length; p++) {
+    var qIndex = state.order[p];
+    var question = QUESTIONS[qIndex];
+    var ans = state.answers[p];
+    html += "<div class=\"reviewItem\">";
+    html += "<div class=\"rq\">Q" + (p + 1) + ". " + escapeHtml(question.q) + "</div>";
+    if (ans) {
+      html += "<div class=\"rline\">Your answer: " + escapeHtml(question.opts[ans.picked]) + "</div>";
+      html += "<div class=\"rline\">Correct answer: " + escapeHtml(question.opts[question.ci]) + "</div>";
+      html += "<div class=\"rline " + (ans.correct ? "rcorrect" : "rwrong") + "\">" + (ans.correct ? "Correct" : "Incorrect") + "</div>";
+    } else {
+      html += "<div class=\"rline\">Not answered</div>";
+    }
+    html += "</div>";
+  }
+  html += "</div>";
+  html += "</div>";
+  resultsArea.innerHTML = html;
+}
+
+function retryWrongOnes() {
+  var wrongPositions = [];
+  for (var i = 0; i < state.answers.length; i++) {
+    if (state.answers[i] && !state.answers[i].correct) wrongPositions.push(i);
+  }
+  if (wrongPositions.length === 0) {
+    alert("No wrong answers to retry.");
+    return;
+  }
+  state.mode = "retry";
+  state.retryQueue = wrongPositions;
+  state.retryAnswers = {};
+  state.retryCurrent = 0;
+  state.resultsShown = false;
+  saveState();
+  renderQuestion();
+}
+
+function saveWrongAnswers() {
+  var wrong = [];
+  for (var i = 0; i < state.answers.length; i++) {
+    var ans = state.answers[i];
+    if (ans && !ans.correct) {
+      var qIndex = state.order[i];
+      var question = QUESTIONS[qIndex];
+      wrong.push({ q: question.q, opts: question.opts, ci: question.ci, picked: ans.picked });
+    }
+  }
+  if (wrong.length === 0) {
+    alert("No wrong answers to save.");
+    return;
+  }
+  try {
+    var payload = { child: "Sion", subject: "[Sion] SAT Grammar", date: "2026-08-22", wrong: wrong };
+    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "sion_sat_grammar_wrong_answers.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  } catch (e) {
+    alert("Could not save wrong answers.");
+  }
+}
+
+function copyAllResults() {
+  var lines = [];
+  lines.push("[Sion] SAT Grammar Results");
+  var correctCount = 0;
+  for (var i = 0; i < state.answers.length; i++) {
+    if (state.answers[i] && state.answers[i].correct) correctCount++;
+  }
+  lines.push("Score: " + correctCount + " / " + state.order.length);
+  lines.push("");
+  for (var p = 0; p < state.order.length; p++) {
+    var qIndex = state.order[p];
+    var question = QUESTIONS[qIndex];
+    var ans = state.answers[p];
+    lines.push("Q" + (p + 1) + ": " + question.q);
+    if (ans) {
+      lines.push("Your answer: " + question.opts[ans.picked]);
+      lines.push("Correct answer: " + question.opts[question.ci]);
+      lines.push("Result: " + (ans.correct ? "Correct" : "Incorrect"));
+    } else {
+      lines.push("Not answered");
+    }
+    lines.push("");
+  }
+  var text = lines.join("\n");
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        alert("Results copied to clipboard.");
+      }).catch(function () {
+        fallbackCopy(text);
+      });
+    } else {
+      fallbackCopy(text);
+    }
+  } catch (e) {
+    try { fallbackCopy(text); } catch (e2) {}
+  }
+}
+
+function fallbackCopy(text) {
+  try {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    alert("Results copied to clipboard.");
+  } catch (e) {
+    alert("Could not copy results.");
+  }
+}
+
+function startFreshOriginal() {
+  pendingModalAction = "original";
+  document.getElementById("modalText").textContent = "Start fresh with questions in the original order? This will reset all progress and the timer.";
+  document.getElementById("modalOverlay").classList.remove("hidden");
+}
+
+function startFreshRandom() {
+  pendingModalAction = "random";
+  document.getElementById("modalText").textContent = "Start fresh with questions in random order? This will reset all progress and the timer.";
+  document.getElementById("modalOverlay").classList.remove("hidden");
+}
+
+function modalConfirmYes() {
+  var newOrder = (pendingModalAction === "random") ? shuffleArray(defaultOrder()) : defaultOrder();
+  saveOrder(newOrder);
+  state = defaultState();
+  state.order = newOrder;
+  saveState();
+  document.getElementById("modalOverlay").classList.add("hidden");
+  pendingModalAction = null;
+  stopTimerInterval();
+  updateTimerDisplay();
+  renderQuestion();
+}
+
+function modalConfirmNo() {
+  document.getElementById("modalOverlay").classList.add("hidden");
+  pendingModalAction = null;
+}
+
+function startTimer() {
+  var input = document.getElementById("timeLimitInput");
+  var minutes = parseInt(input.value, 10);
+  if (isNaN(minutes) || minutes <= 0) minutes = 20;
+  state.timer.limitMin = minutes;
+  state.timer.startTs = Date.now();
+  state.timer.running = true;
+  saveState();
+  startTimerInterval();
+}
+
+function bindTimerResume() {
+  if (state.timer && state.timer.running && state.timer.startTs) {
+    startTimerInterval();
+  } else {
+    updateTimerDisplay();
+  }
+}
+
+function startTimerInterval() {
+  stopTimerInterval();
+  tickTimer();
+  timerInterval = setInterval(tickTimer, 500);
+}
+
+function stopTimerInterval() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
+
+function tickTimer() {
+  if (!state.timer || !state.timer.running || !state.timer.startTs) {
+    updateTimerDisplay();
+    return;
+  }
+  var totalMs = state.timer.limitMin * 60000;
+  var elapsed = Date.now() - state.timer.startTs;
+  var remaining = totalMs - elapsed;
+  var display = document.getElementById("timerDisplay");
+  if (remaining <= 0) {
+    display.textContent = "Time's Up";
+    display.classList.remove("orange");
+    display.classList.add("red");
+    state.timer.running = false;
+    saveState();
+    stopTimerInterval();
+    return;
+  }
+  var totalSec = Math.ceil(remaining / 1000);
+  var mm = Math.floor(totalSec / 60);
+  var ss = totalSec % 60;
+  display.textContent = (mm < 10 ? "0" + mm : mm) + ":" + (ss < 10 ? "0" + ss : ss);
+  var ratio = remaining / totalMs;
+  display.classList.remove("orange", "red");
+  if (ratio <= 0.10) display.classList.add("red");
+  else if (ratio <= 0.25) display.classList.add("orange");
+}
+
+function updateTimerDisplay() {
+  var display = document.getElementById("timerDisplay");
+  if (!display) return;
+  if (state.timer && state.timer.limitMin) {
+    var mm = state.timer.limitMin;
+    display.textContent = (mm < 10 ? "0" + mm : mm) + ":00";
+  } else {
+    display.textContent = "20:00";
+  }
+  display.classList.remove("orange", "red");
+}
+
+function escapeHtml(str) {
+  if (str === undefined || str === null) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+window.startTimer = startTimer;
+window.selectOption = selectOption;
+window.nextQuestion = nextQuestion;
+window.prevQuestion = prevQuestion;
+window.jumpTo = jumpTo;
+window.toggleDots = toggleDots;
+window.retryWrongOnes = retryWrongOnes;
+window.saveWrongAnswers = saveWrongAnswers;
+window.startFreshOriginal = startFreshOriginal;
+window.startFreshRandom = startFreshRandom;
+window.modalConfirmYes = modalConfirmYes;
+window.modalConfirmNo = modalConfirmNo;
+window.copyAllResults = copyAllResults;
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Grammar</title>
+<style>
+  :root{
+    --blue:#185FA5;
+    --track:#d7dde6;
+    --red:#E24B4A;
+    --green:#1D9E75;
+    --purple:#7b61ff;
+    --orange:#FF8C00;
+    --ink:#22303f;
+    --sub:#5a6b7d;
+    --card:#ffffff;
+    --bg:#f2f5f9;
+    --border:#e1e7ee;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    max-width:720px;
+    margin:0 auto;
+    padding:20px 16px 60px;
+  }
+  h1{
+    font-size:26px;
+    text-align:center;
+    margin:10px 0 4px;
+  }
+  .instruction{
+    text-align:center;
+    color:var(--sub);
+    font-size:15px;
+    margin-bottom:18px;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:18px;
+    margin-bottom:16px;
+    box-shadow:0 1px 4px rgba(20,30,50,0.06);
+  }
+  .timer-row{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:10px;
+    justify-content:space-between;
+  }
+  .timer-controls{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .timer-controls label{
+    font-size:14px;
+    color:var(--sub);
+  }
+  .timer-controls input[type="number"]{
+    width:64px;
+    padding:6px 8px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    font-size:14px;
+  }
+  .btn{
+    border:none;
+    border-radius:9px;
+    padding:9px 14px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    color:#fff;
+  }
+  .btn-blue{background:var(--blue);}
+  .btn-green{background:var(--green);}
+  .btn-purple{background:var(--purple);}
+  .btn-grey{background:#6b7684;}
+  .btn:disabled{opacity:0.5;cursor:not-allowed;}
+  #timerDisplay{
+    font-size:20px;
+    font-weight:700;
+    color:var(--ink);
+    min-width:90px;
+    text-align:right;
+  }
+  #timerDisplay.orange{color:var(--orange);}
+  #timerDisplay.red{color:var(--red);}
+  .progress-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:14px;
+    color:var(--sub);
+    margin-bottom:8px;
+  }
+  .progress-track{
+    width:100%;
+    height:10px;
+    background:var(--track);
+    border-radius:6px;
+    overflow:hidden;
+    margin-bottom:6px;
+  }
+  .progress-fill{
+    height:100%;
+    background:var(--blue);
+    width:0%;
+    transition:width 0.2s ease;
+  }
+  .jump-toggle{
+    background:none;
+    border:none;
+    color:var(--blue);
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    padding:4px 0;
+  }
+  .jump-panel{
+    display:none;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px solid var(--border);
+  }
+  .jump-panel.open{display:flex;}
+  .jump-dot{
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    background:var(--track);
+    border:2px solid transparent;
+    color:var(--ink);
+    font-size:11px;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+  .jump-dot.answered-correct{background:var(--blue);color:#fff;}
+  .jump-dot.answered-wrong{background:var(--red);color:#fff;}
+  .jump-dot.current{border-color:var(--ink);}
+  .qnum{
+    font-size:13px;
+    color:var(--sub);
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  .qtext{
+    font-size:18px;
+    line-height:1.45;
+    margin-bottom:16px;
+  }
+  .opt{
+    display:block;
+    width:100%;
+    text-align:left;
+    padding:12px 14px;
+    margin-bottom:10px;
+    border:2px solid var(--border);
+    border-radius:10px;
+    background:#fff;
+    font-size:15px;
+    cursor:pointer;
+    color:var(--ink);
+  }
+  .opt:hover{border-color:var(--blue);}
+  .opt.selected{border-color:var(--blue);background:#eaf2fb;}
+  .opt.correct{border-color:var(--green);background:#e7f7f1;}
+  .opt.wrong{border-color:var(--red);background:#fbeaea;}
+  .opt:disabled{cursor:default;}
+  .nav-row{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    margin-top:6px;
+  }
+  .exp-box{
+    margin-top:12px;
+    padding:12px 14px;
+    background:#f6f8fb;
+    border-left:4px solid var(--blue);
+    border-radius:8px;
+    font-size:14px;
+    line-height:1.5;
+    color:var(--sub);
+  }
+  .results-actions{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .results-actions .btn{width:100%;}
+  .score-line{
+    font-size:20px;
+    font-weight:700;
+    text-align:center;
+    margin-bottom:6px;
+  }
+  .attempts-line{
+    text-align:center;
+    color:var(--sub);
+    font-size:14px;
+    margin-bottom:16px;
+  }
+  .review-item{
+    padding:12px 0;
+    border-top:1px solid var(--border);
+  }
+  .review-q{font-weight:600;margin-bottom:6px;}
+  .review-your{font-size:14px;margin-bottom:2px;}
+  .review-correct{font-size:14px;margin-bottom:6px;}
+  .tag-right{color:var(--green);font-weight:700;}
+  .tag-wrong{color:var(--red);font-weight:700;}
+  #toast{
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--ink);
+    color:#fff;
+    padding:10px 18px;
+    border-radius:8px;
+    font-size:14px;
+    display:none;
+    z-index:50;
+  }
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    top:0;left:0;right:0;bottom:0;
+    background:rgba(20,30,50,0.45);
+    align-items:center;
+    justify-content:center;
+    z-index:100;
+    padding:20px;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-box{
+    background:#fff;
+    border-radius:14px;
+    padding:20px;
+    max-width:360px;
+    width:100%;
+  }
+  .modal-box p{font-size:15px;line-height:1.5;margin-top:0;}
+  .modal-btn-row{
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+    margin-top:16px;
+  }
+  .modal-btn{
+    border:none;
+    border-radius:8px;
+    padding:9px 16px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .modal-cancel{background:var(--track);color:var(--ink);}
+  .modal-confirm{background:var(--blue);color:#fff;}
+</style>
+</head>
+<body>
+
+<h1>[Grant] Grammar</h1>
+<div class="instruction">Choose the best answer to complete each sentence.</div>
+
+<div class="card" id="timerCard">
+  <div class="timer-row">
+    <div class="timer-controls">
+      <label for="timeLimitInput">Set Time Limit (min)</label>
+      <input type="number" id="timeLimitInput" min="1" max="120" value="15">
+      <button class="btn btn-blue" id="startTimerBtn" onclick="window.startTimer()">Start</button>
+    </div>
+    <div id="timerDisplay">--:--</div>
+  </div>
+</div>
+
+<div class="card" id="progressCard">
+  <div class="progress-row">
+    <span id="answeredCount">Answered 0/20</span>
+    <button class="jump-toggle" id="jumpToggleBtn" onclick="window.toggleJumpPanel()">Jump to Question &#9662;</button>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="jump-panel" id="jumpPanel"></div>
+</div>
+
+<div class="card" id="quizCard"></div>
+
+<div class="card" id="resultsCard" style="display:none;"></div>
+
+<div id="toast"></div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <p id="modalText"></p>
+    <div class="modal-btn-row">
+      <button class="modal-btn modal-cancel" id="modalCancelBtn">Cancel</button>
+      <button class="modal-btn modal-confirm" id="modalConfirmBtn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STATE_KEY = "quiz_grantgrammar_20_20260822_v1";
+  var ATTEMPTS_KEY = "quiz_grantgrammar_20260822_att_v1";
+
+  var QUESTIONS = [
+    {
+      q:"Grant has ___ his homework already.",
+      opts:["did","doed","done","doing"],
+      ci:2,
+      exp:"Done is the correct past participle to pair with has in the present perfect tense, as in has done. Did is the simple past tense form and cannot follow has. Doed is not a real word, since do has an irregular past participle. Doing is a present participle and does not fit with has in this construction."
+    },
+    {
+      q:"Yesterday, Mia ___ across the entire lake.",
+      opts:["swimmed","swam","swum","swimming"],
+      ci:1,
+      exp:"Swam is the correct simple past tense form of swim. Swimmed is not a standard word, since swim has an irregular past tense. Swum is the past participle form, which needs a helping verb like has or had and cannot stand alone in simple past tense. Swimming is a present participle and does not show that the swimming already happened."
+    },
+    {
+      q:"The puppy waited ___ for its owner to return.",
+      opts:["patient","more patient","patients","patiently"],
+      ci:3,
+      exp:"Patiently is the adverb form that describes how the puppy waited. Patient is an adjective and should describe a noun, not a verb. More patient is a comparative adjective phrase and does not modify a verb. Patients is a noun referring to people receiving medical care, so it does not fit this sentence at all."
+    },
+    {
+      q:"Which sentence uses an adverb correctly to describe how Grant runs?",
+      opts:["Grant runs quick around the track.","Grant runs quickest around the track.","Grant runs quickly around the track.","Grant runs a quick around the track."],
+      ci:2,
+      exp:"Grant runs quickly around the track uses the adverb quickly to correctly describe how Grant runs. Grant runs quick around the track uses quick, which is an adjective and should not modify the verb runs directly. Grant runs quickest around the track uses a superlative adjective form instead of an adverb. Grant runs a quick around the track is not a grammatically complete way to describe the action."
+    },
+    {
+      q:"Each of the puzzle pieces ___ a different color.",
+      opts:["have","has","having","were"],
+      ci:1,
+      exp:"Each is a singular indefinite pronoun, so it takes the singular verb has. Have is the plural verb form and does not agree with the singular subject each. Having is not a complete conjugated verb for this sentence. Were is a plural past tense verb that also does not match the singular subject each."
+    },
+    {
+      q:"The news about the upcoming exams ___ everyone nervous.",
+      opts:["make","making","have made","makes"],
+      ci:3,
+      exp:"News is treated as a singular noun even though it ends in s, so it takes the singular verb makes. Make is the plural verb form and does not agree with the singular subject news. Making is not a complete verb on its own here. Have made is a plural helping verb construction that does not match the singular subject news."
+    },
+    {
+      q:"___ and I finished our project early.",
+      opts:["Her","Herself","She","Hers"],
+      ci:2,
+      exp:"She is the correct subject pronoun to use alongside I as part of the compound subject. Her is an object pronoun and cannot function as the subject of the sentence. Herself is a reflexive pronoun and cannot serve as a subject either. Hers is a possessive pronoun and does not name who finished the project."
+    },
+    {
+      q:"The teacher gave the award to Mia and ___.",
+      opts:["I","me","myself","mine"],
+      ci:1,
+      exp:"Me is the correct object pronoun because it follows the preposition to along with Mia. I is a subject pronoun and cannot serve as the object of a preposition. Myself is a reflexive pronoun that does not fit unless the speaker is also the one giving the award. Mine is a possessive pronoun and does not show who received the award."
+    },
+    {
+      q:"___ not sure if the bus has left yet.",
+      opts:["Im","I am't","I'am","I'm"],
+      ci:3,
+      exp:"I'm is the correct contraction of I am, with the apostrophe placed where the letter a is removed. Im is missing the apostrophe entirely. I am't is not a real contraction, since am does not combine with not in this form. I'am places the apostrophe in the wrong spot within the word."
+    },
+    {
+      q:"Which sentence is an example of an imperative sentence?",
+      opts:["Did you close the door?","Please close the door before you leave.","The door is closed.","What a loud door that is!"],
+      ci:1,
+      exp:"Please close the door before you leave gives a command or request, which makes it an imperative sentence. Did you close the door asks a question, making it interrogative. The door is closed simply states a fact, making it declarative. What a loud door that is expresses strong emotion, making it exclamatory."
+    },
+    {
+      q:"Which sentence is an example of an exclamatory sentence?",
+      opts:["We won the game.","Did we win the game?","I can't believe we won the game!","Please tell me if we won the game."],
+      ci:2,
+      exp:"I can't believe we won the game expresses strong excitement and ends with an exclamation point, making it exclamatory. We won the game simply states a fact, making it declarative. Did we win the game asks a question, making it interrogative. Please tell me if we won the game makes a request, making it imperative."
+    },
+    {
+      q:"Which sentence capitalizes proper nouns correctly?",
+      opts:["grant visited the Grand Canyon last summer.","Grant visited the Grand Canyon last summer.","Grant visited the grand canyon last summer.","Grant Visited the Grand Canyon Last Summer."],
+      ci:1,
+      exp:"Grant visited the Grand Canyon last summer correctly capitalizes Grant and Grand Canyon, since both are proper nouns naming a specific person and a specific place. Grant visited the Grand Canyon last summer with a lowercase grant fails to capitalize the person's name. Grant visited the grand canyon last summer fails to capitalize the specific place name. Grant Visited the Grand Canyon Last Summer incorrectly capitalizes common words like visited and last that are not proper nouns."
+    },
+    {
+      q:"Which sentence uses correct capitalization?",
+      opts:["our family is driving to texas for the fourth of july.","Our family is driving to texas for the Fourth of July.","Our Family is driving to Texas for the Fourth of July.","Our family is driving to Texas for the Fourth of July."],
+      ci:3,
+      exp:"Our family is driving to Texas for the Fourth of July correctly capitalizes Texas and Fourth of July, since they are proper nouns naming a specific state and a specific holiday, while family stays lowercase. Our family is driving to texas for the fourth of july fails to capitalize either proper noun. Our family is driving to texas for the Fourth of July still leaves texas lowercase. Our Family is driving to Texas for the Fourth of July incorrectly capitalizes the common noun family."
+    },
+    {
+      q:"Which sentence correctly uses a comma to join two independent clauses?",
+      opts:["Grant finished his chores and he went outside to play.","Grant finished his chores, and, he went outside to play.","Grant finished his chores, and he went outside to play.","Grant finished his chores and, he went outside to play."],
+      ci:2,
+      exp:"Grant finished his chores, and he went outside to play correctly places a comma before the coordinating conjunction and, which joins two independent clauses. Grant finished his chores and he went outside to play leaves out the needed comma before and. Grant finished his chores, and, he went outside to play adds an unnecessary extra comma right after and. Grant finished his chores and, he went outside to play misplaces the comma after and instead of before it."
+    },
+    {
+      q:"Which sentence correctly punctuates a compound sentence?",
+      opts:["The sky grew dark so we hurried home.","The sky grew dark, so we hurried home.","The sky grew dark so, we hurried home.","The sky, grew dark so we hurried home."],
+      ci:1,
+      exp:"The sky grew dark, so we hurried home correctly places a comma before the coordinating conjunction so, which connects two independent clauses. The sky grew dark so we hurried home is missing the comma before so. The sky grew dark so, we hurried home misplaces the comma after so instead of before it. The sky, grew dark so we hurried home places a comma in the wrong spot, right after sky."
+    },
+    {
+      q:"Which sentence uses a linking verb correctly?",
+      opts:["The soup smells the counter tonight.","The chef smells the soup carefully.","The chef smells quickly toward the soup.","The soup smells delicious tonight."],
+      ci:3,
+      exp:"In the soup smells delicious tonight, smells acts as a linking verb connecting the subject soup to the adjective delicious that describes it. The soup smells the counter tonight follows smells with an object, which does not fit a linking verb pattern. The chef smells the soup carefully and the chef smells quickly toward the soup both use smells as an action verb performed by the chef, not as a linking verb describing the subject."
+    },
+    {
+      q:"Of the three trails, this one is the ___.",
+      opts:["shorter","shortest","more short","most shortest"],
+      ci:1,
+      exp:"Shortest is the correct superlative form used when comparing three or more trails. Shorter is the comparative form, which only compares two things, not three. More short and most shortest are both incorrect because short is a short adjective that forms its comparative and superlative by adding er or est, not by adding more or most."
+    },
+    {
+      q:"This backpack is ___ than the one I had last year.",
+      opts:["heavyer","more heavier","heavier","heaviest"],
+      ci:2,
+      exp:"Heavier is the correct comparative form used when comparing two backpacks. Heavyer misspells the comparative form, since the final y changes to i before adding er. More heavier incorrectly combines more with the er ending on the same word. Heaviest is the superlative form, which is used when comparing three or more things, not two."
+    },
+    {
+      q:"The cat hid ___ the couch during the thunderstorm.",
+      opts:["between","under","among","throughout"],
+      ci:1,
+      exp:"Under correctly describes the cat's position beneath the couch. Between is used when locating something in relation to two specific things, which does not apply here. Among describes a position within a group of three or more things. Throughout describes movement or presence across an entire area, which does not match hiding beneath a single couch."
+    },
+    {
+      q:"Grant wanted to play outside, ___ it started to rain.",
+      opts:["and","or","so","but"],
+      ci:3,
+      exp:"But correctly shows the contrast between Grant's wish to play outside and the rain that stopped him. And would incorrectly suggest the two ideas simply add together rather than contrast. Or presents a choice between alternatives, which does not fit here. So shows a cause and result relationship, which does not match the contrasting relationship in this sentence."
+    }
+  ];
+
+  var TOTAL = QUESTIONS.length;
+
+  function safeGet(key){
+    try{
+      var v = localStorage.getItem(key);
+      return v ? JSON.parse(v) : null;
+    }catch(e){ return null; }
+  }
+  function safeSet(key, val){
+    try{
+      localStorage.setItem(key, JSON.stringify(val));
+    }catch(e){ /* ignore */ }
+  }
+
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i = a.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function freshState(mode){
+    var order;
+    if(mode === "random"){
+      order = shuffle(Array.from({length: TOTAL}, function(_, i){ return i; }));
+    } else {
+      order = Array.from({length: TOTAL}, function(_, i){ return i; });
+    }
+    return {
+      orderMode: mode || "original",
+      order: order,
+      answers: new Array(order.length).fill(null),
+      currentPos: 0,
+      finished: false,
+      countedThisAttempt: false,
+      isRetry: false,
+      timer: { durationMs: null, startTs: null, running: false }
+    };
+  }
+
+  var state = safeGet(STATE_KEY);
+  if(!state || !state.order || !state.answers || state.order.length !== state.answers.length){
+    state = freshState("original");
+    safeSet(STATE_KEY, state);
+  }
+
+  function save(){ safeSet(STATE_KEY, state); }
+
+  // ---------- Timer ----------
+  var timerInterval = null;
+
+  function updateTimerDisplay(){
+    var el = document.getElementById("timerDisplay");
+    if(!state.timer || !state.timer.running || !state.timer.durationMs){
+      el.textContent = "--:--";
+      el.classList.remove("orange","red");
+      return;
+    }
+    var elapsed = Date.now() - state.timer.startTs;
+    var remaining = state.timer.durationMs - elapsed;
+    if(remaining <= 0){
+      el.textContent = "Time's Up";
+      el.classList.remove("orange");
+      el.classList.add("red");
+      state.timer.running = false;
+      save();
+      if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
+      return;
+    }
+    var pct = remaining / state.timer.durationMs;
+    el.classList.remove("orange","red");
+    if(pct <= 0.10){ el.classList.add("red"); }
+    else if(pct <= 0.25){ el.classList.add("orange"); }
+    var totalSec = Math.ceil(remaining / 1000);
+    var mm = Math.floor(totalSec / 60);
+    var ss = totalSec % 60;
+    el.textContent = (mm < 10 ? "0" + mm : mm) + ":" + (ss < 10 ? "0" + ss : ss);
+  }
+
+  function startTimerInterval(){
+    if(timerInterval){ clearInterval(timerInterval); }
+    timerInterval = setInterval(updateTimerDisplay, 500);
+    updateTimerDisplay();
+  }
+
+  window.startTimer = function(){
+    var input = document.getElementById("timeLimitInput");
+    var minutes = parseFloat(input.value);
+    if(!minutes || minutes <= 0){ minutes = 15; }
+    state.timer = {
+      durationMs: minutes * 60 * 1000,
+      startTs: Date.now(),
+      running: true
+    };
+    save();
+    startTimerInterval();
+  };
+
+  // ---------- Rendering ----------
+  function currentQuestionIndex(){
+    return state.order[state.currentPos];
+  }
+
+  function renderProgress(){
+    var answeredCount = state.answers.filter(function(a){ return a !== null; }).length;
+    document.getElementById("answeredCount").textContent = "Answered " + answeredCount + "/" + state.order.length;
+    var pct = state.order.length ? (answeredCount / state.order.length) * 100 : 0;
+    document.getElementById("progressFill").style.width = pct + "%";
+    renderJumpPanel();
+  }
+
+  function renderJumpPanel(){
+    var panel = document.getElementById("jumpPanel");
+    panel.innerHTML = "";
+    state.order.forEach(function(qIdx, pos){
+      var dot = document.createElement("div");
+      dot.className = "jump-dot";
+      var ans = state.answers[pos];
+      if(ans !== null){
+        var q = QUESTIONS[qIdx];
+        dot.className += (ans === q.ci) ? " answered-correct" : " answered-wrong";
+      }
+      if(pos === state.currentPos && !state.finished){
+        dot.className += " current";
+      }
+      dot.textContent = String(pos + 1);
+      dot.setAttribute("onclick", "window.jumpTo(" + pos + ")");
+      panel.appendChild(dot);
+    });
+  }
+
+  window.toggleJumpPanel = function(){
+    var panel = document.getElementById("jumpPanel");
+    var btn = document.getElementById("jumpToggleBtn");
+    var open = panel.classList.toggle("open");
+    btn.innerHTML = open ? "Jump to Question &#9652;" : "Jump to Question &#9662;";
+  };
+
+  window.jumpTo = function(pos){
+    if(state.finished) return;
+    state.currentPos = pos;
+    save();
+    renderQuiz();
+  };
+
+  function renderQuiz(){
+    if(state.finished){
+      renderResults();
+      return;
+    }
+    document.getElementById("resultsCard").style.display = "none";
+    var card = document.getElementById("quizCard");
+    card.style.display = "block";
+
+    var pos = state.currentPos;
+    var qIdx = state.order[pos];
+    var q = QUESTIONS[qIdx];
+    var picked = state.answers[pos];
+
+    var html = "";
+    html += '<div class="qnum">Question ' + (pos + 1) + ' of ' + state.order.length + '</div>';
+    html += '<div class="qtext">' + escapeHtml(q.q) + '</div>';
+
+    q.opts.forEach(function(optText, oIdx){
+      var cls = "opt";
+      var disabled = "";
+      if(picked !== null){
+        disabled = "disabled";
+        if(oIdx === q.ci){ cls += " correct"; }
+        else if(oIdx === picked){ cls += " wrong"; }
+      }
+      html += '<button class="' + cls + '" ' + disabled + ' onclick="window.selectOption(' + oIdx + ')">' + escapeHtml(optText) + '</button>';
+    });
+
+    if(picked !== null){
+      html += '<div class="exp-box">' + escapeHtml(q.exp) + '</div>';
+    }
+
+    var isLast = (pos === state.order.length - 1);
+    html += '<div class="nav-row">';
+    html += '<button class="btn btn-grey" onclick="window.goPrev()" ' + (pos === 0 ? "disabled" : "") + '>&larr; Previous</button>';
+    if(isLast){
+      html += '<button class="btn btn-blue" onclick="window.goNext()">Show Results &rarr;</button>';
+    } else {
+      html += '<button class="btn btn-blue" onclick="window.goNext()">Next &rarr;</button>';
+    }
+    html += '</div>';
+
+    card.innerHTML = html;
+    renderProgress();
+  }
+
+  window.selectOption = function(oIdx){
+    var pos = state.currentPos;
+    if(state.answers[pos] !== null) return;
+    state.answers[pos] = oIdx;
+    save();
+    renderQuiz();
+  };
+
+  window.goPrev = function(){
+    if(state.currentPos > 0){
+      state.currentPos -= 1;
+      save();
+      renderQuiz();
+    }
+  };
+
+  window.goNext = function(){
+    var isLast = (state.currentPos === state.order.length - 1);
+    if(isLast){
+      finishQuiz();
+    } else {
+      state.currentPos += 1;
+      save();
+      renderQuiz();
+    }
+  };
+
+  function finishQuiz(){
+    state.finished = true;
+    if(!state.countedThisAttempt){
+      var attempts = safeGet(ATTEMPTS_KEY);
+      if(typeof attempts !== "number"){ attempts = 0; }
+      attempts += 1;
+      safeSet(ATTEMPTS_KEY, attempts);
+      state.countedThisAttempt = true;
+    }
+    save();
+    renderQuiz();
+  }
+
+  function escapeHtml(str){
+    var div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ---------- Results ----------
+  function renderResults(){
+    document.getElementById("quizCard").style.display = "none";
+    var card = document.getElementById("resultsCard");
+    card.style.display = "block";
+
+    var correctCount = 0;
+    state.order.forEach(function(qIdx, pos){
+      var q = QUESTIONS[qIdx];
+      if(state.answers[pos] === q.ci){ correctCount++; }
+    });
+
+    var attempts = safeGet(ATTEMPTS_KEY);
+    if(typeof attempts !== "number"){ attempts = 0; }
+
+    var html = "";
+    html += '<div class="score-line">Score: ' + correctCount + ' / ' + state.order.length + '</div>';
+    html += '<div class="attempts-line">Total Attempts: ' + attempts + '</div>';
+
+    html += '<div class="results-actions">';
+    html += '<button class="btn btn-blue" onclick="window.copyAllResults()">Copy All Results</button>';
+    html += '<button class="btn btn-green" onclick="window.retryWrongOnes()">Retry Wrong Ones</button>';
+    html += '<button class="btn btn-purple" onclick="window.saveWrongAnswers()">Save Wrong Answers</button>';
+    html += '<button class="btn btn-grey" onclick="window.startFresh(\'original\')">Start Fresh (Original Order)</button>';
+    html += '<button class="btn btn-grey" onclick="window.startFresh(\'random\')">Start Fresh (Random Order)</button>';
+    html += '</div>';
+
+    html += '<div id="reviewList">';
+    state.order.forEach(function(qIdx, pos){
+      var q = QUESTIONS[qIdx];
+      var picked = state.answers[pos];
+      var isCorrect = picked === q.ci;
+      html += '<div class="review-item">';
+      html += '<div class="review-q">' + (pos + 1) + '. ' + escapeHtml(q.q) + '</div>';
+      html += '<div class="review-your">Your answer: ' + escapeHtml(picked !== null ? q.opts[picked] : "(no answer)") + ' <span class="' + (isCorrect ? "tag-right" : "tag-wrong") + '">' + (isCorrect ? "Correct" : "Incorrect") + '</span></div>';
+      if(!isCorrect){
+        html += '<div class="review-correct">Correct answer: ' + escapeHtml(q.opts[q.ci]) + '</div>';
+      }
+      html += '<div class="exp-box">' + escapeHtml(q.exp) + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    card.innerHTML = html;
+    renderProgress();
+  }
+
+  // ---------- Copy / Save / Retry / Reset ----------
+  window.copyAllResults = function(){
+    var lines = [];
+    lines.push("[Grant] Grammar - Results");
+    var correctCount = 0;
+    state.order.forEach(function(qIdx, pos){
+      var q = QUESTIONS[qIdx];
+      var picked = state.answers[pos];
+      var isCorrect = picked === q.ci;
+      if(isCorrect) correctCount++;
+      lines.push((pos + 1) + ". " + q.q);
+      lines.push("Your answer: " + (picked !== null ? q.opts[picked] : "(no answer)") + (isCorrect ? " (Correct)" : " (Incorrect)"));
+      if(!isCorrect){
+        lines.push("Correct answer: " + q.opts[q.ci]);
+      }
+      lines.push("");
+    });
+    lines.push("Score: " + correctCount + " / " + state.order.length);
+    var text = lines.join("\n");
+
+    function showToast(msg){
+      var t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      setTimeout(function(){ t.style.display = "none"; }, 2200);
+    }
+
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){
+          showToast("Results copied to clipboard.");
+        }).catch(function(){
+          showToast("Could not copy results.");
+        });
+      } else {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        showToast("Results copied to clipboard.");
+      }
+    }catch(e){
+      showToast("Could not copy results.");
+    }
+  };
+
+  window.saveWrongAnswers = function(){
+    var wrong = [];
+    state.order.forEach(function(qIdx, pos){
+      var q = QUESTIONS[qIdx];
+      var picked = state.answers[pos];
+      if(picked !== q.ci){
+        wrong.push({
+          q: q.q,
+          opts: q.opts,
+          ci: q.ci,
+          picked: picked
+        });
+      }
+    });
+
+    if(wrong.length === 0){
+      alert("No wrong answers to save. Great job!");
+      return;
+    }
+
+    var payload = {
+      child: "Grant",
+      subject: "[Grant] Grammar",
+      date: "2026-08-22",
+      wrong: wrong
+    };
+
+    try{
+      var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "grant_grammar_wrong_answers_2026-08-22.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }catch(e){
+      alert("Could not save wrong answers file.");
+    }
+  };
+
+  window.retryWrongOnes = function(){
+    var wrongIdx = [];
+    state.order.forEach(function(qIdx, pos){
+      var q = QUESTIONS[qIdx];
+      if(state.answers[pos] !== q.ci){
+        wrongIdx.push(qIdx);
+      }
+    });
+    if(wrongIdx.length === 0){
+      alert("No wrong answers to retry. Great job!");
+      return;
+    }
+    state.order = wrongIdx;
+    state.answers = new Array(wrongIdx.length).fill(null);
+    state.currentPos = 0;
+    state.finished = false;
+    state.countedThisAttempt = false;
+    state.isRetry = true;
+    save();
+    renderQuiz();
+  };
+
+  function showModal(message, onConfirm){
+    var overlay = document.getElementById("modalOverlay");
+    document.getElementById("modalText").textContent = message;
+    overlay.classList.add("open");
+
+    var confirmBtn = document.getElementById("modalConfirmBtn");
+    var cancelBtn = document.getElementById("modalCancelBtn");
+
+    function cleanup(){
+      overlay.classList.remove("open");
+      confirmBtn.removeEventListener("click", onConfirmClick);
+      cancelBtn.removeEventListener("click", onCancelClick);
+    }
+    function onConfirmClick(){ cleanup(); onConfirm(); }
+    function onCancelClick(){ cleanup(); }
+
+    confirmBtn.addEventListener("click", onConfirmClick);
+    cancelBtn.addEventListener("click", onCancelClick);
+  }
+
+  window.startFresh = function(mode){
+    var label = (mode === "random") ? "Random Order" : "Original Order";
+    showModal("Start fresh with " + label + "? This will clear your current progress.", function(){
+      state = freshState(mode);
+      save();
+      if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
+      updateTimerDisplay();
+      var panel = document.getElementById("jumpPanel");
+      panel.classList.remove("open");
+      document.getElementById("jumpToggleBtn").innerHTML = "Jump to Question &#9662;";
+      renderQuiz();
+    });
+  };
+
+  // ---------- Init ----------
+  document.getElementById("timeLimitInput").value = state.timer && state.timer.durationMs ? Math.round(state.timer.durationMs / 60000) : 15;
+  if(state.timer && state.timer.running && state.timer.durationMs){
+    startTimerInterval();
+  } else {
+    updateTimerDisplay();
+  }
+  renderQuiz();
+})();
+</script>
+</body>
+</html>
