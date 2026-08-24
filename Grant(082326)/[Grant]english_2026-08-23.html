@@ -678,9 +678,16 @@
     return a;
   }
 
+  function isValidOrderArray(arr){
+    if (!Array.isArray(arr) || arr.length === 0 || arr.length > N) return false;
+    for (var i=0;i<arr.length;i++){
+      if (typeof arr[i] !== 'number' || arr[i] < 0 || arr[i] >= N) return false;
+    }
+    return true;
+  }
   function loadOrder(){
     var stored = safeGet(ORDER_KEY);
-    if (stored && stored.order && stored.order.length === N){
+    if (stored && isValidOrderArray(stored.order)){
       order = stored.order;
     } else {
       order = defaultOrder();
@@ -713,7 +720,7 @@
   }
 
   function renderQuestion(){
-    if (current >= N){
+    if (current >= order.length){
       showResults();
       return;
     }
@@ -725,7 +732,7 @@
     var picked = answers[current];
 
     var html = '';
-    html += '<div class="q-skill">Question ' + (current+1) + ' of ' + N + ' - Skill: ' + skill + '</div>';
+    html += '<div class="q-skill">Question ' + (current+1) + ' of ' + order.length + ' - Skill: ' + skill + '</div>';
     html += '<div class="q-title">' + escapeHtml(qObj.q) + '</div>';
     for (var i=0;i<qObj.opts.length;i++){
       var cls = 'opt-btn';
@@ -751,7 +758,7 @@
     document.getElementById('prevBtn').disabled = (current === 0);
     var nextBtn = document.getElementById('nextBtn');
     nextBtn.disabled = false;
-    nextBtn.textContent = (current === N-1) ? 'Show Results →' : 'Next';
+    nextBtn.textContent = (current === order.length-1) ? 'Show Results →' : 'Next';
 
     updateProgress();
     updateJumpPanel();
@@ -764,7 +771,7 @@
   }
 
   window.selectOption = function(i){
-    if (current >= N) return;
+    if (current >= order.length) return;
     var qIdx = order[current];
     var qObj = QUESTIONS[qIdx];
     if (answers[current]) return;
@@ -775,12 +782,12 @@
   };
 
   window.nextQuestion = function(){
-    if (current >= N){
+    if (current >= order.length){
       showResults();
       return;
     }
-    if (current === N-1){
-      current = N;
+    if (current === order.length-1){
+      current = order.length;
       finishQuiz();
       return;
     }
@@ -790,8 +797,8 @@
   };
 
   window.prevQuestion = function(){
-    if (current >= N){
-      current = N-1;
+    if (current >= order.length){
+      current = order.length-1;
       saveProgress();
       renderQuestion();
       return;
@@ -825,7 +832,7 @@
   function updateJumpPanel(){
     var panel = document.getElementById('jumpPanel');
     var html = '';
-    for (var pos=0; pos<N; pos++){
+    for (var pos=0; pos<order.length; pos++){
       var cls = 'jump-dot';
       var ans = answers[pos];
       if (ans){
@@ -841,8 +848,8 @@
 
   function updateProgress(){
     var answeredCount = Object.keys(answers).length;
-    document.getElementById('progressText').textContent = 'Answered: ' + answeredCount + ' / ' + N;
-    var pct = Math.round((answeredCount / N) * 100);
+    document.getElementById('progressText').textContent = 'Answered: ' + answeredCount + ' / ' + order.length;
+    var pct = Math.round((answeredCount / order.length) * 100);
     document.getElementById('progressBar').style.width = pct + '%';
   }
 
@@ -861,7 +868,7 @@
     for (var k in answers){
       if (answers[k].correct) correctCount++;
     }
-    document.getElementById('scoreText').textContent = 'Score: ' + correctCount + ' / ' + N + ' (answered ' + answeredCount + ' / ' + N + ')';
+    document.getElementById('scoreText').textContent = 'Score: ' + correctCount + ' / ' + order.length + ' (answered ' + answeredCount + ' / ' + order.length + ')';
     var attempts = getAttempts();
     document.getElementById('attemptsText').textContent = 'Total Attempts: ' + attempts;
     updateProgress();
@@ -871,7 +878,7 @@
   window.copyAllResults = function(){
     var lines = [];
     lines.push('[Grant] English - Results');
-    for (var pos=0; pos<N; pos++){
+    for (var pos=0; pos<order.length; pos++){
       var qIdx = order[pos];
       var qObj = QUESTIONS[qIdx];
       var ans = answers[pos];
@@ -910,7 +917,7 @@
 
   window.retryWrongOnes = function(){
     var wrongPositions = [];
-    for (var pos=0; pos<N; pos++){
+    for (var pos=0; pos<order.length; pos++){
       var ans = answers[pos];
       if (ans && !ans.correct){
         wrongPositions.push(order[pos]);
@@ -931,7 +938,7 @@
 
   window.saveWrongAnswers = function(){
     var wrong = [];
-    for (var pos=0; pos<N; pos++){
+    for (var pos=0; pos<order.length; pos++){
       var qIdx = order[pos];
       var qObj = QUESTIONS[qIdx];
       var ans = answers[pos];
@@ -1077,7 +1084,7 @@
   function init(){
     loadOrder();
     loadProgress();
-    if (current > N) current = N;
+    if (current > order.length) current = order.length;
     renderQuestion();
     resumeTimerIfAny();
   }
