@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Advanced SAT Reading</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh;padding:12px;max-width:720px;margin:0 auto;}
+.quiz-title{font-size:1.35rem;font-weight:700;text-align:center;color:#111;background:#fff;padding:10px 0 2px}
+.subtitle{text-align:center;font-size:0.85rem;color:#555;background:#fff;padding:2px 0 4px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:2px 12px 10px}
+.timer-bar { background: #fff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; border-radius:10px; margin-bottom:8px;}
+.timer-setup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+.timer-setup label { font-weight: 700; }
+.timer-setup input[type="number"] { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+.timer-start-btn { background: #185FA5; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.timer-running { display: flex; align-items: center; gap: 8px; }
+.timer-label { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.02em; }
+.timer-display { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+.timer-display.warn { color: #f5a623; }
+.timer-display.danger { color: #E24B4A; }
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0;background:#fff;padding:8px 12px;border-radius:10px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;border:none;}
+.results-pill{display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;border:none;}
+.quiz-area{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;}
+.q-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.q-num{font-size:0.82rem;color:#888;}
+.tag-badge{font-size:0.75rem;padding:2px 10px;border-radius:10px;background:#185FA5;color:#fff;font-weight:600;}
+.passage-box,.context-box{background:#f5f7fa;border-left:3px solid #185FA5;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.92rem;color:#333;line-height:1.5;}
+.q-text{font-size:1.08rem;font-weight:600;color:#111;margin-bottom:14px;line-height:1.5;}
+.options{display:flex;flex-direction:column;gap:9px;}
+.opt-btn{background:#e8edf4;color:#111;border:2px solid transparent;border-radius:9px;padding:11px 14px;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.4;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn.revealed{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{margin-top:12px;padding:10px 12px;background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;font-size:0.88rem;color:#333;display:none;}
+.nav-btns{display:flex;justify-content:space-between;margin-top:14px;gap:10px;}
+.prev-btn,.next-btn{padding:9px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer;}
+.prev-btn{background:#e8edf4;color:#333;}
+.next-btn{background:#1D9E75;color:#fff;}
+.results-screen{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;display:none;}
+.results-screen.show{display:block;}
+.results-heading{font-size:1.3rem;font-weight:700;color:#1D9E75;text-align:center;margin-bottom:6px;}
+.results-score{font-size:1rem;text-align:center;color:#555;margin-bottom:14px;}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;margin-bottom:16px;}
+.r-card{border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;font-size:0.82rem;font-weight:600;}
+.r-card.correct{background:#E1F5EE;color:#085041;}
+.r-card.wrong{background:#FCEBEB;color:#501313;}
+.r-card.skipped{background:#f5f7fa;color:#555;}
+.results-btns{display:flex;flex-direction:column;gap:9px;}
+.retry-btn{background:#1D9E75;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.copy-btn{background:#185FA5;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.save-btn{background:#f5a623;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.fresh-btn{background:#e8edf4;color:#111;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:12px;padding:24px 20px;max-width:320px;width:90%;text-align:center;}
+.modal-title{font-size:1.05rem;font-weight:700;margin-bottom:8px;}
+.modal-msg{font-size:0.9rem;color:#555;margin-bottom:18px;}
+.modal-btns{display:flex;gap:10px;justify-content:center;}
+.modal-cancel{background:#e8edf4;color:#333;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;cursor:pointer;}
+.modal-confirm{background:#E24B4A;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;font-weight:600;cursor:pointer;}
+</style>
+</head>
+<body><div class="quiz-title">[Sion] Advanced SAT Reading</div><div class="subtitle" id="att-display">Total Attempts: 0</div><div class="instruction">Read each passage and choose the best answer.</div>
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="20"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">20:00</span>
+  </div>
+</div>
+<div id="nav-bar"><span id="nav-count">0 / 12</span><div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div><button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button></div><div id="dot-panel"></div>
+<div class="quiz-area" id="quiz-area">
+  <div class="q-header">
+    <span class="q-num" id="q-num"></span>
+    <span class="tag-badge" id="tag-badge" style="display:none;"></span>
+  </div>
+  <div class="passage-box" id="passage-box" style="display:none;"></div>
+  <div class="context-box" id="context-box" style="display:none;"></div>
+  <div class="q-text" id="q-text"></div>
+  <div class="options" id="options"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-btns">
+    <button class="prev-btn" onclick="goPrev()">Prev</button>
+    <button class="next-btn" id="next-btn" onclick="goNext()">Next</button>
+  </div>
+</div>
+
+<div class="results-screen" id="results-screen">
+  <div class="results-heading" id="results-heading">Results</div>
+  <div class="results-score" id="results-score"></div>
+  <div class="results-grid" id="results-grid"></div>
+  <div class="results-btns">
+    <button class="retry-btn" onclick="retryWrong()">Retry Wrong Ones</button>
+    <button class="copy-btn" onclick="copyRes()">Copy All Results</button>
+    <button class="save-btn" onclick="saveWrongAnswers()">Save Wrong Answers</button>
+    <button class="fresh-btn" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button>
+    <button class="fresh-btn" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <div class="modal-title" id="freshModalTitle">Start Fresh?</div>
+    <div class="modal-msg" id="freshModalText">All progress will be cleared. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>var TITLE = "[Sion] Advanced SAT Reading";var QUIZ_KEY = "quiz_advsatreading_12_20260824_v1";var ATT_KEY = "quiz_advsatreading_12_att_20260824_v1";var RAW_QUESTIONS = [{"stem": "Which choice most logically completes the text?", "opts": ["photosynthesis is the only reliable source of energy on Earth", "life on other sunless worlds, such as certain moons with subsurface oceans, might be possible", "deep-sea vents are too dangerous for further scientific study", "tube worms and crabs evolved directly from bacteria found near the vents"], "ci": 1, "exp": "The passage builds toward the idea that thriving ecosystems can exist entirely without sunlight, which supports the inference that similarly sunless environments elsewhere, like subsurface oceans on distant moons, could potentially support life. The other choices either contradict the passage's point (that photosynthesis is not required) or introduce claims the passage never supports.", "tag": "Inferences", "tagcolor": "#185FA5", "passage": "Marine biologists studying deep-sea vents once assumed that the extreme heat and toxic chemicals near these vents would support only the simplest life forms. Yet surveys have repeatedly found dense communities of tube worms, crabs, and bacteria thriving there, none of which rely on sunlight for energy. Because these ecosystems function independently of the sun, some researchers now argue that ______."}, {"stem": "Which choice most logically completes the text?", "opts": ["wide roads should be eliminated entirely from all future city designs", "narrower streets with frequent intersections may naturally encourage safer driving behavior", "traffic accidents are entirely unrelated to road design", "four-way intersections are more expensive to build than wide roads"], "ci": 1, "exp": "The passage sets up a surprising contrast: roads designed for speed and safety saw more accidents than narrower streets. The most reasonable conclusion is that narrower streets with intersections may naturally slow drivers down and encourage safer behavior. The other choices are too extreme, contradict the data described, or introduce unsupported claims about cost.", "tag": "Inferences", "tagcolor": "#185FA5", "passage": "A city planner reviewing decades of traffic data noticed that neighborhoods with narrower streets and more four-way intersections consistently had fewer serious accidents than neighborhoods with wide, uninterrupted roads, even though the wider roads were originally designed to move traffic more efficiently and safely. Based on this pattern, the planner concluded that ______."}, {"stem": "Which quotation from Ruiz's memoir would best support this claim?", "opts": ["\"I remember the marble countertops of the culinary academy gleaming under bright lights.\"", "\"With only two of us on a Friday night, I learned to prep, plate, and clean in a single fluid motion I never had to think about again.\"", "\"My classmates at the academy came from every corner of the world.\"", "\"The academy's final exam required us to prepare a five-course tasting menu.\""], "ci": 1, "exp": "The claim is specifically about efficiency learned from working in an understaffed kitchen, so the quotation describing how she learned to \"prep, plate, and clean in a single fluid motion\" while short-staffed directly illustrates that efficiency. The other quotations describe the culinary academy itself, which does not support a claim about lessons learned before that formal training.", "tag": "Command of Evidence", "tagcolor": "#1D9E75", "passage": "In her memoir, chef Elena Ruiz claims that her early years working in a small, understaffed kitchen taught her more about efficient cooking than any formal culinary training later provided."}, {"stem": "Which quotation would best support the historian's claim?", "opts": ["\"Within fifty years of Gutenberg's press, the number of books in circulation across Europe increased more than a hundredfold.\"", "\"Gutenberg was born in the German city of Mainz.\"", "\"Many scientists of the era corresponded with one another by letter.\"", "\"The printing press used movable metal type instead of carved wooden blocks.\""], "ci": 0, "exp": "The historian's claim is about the printing press accelerating the spread of ideas, so evidence showing a massive, rapid increase in circulating books most directly supports that claim. The other quotations describe unrelated biographical facts or technical details that do not address how quickly ideas actually spread.", "tag": "Command of Evidence", "tagcolor": "#1D9E75", "passage": "A historian argues that the introduction of the printing press accelerated the spread of scientific ideas across Europe far more than any single discovery of the era."}, {"stem": "As used in the text, what does the word \"ornate\" most nearly mean?", "opts": ["structurally unsound", "elaborately decorated", "environmentally friendly", "quickly constructed"], "ci": 1, "exp": "The passage contrasts the initial dismissal of the design as \"needlessly ornate\" with the later discovery that its \"excessive details\" served a purpose, indicating that \"ornate\" refers to elaborate decoration, not structural, environmental, or construction-speed qualities.", "tag": "Words in Context", "tagcolor": "#f5a623", "passage": "Critics initially dismissed the architect's design as needlessly ornate, but as visitors began exploring the building, many found that its seemingly excessive details actually served a practical purpose, guiding foot traffic and softening harsh acoustics in ways a plainer structure never could."}, {"stem": "As used in the text, what does the word \"candor\" most nearly mean?", "opts": ["persuasive charm", "outright honesty", "emotional intensity", "formal politeness"], "ci": 1, "exp": "The passage explains that the senator's speech avoided \"vague, carefully hedged statements\" and instead \"directly acknowledged the policy's shortcomings,\" which describes outright honesty rather than charm, emotional intensity, or mere politeness.", "tag": "Words in Context", "tagcolor": "#f5a623", "passage": "The senator's speech was widely praised for its candor; rather than offering the vague, carefully hedged statements typical of political address, she directly acknowledged the policy's shortcomings before proposing a solution."}, {"stem": "Based on the texts, how would Klein most likely respond to Owusu's argument?", "opts": ["By agreeing entirely that automation only destroys jobs with no offsetting benefit", "By suggesting that the negative effects Owusu describes may be temporary if retraining programs are put in place", "By denying that automation has any effect on manufacturing jobs at all", "By arguing that income inequality is unrelated to job displacement"], "ci": 1, "exp": "Klein's position is that automation creates new job categories \"provided workers receive adequate retraining,\" so he would most likely respond to Owusu's concerns by suggesting that the negative effects can be addressed, not that they do not exist or are unrelated to automation.", "tag": "Cross-Text Connections", "tagcolor": "#8e44ad", "passage": "Text 1: Economist Dara Owusu argues that automation in manufacturing has primarily displaced low-skill workers, leaving them with few comparable job opportunities and widening income inequality across regions that depend on factory work.<br><br>Text 2: Economist Felix Klein contends that automation, while eliminating some routine jobs, has historically created new categories of technical and maintenance work that ultimately offset early job losses, provided workers receive adequate retraining."}, {"stem": "Based on the texts, on which point would Petrov and Idowu most likely disagree?", "opts": ["Whether social media platforms exist", "Whether social media strengthens or weakens meaningful community connections", "Whether people use social media at all", "Whether niche interests exist among distant communities"], "ci": 1, "exp": "Petrov argues social media weakens deep community bonds, while Idowu argues it expands community by connecting people around shared interests, so their central disagreement concerns whether social media strengthens or weakens meaningful community connections, not whether these platforms or interests exist.", "tag": "Cross-Text Connections", "tagcolor": "#8e44ad", "passage": "Text 1: Sociologist Ana Petrov maintains that social media platforms have weakened face-to-face community bonds by encouraging people to substitute brief online interactions for deeper, sustained relationships.<br><br>Text 2: Sociologist Marcus Idowu argues that social media has instead expanded community by connecting geographically distant people who share niche interests, allowing relationships to form that would otherwise never have existed."}, {"stem": "The student wants to emphasize the economic response farmers have taken to declining bee populations. Which choice most effectively uses relevant information from the notes to accomplish this goal?", "opts": ["Bees pollinate about one-third of the food crops that humans eat every year.", "Colony collapse disorder has been a significant problem for bee populations since the mid-2000s.", "As bee populations have declined, some farmers have turned to renting managed beehives to protect their crops' pollination.", "Bees are a key part of many ecosystems around the world."], "ci": 2, "exp": "The goal is to emphasize the economic response farmers have taken, and only the choice describing farmers renting managed beehives directly addresses an action taken in response to declining bee populations. The other choices state background facts about bees or colony collapse disorder without describing any response.", "tag": "Rhetorical Synthesis", "tagcolor": "#E24B4A", "passage": "A student is writing a report and has taken the following notes:<br>&bull; Bees pollinate roughly one-third of the food crops humans consume.<br>&bull; Colony collapse disorder has reduced bee populations significantly since the mid-2000s.<br>&bull; Some farmers have begun renting managed beehives to ensure their crops are pollinated.<br>"}, {"stem": "The student wants to highlight a specific financial benefit that resulted from the city's streetlight upgrade. Which choice most effectively uses relevant information from the notes to accomplish this goal?", "opts": ["The city's old streetlights used incandescent bulbs that needed frequent replacement.", "After switching to LED streetlights in 2019, the city's annual lighting maintenance costs fell by 40 percent.", "LED bulbs are generally considered more energy-efficient than incandescent bulbs.", "The city has continued to explore other environmentally friendly infrastructure projects."], "ci": 1, "exp": "The goal is to highlight a specific financial benefit, and only the choice citing the 40 percent drop in annual maintenance costs after the 2019 LED switch provides that specific financial detail. The other choices describe background information or unrelated future plans rather than a concrete financial benefit.", "tag": "Rhetorical Synthesis", "tagcolor": "#E24B4A", "passage": "A student is writing a report and has taken the following notes:<br>&bull; The city's old streetlights used incandescent bulbs that required frequent replacement.<br>&bull; In 2019, the city replaced all streetlights with LED bulbs.<br>&bull; The city's annual lighting maintenance costs dropped by 40 percent after the switch.<br>"}, {"stem": "Which choice best states the main idea of the text?", "opts": ["Roman aqueducts were built solely to demonstrate the empire's engineering superiority over rival civilizations.", "Recent evidence indicates that Roman engineers designed aqueducts to ensure water purity, not just efficient transport.", "Roman cities relied entirely on fountains and baths for their water supply.", "Modern water systems have made ancient aqueduct engineering completely obsolete."], "ci": 1, "exp": "The passage's key point is that new excavation evidence shows Roman engineers cared about water purity in addition to efficient transport, which matches the second choice. The other choices either overstate the point, focus on an unsupported detail, or introduce an idea (modern obsolescence) not discussed in the passage.", "tag": "Central Ideas and Details", "tagcolor": "#0e7c86", "passage": "For decades, conventional wisdom held that the Roman aqueduct system was primarily an engineering triumph focused on transporting water efficiently across long distances. Recent excavations, however, reveal an equally sophisticated attention to water quality: sediment tanks, filtration basins, and carefully angled channels were built specifically to remove impurities before water reached city fountains and baths. This evidence suggests that Roman engineers valued not just the quantity of water delivered, but its cleanliness as well."}, {"stem": "Which choice best states the main idea of the text?", "opts": ["Coral reefs are unchanging structures that remain exactly the same for centuries.", "Coral polyps are the only organisms capable of surviving in ocean environments.", "Coral reefs are dynamic structures that continually change shape through ongoing growth and erosion.", "Calcium carbonate is more valuable to scientists than coral polyps themselves."], "ci": 2, "exp": "The passage's central point directly contradicts the idea that reefs are static, explaining instead that they continually change through the growth, death, and erosion of coral polyps over time, which matches the third choice. The other choices either restate the misconception the passage corrects or introduce claims never made in the text.", "tag": "Central Ideas and Details", "tagcolor": "#0e7c86", "passage": "It is tempting to think of coral reefs as static structures, permanent fixtures of the ocean floor. In reality, reefs are built by countless generations of tiny coral polyps that continuously grow, die, and leave behind calcium carbonate skeletons for new polyps to build upon. Over centuries, this slow, ongoing process transforms a reef's shape, sometimes shifting its location entirely as older sections erode while new growth extends outward."}];var N = RAW_QUESTIONS.length;var ORDER_KEY = QUIZ_KEY + '_order_v1';
+function shuffleArr(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function identityOrder(){var o=[];for(var i=0;i<N;i++)o.push(i);return o;}
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length===0) return false;
+  for(var i=0;i<arr.length;i++){ if(typeof arr[i] !== 'number' || arr[i]<0 || arr[i]>=N) return false; }
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad');
+    return arr;
+  }catch(e){ try{localStorage.removeItem(ORDER_KEY);}catch(e2){} return null; }
+}
+function saveOrder(o){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(o)); }catch(e){} }
+
+var order = loadOrder() || identityOrder();
+if(!loadOrder()) saveOrder(order);
+var pendingFreshMode = 'original';
+
+function defaultState(){
+  return { cur:0, answers:{}, showResults:false, timerTotalSec:null, timerStartedAt:null };
+}
+function loadState(){
+  try{
+    var raw = localStorage.getItem(QUIZ_KEY);
+    if(!raw) return defaultState();
+    var s = JSON.parse(raw);
+    if(typeof s.cur !== 'number' || s.cur<0 || s.cur>=order.length) s.cur = 0;
+    if(typeof s.answers !== 'object' || s.answers===null) s.answers = {};
+    if(typeof s.showResults !== 'boolean') s.showResults = false;
+    if(typeof s.timerTotalSec === 'undefined') s.timerTotalSec = null;
+    if(typeof s.timerStartedAt === 'undefined') s.timerStartedAt = null;
+    return s;
+  }catch(e){ try{localStorage.removeItem(QUIZ_KEY);}catch(e2){} return defaultState(); }
+}
+function saveState(){ try{ localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); }catch(e){} }
+
+var state = loadState();
+var timerInterval = null;
+
+function getAttempts(){ try{ return parseInt(localStorage.getItem(ATT_KEY)||'0',10); }catch(e){ return 0; } }
+function incAttempts(){ try{ localStorage.setItem(ATT_KEY, String(getAttempts()+1)); }catch(e){} }
+function updateAttDisplay(){
+  var el = document.getElementById('att-display');
+  if(el) el.textContent = 'Total Attempts: ' + getAttempts();
+}
+
+function formatTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function renderTimer(){
+  var setupEl = document.getElementById('timerSetup');
+  var runningEl = document.getElementById('timerRunning');
+  var dispEl = document.getElementById('timerDisplay');
+  if(!setupEl||!runningEl||!dispEl) return;
+  if(!state.timerStartedAt){ setupEl.style.display='flex'; runningEl.style.display='none'; return; }
+  setupEl.style.display='none'; runningEl.style.display='flex';
+  var elapsed = (Date.now()-state.timerStartedAt)/1000;
+  var remaining = state.timerTotalSec - elapsed;
+  dispEl.classList.remove('warn','danger');
+  if(remaining<=0){ dispEl.textContent="Time's Up"; dispEl.classList.add('danger'); stopTimerInterval(); return; }
+  dispEl.textContent = formatTime(remaining);
+  if(remaining <= state.timerTotalSec*0.1) dispEl.classList.add('danger');
+  else if(remaining <= state.timerTotalSec*0.25) dispEl.classList.add('warn');
+}
+function startTimer(){
+  var input = document.getElementById('timerMinutesInput');
+  var minutes = parseFloat(input.value);
+  if(!minutes || minutes<=0) minutes=20;
+  state.timerTotalSec = Math.round(minutes*60);
+  state.timerStartedAt = Date.now();
+  saveState(); renderTimer(); startTimerInterval();
+}
+function startTimerInterval(){ stopTimerInterval(); timerInterval=setInterval(renderTimer,1000); }
+function stopTimerInterval(){ if(timerInterval){clearInterval(timerInterval); timerInterval=null;} }
+function resetTimer(){
+  state.timerTotalSec = null; state.timerStartedAt = null;
+  stopTimerInterval(); saveState(); renderTimer();
+}
+
+function render(){
+  updateAttDisplay();
+  var qa = document.getElementById('quiz-area');
+  var rs = document.getElementById('results-screen');
+  if(state.showResults){
+    qa.style.display='none';
+    rs.classList.add('show');
+    renderResults();
+    return;
+  }
+  qa.style.display='block';
+  rs.classList.remove('show');
+
+  var qi = order[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  document.getElementById('q-num').textContent = 'Q' + (state.cur+1) + ' / ' + order.length;
+
+  var badge = document.getElementById('tag-badge');
+  if(q.tag){
+    badge.style.display='inline-block';
+    badge.textContent = q.tag;
+    badge.style.background = q.tagcolor || '#185FA5';
+  } else { badge.style.display='none'; }
+
+  var pbox = document.getElementById('passage-box');
+  if(q.passage){ pbox.style.display='block'; pbox.innerHTML = q.passage; } else { pbox.style.display='none'; }
+  var cbox = document.getElementById('context-box');
+  if(q.context){ cbox.style.display='block'; cbox.innerHTML = q.context; } else { cbox.style.display='none'; }
+
+  document.getElementById('q-text').innerHTML = q.stem;
+
+  var answered = state.answers[qi];
+  var optDiv = document.getElementById('options');
+  optDiv.innerHTML='';
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML = optText;
+    btn.disabled = answered !== undefined;
+    if(answered !== undefined){
+      if(idx === q.ci) btn.classList.add(answered===idx ? 'correct' : 'revealed');
+      else if(answered === idx) btn.classList.add('wrong');
+    }
+    btn.onclick = function(){ chooseAnswer(idx); };
+    optDiv.appendChild(btn);
+  });
+
+  var expDiv = document.getElementById('exp-box');
+  if(answered !== undefined && answered !== q.ci){
+    expDiv.style.display='block';
+    expDiv.innerHTML = q.exp;
+  } else {
+    expDiv.style.display='none';
+  }
+
+  var nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = (state.cur >= order.length-1) ? 'Show Results →' : 'Next →';
+
+  updateNav();
+}
+
+function updateNav(){
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  document.getElementById('nav-count').textContent = answered + ' / ' + order.length;
+  document.getElementById('prog-fill').style.width = (answered/order.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel = document.getElementById('dot-panel');
+  if(panel.style.display==='none') return;
+  var html='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var bg = state.answers[qi]===undefined ? '#d7dde6' : (state.answers[qi]===RAW_QUESTIONS[qi].ci ? '#185FA5' : '#E24B4A');
+    html += '<button class="dot" style="background:'+bg+';" onclick="goToQ('+pos+')">'+(pos+1)+'</button>';
+  }
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  if(answered===order.length){
+    html += '<br><button class="results-pill" onclick="showResultsNow()">Results</button>';
+  }
+  panel.innerHTML = html;
+}
+function toggleJump(){
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display==='none' || panel.style.display===''){
+    panel.style.display='block'; btn.innerHTML='Hide &#9652;'; renderDots();
+  } else {
+    panel.style.display='none'; btn.innerHTML='Jump &#9662;';
+  }
+}
+function goToQ(pos){
+  state.cur = pos; state.showResults=false; saveState(); render();
+}
+function showResultsNow(){
+  state.showResults = true; incAttempts(); saveState(); render();
+}
+function chooseAnswer(idx){
+  var qi = order[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState(); render();
+}
+function goPrev(){
+  if(state.cur>0){ state.cur--; saveState(); render(); }
+}
+function goNext(){
+  if(state.cur < order.length-1){ state.cur++; saveState(); render(); }
+  else { state.showResults=true; incAttempts(); saveState(); render(); }
+}
+function renderResults(){
+  var correct=0, wrong=0, skipped=0;
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]===undefined){ skipped++; continue; }
+    if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+  }
+  document.getElementById('results-score').textContent = correct+' correct, '+wrong+' wrong, '+skipped+' skipped - out of '+order.length;
+  var grid = document.getElementById('results-grid');
+  grid.innerHTML='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var card = document.createElement('div');
+    if(state.answers[qi]===undefined){
+      card.className='r-card skipped';
+      card.textContent='Q'+(pos+1)+' Skip';
+    } else {
+      var ok = state.answers[qi]===RAW_QUESTIONS[qi].ci;
+      card.className='r-card '+(ok?'correct':'wrong');
+      card.textContent='Q'+(pos+1)+' '+(ok?'OK':'X');
+    }
+    (function(p){ card.onclick=function(){ state.showResults=false; state.cur=p; saveState(); render(); }; })(pos);
+    grid.appendChild(card);
+  }
+}
+function retryWrong(){
+  var wrong=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      wrong.push(qi);
+    }
+  }
+  if(wrong.length===0) return;
+  wrong.forEach(function(qi){ delete state.answers[qi]; });
+  order = wrong;
+  saveOrder(order);
+  state.cur=0; state.showResults=false;
+  saveState(); render(); renderTimer();
+}
+function copyRes(){
+  var lines=[TITLE+' Results'];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    var s='Q'+(pos+1)+': ';
+    if(a===undefined) s+='Skipped';
+    else s += (a===RAW_QUESTIONS[qi].ci ? 'Correct' : 'Wrong');
+    lines.push(s);
+  }
+  var text = lines.join('\n');
+  try{
+    if(navigator.clipboard){ navigator.clipboard.writeText(text).catch(function(){}); }
+    else { var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+  }catch(e){}
+}
+function saveWrongAnswers(){
+  var wrongItems=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    if(a!==undefined && a!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongItems.push({ question: q.stem, yourAnswer: q.opts[a], correctAnswer: q.opts[q.ci], explanation: q.exp });
+    }
+  }
+  var blob = new Blob([JSON.stringify({title:TITLE, wrongAnswers:wrongItems}, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a2 = document.createElement('a');
+  a2.href = url; a2.download = QUIZ_KEY + '_wrong.json';
+  document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+  URL.revokeObjectURL(url);
+}
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var t = document.getElementById('freshModalTitle');
+  var m = document.getElementById('freshModalText');
+  if(mode==='random'){
+    t.textContent='Start Fresh (Random Order)?';
+    m.textContent='Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    t.textContent='Start Fresh (Original Order)?';
+    m.textContent='Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  order = (pendingFreshMode==='random') ? shuffleArr(identityOrder()) : identityOrder();
+  saveOrder(order);
+  state = defaultState();
+  saveState();
+  resetTimer();
+  closeFreshModal();
+  render();
+  renderTimer();
+}
+
+window.startTimer=startTimer;
+window.toggleJump=toggleJump;
+window.goToQ=goToQ;
+window.showResultsNow=showResultsNow;
+window.chooseAnswer=chooseAnswer;
+window.goPrev=goPrev;
+window.goNext=goNext;
+window.retryWrong=retryWrong;
+window.copyRes=copyRes;
+window.saveWrongAnswers=saveWrongAnswers;
+window.openFreshModalOriginal=openFreshModalOriginal;
+window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;
+window.confirmFresh=confirmFresh;
+
+render();
+renderTimer();
+if(state.timerStartedAt) startTimerInterval();
+</script>
+</body>
+</html>
