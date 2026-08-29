@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT Grammar</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh;padding:12px;max-width:720px;margin:0 auto;}
+.quiz-title{font-size:1.35rem;font-weight:700;text-align:center;color:#111;background:#fff;padding:10px 0 2px}
+.subtitle{text-align:center;font-size:0.85rem;color:#555;background:#fff;padding:2px 0 4px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:2px 12px 10px}
+.timer-bar { background: #fff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; border-radius:10px; margin-bottom:8px;}
+.timer-setup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+.timer-setup label { font-weight: 700; }
+.timer-setup input[type="number"] { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+.timer-start-btn { background: #185FA5; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.timer-running { display: flex; align-items: center; gap: 8px; }
+.timer-label { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.02em; }
+.timer-display { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+.timer-display.warn { color: #f5a623; }
+.timer-display.danger { color: #E24B4A; }
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0;background:#fff;padding:8px 12px;border-radius:10px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;border:none;}
+.results-pill{display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;border:none;}
+.quiz-area{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;}
+.q-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.q-num{font-size:0.82rem;color:#888;}
+.tag-badge{font-size:0.75rem;padding:2px 10px;border-radius:10px;background:#185FA5;color:#fff;font-weight:600;}
+.passage-box,.context-box{background:#f5f7fa;border-left:3px solid #185FA5;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.92rem;color:#333;line-height:1.5;}
+.q-text{font-size:1.08rem;font-weight:600;color:#111;margin-bottom:14px;line-height:1.5;}
+.options{display:flex;flex-direction:column;gap:9px;}
+.opt-btn{background:#e8edf4;color:#111;border:2px solid transparent;border-radius:9px;padding:11px 14px;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.4;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn.revealed{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{margin-top:12px;padding:10px 12px;background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;font-size:0.88rem;color:#333;display:none;}
+.nav-btns{display:flex;justify-content:space-between;margin-top:14px;gap:10px;}
+.prev-btn,.next-btn{padding:9px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer;}
+.prev-btn{background:#e8edf4;color:#333;}
+.next-btn{background:#1D9E75;color:#fff;}
+.results-screen{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;display:none;}
+.results-screen.show{display:block;}
+.results-heading{font-size:1.3rem;font-weight:700;color:#1D9E75;text-align:center;margin-bottom:6px;}
+.results-score{font-size:1rem;text-align:center;color:#555;margin-bottom:14px;}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;margin-bottom:16px;}
+.r-card{border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;font-size:0.82rem;font-weight:600;}
+.r-card.correct{background:#E1F5EE;color:#085041;}
+.r-card.wrong{background:#FCEBEB;color:#501313;}
+.r-card.skipped{background:#f5f7fa;color:#555;}
+.results-btns{display:flex;flex-direction:column;gap:9px;}
+.retry-btn{background:#1D9E75;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.copy-btn{background:#185FA5;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.save-btn{background:#f5a623;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.fresh-btn{background:#e8edf4;color:#111;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:12px;padding:24px 20px;max-width:320px;width:90%;text-align:center;}
+.modal-title{font-size:1.05rem;font-weight:700;margin-bottom:8px;}
+.modal-msg{font-size:0.9rem;color:#555;margin-bottom:18px;}
+.modal-btns{display:flex;gap:10px;justify-content:center;}
+.modal-cancel{background:#e8edf4;color:#333;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;cursor:pointer;}
+.modal-confirm{background:#E24B4A;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;font-weight:600;cursor:pointer;}
+</style>
+</head>
+<body><div class="quiz-title">[Sion] SAT Grammar</div><div class="subtitle" id="att-display">Total Attempts: 0</div><div class="instruction">Choose the best answer to complete each sentence.</div>
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="20"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">20:00</span>
+  </div>
+</div>
+<div id="nav-bar"><span id="nav-count">0 / 20</span><div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div><button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button></div><div id="dot-panel"></div>
+<div class="quiz-area" id="quiz-area">
+  <div class="q-header">
+    <span class="q-num" id="q-num"></span>
+    <span class="tag-badge" id="tag-badge" style="display:none;"></span>
+    
+  </div>
+  <div class="passage-box" id="passage-box" style="display:none;"></div>
+  <div class="context-box" id="context-box" style="display:none;"></div>
+  <div class="q-text" id="q-text"></div>
+  <div class="options" id="options"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-btns">
+    <button class="prev-btn" onclick="goPrev()">Prev</button>
+    <button class="next-btn" id="next-btn" onclick="goNext()">Next</button>
+  </div>
+</div>
+
+<div class="results-screen" id="results-screen">
+  <div class="results-heading" id="results-heading">Results</div>
+  <div class="results-score" id="results-score"></div>
+  <div class="results-grid" id="results-grid"></div>
+  <div class="results-btns">
+    <button class="retry-btn" onclick="retryWrong()">Retry Wrong Ones</button>
+    <button class="copy-btn" onclick="copyRes()">Copy All Results</button>
+    <button class="save-btn" onclick="saveWrongAnswers()">Save Wrong Answers</button>
+    <button class="fresh-btn" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button>
+    <button class="fresh-btn" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <div class="modal-title" id="freshModalTitle">Start Fresh?</div>
+    <div class="modal-msg" id="freshModalText">All progress will be cleared. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>var TITLE = "[Sion] SAT Grammar";var QUIZ_KEY = "quiz_siongrammar_20_20260828_v1";var ATT_KEY = "quiz_siongrammar_20_att_20260828_v1";var RAW_QUESTIONS = [{"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "Ticket sales for the exhibit fell far short of the museum's projections. <u>Similarly</u>, the board approved an unplanned increase in the marketing budget.", "opts": ["Similarly", "Consequently", "Likewise", "In the same way"], "ci": 1, "exp": "Since the disappointing ticket sales directly caused the board's decision, a transition showing result, like \"Consequently,\" fits best. \"Similarly,\" \"Likewise,\" and \"In the same way\" all signal comparison between two similar situations, but the sentences describe a cause leading to an effect, not two parallel situations.", "tag": "Transitions", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "<u>Having rehearsed the routine for weeks, the sudden venue change unsettled the dancers</u>.", "opts": ["Having rehearsed the routine for weeks, the change of venue unsettled the dancers suddenly", "Having rehearsed the routine for weeks, the dancers were unsettled by the sudden venue change", "Having rehearsed the routine for weeks, the sudden venue change unsettled the dancers", "Rehearsing the routine for weeks, the sudden venue change unsettled the dancers"], "ci": 1, "exp": "The modifier \"Having rehearsed the routine for weeks\" describes the dancers, so the noun right after the comma should be \"the dancers.\" \"Having rehearsed...the dancers were unsettled by the sudden venue change\" places \"the dancers\" correctly. \"the sudden venue change unsettled the dancers\" places \"the sudden venue change\" right after the modifier, illogically suggesting the change rehearsed the routine. \"the change of venue unsettled the dancers suddenly\" makes the same error, since a change is still the noun right after the modifier. \"Rehearsing the routine for weeks, the sudden venue change unsettled the dancers\" repeats the same dangling-modifier problem with a different opening verb form.", "tag": "Modifier Placement", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "<u>Weakened by years of neglect, the city council condemned the bridge</u> without further review.", "opts": ["Having been weakened by years of neglect, the city council condemned the bridge", "Weakened by years of neglect, the council's bridge was condemned", "Weakened by years of neglect, the city council condemned the bridge", "Weakened by years of neglect, the bridge was condemned by the city council"], "ci": 3, "exp": "The opening phrase \"Weakened by years of neglect\" must modify the bridge, so the noun right after the comma should be \"the bridge.\" \"Weakened...the bridge was condemned by the city council\" places \"the bridge\" correctly. \"the city council condemned the bridge\" places \"the city council\" right after the modifier, illogically suggesting the council was weakened by neglect. \"the council's bridge was condemned\" still places \"the council's\" immediately after the modifier, repeating the same problem. \"Having been weakened...the city council condemned the bridge\" repeats the same dangling-modifier error.", "tag": "Modifier Placement", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "The fellowship required applicants to draft a research proposal, <u>securing letters of recommendation, and to complete</u> an interview panel.", "opts": ["to secure letters of recommendation, and to complete", "to secure letters of recommendation, and completing", "securing letters of recommendation, and completing", "securing letters of recommendation, and to complete"], "ci": 0, "exp": "All three items in the list must match the infinitive form of \"to draft.\" \"to secure letters of recommendation, and to complete\" keeps every item in the infinitive form. \"securing letters of recommendation, and to complete\" shifts the second item to a gerund. \"to secure letters of recommendation, and completing\" shifts the third item to a gerund instead. \"securing letters of recommendation, and completing\" breaks the pattern in two places at once.", "tag": "Parallel Structure", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "The editorial board will publish the essay from <u>whoever</u> they select as this year's guest columnist.", "opts": ["whomever", "who", "whoever", "who's"], "ci": 0, "exp": "\"whomever\" is correct because it functions as the object of the verb \"select\" within its own clause (\"whomever they select\"), even though the clause as a whole follows the preposition \"from.\" \"whoever\" is a subject pronoun and can't serve as the object of \"select.\" \"who\" is also a subject pronoun and has the same problem. \"who's\" is a contraction of \"who is\" and doesn't fit grammatically in this position at all.", "tag": "Pronoun Case", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "The <u>jury's</u> verdicts, though delivered separately in three related trials, ultimately reached the same conclusion about the defendant's conduct.", "opts": ["juries", "juries'", "juries's", "jury's"], "ci": 1, "exp": "\"juries'\" is the correct plural possessive, matching \"three related trials\" and showing the verdicts belong to more than one jury. \"jury's\" is singular possessive, which doesn't match the plural group described. \"juries\" is only plural, with no possessive meaning at all. \"juries's\" is not a standard English possessive form.", "tag": "Apostrophes", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "Neither the librarians nor the department head <u>were</u> informed about the renovation timeline.", "opts": ["are", "have been", "were", "was"], "ci": 3, "exp": "With \"neither...nor,\" the verb agrees with the closer subject, which here is the singular \"department head,\" so the singular verb \"was\" is correct. \"were,\" \"are,\" and \"have been\" are all plural forms that don't agree with \"department head.\"", "tag": "Subject-Verb Agreement", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "Economics, though listed as an elective for most students, <u>remain</u> one of the more rigorous courses offered.", "opts": ["have remained", "remains", "were", "remain"], "ci": 1, "exp": "When \"economics\" refers to a single academic subject, as clarified by \"an elective,\" it takes a singular verb: \"remains.\" \"remain,\" \"were,\" and \"have remained\" all treat the word as a plural count noun, which doesn't match its use here as the name of one subject.", "tag": "Subject-Verb Agreement", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "The pilot program reduced commute times in every district tested. <u>Nonetheless</u>, city planners voted to expand it citywide the following year.", "opts": ["Even so", "Nevertheless", "Consequently", "Nonetheless"], "ci": 2, "exp": "Since the program's success is the direct reason planners expanded it, a transition showing result, like \"Consequently,\" fits best. \"Nonetheless,\" \"Nevertheless,\" and \"Even so\" all signal contrast, but the two sentences describe a logical cause-and-effect relationship, not a contradiction.", "tag": "Transitions", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "The generator failed during the storm<u>, the entire wing lost power for six hours.</u>", "opts": [", the entire wing lost power for six hours.", ", therefore the entire wing lost power for six hours.", "; and the entire wing lost power for six hours.", ", so the entire wing lost power for six hours."], "ci": 3, "exp": "Two independent clauses joined only by a comma create a comma splice, so the fix must add a coordinating conjunction like \"so\" to show the cause-and-effect relationship. \", the entire wing lost power...\" keeps the original comma splice unfixed. \", therefore the entire wing lost power...\" pairs a comma with \"therefore,\" which still creates a comma splice since \"therefore\" is not a coordinating conjunction. \"; and the entire wing lost power...\" incorrectly combines a semicolon with the conjunction \"and,\" which is redundant punctuation for joining two clauses.", "tag": "Punctuation - Comma Splice", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "<u>Due to the fact that</u> the ferry was delayed, the tour group missed its scheduled departure.", "opts": ["Because", "Owing to the fact that", "In light of the fact that", "Due to the fact that"], "ci": 0, "exp": "\"Because\" conveys the same causal meaning in a single concise word. \"Due to the fact that,\" \"Owing to the fact that,\" and \"In light of the fact that\" are all wordier phrases that express the same causal meaning with unnecessary extra words.", "tag": "Concision", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "After the coach spoke with the team captain about the new training schedule, <u>he</u> emailed the revised plan to every player.", "opts": ["the team leader emailed the revised plan to every player", "he emailed the revised plan to every player", "the revised plan was emailed to every player", "the coach emailed the revised plan to every player"], "ci": 3, "exp": "\"he\" could refer to either the coach or the team captain, leaving the sentence ambiguous. \"the coach emailed the revised plan to every player\" removes that ambiguity by naming a specific person. \"he\" keeps the vague pronoun. \"the team leader\" is still vague, since it could describe either person in the sentence. \"the revised plan was emailed to every player\" drops the actor the sentence needs to identify.", "tag": "Pronoun Reference", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "After the merger, the two companies' combined <u>earning's</u> surpassed even the most optimistic forecasts.", "opts": ["earnings's", "earnings'", "earnings", "earning's"], "ci": 2, "exp": "\"earnings\" functions here as the plural subject describing total income, so it needs no possessive apostrophe. \"earning's\" incorrectly adds a possessive apostrophe where no possession is being shown. \"earnings'\" treats the word as a possessive plural, which doesn't fit its use as a simple plural subject. \"earnings's\" is not a standard English form at all.", "tag": "Apostrophes", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "Every morning, the night-shift nurses <u>completed</u> their handoff notes and briefs the incoming team.", "opts": ["have completed", "complete", "were completing", "completed"], "ci": 1, "exp": "Since the sentence describes a routine habit in the present tense, shown by \"briefs,\" the first verb must also be present tense: \"complete.\" \"completed\" is past tense and breaks the tense consistency. \"have completed\" and \"were completing\" both introduce different tenses that don't match the simple present routine described by \"briefs.\"", "tag": "Verb Tense Consistency", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "The proposed merger<u>, which two board members had already opposed in closed session</u> was leaked to reporters within days.", "opts": [", which two board members had already opposed in closed session", "(which two board members had already opposed in closed session)", ", which two board members had already opposed in closed session,", "which two board members had already opposed in closed session,"], "ci": 2, "exp": "A nonessential clause in the middle of a sentence needs a comma both before and after it. \", which two board members had already opposed in closed session,\" correctly closes off the clause on both sides. \", which two board members had already opposed in closed session\" is missing the closing comma before \"was.\" \"which two board members had already opposed in closed session,\" is missing the opening comma after \"merger.\" \"(which two board members had already opposed in closed session)\" uses parentheses instead of the comma pair the surrounding sentence structure calls for.", "tag": "Punctuation - Nonessential Clause", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "The archive of handwritten letters, donated last spring by three separate families, <u>document</u> the town's history in vivid detail.", "opts": ["documents", "are documenting", "documenting", "document"], "ci": 0, "exp": "The subject is the singular \"archive,\" not the plural \"families\" inside the intervening phrase, so the singular verb \"documents\" is required. \"document\" pairs a singular subject with a plural verb. \"are documenting\" is still plural and disagrees with the singular subject. \"documenting\" alone is not a complete verb and leaves the sentence without a main verb.", "tag": "Subject-Verb Agreement", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "The lab requires exactly four safety items<u>,</u> goggles, gloves, an apron, and closed-toe shoes.", "opts": [":", " -", ";", ","], "ci": 0, "exp": "A colon correctly introduces the list that explains what the four safety items were. A comma alone cannot introduce a list this way after a complete independent clause. A semicolon is used to join two independent clauses or separate complex list items, not to introduce a simple list. A single dash is not the conventional punctuation for introducing a list following a complete sentence here.", "tag": "Punctuation - Colon vs. Comma", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "<u>In spite of the fact that</u> the forecast predicted rain, the festival organizers proceeded as planned.", "opts": ["In spite of the fact that", "Despite the fact that", "Regardless of the fact that", "Although"], "ci": 3, "exp": "\"Although\" conveys the same concessive meaning in a single concise word. \"In spite of the fact that,\" \"Despite the fact that,\" and \"Regardless of the fact that\" are all wordy phrases that express the same meaning with unnecessary extra words.", "tag": "Concision", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "By the time the auditors arrived, the accounting error <u>already spreads</u> across three separate departments.", "opts": ["has already spread", "already spreads", "had already spread", "already spread"], "ci": 2, "exp": "Because the error spreading happened before another past event (\"the auditors arrived\"), the past-perfect \"had already spread\" is required. \"already spreads\" is present tense and doesn't fit the past-tense sentence. \"already spread\" is simple past, which doesn't show the action was completed before the auditors' arrival. \"has already spread\" is present perfect, which doesn't fit a sentence anchored entirely in the past.", "tag": "Verb Tense Consistency", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the underlined portion so that it conforms to standard English conventions?", "context": "Successful negotiators aim to listen actively, to ask clarifying questions, and <u>staying calm under</u> pressure.", "opts": ["to stay calm under", "staying calm under", "remain calm under", "to staying calm under"], "ci": 0, "exp": "To match \"to listen\" and \"to ask,\" the third item should also use the infinitive form: \"to stay calm under.\" \"staying calm under\" breaks the pattern by switching to a gerund. \"remain calm under\" drops the required \"to\" and no longer matches the infinitive pattern. \"to staying calm under\" awkwardly combines the infinitive marker with a gerund, which is not a grammatical phrase.", "tag": "Parallel Structure", "tagcolor": "#185FA5"}];var N = RAW_QUESTIONS.length;var ORDER_KEY = QUIZ_KEY + '_order_v1';
+function shuffleArr(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function identityOrder(){var o=[];for(var i=0;i<N;i++)o.push(i);return o;}
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length===0) return false;
+  for(var i=0;i<arr.length;i++){ if(typeof arr[i] !== 'number' || arr[i]<0 || arr[i]>=N) return false; }
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad');
+    return arr;
+  }catch(e){ try{localStorage.removeItem(ORDER_KEY);}catch(e2){} return null; }
+}
+function saveOrder(o){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(o)); }catch(e){} }
+
+var order = loadOrder() || identityOrder();
+if(!loadOrder()) saveOrder(order);
+var pendingFreshMode = 'original';
+
+function defaultState(){
+  return { cur:0, answers:{}, showResults:false, timerTotalSec:null, timerStartedAt:null };
+}
+function loadState(){
+  try{
+    var raw = localStorage.getItem(QUIZ_KEY);
+    if(!raw) return defaultState();
+    var s = JSON.parse(raw);
+    if(typeof s.cur !== 'number' || s.cur<0 || s.cur>=order.length) s.cur = 0;
+    if(typeof s.answers !== 'object' || s.answers===null) s.answers = {};
+    if(typeof s.showResults !== 'boolean') s.showResults = false;
+    if(typeof s.timerTotalSec === 'undefined') s.timerTotalSec = null;
+    if(typeof s.timerStartedAt === 'undefined') s.timerStartedAt = null;
+    return s;
+  }catch(e){ try{localStorage.removeItem(QUIZ_KEY);}catch(e2){} return defaultState(); }
+}
+function saveState(){ try{ localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); }catch(e){} }
+
+var state = loadState();
+var timerInterval = null;
+
+function getAttempts(){ try{ return parseInt(localStorage.getItem(ATT_KEY)||'0',10); }catch(e){ return 0; } }
+function incAttempts(){ try{ localStorage.setItem(ATT_KEY, String(getAttempts()+1)); }catch(e){} }
+function updateAttDisplay(){
+  var el = document.getElementById('att-display');
+  if(el) el.textContent = 'Total Attempts: ' + getAttempts();
+}
+
+function formatTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function renderTimer(){
+  var setupEl = document.getElementById('timerSetup');
+  var runningEl = document.getElementById('timerRunning');
+  var dispEl = document.getElementById('timerDisplay');
+  if(!setupEl||!runningEl||!dispEl) return;
+  if(!state.timerStartedAt){ setupEl.style.display='flex'; runningEl.style.display='none'; return; }
+  setupEl.style.display='none'; runningEl.style.display='flex';
+  var elapsed = (Date.now()-state.timerStartedAt)/1000;
+  var remaining = state.timerTotalSec - elapsed;
+  dispEl.classList.remove('warn','danger');
+  if(remaining<=0){ dispEl.textContent="Time's Up"; dispEl.classList.add('danger'); stopTimerInterval(); return; }
+  dispEl.textContent = formatTime(remaining);
+  if(remaining <= state.timerTotalSec*0.1) dispEl.classList.add('danger');
+  else if(remaining <= state.timerTotalSec*0.25) dispEl.classList.add('warn');
+}
+function startTimer(){
+  var input = document.getElementById('timerMinutesInput');
+  var minutes = parseFloat(input.value);
+  if(!minutes || minutes<=0) minutes=20;
+  state.timerTotalSec = Math.round(minutes*60);
+  state.timerStartedAt = Date.now();
+  saveState(); renderTimer(); startTimerInterval();
+}
+function startTimerInterval(){ stopTimerInterval(); timerInterval=setInterval(renderTimer,1000); }
+function stopTimerInterval(){ if(timerInterval){clearInterval(timerInterval); timerInterval=null;} }
+function resetTimer(){
+  state.timerTotalSec = null; state.timerStartedAt = null;
+  stopTimerInterval(); saveState(); renderTimer();
+}
+
+function render(){
+  updateAttDisplay();
+  var qa = document.getElementById('quiz-area');
+  var rs = document.getElementById('results-screen');
+  if(state.showResults){
+    qa.style.display='none';
+    rs.classList.add('show');
+    renderResults();
+    return;
+  }
+  qa.style.display='block';
+  rs.classList.remove('show');
+
+  var qi = order[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  document.getElementById('q-num').textContent = 'Q' + (state.cur+1) + ' / ' + order.length;
+
+  var badge = document.getElementById('tag-badge');
+  if(q.tag){
+    badge.style.display='inline-block';
+    badge.textContent = q.tag;
+    badge.style.background = q.tagcolor || '#185FA5';
+  } else { badge.style.display='none'; }
+
+  var pbox = document.getElementById('passage-box');
+  if(q.passage){ pbox.style.display='block'; pbox.innerHTML = q.passage; } else { pbox.style.display='none'; }
+  var cbox = document.getElementById('context-box');
+  if(q.context){ cbox.style.display='block'; cbox.innerHTML = q.context; } else { cbox.style.display='none'; }
+
+  document.getElementById('q-text').innerHTML = q.stem;
+
+  
+
+  var answered = state.answers[qi];
+  var optDiv = document.getElementById('options');
+  optDiv.innerHTML='';
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML = optText;
+    btn.disabled = answered !== undefined;
+    if(answered !== undefined){
+      if(idx === q.ci) btn.classList.add(answered===idx ? 'correct' : 'revealed');
+      else if(answered === idx) btn.classList.add('wrong');
+    }
+    btn.onclick = function(){ chooseAnswer(idx); };
+    optDiv.appendChild(btn);
+  });
+
+  var expDiv = document.getElementById('exp-box');
+  if(answered !== undefined && answered !== q.ci){
+    expDiv.style.display='block';
+    expDiv.innerHTML = q.exp;
+  } else {
+    expDiv.style.display='none';
+  }
+
+  var nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = (state.cur >= order.length-1) ? 'Show Results \u2192' : 'Next \u2192';
+
+  updateNav();
+}
+
+function updateNav(){
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  document.getElementById('nav-count').textContent = answered + ' / ' + order.length;
+  document.getElementById('prog-fill').style.width = (answered/order.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel = document.getElementById('dot-panel');
+  if(panel.style.display==='none') return;
+  var html='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var bg = state.answers[qi]===undefined ? '#d7dde6' : (state.answers[qi]===RAW_QUESTIONS[qi].ci ? '#185FA5' : '#E24B4A');
+    html += '<button class="dot" style="background:'+bg+';" onclick="goToQ('+pos+')">'+(pos+1)+'</button>';
+  }
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  if(answered===order.length){
+    html += '<br><button class="results-pill" onclick="showResultsNow()">Results</button>';
+  }
+  panel.innerHTML = html;
+}
+function toggleJump(){
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display==='none' || panel.style.display===''){
+    panel.style.display='block'; btn.innerHTML='Hide &#9652;'; renderDots();
+  } else {
+    panel.style.display='none'; btn.innerHTML='Jump &#9662;';
+  }
+}
+function goToQ(pos){
+  state.cur = pos; state.showResults=false; saveState(); render();
+}
+function showResultsNow(){
+  state.showResults = true; incAttempts(); saveState(); render();
+}
+function chooseAnswer(idx){
+  var qi = order[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState(); render();
+}
+function goPrev(){
+  if(state.cur>0){ state.cur--; saveState(); render(); }
+}
+function goNext(){
+  if(state.cur < order.length-1){ state.cur++; saveState(); render(); }
+  else { state.showResults=true; incAttempts(); saveState(); render(); }
+}
+function renderResults(){
+  var correct=0, wrong=0, skipped=0;
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]===undefined){ skipped++; continue; }
+    if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+  }
+  document.getElementById('results-score').textContent = correct+' correct, '+wrong+' wrong, '+skipped+' skipped - out of '+order.length;
+  var grid = document.getElementById('results-grid');
+  grid.innerHTML='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var card = document.createElement('div');
+    if(state.answers[qi]===undefined){
+      card.className='r-card skipped';
+      card.textContent='Q'+(pos+1)+' Skip';
+    } else {
+      var ok = state.answers[qi]===RAW_QUESTIONS[qi].ci;
+      card.className='r-card '+(ok?'correct':'wrong');
+      card.textContent='Q'+(pos+1)+' '+(ok?'OK':'X');
+    }
+    (function(p){ card.onclick=function(){ state.showResults=false; state.cur=p; saveState(); render(); }; })(pos);
+    grid.appendChild(card);
+  }
+}
+function retryWrong(){
+  var wrong=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      wrong.push(qi);
+    }
+  }
+  if(wrong.length===0) return;
+  wrong.forEach(function(qi){ delete state.answers[qi]; });
+  order = wrong;
+  saveOrder(order);
+  state.cur=0; state.showResults=false;
+  saveState(); render(); renderTimer();
+}
+function copyRes(){
+  var lines=[TITLE+' Results'];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    var s='Q'+(pos+1)+': ';
+    if(a===undefined) s+='Skipped';
+    else s += (a===RAW_QUESTIONS[qi].ci ? 'Correct' : 'Wrong');
+    lines.push(s);
+  }
+  var text = lines.join('\n');
+  try{
+    if(navigator.clipboard){ navigator.clipboard.writeText(text).catch(function(){}); }
+    else { var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+  }catch(e){}
+}
+function saveWrongAnswers(){
+  var wrongItems=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    if(a!==undefined && a!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongItems.push({ question: q.stem, yourAnswer: q.opts[a], correctAnswer: q.opts[q.ci], explanation: q.exp });
+    }
+  }
+  var blob = new Blob([JSON.stringify({title:TITLE, wrongAnswers:wrongItems}, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a2 = document.createElement('a');
+  a2.href = url; a2.download = QUIZ_KEY + '_wrong.json';
+  document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+  URL.revokeObjectURL(url);
+}
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var t = document.getElementById('freshModalTitle');
+  var m = document.getElementById('freshModalText');
+  if(mode==='random'){
+    t.textContent='Start Fresh (Random Order)?';
+    m.textContent='Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    t.textContent='Start Fresh (Original Order)?';
+    m.textContent='Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  order = (pendingFreshMode==='random') ? shuffleArr(identityOrder()) : identityOrder();
+  saveOrder(order);
+  state = defaultState();
+  saveState();
+  resetTimer();
+  closeFreshModal();
+  render();
+  renderTimer();
+}
+
+window.startTimer=startTimer;
+window.toggleJump=toggleJump;
+window.goToQ=goToQ;
+window.showResultsNow=showResultsNow;
+window.chooseAnswer=chooseAnswer;
+window.goPrev=goPrev;
+window.goNext=goNext;
+window.retryWrong=retryWrong;
+window.copyRes=copyRes;
+window.saveWrongAnswers=saveWrongAnswers;
+window.openFreshModalOriginal=openFreshModalOriginal;
+window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;
+window.confirmFresh=confirmFresh;
+
+render();
+renderTimer();
+if(state.timerStartedAt) startTimerInterval();
+</script>
+</body>
+</html>

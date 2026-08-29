@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Grammar</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh;padding:12px;max-width:720px;margin:0 auto;}
+.quiz-title{font-size:1.35rem;font-weight:700;text-align:center;color:#111;background:#fff;padding:10px 0 2px}
+.subtitle{text-align:center;font-size:0.85rem;color:#555;background:#fff;padding:2px 0 4px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:2px 12px 10px}
+.timer-bar { background: #fff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; border-radius:10px; margin-bottom:8px;}
+.timer-setup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+.timer-setup label { font-weight: 700; }
+.timer-setup input[type="number"] { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+.timer-start-btn { background: #185FA5; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.timer-running { display: flex; align-items: center; gap: 8px; }
+.timer-label { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.02em; }
+.timer-display { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+.timer-display.warn { color: #f5a623; }
+.timer-display.danger { color: #E24B4A; }
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0;background:#fff;padding:8px 12px;border-radius:10px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;border:none;}
+.results-pill{display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;border:none;}
+.quiz-area{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;}
+.q-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.q-num{font-size:0.82rem;color:#888;}
+.tag-badge{font-size:0.75rem;padding:2px 10px;border-radius:10px;background:#185FA5;color:#fff;font-weight:600;}
+.passage-box,.context-box{background:#f5f7fa;border-left:3px solid #185FA5;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.92rem;color:#333;line-height:1.5;}
+.q-text{font-size:1.08rem;font-weight:600;color:#111;margin-bottom:14px;line-height:1.5;}
+.options{display:flex;flex-direction:column;gap:9px;}
+.opt-btn{background:#e8edf4;color:#111;border:2px solid transparent;border-radius:9px;padding:11px 14px;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.4;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn.revealed{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{margin-top:12px;padding:10px 12px;background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;font-size:0.88rem;color:#333;display:none;}
+.nav-btns{display:flex;justify-content:space-between;margin-top:14px;gap:10px;}
+.prev-btn,.next-btn{padding:9px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer;}
+.prev-btn{background:#e8edf4;color:#333;}
+.next-btn{background:#1D9E75;color:#fff;}
+.results-screen{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;display:none;}
+.results-screen.show{display:block;}
+.results-heading{font-size:1.3rem;font-weight:700;color:#1D9E75;text-align:center;margin-bottom:6px;}
+.results-score{font-size:1rem;text-align:center;color:#555;margin-bottom:14px;}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;margin-bottom:16px;}
+.r-card{border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;font-size:0.82rem;font-weight:600;}
+.r-card.correct{background:#E1F5EE;color:#085041;}
+.r-card.wrong{background:#FCEBEB;color:#501313;}
+.r-card.skipped{background:#f5f7fa;color:#555;}
+.results-btns{display:flex;flex-direction:column;gap:9px;}
+.retry-btn{background:#1D9E75;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.copy-btn{background:#185FA5;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.save-btn{background:#f5a623;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.fresh-btn{background:#e8edf4;color:#111;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:12px;padding:24px 20px;max-width:320px;width:90%;text-align:center;}
+.modal-title{font-size:1.05rem;font-weight:700;margin-bottom:8px;}
+.modal-msg{font-size:0.9rem;color:#555;margin-bottom:18px;}
+.modal-btns{display:flex;gap:10px;justify-content:center;}
+.modal-cancel{background:#e8edf4;color:#333;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;cursor:pointer;}
+.modal-confirm{background:#E24B4A;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;font-weight:600;cursor:pointer;}
+</style>
+</head>
+<body><div class="quiz-title">[Grant] Grammar</div><div class="subtitle" id="att-display">Total Attempts: 0</div><div class="instruction">Choose the best answer for each question.</div>
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="20"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">20:00</span>
+  </div>
+</div>
+<div id="nav-bar"><span id="nav-count">0 / 48</span><div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div><button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button></div><div id="dot-panel"></div>
+<div class="quiz-area" id="quiz-area">
+  <div class="q-header">
+    <span class="q-num" id="q-num"></span>
+    <span class="tag-badge" id="tag-badge" style="display:none;"></span>
+    
+  </div>
+  <div class="passage-box" id="passage-box" style="display:none;"></div>
+  <div class="context-box" id="context-box" style="display:none;"></div>
+  <div class="q-text" id="q-text"></div>
+  <div class="options" id="options"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-btns">
+    <button class="prev-btn" onclick="goPrev()">Prev</button>
+    <button class="next-btn" id="next-btn" onclick="goNext()">Next</button>
+  </div>
+</div>
+
+<div class="results-screen" id="results-screen">
+  <div class="results-heading" id="results-heading">Results</div>
+  <div class="results-score" id="results-score"></div>
+  <div class="results-grid" id="results-grid"></div>
+  <div class="results-btns">
+    <button class="retry-btn" onclick="retryWrong()">Retry Wrong Ones</button>
+    <button class="copy-btn" onclick="copyRes()">Copy All Results</button>
+    <button class="save-btn" onclick="saveWrongAnswers()">Save Wrong Answers</button>
+    <button class="fresh-btn" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button>
+    <button class="fresh-btn" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <div class="modal-title" id="freshModalTitle">Start Fresh?</div>
+    <div class="modal-msg" id="freshModalText">All progress will be cleared. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>var TITLE = "[Grant] Grammar";var QUIZ_KEY = "quiz_grantgrammar_48_20260828_v1";var ATT_KEY = "quiz_grantgrammar_48_att_20260828_v1";var RAW_QUESTIONS = [{"stem": "<div style=\"font-size:0.85em;color:#888;font-weight:700;\">Original sentence:</div><div style=\"font-weight:700;color:#185FA5;\">I have never in my life tasted anything so delicious.</div><div style=\"margin-top:8px;font-weight:400;font-style:italic;color:#555;font-size:0.9em;\">Which sentence correctly inverts this sentence?</div>", "opts": ["Never in my life I have tasted anything so delicious.", "Never in my life had I tasted anything so delicious.", "Never in my life have I taste anything so delicious.", "Never in my life have I tasted anything so delicious."], "ci": 3, "exp": "The fronted phrase \"Never in my life\" triggers inversion: \"Never in my life + have + I + tasted...\". The tense is present perfect (\"have\", not \"had\"), and the past participle \"tasted\" is correct. The correct form is: Never in my life have I tasted anything so delicious.", "tag": "Inversion", "tagcolor": "#185FA5"}, {"stem": "Which sentence uses the possessive form CORRECTLY?", "opts": ["My two brothers bicycle tires are flat.", "The fox hid it's cubs in the den.", "The principal's announcement surprised everyone.", "All the score's were listed on the board."], "ci": 2, "exp": "<strong>\"principal's\"</strong> correctly adds <em>'s</em> to the singular noun.<br>• <em>brothers</em> is missing the apostrophe — should be <em>brothers'</em>.<br>• <em>it's</em> = <em>it is</em>; the possessive is <em>its</em>.<br>• <em>score's</em> incorrectly adds an apostrophe to a simple plural noun.", "tag": "Possessives", "tagcolor": "#185FA5"}, {"stem": "Which group of adjectives is in the correct order?", "opts": ["two beautiful pink roses", "pink two beautiful roses", "beautiful two pink roses", "two pink beautiful roses"], "ci": 0, "exp": "Correct order: number (two) → opinion (beautiful) → color (pink) → noun\n✔ two beautiful pink roses", "tag": "Adjective Order", "tagcolor": "#185FA5"}, {"stem": "They ________ a new restaurant last weekend.", "opts": ["tried", "have tried"], "ci": 0, "exp": "Last weekend is a specific finished time, so use simple past: tried.", "tag": "Past vs Present Perfect", "tagcolor": "#185FA5"}, {"stem": "Which sentence uses punctuation and capitalization correctly?", "opts": ["Dr. Martinez asked, \"have you taken your medication today?\"", "Dr. Martinez asked, \"Have you taken your medication today\"?", "Dr. Martinez asked, \"Have you taken your medication today?\"", "Dr. martinez asked, \"Have you taken your medication today?\""], "ci": 2, "exp": "A direct question inside quotation marks begins with a capital letter. The question mark belongs inside the closing quotation mark because it is part of the quoted question. \"Dr. Martinez\" — both the title and the name — are capitalized.", "tag": "Punctuation & Capitalization", "tagcolor": "#185FA5"}, {"stem": "Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?", "opts": ["The <b>shining</b> star caught everyone's attention.", "The star is <b>shining</b> brightly tonight.", "<b>Shining</b> shoes is one of his weekend chores.", "The moon was <b>shining</b> over the lake."], "ci": 0, "exp": "In \"The shining star caught everyone's attention,\" \"shining\" comes directly before the noun \"star\" and describes what the star is doing - this adjective use of an -ing word is a present participle. In \"The star is shining brightly tonight\" and \"The moon was shining over the lake,\" \"shining\" is the main verb paired with \"is / was,\" making it part of the progressive tense. In \"Shining shoes is one of his weekend chores,\" \"shining\" is the subject of the sentence, functioning as a noun, so it is a gerund.", "tag": "Present Participle", "tagcolor": "#185FA5"}, {"stem": "Our team _____ won three games this season and is in first place.", "opts": ["have", "had"], "ci": 0, "exp": "\"Have\" (has) is correct. The season is still going on, so present perfect is used to describe achievements within an unfinished time period.", "tag": "Have vs Had", "tagcolor": "#185FA5"}, {"stem": "<div>Present: <b>bring</b> &rsaquo; Past: <b>brought</b> &rsaquo; Past Participle: ______</div><div style=\"margin-top:8px;font-weight:400;font-style:italic;color:#555;font-size:0.9em;\">Choose the correct past participle form.</div>", "opts": ["bringed", "bring", "bringing", "brought"], "ci": 3, "exp": "'bring' is an irregular verb. Its past participle is 'brought'. Past perfect: had brought.", "tag": "Past Perfect", "tagcolor": "#185FA5"}, {"stem": "Which sentence below uses the bolded -ing word as a present participle (an adjective describing a noun)?", "opts": ["The leaves are <b>falling</b> from the trees.", "Snow was <b>falling</b> steadily all afternoon.", "The <b>falling</b> leaves covered the sidewalk.", "<b>Falling</b> asleep in class is embarrassing."], "ci": 2, "exp": "In \"The falling leaves covered the sidewalk,\" \"falling\" comes directly before the noun \"leaves\" and describes what the leaves are doing - this adjective use of an -ing word is a present participle. In \"The leaves are falling from the trees\" and \"Snow was falling steadily all afternoon,\" \"falling\" is the main verb paired with \"are / was,\" making it part of the progressive tense. In \"Falling asleep in class is embarrassing,\" \"falling\" is the subject of the sentence, functioning as a noun, so it is a gerund.", "tag": "Present Participle", "tagcolor": "#185FA5"}, {"stem": "<div style=\"font-size:0.85em;color:#888;font-weight:700;\">Original sentence:</div><div style=\"font-weight:700;color:#185FA5;\">Tom did not know that he was about to win the award.</div><div style=\"margin-top:8px;font-weight:400;font-style:italic;color:#555;font-size:0.9em;\">Which sentence correctly inverts this sentence?</div>", "opts": ["Little Tom knew that he was about to win the award.", "Little did Tom know that he was about to win the award.", "Little knew Tom that he was about to win the award.", "Little does Tom know that he was about to win the award."], "ci": 1, "exp": "\"Little\" as a negative adverb triggers do-auxiliary inversion in the past: \"Little + did + Tom + know...\". The main verb becomes the base form \"know\" after \"did\". The correct form is: Little did Tom know that he was about to win the award.", "tag": "Inversion", "tagcolor": "#185FA5"}, {"stem": "If you don't hurry, they <span style=\"text-decoration:underline;\">______</span> out of tickets by tomorrow morning.", "opts": ["had sold", "have sold", "will have sold", "sell"], "ci": 2, "exp": "\"will have sold\" is future perfect — the sellout will be complete before tomorrow morning.", "tag": "Perfect Tense", "tagcolor": "#185FA5"}, {"stem": "She is <u>take</u> a nap on the couch.", "opts": ["taking", "takeing", "takking", "taked"], "ci": 0, "exp": "take → taking (drop the silent -e, then add -ing)", "tag": "Present Progressive", "tagcolor": "#185FA5"}, {"stem": "What is the plural of <b>mouse</b>?", "opts": ["mouses", "meese", "mice", "mices"], "ci": 2, "exp": "mouse → mice (ou → i)", "tag": "Irregular Plurals", "tagcolor": "#185FA5"}, {"stem": "many<br><span style=\"font-weight:400;color:#555;font-size:0.9em;\">Choose the correct comparative and superlative forms.</span>", "opts": ["more / most", "manier / maniest", "more many / most many", "morer / mostest"], "ci": 0, "exp": "many → more / most (same as 'much' — must be memorized)", "tag": "Comparative / Superlative", "tagcolor": "#185FA5"}, {"stem": "She reads a long book.<br><span style=\"font-weight:400;font-style:italic;color:#555;font-size:0.9em;\">Which choice lists all the VERBS in this sentence, and only the verbs?</span>", "opts": ["reads", "she, reads", "(none of these)", "reads, long"], "ci": 0, "exp": "'Reads' is the verb.", "tag": "Parts of Speech", "tagcolor": "#185FA5"}, {"stem": "Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?", "opts": ["She is <b>painting</b> a portrait.", "They were <b>painting</b> the house last summer.", "<b>Painting</b> the fence took all weekend.", "He will be <b>painting</b> the mural next week."], "ci": 2, "exp": "In \"Painting the fence took all weekend,\" \"painting\" (along with \"the fence\") is the subject of the sentence, functioning as a noun - a gerund. In the other three sentences, \"painting\" follows \"is / were / will be\" and is part of the progressive verb tense.", "tag": "Gerund vs Participle", "tagcolor": "#185FA5"}, {"stem": "Which of the following is a COMPLETE sentence?", "opts": ["We visited the science museum on Saturday.", "Because the weather was so cold.", "Laughing and talking with her best friends.", "The old red barn near the river."], "ci": 0, "exp": "\"We visited the science museum on Saturday.\" is a complete sentence — subject: 'We', predicate: 'visited'. The others are fragments: a 'Because' clause, an -ing phrase, and a noun phrase with no verb.", "tag": "Complete Sentences", "tagcolor": "#185FA5"}, {"stem": "The package was delivered _____ the front door early in the morning before anyone woke up.", "opts": ["beyond", "to", "off", "past"], "ci": 1, "exp": "\"To\" shows the destination or endpoint of delivery. The package arrived at the front door. \"Past\" means it went further than the door, and \"beyond\" means even farther away.", "tag": "Prepositions", "tagcolor": "#185FA5"}, {"stem": "Which sentence correctly matches the verb with the subject?", "opts": ["The dog and the cat fights over the same toy every evening.", "Not one of the players on the team have scored yet.", "Everybody in both grade levels was invited to the assembly.", "The chairs in that classroom needs to be replaced."], "ci": 2, "exp": "\"Everybody\" is always singular, so \"was\" is correct. \"Dog and cat\" is a compound (plural) subject — use \"fight.\" \"Not one\" is singular — use \"has.\" \"Chairs\" is plural — use \"need.\"", "tag": "Subject-Verb Agreement", "tagcolor": "#185FA5"}, {"stem": "Mom bought him new shoes.<br><span style=\"font-weight:400;font-style:italic;color:#555;font-size:0.9em;\">What is the <b>indirect object</b> in this sentence?</span>", "opts": ["him", "new shoes"], "ci": 0, "exp": "\"Him\" is the indirect object (who received them). \"New shoes\" is the direct object (what was bought).", "tag": "Indirect / Direct Object", "tagcolor": "#185FA5"}, {"stem": "She reads a long book.<br><span style=\"font-weight:400;font-style:italic;color:#555;font-size:0.9em;\">Which choice lists all the NOUNS in this sentence, and only the nouns?</span>", "opts": ["she, book", "she, book, long", "book", "she"], "ci": 0, "exp": "'She' is a pronoun used as a noun, and 'book' is a noun.", "tag": "Parts of Speech", "tagcolor": "#185FA5"}, {"stem": "<div style=\"font-size:0.85em;color:#888;font-weight:700;\">ACTIVE</div><div>Farmers <b>grow</b> rice.</div><div style=\"margin-top:8px;font-size:0.85em;color:#888;font-weight:700;\">PASSIVE</div><div>Rice ______ by farmers.</div><div style=\"margin-top:10px;font-weight:400;font-style:italic;color:#555;font-size:0.9em;\">Choose the correct verb form to complete the passive sentence.</div>", "opts": ["is grown", "are grown", "is growing", "is grow"], "ci": 0, "exp": "The new subject \"rice\" is uncountable (treated as singular) and the action is in the present, so use is + the past participle \"grown\": is grown.", "tag": "Passive Voice", "tagcolor": "#185FA5"}, {"stem": "We elected her president.<br><span style=\"font-weight:400;font-style:italic;color:#555;font-size:0.9em;\">What is the <b>object</b> in this sentence?</span>", "opts": ["her", "president"], "ci": 0, "exp": "\"Her\" is the object (who was elected). \"President\" is the objective complement (the role she was given).", "tag": "Objective Complement", "tagcolor": "#185FA5"}, {"stem": "What is the past tense of <b>shut</b>?", "opts": ["shut", "shutted", "shuted", "shutten"], "ci": 0, "exp": "The past tense of <b>shut</b> is <b>shut</b>.", "tag": "Irregular Verbs (Past Tense)", "tagcolor": "#185FA5"}, {"stem": "The children divided the candy equally _____ all six of them after the Halloween parade.", "opts": ["between", "among", "around", "across"], "ci": 1, "exp": "\"Among\" is used when something is shared with more than two people. \"Between\" is typically used for exactly two. Since there are six children, \"among\" is the correct choice.", "tag": "Prepositions", "tagcolor": "#185FA5"}, {"stem": "much<br><span style=\"font-weight:400;color:#555;font-size:0.9em;\">Choose the correct comparative and superlative forms.</span>", "opts": ["more / most", "mucher / muchest", "more much / most much", "morest / mostest"], "ci": 0, "exp": "much → more / most (irregular — must be memorized)", "tag": "Comparative / Superlative", "tagcolor": "#185FA5"}, {"stem": "We need <u>help</u>.", "opts": ["Object", "Complement"], "ci": 0, "exp": "\"Help\" receives the action of \"need.\" It is a direct object.", "tag": "Object vs Complement", "tagcolor": "#185FA5"}, {"stem": "The children played in the park.<br><span style=\"font-weight:400;font-style:italic;color:#555;font-size:0.9em;\">What is the SUBJECT of this sentence?</span>", "opts": ["The children", "park", "played", "in"], "ci": 0, "exp": "See the correct answer highlighted above.", "tag": "Subject & Verb Identification", "tagcolor": "#185FA5"}, {"stem": "He <u>reach</u> the top shelf easily.", "opts": ["reaches", "reachs", "reachies", "reacheds"], "ci": 0, "exp": "reach → reaches (ends in -ch, so add -es)", "tag": "3rd Person Singular", "tagcolor": "#185FA5"}, {"stem": "Which of the following is a COMPLETE sentence?", "opts": ["The little girl with the red umbrella.", "Whenever it rains heavily outside.", "Before the movie started at the theater.", "My brother plays basketball after school."], "ci": 3, "exp": "\"My brother plays basketball after school.\" is a complete sentence — subject: 'My brother', predicate: 'plays'. The others are fragments: a noun phrase, a 'Whenever' clause, and a 'Before' clause.", "tag": "Complete Sentences", "tagcolor": "#185FA5"}, {"stem": "Which sentence uses the possessive form CORRECTLY?", "opts": ["The boy's shoes were muddy after the game.", "All the deers' tracks led into the forest.", "They left there homework on the bus.", "The babys' toys were scattered on the floor."], "ci": 0, "exp": "<strong>\"boy's\"</strong> correctly marks singular possessive.<br>• <em>deers'</em> is wrong — <em>deer</em> is already plural; the possessive is <em>deer's</em>.<br>• <em>there</em> should be <em>their</em> (possessive adjective).<br>• <em>babys'</em> is a misspelling — the correct plural is <em>babies</em>, so the possessive is <em>babies'</em>.", "tag": "Possessives", "tagcolor": "#185FA5"}, {"stem": "He is <u>give</u> a speech in front of the class.", "opts": ["giving", "giveing", "givving", "gived"], "ci": 0, "exp": "give → giving (drop the silent -e, then add -ing)", "tag": "Present Progressive", "tagcolor": "#185FA5"}, {"stem": "The children played in the park.<br><span style=\"font-weight:400;font-style:italic;color:#555;font-size:0.9em;\">What is the VERB of this sentence?</span>", "opts": ["played", "The children", "park", "in"], "ci": 0, "exp": "See the correct answer highlighted above.", "tag": "Subject & Verb Identification", "tagcolor": "#185FA5"}, {"stem": "Which sentence uses punctuation and capitalization correctly?", "opts": ["We visited Paris, France and london, England on our trip last Summer.", "We visited Paris, France, and London, England on our trip last summer.", "We visited Paris, France, and London, England, on our trip last summer.", "We visited Paris France and London England on our trip last summer."], "ci": 1, "exp": "City and country names are proper nouns and must be capitalized. A comma separates city from country. A serial comma goes after \"London, England\" before \"and.\" \"Summer\" is a common noun and should not be capitalized.", "tag": "Punctuation & Capitalization", "tagcolor": "#185FA5"}, {"stem": "I _____ always wanted to learn how to play the guitar.", "opts": ["have", "had"], "ci": 0, "exp": "\"Have\" is correct. This describes a continuing desire from the past to the present.", "tag": "Have vs Had", "tagcolor": "#185FA5"}, {"stem": "She <u>teach</u> math at a middle school.", "opts": ["teaches", "teachs", "teachies", "teacheds"], "ci": 0, "exp": "teach → teaches (ends in -ch, so add -es)", "tag": "3rd Person Singular", "tagcolor": "#185FA5"}, {"stem": "He ________ his homework yet.", "opts": ["did not finish", "has not finished"], "ci": 1, "exp": "Yet connects to the present moment, so use present perfect: has not finished.", "tag": "Past vs Present Perfect", "tagcolor": "#185FA5"}, {"stem": "Mom bought him new shoes.<br><span style=\"font-weight:400;font-style:italic;color:#555;font-size:0.9em;\">What is the <b>direct object</b> in this sentence?</span>", "opts": ["new shoes", "him"], "ci": 0, "exp": "\"New shoes\" is the direct object (what was bought). \"Him\" is the indirect object (who received them).", "tag": "Indirect / Direct Object", "tagcolor": "#185FA5"}, {"stem": "Which sentence below uses the bolded -ing word as a gerund (not part of a progressive verb tense)?", "opts": ["He is <b>writing</b> a letter to his grandmother.", "My hobby is <b>writing</b> short stories.", "They were <b>writing</b> essays all night.", "She will be <b>writing</b> her speech tonight."], "ci": 1, "exp": "In \"My hobby is writing short stories,\" \"writing\" renames the subject \"hobby\" after the linking verb \"is\" - a noun role called a subject complement - which makes it a gerund. In the other three sentences, \"writing\" is paired with \"is / were / will be\" to describe an action in progress, so it is part of the progressive tense.", "tag": "Gerund vs Participle", "tagcolor": "#185FA5"}, {"stem": "<div>Present: <b>win</b> &rsaquo; Past: <b>won</b> &rsaquo; Past Participle: ______</div><div style=\"margin-top:8px;font-weight:400;font-style:italic;color:#555;font-size:0.9em;\">Choose the correct past participle form.</div>", "opts": ["winned", "win", "winning", "won"], "ci": 3, "exp": "'win' is an irregular verb. Its past participle is 'won'. Past perfect: had won.", "tag": "Past Perfect", "tagcolor": "#185FA5"}, {"stem": "We elected her president.<br><span style=\"font-weight:400;font-style:italic;color:#555;font-size:0.9em;\">What is the <b>objective complement</b> in this sentence?</span>", "opts": ["president", "her"], "ci": 0, "exp": "\"President\" is the objective complement — it names what \"her\" became. \"Her\" is the object.", "tag": "Objective Complement", "tagcolor": "#185FA5"}, {"stem": "Which group of adjectives is in the correct order?", "opts": ["large messy American kitchen", "messy large American kitchen", "American large messy kitchen", "large American messy kitchen"], "ci": 0, "exp": "Correct order: size (large) → condition (messy) → origin (American) → noun\n✔ large messy American kitchen", "tag": "Adjective Order", "tagcolor": "#185FA5"}, {"stem": "What is the past tense of <b>hurt</b>?", "opts": ["hurt", "hurted", "hurten", "hurtt"], "ci": 0, "exp": "The past tense of <b>hurt</b> is <b>hurt</b>.", "tag": "Irregular Verbs (Past Tense)", "tagcolor": "#185FA5"}, {"stem": "<div style=\"font-size:0.85em;color:#888;font-weight:700;\">ACTIVE</div><div>The artist <b>painted</b> the wall.</div><div style=\"margin-top:8px;font-size:0.85em;color:#888;font-weight:700;\">PASSIVE</div><div>The wall ______ by the artist.</div><div style=\"margin-top:10px;font-weight:400;font-style:italic;color:#555;font-size:0.9em;\">Choose the correct verb form to complete the passive sentence.</div>", "opts": ["was painted", "is painted", "was painting", "were painted"], "ci": 0, "exp": "The new subject \"the wall\" is singular and the action is in the past, so use was + the past participle \"painted\": was painted.", "tag": "Passive Voice", "tagcolor": "#185FA5"}, {"stem": "We are too late; they <span style=\"text-decoration:underline;\">______</span> all the tickets for tonight already.", "opts": ["had sold", "have sold", "will have sold", "were selling"], "ci": 1, "exp": "\"have sold\" is present perfect — the tickets are gone now, affecting the present situation.", "tag": "Perfect Tense", "tagcolor": "#185FA5"}, {"stem": "I love <u>dogs</u>.", "opts": ["Object", "Complement"], "ci": 0, "exp": "\"Dogs\" receives the action of \"love.\" It is a direct object.", "tag": "Object vs Complement", "tagcolor": "#185FA5"}, {"stem": "Which sentence correctly matches the verb with the subject?", "opts": ["The news about the missing hikers were shocking to everyone.", "Neither of the two answers are completely correct.", "The collection of rare stamps belongs to my grandfather.", "A group of volunteers were cleaning up the park this morning."], "ci": 2, "exp": "\"Collection\" is singular, so \"belongs\" is correct. \"News\" is always singular — use \"was.\" \"Neither\" is singular — use \"is.\" \"Group\" is singular — use \"was.\"", "tag": "Subject-Verb Agreement", "tagcolor": "#185FA5"}, {"stem": "What is the plural of <b>goose</b>?", "opts": ["gooses", "geese", "gooses", "goese"], "ci": 1, "exp": "goose → geese (oo → ee)", "tag": "Irregular Plurals", "tagcolor": "#185FA5"}];var N = RAW_QUESTIONS.length;var ORDER_KEY = QUIZ_KEY + '_order_v1';
+function shuffleArr(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function identityOrder(){var o=[];for(var i=0;i<N;i++)o.push(i);return o;}
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length===0) return false;
+  for(var i=0;i<arr.length;i++){ if(typeof arr[i] !== 'number' || arr[i]<0 || arr[i]>=N) return false; }
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad');
+    return arr;
+  }catch(e){ try{localStorage.removeItem(ORDER_KEY);}catch(e2){} return null; }
+}
+function saveOrder(o){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(o)); }catch(e){} }
+
+var order = loadOrder() || identityOrder();
+if(!loadOrder()) saveOrder(order);
+var pendingFreshMode = 'original';
+
+function defaultState(){
+  return { cur:0, answers:{}, showResults:false, timerTotalSec:null, timerStartedAt:null };
+}
+function loadState(){
+  try{
+    var raw = localStorage.getItem(QUIZ_KEY);
+    if(!raw) return defaultState();
+    var s = JSON.parse(raw);
+    if(typeof s.cur !== 'number' || s.cur<0 || s.cur>=order.length) s.cur = 0;
+    if(typeof s.answers !== 'object' || s.answers===null) s.answers = {};
+    if(typeof s.showResults !== 'boolean') s.showResults = false;
+    if(typeof s.timerTotalSec === 'undefined') s.timerTotalSec = null;
+    if(typeof s.timerStartedAt === 'undefined') s.timerStartedAt = null;
+    return s;
+  }catch(e){ try{localStorage.removeItem(QUIZ_KEY);}catch(e2){} return defaultState(); }
+}
+function saveState(){ try{ localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); }catch(e){} }
+
+var state = loadState();
+var timerInterval = null;
+
+function getAttempts(){ try{ return parseInt(localStorage.getItem(ATT_KEY)||'0',10); }catch(e){ return 0; } }
+function incAttempts(){ try{ localStorage.setItem(ATT_KEY, String(getAttempts()+1)); }catch(e){} }
+function updateAttDisplay(){
+  var el = document.getElementById('att-display');
+  if(el) el.textContent = 'Total Attempts: ' + getAttempts();
+}
+
+function formatTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function renderTimer(){
+  var setupEl = document.getElementById('timerSetup');
+  var runningEl = document.getElementById('timerRunning');
+  var dispEl = document.getElementById('timerDisplay');
+  if(!setupEl||!runningEl||!dispEl) return;
+  if(!state.timerStartedAt){ setupEl.style.display='flex'; runningEl.style.display='none'; return; }
+  setupEl.style.display='none'; runningEl.style.display='flex';
+  var elapsed = (Date.now()-state.timerStartedAt)/1000;
+  var remaining = state.timerTotalSec - elapsed;
+  dispEl.classList.remove('warn','danger');
+  if(remaining<=0){ dispEl.textContent="Time's Up"; dispEl.classList.add('danger'); stopTimerInterval(); return; }
+  dispEl.textContent = formatTime(remaining);
+  if(remaining <= state.timerTotalSec*0.1) dispEl.classList.add('danger');
+  else if(remaining <= state.timerTotalSec*0.25) dispEl.classList.add('warn');
+}
+function startTimer(){
+  var input = document.getElementById('timerMinutesInput');
+  var minutes = parseFloat(input.value);
+  if(!minutes || minutes<=0) minutes=20;
+  state.timerTotalSec = Math.round(minutes*60);
+  state.timerStartedAt = Date.now();
+  saveState(); renderTimer(); startTimerInterval();
+}
+function startTimerInterval(){ stopTimerInterval(); timerInterval=setInterval(renderTimer,1000); }
+function stopTimerInterval(){ if(timerInterval){clearInterval(timerInterval); timerInterval=null;} }
+function resetTimer(){
+  state.timerTotalSec = null; state.timerStartedAt = null;
+  stopTimerInterval(); saveState(); renderTimer();
+}
+
+function render(){
+  updateAttDisplay();
+  var qa = document.getElementById('quiz-area');
+  var rs = document.getElementById('results-screen');
+  if(state.showResults){
+    qa.style.display='none';
+    rs.classList.add('show');
+    renderResults();
+    return;
+  }
+  qa.style.display='block';
+  rs.classList.remove('show');
+
+  var qi = order[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  document.getElementById('q-num').textContent = 'Q' + (state.cur+1) + ' / ' + order.length;
+
+  var badge = document.getElementById('tag-badge');
+  if(q.tag){
+    badge.style.display='inline-block';
+    badge.textContent = q.tag;
+    badge.style.background = q.tagcolor || '#185FA5';
+  } else { badge.style.display='none'; }
+
+  var pbox = document.getElementById('passage-box');
+  if(q.passage){ pbox.style.display='block'; pbox.innerHTML = q.passage; } else { pbox.style.display='none'; }
+  var cbox = document.getElementById('context-box');
+  if(q.context){ cbox.style.display='block'; cbox.innerHTML = q.context; } else { cbox.style.display='none'; }
+
+  document.getElementById('q-text').innerHTML = q.stem;
+
+  
+
+  var answered = state.answers[qi];
+  var optDiv = document.getElementById('options');
+  optDiv.innerHTML='';
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML = optText;
+    btn.disabled = answered !== undefined;
+    if(answered !== undefined){
+      if(idx === q.ci) btn.classList.add(answered===idx ? 'correct' : 'revealed');
+      else if(answered === idx) btn.classList.add('wrong');
+    }
+    btn.onclick = function(){ chooseAnswer(idx); };
+    optDiv.appendChild(btn);
+  });
+
+  var expDiv = document.getElementById('exp-box');
+  if(answered !== undefined && answered !== q.ci){
+    expDiv.style.display='block';
+    expDiv.innerHTML = q.exp;
+  } else {
+    expDiv.style.display='none';
+  }
+
+  var nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = (state.cur >= order.length-1) ? 'Show Results \u2192' : 'Next \u2192';
+
+  updateNav();
+}
+
+function updateNav(){
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  document.getElementById('nav-count').textContent = answered + ' / ' + order.length;
+  document.getElementById('prog-fill').style.width = (answered/order.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel = document.getElementById('dot-panel');
+  if(panel.style.display==='none') return;
+  var html='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var bg = state.answers[qi]===undefined ? '#d7dde6' : (state.answers[qi]===RAW_QUESTIONS[qi].ci ? '#185FA5' : '#E24B4A');
+    html += '<button class="dot" style="background:'+bg+';" onclick="goToQ('+pos+')">'+(pos+1)+'</button>';
+  }
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  if(answered===order.length){
+    html += '<br><button class="results-pill" onclick="showResultsNow()">Results</button>';
+  }
+  panel.innerHTML = html;
+}
+function toggleJump(){
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display==='none' || panel.style.display===''){
+    panel.style.display='block'; btn.innerHTML='Hide &#9652;'; renderDots();
+  } else {
+    panel.style.display='none'; btn.innerHTML='Jump &#9662;';
+  }
+}
+function goToQ(pos){
+  state.cur = pos; state.showResults=false; saveState(); render();
+}
+function showResultsNow(){
+  state.showResults = true; incAttempts(); saveState(); render();
+}
+function chooseAnswer(idx){
+  var qi = order[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState(); render();
+}
+function goPrev(){
+  if(state.cur>0){ state.cur--; saveState(); render(); }
+}
+function goNext(){
+  if(state.cur < order.length-1){ state.cur++; saveState(); render(); }
+  else { state.showResults=true; incAttempts(); saveState(); render(); }
+}
+function renderResults(){
+  var correct=0, wrong=0, skipped=0;
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]===undefined){ skipped++; continue; }
+    if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+  }
+  document.getElementById('results-score').textContent = correct+' correct, '+wrong+' wrong, '+skipped+' skipped - out of '+order.length;
+  var grid = document.getElementById('results-grid');
+  grid.innerHTML='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var card = document.createElement('div');
+    if(state.answers[qi]===undefined){
+      card.className='r-card skipped';
+      card.textContent='Q'+(pos+1)+' Skip';
+    } else {
+      var ok = state.answers[qi]===RAW_QUESTIONS[qi].ci;
+      card.className='r-card '+(ok?'correct':'wrong');
+      card.textContent='Q'+(pos+1)+' '+(ok?'OK':'X');
+    }
+    (function(p){ card.onclick=function(){ state.showResults=false; state.cur=p; saveState(); render(); }; })(pos);
+    grid.appendChild(card);
+  }
+}
+function retryWrong(){
+  var wrong=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      wrong.push(qi);
+    }
+  }
+  if(wrong.length===0) return;
+  wrong.forEach(function(qi){ delete state.answers[qi]; });
+  order = wrong;
+  saveOrder(order);
+  state.cur=0; state.showResults=false;
+  saveState(); render(); renderTimer();
+}
+function copyRes(){
+  var lines=[TITLE+' Results'];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    var s='Q'+(pos+1)+': ';
+    if(a===undefined) s+='Skipped';
+    else s += (a===RAW_QUESTIONS[qi].ci ? 'Correct' : 'Wrong');
+    lines.push(s);
+  }
+  var text = lines.join('\n');
+  try{
+    if(navigator.clipboard){ navigator.clipboard.writeText(text).catch(function(){}); }
+    else { var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+  }catch(e){}
+}
+function saveWrongAnswers(){
+  var wrongItems=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    if(a!==undefined && a!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongItems.push({ question: q.stem, yourAnswer: q.opts[a], correctAnswer: q.opts[q.ci], explanation: q.exp });
+    }
+  }
+  var blob = new Blob([JSON.stringify({title:TITLE, wrongAnswers:wrongItems}, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a2 = document.createElement('a');
+  a2.href = url; a2.download = QUIZ_KEY + '_wrong.json';
+  document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+  URL.revokeObjectURL(url);
+}
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var t = document.getElementById('freshModalTitle');
+  var m = document.getElementById('freshModalText');
+  if(mode==='random'){
+    t.textContent='Start Fresh (Random Order)?';
+    m.textContent='Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    t.textContent='Start Fresh (Original Order)?';
+    m.textContent='Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  order = (pendingFreshMode==='random') ? shuffleArr(identityOrder()) : identityOrder();
+  saveOrder(order);
+  state = defaultState();
+  saveState();
+  resetTimer();
+  closeFreshModal();
+  render();
+  renderTimer();
+}
+
+window.startTimer=startTimer;
+window.toggleJump=toggleJump;
+window.goToQ=goToQ;
+window.showResultsNow=showResultsNow;
+window.chooseAnswer=chooseAnswer;
+window.goPrev=goPrev;
+window.goNext=goNext;
+window.retryWrong=retryWrong;
+window.copyRes=copyRes;
+window.saveWrongAnswers=saveWrongAnswers;
+window.openFreshModalOriginal=openFreshModalOriginal;
+window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;
+window.confirmFresh=confirmFresh;
+
+render();
+renderTimer();
+if(state.timerStartedAt) startTimerInterval();
+</script>
+</body>
+</html>
