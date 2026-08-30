@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Advanced SAT Reading</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh;padding:12px;max-width:720px;margin:0 auto;}
+.quiz-title{font-size:1.35rem;font-weight:700;text-align:center;color:#111;background:#fff;padding:10px 0 2px}
+.subtitle{text-align:center;font-size:0.85rem;color:#555;background:#fff;padding:2px 0 4px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:2px 12px 10px}
+.timer-bar { background: #fff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; border-radius:10px; margin-bottom:8px;}
+.timer-setup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+.timer-setup label { font-weight: 700; }
+.timer-setup input[type="number"] { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+.timer-start-btn { background: #185FA5; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.timer-running { display: flex; align-items: center; gap: 8px; }
+.timer-label { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.02em; }
+.timer-display { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+.timer-display.warn { color: #f5a623; }
+.timer-display.danger { color: #E24B4A; }
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0;background:#fff;padding:8px 12px;border-radius:10px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;border:none;}
+.results-pill{display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;border:none;}
+.quiz-area{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;}
+.q-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.q-num{font-size:0.82rem;color:#888;}
+.tag-badge{font-size:0.75rem;padding:2px 10px;border-radius:10px;background:#185FA5;color:#fff;font-weight:600;}
+.passage-box,.context-box{background:#f5f7fa;border-left:3px solid #185FA5;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.92rem;color:#333;line-height:1.5;}
+.q-text{font-size:1.08rem;font-weight:600;color:#111;margin-bottom:14px;line-height:1.5;}
+.options{display:flex;flex-direction:column;gap:9px;}
+.opt-btn{background:#e8edf4;color:#111;border:2px solid transparent;border-radius:9px;padding:11px 14px;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.4;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn.revealed{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{margin-top:12px;padding:10px 12px;background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;font-size:0.88rem;color:#333;display:none;}
+.nav-btns{display:flex;justify-content:space-between;margin-top:14px;gap:10px;}
+.prev-btn,.next-btn{padding:9px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer;}
+.prev-btn{background:#e8edf4;color:#333;}
+.next-btn{background:#1D9E75;color:#fff;}
+.results-screen{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;display:none;}
+.results-screen.show{display:block;}
+.results-heading{font-size:1.3rem;font-weight:700;color:#1D9E75;text-align:center;margin-bottom:6px;}
+.results-score{font-size:1rem;text-align:center;color:#555;margin-bottom:14px;}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;margin-bottom:16px;}
+.r-card{border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;font-size:0.82rem;font-weight:600;}
+.r-card.correct{background:#E1F5EE;color:#085041;}
+.r-card.wrong{background:#FCEBEB;color:#501313;}
+.r-card.skipped{background:#f5f7fa;color:#555;}
+.results-btns{display:flex;flex-direction:column;gap:9px;}
+.retry-btn{background:#1D9E75;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.copy-btn{background:#185FA5;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.save-btn{background:#f5a623;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.fresh-btn{background:#e8edf4;color:#111;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:12px;padding:24px 20px;max-width:320px;width:90%;text-align:center;}
+.modal-title{font-size:1.05rem;font-weight:700;margin-bottom:8px;}
+.modal-msg{font-size:0.9rem;color:#555;margin-bottom:18px;}
+.modal-btns{display:flex;gap:10px;justify-content:center;}
+.modal-cancel{background:#e8edf4;color:#333;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;cursor:pointer;}
+.modal-confirm{background:#E24B4A;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;font-weight:600;cursor:pointer;}
+</style>
+</head>
+<body><div class="quiz-title">[Sion] Advanced SAT Reading</div><div class="subtitle" id="att-display">Total Attempts: 0</div><div class="instruction">Read each passage, then choose the best answer.</div>
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="20"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">20:00</span>
+  </div>
+</div>
+<div id="nav-bar"><span id="nav-count">0 / 12</span><div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div><button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button></div><div id="dot-panel"></div>
+<div class="quiz-area" id="quiz-area">
+  <div class="q-header">
+    <span class="q-num" id="q-num"></span>
+    <span class="tag-badge" id="tag-badge" style="display:none;"></span>
+    
+  </div>
+  <div class="passage-box" id="passage-box" style="display:none;"></div>
+  <div class="context-box" id="context-box" style="display:none;"></div>
+  <div class="q-text" id="q-text"></div>
+  <div class="options" id="options"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-btns">
+    <button class="prev-btn" onclick="goPrev()">Prev</button>
+    <button class="next-btn" id="next-btn" onclick="goNext()">Next</button>
+  </div>
+</div>
+
+<div class="results-screen" id="results-screen">
+  <div class="results-heading" id="results-heading">Results</div>
+  <div class="results-score" id="results-score"></div>
+  <div class="results-grid" id="results-grid"></div>
+  <div class="results-btns">
+    <button class="retry-btn" onclick="retryWrong()">Retry Wrong Ones</button>
+    <button class="copy-btn" onclick="copyRes()">Copy All Results</button>
+    <button class="save-btn" onclick="saveWrongAnswers()">Save Wrong Answers</button>
+    <button class="fresh-btn" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button>
+    <button class="fresh-btn" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <div class="modal-title" id="freshModalTitle">Start Fresh?</div>
+    <div class="modal-msg" id="freshModalText">All progress will be cleared. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>var TITLE = "[Sion] Advanced SAT Reading";var QUIZ_KEY = "quiz_sionadvreading_12_20260829_v1";var ATT_KEY = "quiz_sionadvreading_12_att_20260829_v1";var RAW_QUESTIONS = [{"stem": "Which choice best states the main purpose of the text?", "passage": "City planners have historically widened roads to relieve traffic congestion, reasoning that more lanes allow more cars to pass through at once. However, long-term traffic studies in several major cities have found that newly widened roads often fill back up with traffic within a few years, a pattern researchers call induced demand, since easier driving conditions encourage more people to drive rather than use public transit or carpool. As a result, some urban planners now argue that widening roads is, at best, a temporary and self-defeating solution to congestion.", "opts": ["To explain why widening roads often fails to solve traffic congestion in the long term.", "To describe how public transit systems are funded in major cities.", "To compare the construction costs of different types of roads.", "To argue that traffic congestion has no negative effects on city residents."], "ci": 0, "exp": "The text's central point is that widened roads tend to refill with traffic due to induced demand, making road widening a poor long-term fix, matching the correct choice. Public transit funding is mentioned only briefly as an alternative, not as the text's focus. The text never claims congestion is harmless. It never compares construction costs of road types.", "tag": "Central Ideas and Details", "tagcolor": "#185FA5"}, {"stem": "Which finding, if true, would most directly support the researcher's claim?", "passage": "A nutrition researcher claims that a new labeling system on grocery store shelves leads shoppers to choose healthier snacks.", "opts": ["The new labels cost slightly more to produce than the old labeling system.", "The new labels used a brighter color scheme than the previous labeling system.", "Store employees found the new labels easier to print and attach to shelves.", "In stores using the new labels, shoppers purchased 22 percent more low-sugar snacks than shoppers in stores without the labels, under otherwise similar conditions."], "ci": 3, "exp": "Since the claim concerns shoppers' snack choices, a direct measurement of healthier purchases under otherwise similar conditions most directly supports it. Color scheme doesn't measure purchasing behavior. Ease of printing for employees is unrelated to shopper choices. Production cost doesn't measure whether shoppers chose healthier snacks.", "tag": "Command of Evidence", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the text with the most logical and precise word?", "passage": "Despite the mounting evidence presented at the trial, the witness remained ______ in her account of the events, never once altering the details even under intense cross-examination.", "opts": ["evasive", "forgetful", "steadfast", "hesitant"], "ci": 2, "exp": "Never altering the details even under intense cross-examination shows firm, unwavering consistency, matching \"steadfast.\" \"hesitant\" and \"evasive\" both suggest uncertainty or avoidance, contradicting a witness who never wavered. \"forgetful\" would not explain why the account stayed exactly the same throughout.", "tag": "Words in Context", "tagcolor": "#185FA5"}, {"stem": "The student wants to highlight the connection between the reef's massive size and its visibility from space. Which choice most effectively combines the relevant information to accomplish this goal?", "passage": "- The Great Barrier Reef stretches over 1,400 miles along the northeastern coast of Australia.<br>- It is composed of thousands of individual coral reefs and hundreds of islands.<br>- Despite its enormous size, the reef is visible from outer space, one of the few living structures on Earth that is.", "opts": ["The reef is visible from outer space, one of the few living structures on Earth that is.", "The Great Barrier Reef stretches over 1,400 miles along the northeastern coast of Australia.", "Stretching over 1,400 miles and composed of thousands of individual reefs and islands, the Great Barrier Reef is so enormous that it is visible from outer space.", "It is composed of thousands of individual coral reefs and hundreds of islands."], "ci": 2, "exp": "The correct choice combines the reef's massive scale (length, number of reefs and islands) with its visibility from space in one sentence, directly creating the connection the student wants. The other choices each present only the reef's size or only its visibility from space, not both together, so none of them creates the intended connection.", "tag": "Rhetorical Synthesis", "tagcolor": "#185FA5"}, {"stem": "Which choice completes the text with the most logical and precise word?", "passage": "The architect's design for the community center was praised as remarkably ______, blending large glass windows with reclaimed wood in a way that few had attempted before in that style of building.", "opts": ["flawed", "outdated", "conventional", "innovative"], "ci": 3, "exp": "Combining materials in a way few had attempted before reflects a fresh, original approach, matching \"innovative.\" \"outdated\" and \"conventional\" both suggest the design followed familiar, established patterns, contradicting the description of something rarely attempted before. \"flawed\" would not explain why the design was praised.", "tag": "Words in Context", "tagcolor": "#185FA5"}, {"stem": "Based on the two texts, how would the economists in Text 2 most likely respond to the claim in Text 1 that minimum wage increases mainly help low-income workers with minimal employment effects?", "passage": "Text 1: Some economists argue that raising the minimum wage primarily benefits low-income workers by directly increasing their take-home pay, with only minor, short-lived effects on overall employment levels.<br><br>Text 2: Other economists contend that raising the minimum wage leads businesses to reduce hours or automate certain positions, meaning some low-income workers may see little net benefit or even a loss of income.", "opts": ["They would likely argue that minimum wage laws have never existed in any country.", "They would likely agree completely, since both texts focus only on take-home pay.", "They would likely argue that businesses never change staffing in response to wage laws.", "They would likely argue that businesses' responses, such as reducing hours or automating jobs, could offset or eliminate the intended benefit for some workers."], "ci": 3, "exp": "Text 2's claim that businesses may reduce hours or automate jobs directly challenges Text 1's claim of minimal employment effects, supporting the correct choice. The two texts disagree, so they would not likely agree completely. Text 2 never denies minimum wage laws exist. Text 2 explicitly describes businesses changing staffing in response to wage increases, the opposite of the wrong choice.", "tag": "Cross-Text Connections", "tagcolor": "#185FA5"}, {"stem": "Which choice best describes the relationship between the two texts?", "passage": "Text 1: Proponents of open-plan offices argue that removing walls between desks encourages spontaneous collaboration and makes communication between coworkers faster and easier.<br><br>Text 2: Researchers who tracked employee behavior after offices switched to open floor plans found that face-to-face conversation actually decreased, as employees increasingly relied on messaging apps and email to maintain privacy.", "opts": ["Text 1 and Text 2 both focus on the cost of office furniture.", "Text 2 presents research findings that complicate the collaboration benefit Text 1 describes.", "Text 1 responds directly to the findings described in Text 2.", "Text 2 provides additional research supporting the claim made in Text 1."], "ci": 1, "exp": "Text 1 emphasizes a communication benefit, while Text 2 presents findings that face-to-face conversation actually decreased, making the correct choice accurate. Text 2 challenges rather than supports Text 1's claim. Neither text discusses furniture costs. Text 1 is presented independently and does not respond to Text 2's findings.", "tag": "Cross-Text Connections", "tagcolor": "#185FA5"}, {"stem": "Which finding would most strongly support the engineer's claim?", "passage": "An engineer claims that a redesigned bicycle helmet reduces the risk of head injury in low-speed falls.", "opts": ["The redesigned helmet weighed slightly less than the previous design.", "In controlled drop tests simulating low-speed falls, the redesigned helmet reduced the impact force reaching the head by 30 percent compared with the previous design.", "Surveys found that cyclists thought the redesigned helmet looked more stylish.", "The redesigned helmet was available in more colors than the previous design."], "ci": 1, "exp": "Since the claim is about reducing head injury risk in low-speed falls, a controlled test directly measuring impact force reaching the head most strongly supports it. Available colors say nothing about injury protection. Cyclists' opinions about style don't measure safety. Weight alone doesn't demonstrate reduced impact force or injury risk.", "tag": "Command of Evidence", "tagcolor": "#185FA5"}, {"stem": "Which choice best states the main idea of the text?", "passage": "Beekeepers have long relied on smoke to calm bees before inspecting a hive, and for decades the common explanation was that smoke simply masked the alarm pheromones bees release to warn each other of danger. Recent research suggests a second mechanism is also at work: smoke appears to trigger a feeding response in bees, prompting them to gorge on stored honey in case they need to flee the hive, and bees with full stomachs are demonstrably less likely to sting. The calming effect of smoke, then, seems to result from both pheromone masking and an instinctive feeding reflex.", "opts": ["Bees release alarm pheromones only when beekeepers use smoke near the hive.", "Smoke likely calms bees through two combined mechanisms: masking alarm pheromones and triggering a feeding reflex that makes bees less likely to sting.", "Bees with full stomachs are more aggressive and more likely to sting beekeepers.", "Modern research has disproven that smoke has any calming effect on bees at all."], "ci": 1, "exp": "The text explains that smoke's calming effect likely comes from both pheromone masking and a feeding reflex, matching the correct choice. Bees release alarm pheromones in response to danger generally, not only when smoke is used. The text states bees with full stomachs are less likely to sting, the opposite of the wrong choice. The text confirms smoke does have a calming effect, just for a more complex reason than once thought.", "tag": "Central Ideas and Details", "tagcolor": "#185FA5"}, {"stem": "The student wants to emphasize that Curie's meticulous early research directly led to a historic scientific achievement. Which choice most effectively uses the given information to accomplish this goal?", "passage": "- Marie Curie conducted years of painstaking research on radioactive elements using rudimentary laboratory equipment.<br>- Her work led to the discovery of two new elements, polonium and radium.<br>- Curie became the first person to win Nobel Prizes in two different scientific fields, physics and chemistry.", "opts": ["Marie Curie conducted years of painstaking research on radioactive elements using rudimentary laboratory equipment.", "Marie Curie's research led to the discovery of two new elements, polonium and radium.", "Curie became the first person to win Nobel Prizes in two different scientific fields, physics and chemistry.", "Through years of painstaking research with rudimentary equipment that led to the discovery of polonium and radium, Marie Curie became the first person to win Nobel Prizes in two different scientific fields."], "ci": 3, "exp": "Only the correct choice explicitly connects Curie's careful early research and element discoveries to her historic two-field Nobel achievement, exactly the link the student wants to emphasize. The other choices each describe only her research methods, only her Nobel achievement, or only her discoveries, without connecting them together.", "tag": "Rhetorical Synthesis", "tagcolor": "#185FA5"}, {"stem": "Which choice most logically completes the text?", "passage": "Botanists studying desert plants have found that species with thick, waxy leaf coatings lose water far more slowly through evaporation than species with thin, papery leaves, allowing the waxy-leaved plants to survive extended droughts. If a newly discovered desert plant species were found to have unusually thin, papery leaves compared to its desert-dwelling relatives, researchers would most likely predict that the species would ______.", "opts": ["be more vulnerable to water loss and less able to withstand extended droughts", "be completely unaffected by how much water is available in its environment", "be better able to survive extended droughts than its waxy-leaved relatives", "immediately die within hours regardless of any water in the soil"], "ci": 0, "exp": "Since thin, papery leaves are linked to faster water loss through evaporation, researchers would predict greater vulnerability to drought, matching the correct choice. Thin leaves are associated with faster, not slower, water loss, so this species would not out-survive its waxy-leaved relatives. The passage directly ties leaf type to water loss, so the species would not be unaffected by water availability. The passage describes a gradual survival disadvantage, not an immediate death regardless of soil moisture.", "tag": "Inferences", "tagcolor": "#185FA5"}, {"stem": "Which choice most logically completes the text?", "passage": "Entomologists studying firefly flash patterns have found that each species produces a distinct rhythm and duration of light pulses, which females use to identify males of their own species in the dark. If researchers recorded a new population of fireflies whose flash pattern closely matched a rhythm previously undocumented in any known species, they would most likely conclude that the fireflies ______.", "opts": ["might represent a previously unidentified species or a distinct population with its own signaling pattern", "had lost the ability to reproduce due to their unusual flash pattern", "belonged to a species that relies entirely on sound rather than light to communicate", "were incapable of producing any light at all"], "ci": 0, "exp": "Since flash patterns are used to distinguish species, an undocumented rhythm would most logically suggest a new or distinct species or population, matching the correct choice. A recorded flash pattern confirms the fireflies do produce light, not that they cannot. The passage centers on light-based signaling, not sound-based communication. An unusual flash pattern says nothing about reproductive ability.", "tag": "Inferences", "tagcolor": "#185FA5"}];var N = RAW_QUESTIONS.length;var ORDER_KEY = QUIZ_KEY + '_order_v1';
+function shuffleArr(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function identityOrder(){var o=[];for(var i=0;i<N;i++)o.push(i);return o;}
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length===0) return false;
+  for(var i=0;i<arr.length;i++){ if(typeof arr[i] !== 'number' || arr[i]<0 || arr[i]>=N) return false; }
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad');
+    return arr;
+  }catch(e){ try{localStorage.removeItem(ORDER_KEY);}catch(e2){} return null; }
+}
+function saveOrder(o){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(o)); }catch(e){} }
+
+var order = loadOrder() || identityOrder();
+if(!loadOrder()) saveOrder(order);
+var pendingFreshMode = 'original';
+
+function defaultState(){
+  return { cur:0, answers:{}, showResults:false, timerTotalSec:null, timerStartedAt:null };
+}
+function loadState(){
+  try{
+    var raw = localStorage.getItem(QUIZ_KEY);
+    if(!raw) return defaultState();
+    var s = JSON.parse(raw);
+    if(typeof s.cur !== 'number' || s.cur<0 || s.cur>=order.length) s.cur = 0;
+    if(typeof s.answers !== 'object' || s.answers===null) s.answers = {};
+    if(typeof s.showResults !== 'boolean') s.showResults = false;
+    if(typeof s.timerTotalSec === 'undefined') s.timerTotalSec = null;
+    if(typeof s.timerStartedAt === 'undefined') s.timerStartedAt = null;
+    return s;
+  }catch(e){ try{localStorage.removeItem(QUIZ_KEY);}catch(e2){} return defaultState(); }
+}
+function saveState(){ try{ localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); }catch(e){} }
+
+var state = loadState();
+var timerInterval = null;
+
+function getAttempts(){ try{ return parseInt(localStorage.getItem(ATT_KEY)||'0',10); }catch(e){ return 0; } }
+function incAttempts(){ try{ localStorage.setItem(ATT_KEY, String(getAttempts()+1)); }catch(e){} }
+function updateAttDisplay(){
+  var el = document.getElementById('att-display');
+  if(el) el.textContent = 'Total Attempts: ' + getAttempts();
+}
+
+function formatTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function renderTimer(){
+  var setupEl = document.getElementById('timerSetup');
+  var runningEl = document.getElementById('timerRunning');
+  var dispEl = document.getElementById('timerDisplay');
+  if(!setupEl||!runningEl||!dispEl) return;
+  if(!state.timerStartedAt){ setupEl.style.display='flex'; runningEl.style.display='none'; return; }
+  setupEl.style.display='none'; runningEl.style.display='flex';
+  var elapsed = (Date.now()-state.timerStartedAt)/1000;
+  var remaining = state.timerTotalSec - elapsed;
+  dispEl.classList.remove('warn','danger');
+  if(remaining<=0){ dispEl.textContent="Time's Up"; dispEl.classList.add('danger'); stopTimerInterval(); return; }
+  dispEl.textContent = formatTime(remaining);
+  if(remaining <= state.timerTotalSec*0.1) dispEl.classList.add('danger');
+  else if(remaining <= state.timerTotalSec*0.25) dispEl.classList.add('warn');
+}
+function startTimer(){
+  var input = document.getElementById('timerMinutesInput');
+  var minutes = parseFloat(input.value);
+  if(!minutes || minutes<=0) minutes=20;
+  state.timerTotalSec = Math.round(minutes*60);
+  state.timerStartedAt = Date.now();
+  saveState(); renderTimer(); startTimerInterval();
+}
+function startTimerInterval(){ stopTimerInterval(); timerInterval=setInterval(renderTimer,1000); }
+function stopTimerInterval(){ if(timerInterval){clearInterval(timerInterval); timerInterval=null;} }
+function resetTimer(){
+  state.timerTotalSec = null; state.timerStartedAt = null;
+  stopTimerInterval(); saveState(); renderTimer();
+}
+
+function render(){
+  updateAttDisplay();
+  var qa = document.getElementById('quiz-area');
+  var rs = document.getElementById('results-screen');
+  if(state.showResults){
+    qa.style.display='none';
+    rs.classList.add('show');
+    renderResults();
+    return;
+  }
+  qa.style.display='block';
+  rs.classList.remove('show');
+
+  var qi = order[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  document.getElementById('q-num').textContent = 'Q' + (state.cur+1) + ' / ' + order.length;
+
+  var badge = document.getElementById('tag-badge');
+  if(q.tag){
+    badge.style.display='inline-block';
+    badge.textContent = q.tag;
+    badge.style.background = q.tagcolor || '#185FA5';
+  } else { badge.style.display='none'; }
+
+  var pbox = document.getElementById('passage-box');
+  if(q.passage){ pbox.style.display='block'; pbox.innerHTML = q.passage; } else { pbox.style.display='none'; }
+  var cbox = document.getElementById('context-box');
+  if(q.context){ cbox.style.display='block'; cbox.innerHTML = q.context; } else { cbox.style.display='none'; }
+
+  document.getElementById('q-text').innerHTML = q.stem;
+
+  
+
+  var answered = state.answers[qi];
+  var optDiv = document.getElementById('options');
+  optDiv.innerHTML='';
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML = optText;
+    btn.disabled = answered !== undefined;
+    if(answered !== undefined){
+      if(idx === q.ci) btn.classList.add(answered===idx ? 'correct' : 'revealed');
+      else if(answered === idx) btn.classList.add('wrong');
+    }
+    btn.onclick = function(){ chooseAnswer(idx); };
+    optDiv.appendChild(btn);
+  });
+
+  var expDiv = document.getElementById('exp-box');
+  if(answered !== undefined && answered !== q.ci){
+    expDiv.style.display='block';
+    expDiv.innerHTML = q.exp;
+  } else {
+    expDiv.style.display='none';
+  }
+
+  var nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = (state.cur >= order.length-1) ? 'Show Results \u2192' : 'Next \u2192';
+
+  updateNav();
+}
+
+function updateNav(){
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  document.getElementById('nav-count').textContent = answered + ' / ' + order.length;
+  document.getElementById('prog-fill').style.width = (answered/order.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel = document.getElementById('dot-panel');
+  if(panel.style.display==='none') return;
+  var html='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var bg = state.answers[qi]===undefined ? '#d7dde6' : (state.answers[qi]===RAW_QUESTIONS[qi].ci ? '#185FA5' : '#E24B4A');
+    html += '<button class="dot" style="background:'+bg+';" onclick="goToQ('+pos+')">'+(pos+1)+'</button>';
+  }
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  if(answered===order.length){
+    html += '<br><button class="results-pill" onclick="showResultsNow()">Results</button>';
+  }
+  panel.innerHTML = html;
+}
+function toggleJump(){
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display==='none' || panel.style.display===''){
+    panel.style.display='block'; btn.innerHTML='Hide &#9652;'; renderDots();
+  } else {
+    panel.style.display='none'; btn.innerHTML='Jump &#9662;';
+  }
+}
+function goToQ(pos){
+  state.cur = pos; state.showResults=false; saveState(); render();
+}
+function showResultsNow(){
+  state.showResults = true; incAttempts(); saveState(); render();
+}
+function chooseAnswer(idx){
+  var qi = order[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState(); render();
+}
+function goPrev(){
+  if(state.cur>0){ state.cur--; saveState(); render(); }
+}
+function goNext(){
+  if(state.cur < order.length-1){ state.cur++; saveState(); render(); }
+  else { state.showResults=true; incAttempts(); saveState(); render(); }
+}
+function renderResults(){
+  var correct=0, wrong=0, skipped=0;
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]===undefined){ skipped++; continue; }
+    if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+  }
+  document.getElementById('results-score').textContent = correct+' correct, '+wrong+' wrong, '+skipped+' skipped - out of '+order.length;
+  var grid = document.getElementById('results-grid');
+  grid.innerHTML='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var card = document.createElement('div');
+    if(state.answers[qi]===undefined){
+      card.className='r-card skipped';
+      card.textContent='Q'+(pos+1)+' Skip';
+    } else {
+      var ok = state.answers[qi]===RAW_QUESTIONS[qi].ci;
+      card.className='r-card '+(ok?'correct':'wrong');
+      card.textContent='Q'+(pos+1)+' '+(ok?'OK':'X');
+    }
+    (function(p){ card.onclick=function(){ state.showResults=false; state.cur=p; saveState(); render(); }; })(pos);
+    grid.appendChild(card);
+  }
+}
+function retryWrong(){
+  var wrong=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      wrong.push(qi);
+    }
+  }
+  if(wrong.length===0) return;
+  wrong.forEach(function(qi){ delete state.answers[qi]; });
+  order = wrong;
+  saveOrder(order);
+  state.cur=0; state.showResults=false;
+  saveState(); render(); renderTimer();
+}
+function copyRes(){
+  var lines=[TITLE+' Results'];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    var s='Q'+(pos+1)+': ';
+    if(a===undefined) s+='Skipped';
+    else s += (a===RAW_QUESTIONS[qi].ci ? 'Correct' : 'Wrong');
+    lines.push(s);
+  }
+  var text = lines.join('\n');
+  try{
+    if(navigator.clipboard){ navigator.clipboard.writeText(text).catch(function(){}); }
+    else { var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+  }catch(e){}
+}
+function saveWrongAnswers(){
+  var wrongItems=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    if(a!==undefined && a!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongItems.push({ question: q.stem, yourAnswer: q.opts[a], correctAnswer: q.opts[q.ci], explanation: q.exp });
+    }
+  }
+  var blob = new Blob([JSON.stringify({title:TITLE, wrongAnswers:wrongItems}, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a2 = document.createElement('a');
+  a2.href = url; a2.download = QUIZ_KEY + '_wrong.json';
+  document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+  URL.revokeObjectURL(url);
+}
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var t = document.getElementById('freshModalTitle');
+  var m = document.getElementById('freshModalText');
+  if(mode==='random'){
+    t.textContent='Start Fresh (Random Order)?';
+    m.textContent='Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    t.textContent='Start Fresh (Original Order)?';
+    m.textContent='Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  order = (pendingFreshMode==='random') ? shuffleArr(identityOrder()) : identityOrder();
+  saveOrder(order);
+  state = defaultState();
+  saveState();
+  resetTimer();
+  closeFreshModal();
+  render();
+  renderTimer();
+}
+
+window.startTimer=startTimer;
+window.toggleJump=toggleJump;
+window.goToQ=goToQ;
+window.showResultsNow=showResultsNow;
+window.chooseAnswer=chooseAnswer;
+window.goPrev=goPrev;
+window.goNext=goNext;
+window.retryWrong=retryWrong;
+window.copyRes=copyRes;
+window.saveWrongAnswers=saveWrongAnswers;
+window.openFreshModalOriginal=openFreshModalOriginal;
+window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;
+window.confirmFresh=confirmFresh;
+
+render();
+renderTimer();
+if(state.timerStartedAt) startTimerInterval();
+</script>
+</body>
+</html>
