@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Math</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh;padding:12px;max-width:720px;margin:0 auto;}
+.quiz-title{font-size:1.35rem;font-weight:700;text-align:center;color:#111;background:#fff;padding:10px 0 2px}
+.subtitle{text-align:center;font-size:0.85rem;color:#555;background:#fff;padding:2px 0 4px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:2px 12px 10px}
+.timer-bar { background: #fff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; border-radius:10px; margin-bottom:8px;}
+.timer-setup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+.timer-setup label { font-weight: 700; }
+.timer-setup input[type="number"] { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+.timer-start-btn { background: #185FA5; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.timer-running { display: flex; align-items: center; gap: 8px; }
+.timer-label { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.02em; }
+.timer-display { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+.timer-display.warn { color: #f5a623; }
+.timer-display.danger { color: #E24B4A; }
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0;background:#fff;padding:8px 12px;border-radius:10px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;border:none;}
+.results-pill{display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;border:none;}
+.quiz-area{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;}
+.q-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.q-num{font-size:0.82rem;color:#888;}
+.tag-badge{font-size:0.75rem;padding:2px 10px;border-radius:10px;background:#185FA5;color:#fff;font-weight:600;}
+.passage-box,.context-box{background:#f5f7fa;border-left:3px solid #185FA5;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.92rem;color:#333;line-height:1.5;}
+.q-text{font-size:1.08rem;font-weight:600;color:#111;margin-bottom:14px;line-height:1.5;}
+.options{display:flex;flex-direction:column;gap:9px;}
+.opt-btn{background:#e8edf4;color:#111;border:2px solid transparent;border-radius:9px;padding:11px 14px;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.4;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn.revealed{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{margin-top:12px;padding:10px 12px;background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;font-size:0.88rem;color:#333;display:none;}
+.nav-btns{display:flex;justify-content:space-between;margin-top:14px;gap:10px;}
+.prev-btn,.next-btn{padding:9px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer;}
+.prev-btn{background:#e8edf4;color:#333;}
+.next-btn{background:#1D9E75;color:#fff;}
+.results-screen{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;display:none;}
+.results-screen.show{display:block;}
+.results-heading{font-size:1.3rem;font-weight:700;color:#1D9E75;text-align:center;margin-bottom:6px;}
+.results-score{font-size:1rem;text-align:center;color:#555;margin-bottom:14px;}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;margin-bottom:16px;}
+.r-card{border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;font-size:0.82rem;font-weight:600;}
+.r-card.correct{background:#E1F5EE;color:#085041;}
+.r-card.wrong{background:#FCEBEB;color:#501313;}
+.r-card.skipped{background:#f5f7fa;color:#555;}
+.results-btns{display:flex;flex-direction:column;gap:9px;}
+.retry-btn{background:#1D9E75;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.copy-btn{background:#185FA5;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.save-btn{background:#f5a623;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.fresh-btn{background:#e8edf4;color:#111;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:12px;padding:24px 20px;max-width:320px;width:90%;text-align:center;}
+.modal-title{font-size:1.05rem;font-weight:700;margin-bottom:8px;}
+.modal-msg{font-size:0.9rem;color:#555;margin-bottom:18px;}
+.modal-btns{display:flex;gap:10px;justify-content:center;}
+.modal-cancel{background:#e8edf4;color:#333;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;cursor:pointer;}
+.modal-confirm{background:#E24B4A;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;font-weight:600;cursor:pointer;}
+</style>
+</head>
+<body><div class="quiz-title">[Grant] Math</div><div class="subtitle" id="att-display">Total Attempts: 0</div><div class="instruction">Choose the correct answer for each problem.</div>
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="20"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">20:00</span>
+  </div>
+</div>
+<div id="nav-bar"><span id="nav-count">0 / 24</span><div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div><button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button></div><div id="dot-panel"></div>
+<div class="quiz-area" id="quiz-area">
+  <div class="q-header">
+    <span class="q-num" id="q-num"></span>
+    <span class="tag-badge" id="tag-badge" style="display:none;"></span>
+    
+  </div>
+  <div class="passage-box" id="passage-box" style="display:none;"></div>
+  <div class="context-box" id="context-box" style="display:none;"></div>
+  <div class="q-text" id="q-text"></div>
+  <div class="options" id="options"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-btns">
+    <button class="prev-btn" onclick="goPrev()">Prev</button>
+    <button class="next-btn" id="next-btn" onclick="goNext()">Next</button>
+  </div>
+</div>
+
+<div class="results-screen" id="results-screen">
+  <div class="results-heading" id="results-heading">Results</div>
+  <div class="results-score" id="results-score"></div>
+  <div class="results-grid" id="results-grid"></div>
+  <div class="results-btns">
+    <button class="retry-btn" onclick="retryWrong()">Retry Wrong Ones</button>
+    <button class="copy-btn" onclick="copyRes()">Copy All Results</button>
+    <button class="save-btn" onclick="saveWrongAnswers()">Save Wrong Answers</button>
+    <button class="fresh-btn" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button>
+    <button class="fresh-btn" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <div class="modal-title" id="freshModalTitle">Start Fresh?</div>
+    <div class="modal-msg" id="freshModalText">All progress will be cleared. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>var TITLE = "[Grant] Math";var QUIZ_KEY = "quiz_grantmath_24_20260830_v1";var ATT_KEY = "quiz_grantmath_24_att_20260830_v1";var RAW_QUESTIONS = [{"stem": "Simplify: x<sup>5</sup> &times; x<sup>3</sup> &divide; x<sup>2</sup> = ?", "opts": ["x<sup>4</sup>", "x<sup>6</sup>", "x<sup>10</sup>", "x<sup>15</sup>"], "ci": 1, "exp": "Add exponents for multiplication, subtract for division: 5+3−2 = 6.", "tag": "Exponent Laws", "tagcolor": "#7b61ff"}, {"stem": "&minus;8 + 5 &times; (&minus;3) &minus; (&minus;12) = ?", "opts": ["19", "&minus;11", "&minus;5", "&minus;35"], "ci": 1, "exp": "Follow order of operations (parentheses, then multiplication/division, then addition/subtraction). The result is -11.", "tag": "Integers", "tagcolor": "#f5a623"}, {"stem": "(3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">2</span></span> + <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>7</span><span style=\"border-top:1.4px solid #111;\">3</span></span>) &times; <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>2</span><span style=\"border-top:1.4px solid #111;\">3</span></span> &minus; <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">4</span></span> = ?", "opts": ["3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>29</span><span style=\"border-top:1.4px solid #111;\">36</span></span>", "3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>8</span><span style=\"border-top:1.4px solid #111;\">9</span></span>", "3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">36</span></span>", "2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>23</span><span style=\"border-top:1.4px solid #111;\">36</span></span>"], "ci": 3, "exp": "Follow order of operations (parentheses first). The value works out to 2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>23</span><span style=\"border-top:1.4px solid #111;\">36</span></span>.", "tag": "Fractions", "tagcolor": "#185FA5"}, {"stem": "<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>13</span><span style=\"border-top:1.4px solid #111;\">6</span></span> + (2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>2</span><span style=\"border-top:1.4px solid #111;\">3</span></span> &minus; <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">4</span></span>) &times; <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>9</span><span style=\"border-top:1.4px solid #111;\">5</span></span> = ?", "opts": ["4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>23</span><span style=\"border-top:1.4px solid #111;\">60</span></span>", "4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>43</span><span style=\"border-top:1.4px solid #111;\">60</span></span>", "2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>7</span><span style=\"border-top:1.4px solid #111;\">12</span></span>", "6&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>9</span><span style=\"border-top:1.4px solid #111;\">20</span></span>"], "ci": 1, "exp": "Follow order of operations (parentheses first). The value works out to 4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>43</span><span style=\"border-top:1.4px solid #111;\">60</span></span>.", "tag": "Fractions", "tagcolor": "#185FA5"}, {"stem": "Solve for x: 2(x + 4) + 3x = 33", "opts": ["x = 1", "x = 5", "x = 4", "x = 7"], "ci": 1, "exp": "Distribute: 2x+8+3x=33 → 5x+8=33 → 5x=25 → x=5.", "tag": "Linear Equations", "tagcolor": "#0d9488"}, {"stem": "Solve for x: 6x &minus; 2x + 5 = 3x + 17", "opts": ["x = 12", "x = 13", "x = 11", "x = 16"], "ci": 0, "exp": "Combine like terms: 4x+5=3x+17 → x=12.", "tag": "Linear Equations", "tagcolor": "#0d9488"}, {"stem": "7 &times; (&minus;6) &minus; (&minus;18) &divide; 3 = ?", "opts": ["&minus;48", "28", "&minus;36", "&minus;24"], "ci": 2, "exp": "Follow order of operations (parentheses, then multiplication/division, then addition/subtraction). The result is -36.", "tag": "Integers", "tagcolor": "#f5a623"}, {"stem": "(4.75 + 2.3) &times; 1.5 &minus; 0.825 = ?", "opts": ["7.375", "9.750", "5.8125", "10.750"], "ci": 1, "exp": "Follow order of operations (parentheses first, then ×/÷, then +/−). The result is 9.750.", "tag": "Decimals", "tagcolor": "#1D9E75"}, {"stem": "8.125 &minus; (3.6 + 0.75) &divide; 1.5 = ?", "opts": ["5.725", "2.516666666666666666666666667", "4.025", "5.225"], "ci": 3, "exp": "Follow order of operations (parentheses first, then ×/÷, then +/−). The result is 5.225.", "tag": "Decimals", "tagcolor": "#1D9E75"}, {"stem": "A bag of flour weighs 3.5 pounds. How many ounces is that (1 lb = 16 oz)?", "opts": ["56 oz", "48 oz", "35 oz", "60 oz"], "ci": 0, "exp": "Converting gives 56 oz.", "tag": "Unit Conversion", "tagcolor": "#E24B4A"}, {"stem": "(<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>9</span><span style=\"border-top:1.4px solid #111;\">2</span></span> &minus; 2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">3</span></span>) &divide; <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">6</span></span> + 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>3</span><span style=\"border-top:1.4px solid #111;\">4</span></span> = ?", "opts": ["4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>7</span><span style=\"border-top:1.4px solid #111;\">20</span></span>", "3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">9</span></span>", "4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">10</span></span>", "3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>9</span><span style=\"border-top:1.4px solid #111;\">20</span></span>"], "ci": 0, "exp": "Follow order of operations (parentheses first). The value works out to 4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>7</span><span style=\"border-top:1.4px solid #111;\">20</span></span>.", "tag": "Fractions", "tagcolor": "#185FA5"}, {"stem": "Simplify: (x<sup>4</sup>)<sup>3</sup> &divide; x<sup>7</sup> = ?", "opts": ["x<sup>3</sup>", "x<sup>12</sup>", "x<sup>5</sup>", "x<sup>19</sup>"], "ci": 2, "exp": "Power of a power multiplies exponents: 4×3=12, then 12−7=5.", "tag": "Exponent Laws", "tagcolor": "#7b61ff"}, {"stem": "A hiking trail is 3.5 kilometers long. How many meters is that?", "opts": ["3500 m", "350 m", "35000 m", "3.5 m"], "ci": 0, "exp": "Converting gives 3500 m.", "tag": "Unit Conversion", "tagcolor": "#E24B4A"}, {"stem": "Solve for x: 4x + 9 = x + 30", "opts": ["x = 11", "x = 7", "x = 5", "x = 3"], "ci": 1, "exp": "Subtract x from both sides: 3x+9=30 → 3x=21 → x=7.", "tag": "Linear Equations", "tagcolor": "#0d9488"}, {"stem": "Solve for x: 3x + 2x &minus; 4x + 7 = 22", "opts": ["x = 15", "x = 19", "x = 13", "x = 11"], "ci": 0, "exp": "Combine like x-terms: 3x+2x−4x = x. So x+7=22, x=15.", "tag": "Linear Equations", "tagcolor": "#0d9488"}, {"stem": "Simplify: (x<sup>2</sup>)<sup>4</sup> &times; x<sup>3</sup> &divide; x<sup>5</sup> = ?", "opts": ["x<sup>10</sup>", "x<sup>4</sup>", "x<sup>19</sup>", "x<sup>6</sup>"], "ci": 3, "exp": "(x²)⁴=x⁸. Then 8+3−5=6.", "tag": "Exponent Laws", "tagcolor": "#7b61ff"}, {"stem": "(2.5 + 4.375) &times; 0.4 &minus; 1.15 = ?", "opts": ["6.415", "1.6000", "3.1000", "1.8500"], "ci": 1, "exp": "Follow order of operations (parentheses first, then ×/÷, then +/−). The result is 1.6000.", "tag": "Decimals", "tagcolor": "#1D9E75"}, {"stem": "A water bottle holds 4,500 milliliters. How many liters is that?", "opts": ["0.45 L", "450 L", "4.5 L", "45 L"], "ci": 2, "exp": "Converting gives 4.5 L.", "tag": "Unit Conversion", "tagcolor": "#E24B4A"}, {"stem": "5&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>3</span><span style=\"border-top:1.4px solid #111;\">5</span></span> &times; (<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>11</span><span style=\"border-top:1.4px solid #111;\">4</span></span> &minus; 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">2</span></span>) + <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>7</span><span style=\"border-top:1.4px solid #111;\">2</span></span> = ?", "opts": ["10&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">2</span></span>", "11&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">2</span></span>", "17&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>2</span><span style=\"border-top:1.4px solid #111;\">5</span></span>", "3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">2</span></span>"], "ci": 0, "exp": "Follow order of operations (parentheses first). The value works out to 10&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">2</span></span>.", "tag": "Fractions", "tagcolor": "#185FA5"}, {"stem": "A cake needs to bake for 2.25 hours. How many minutes is that?", "opts": ["135 minutes", "150 minutes", "225 minutes", "125 minutes"], "ci": 0, "exp": "Converting gives 135 minutes.", "tag": "Unit Conversion", "tagcolor": "#E24B4A"}, {"stem": "Simplify: x<sup>9</sup> &divide; (x<sup>2</sup> &times; x<sup>3</sup>) = ?", "opts": ["x<sup>14</sup>", "x<sup>1</sup>", "x<sup>5</sup>", "x<sup>4</sup>"], "ci": 3, "exp": "First combine the denominator: x²×x³=x⁵. Then 9−5=4.", "tag": "Exponent Laws", "tagcolor": "#7b61ff"}, {"stem": "(&minus;5 + (&minus;9)) &times; (&minus;2) &minus; 7 = ?", "opts": ["35", "11", "6", "21"], "ci": 3, "exp": "Follow order of operations (parentheses, then multiplication/division, then addition/subtraction). The result is 21.", "tag": "Integers", "tagcolor": "#f5a623"}, {"stem": "(&minus;14 &minus; 6) &divide; (&minus;4) + (&minus;9) = ?", "opts": ["&minus;7", "14", "&minus;8", "&minus;4"], "ci": 3, "exp": "Follow order of operations (parentheses, then multiplication/division, then addition/subtraction). The result is -4.", "tag": "Integers", "tagcolor": "#f5a623"}, {"stem": "(6.4 &minus; 1.25) &times; 0.5 + 3.125 = ?", "opts": ["4.700", "6.7125", "5.700", "8.900"], "ci": 2, "exp": "Follow order of operations (parentheses first, then ×/÷, then +/−). The result is 5.700.", "tag": "Decimals", "tagcolor": "#1D9E75"}];var N = RAW_QUESTIONS.length;var ORDER_KEY = QUIZ_KEY + '_order_v1';
+function shuffleArr(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function identityOrder(){var o=[];for(var i=0;i<N;i++)o.push(i);return o;}
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length===0) return false;
+  for(var i=0;i<arr.length;i++){ if(typeof arr[i] !== 'number' || arr[i]<0 || arr[i]>=N) return false; }
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad');
+    return arr;
+  }catch(e){ try{localStorage.removeItem(ORDER_KEY);}catch(e2){} return null; }
+}
+function saveOrder(o){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(o)); }catch(e){} }
+
+var order = loadOrder() || identityOrder();
+if(!loadOrder()) saveOrder(order);
+var pendingFreshMode = 'original';
+
+function defaultState(){
+  return { cur:0, answers:{}, showResults:false, timerTotalSec:null, timerStartedAt:null };
+}
+function loadState(){
+  try{
+    var raw = localStorage.getItem(QUIZ_KEY);
+    if(!raw) return defaultState();
+    var s = JSON.parse(raw);
+    if(typeof s.cur !== 'number' || s.cur<0 || s.cur>=order.length) s.cur = 0;
+    if(typeof s.answers !== 'object' || s.answers===null) s.answers = {};
+    if(typeof s.showResults !== 'boolean') s.showResults = false;
+    if(typeof s.timerTotalSec === 'undefined') s.timerTotalSec = null;
+    if(typeof s.timerStartedAt === 'undefined') s.timerStartedAt = null;
+    return s;
+  }catch(e){ try{localStorage.removeItem(QUIZ_KEY);}catch(e2){} return defaultState(); }
+}
+function saveState(){ try{ localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); }catch(e){} }
+
+var state = loadState();
+var timerInterval = null;
+
+function getAttempts(){ try{ return parseInt(localStorage.getItem(ATT_KEY)||'0',10); }catch(e){ return 0; } }
+function incAttempts(){ try{ localStorage.setItem(ATT_KEY, String(getAttempts()+1)); }catch(e){} }
+function updateAttDisplay(){
+  var el = document.getElementById('att-display');
+  if(el) el.textContent = 'Total Attempts: ' + getAttempts();
+}
+
+function formatTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function renderTimer(){
+  var setupEl = document.getElementById('timerSetup');
+  var runningEl = document.getElementById('timerRunning');
+  var dispEl = document.getElementById('timerDisplay');
+  if(!setupEl||!runningEl||!dispEl) return;
+  if(!state.timerStartedAt){ setupEl.style.display='flex'; runningEl.style.display='none'; return; }
+  setupEl.style.display='none'; runningEl.style.display='flex';
+  var elapsed = (Date.now()-state.timerStartedAt)/1000;
+  var remaining = state.timerTotalSec - elapsed;
+  dispEl.classList.remove('warn','danger');
+  if(remaining<=0){ dispEl.textContent="Time's Up"; dispEl.classList.add('danger'); stopTimerInterval(); return; }
+  dispEl.textContent = formatTime(remaining);
+  if(remaining <= state.timerTotalSec*0.1) dispEl.classList.add('danger');
+  else if(remaining <= state.timerTotalSec*0.25) dispEl.classList.add('warn');
+}
+function startTimer(){
+  var input = document.getElementById('timerMinutesInput');
+  var minutes = parseFloat(input.value);
+  if(!minutes || minutes<=0) minutes=20;
+  state.timerTotalSec = Math.round(minutes*60);
+  state.timerStartedAt = Date.now();
+  saveState(); renderTimer(); startTimerInterval();
+}
+function startTimerInterval(){ stopTimerInterval(); timerInterval=setInterval(renderTimer,1000); }
+function stopTimerInterval(){ if(timerInterval){clearInterval(timerInterval); timerInterval=null;} }
+function resetTimer(){
+  state.timerTotalSec = null; state.timerStartedAt = null;
+  stopTimerInterval(); saveState(); renderTimer();
+}
+
+function render(){
+  updateAttDisplay();
+  var qa = document.getElementById('quiz-area');
+  var rs = document.getElementById('results-screen');
+  if(state.showResults){
+    qa.style.display='none';
+    rs.classList.add('show');
+    renderResults();
+    return;
+  }
+  qa.style.display='block';
+  rs.classList.remove('show');
+
+  var qi = order[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  document.getElementById('q-num').textContent = 'Q' + (state.cur+1) + ' / ' + order.length;
+
+  var badge = document.getElementById('tag-badge');
+  if(q.tag){
+    badge.style.display='inline-block';
+    badge.textContent = q.tag;
+    badge.style.background = q.tagcolor || '#185FA5';
+  } else { badge.style.display='none'; }
+
+  var pbox = document.getElementById('passage-box');
+  if(q.passage){ pbox.style.display='block'; pbox.innerHTML = q.passage; } else { pbox.style.display='none'; }
+  var cbox = document.getElementById('context-box');
+  if(q.context){ cbox.style.display='block'; cbox.innerHTML = q.context; } else { cbox.style.display='none'; }
+
+  document.getElementById('q-text').innerHTML = q.stem;
+
+  
+
+  var answered = state.answers[qi];
+  var optDiv = document.getElementById('options');
+  optDiv.innerHTML='';
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML = optText;
+    btn.disabled = answered !== undefined;
+    if(answered !== undefined){
+      if(idx === q.ci) btn.classList.add(answered===idx ? 'correct' : 'revealed');
+      else if(answered === idx) btn.classList.add('wrong');
+    }
+    btn.onclick = function(){ chooseAnswer(idx); };
+    optDiv.appendChild(btn);
+  });
+
+  var expDiv = document.getElementById('exp-box');
+  if(answered !== undefined && answered !== q.ci){
+    expDiv.style.display='block';
+    expDiv.innerHTML = q.exp;
+  } else {
+    expDiv.style.display='none';
+  }
+
+  var nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = (state.cur >= order.length-1) ? 'Show Results \u2192' : 'Next \u2192';
+
+  updateNav();
+}
+
+function updateNav(){
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  document.getElementById('nav-count').textContent = answered + ' / ' + order.length;
+  document.getElementById('prog-fill').style.width = (answered/order.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel = document.getElementById('dot-panel');
+  if(panel.style.display==='none') return;
+  var html='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var bg = state.answers[qi]===undefined ? '#d7dde6' : (state.answers[qi]===RAW_QUESTIONS[qi].ci ? '#185FA5' : '#E24B4A');
+    html += '<button class="dot" style="background:'+bg+';" onclick="goToQ('+pos+')">'+(pos+1)+'</button>';
+  }
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  if(answered===order.length){
+    html += '<br><button class="results-pill" onclick="showResultsNow()">Results</button>';
+  }
+  panel.innerHTML = html;
+}
+function toggleJump(){
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display==='none' || panel.style.display===''){
+    panel.style.display='block'; btn.innerHTML='Hide &#9652;'; renderDots();
+  } else {
+    panel.style.display='none'; btn.innerHTML='Jump &#9662;';
+  }
+}
+function goToQ(pos){
+  state.cur = pos; state.showResults=false; saveState(); render();
+}
+function showResultsNow(){
+  state.showResults = true; incAttempts(); saveState(); render();
+}
+function chooseAnswer(idx){
+  var qi = order[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState(); render();
+}
+function goPrev(){
+  if(state.cur>0){ state.cur--; saveState(); render(); }
+}
+function goNext(){
+  if(state.cur < order.length-1){ state.cur++; saveState(); render(); }
+  else { state.showResults=true; incAttempts(); saveState(); render(); }
+}
+function renderResults(){
+  var correct=0, wrong=0, skipped=0;
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]===undefined){ skipped++; continue; }
+    if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+  }
+  document.getElementById('results-score').textContent = correct+' correct, '+wrong+' wrong, '+skipped+' skipped - out of '+order.length;
+  var grid = document.getElementById('results-grid');
+  grid.innerHTML='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var card = document.createElement('div');
+    if(state.answers[qi]===undefined){
+      card.className='r-card skipped';
+      card.textContent='Q'+(pos+1)+' Skip';
+    } else {
+      var ok = state.answers[qi]===RAW_QUESTIONS[qi].ci;
+      card.className='r-card '+(ok?'correct':'wrong');
+      card.textContent='Q'+(pos+1)+' '+(ok?'OK':'X');
+    }
+    (function(p){ card.onclick=function(){ state.showResults=false; state.cur=p; saveState(); render(); }; })(pos);
+    grid.appendChild(card);
+  }
+}
+function retryWrong(){
+  var wrong=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      wrong.push(qi);
+    }
+  }
+  if(wrong.length===0) return;
+  wrong.forEach(function(qi){ delete state.answers[qi]; });
+  order = wrong;
+  saveOrder(order);
+  state.cur=0; state.showResults=false;
+  saveState(); render(); renderTimer();
+}
+function copyRes(){
+  var lines=[TITLE+' Results'];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    var s='Q'+(pos+1)+': ';
+    if(a===undefined) s+='Skipped';
+    else s += (a===RAW_QUESTIONS[qi].ci ? 'Correct' : 'Wrong');
+    lines.push(s);
+  }
+  var text = lines.join('\n');
+  try{
+    if(navigator.clipboard){ navigator.clipboard.writeText(text).catch(function(){}); }
+    else { var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+  }catch(e){}
+}
+function saveWrongAnswers(){
+  var wrongItems=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    if(a!==undefined && a!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongItems.push({ question: q.stem, yourAnswer: q.opts[a], correctAnswer: q.opts[q.ci], explanation: q.exp });
+    }
+  }
+  var blob = new Blob([JSON.stringify({title:TITLE, wrongAnswers:wrongItems}, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a2 = document.createElement('a');
+  a2.href = url; a2.download = QUIZ_KEY + '_wrong.json';
+  document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+  URL.revokeObjectURL(url);
+}
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var t = document.getElementById('freshModalTitle');
+  var m = document.getElementById('freshModalText');
+  if(mode==='random'){
+    t.textContent='Start Fresh (Random Order)?';
+    m.textContent='Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    t.textContent='Start Fresh (Original Order)?';
+    m.textContent='Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  order = (pendingFreshMode==='random') ? shuffleArr(identityOrder()) : identityOrder();
+  saveOrder(order);
+  state = defaultState();
+  saveState();
+  resetTimer();
+  closeFreshModal();
+  render();
+  renderTimer();
+}
+
+window.startTimer=startTimer;
+window.toggleJump=toggleJump;
+window.goToQ=goToQ;
+window.showResultsNow=showResultsNow;
+window.chooseAnswer=chooseAnswer;
+window.goPrev=goPrev;
+window.goNext=goNext;
+window.retryWrong=retryWrong;
+window.copyRes=copyRes;
+window.saveWrongAnswers=saveWrongAnswers;
+window.openFreshModalOriginal=openFreshModalOriginal;
+window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;
+window.confirmFresh=confirmFresh;
+
+render();
+renderTimer();
+if(state.timerStartedAt) startTimerInterval();
+</script>
+</body>
+</html>
