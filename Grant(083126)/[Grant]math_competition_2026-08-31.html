@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Math Competition</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh;padding:12px;max-width:720px;margin:0 auto;}
+.quiz-title{font-size:1.35rem;font-weight:700;text-align:center;color:#111;background:#fff;padding:10px 0 2px}
+.subtitle{text-align:center;font-size:0.85rem;color:#555;background:#fff;padding:2px 0 4px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:2px 12px 10px}
+.timer-bar { background: #fff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; border-radius:10px; margin-bottom:8px;}
+.timer-setup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+.timer-setup label { font-weight: 700; }
+.timer-setup input[type="number"] { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+.timer-start-btn { background: #185FA5; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.timer-running { display: flex; align-items: center; gap: 8px; }
+.timer-label { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.02em; }
+.timer-display { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+.timer-display.warn { color: #f5a623; }
+.timer-display.danger { color: #E24B4A; }
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0;background:#fff;padding:8px 12px;border-radius:10px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;border:none;}
+.results-pill{display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;border:none;}
+.quiz-area{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;}
+.q-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.q-num{font-size:0.82rem;color:#888;}
+.tag-badge{font-size:0.75rem;padding:2px 10px;border-radius:10px;background:#185FA5;color:#fff;font-weight:600;}
+.passage-box,.context-box{background:#f5f7fa;border-left:3px solid #185FA5;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.92rem;color:#333;line-height:1.5;}
+.q-text{font-size:1.08rem;font-weight:600;color:#111;margin-bottom:14px;line-height:1.5;}
+.options{display:flex;flex-direction:column;gap:9px;}
+.opt-btn{background:#e8edf4;color:#111;border:2px solid transparent;border-radius:9px;padding:11px 14px;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.4;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn.revealed{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{margin-top:12px;padding:10px 12px;background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;font-size:0.88rem;color:#333;display:none;}
+.nav-btns{display:flex;justify-content:space-between;margin-top:14px;gap:10px;}
+.prev-btn,.next-btn{padding:9px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer;}
+.prev-btn{background:#e8edf4;color:#333;}
+.next-btn{background:#1D9E75;color:#fff;}
+.results-screen{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;display:none;}
+.results-screen.show{display:block;}
+.results-heading{font-size:1.3rem;font-weight:700;color:#1D9E75;text-align:center;margin-bottom:6px;}
+.results-score{font-size:1rem;text-align:center;color:#555;margin-bottom:14px;}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;margin-bottom:16px;}
+.r-card{border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;font-size:0.82rem;font-weight:600;}
+.r-card.correct{background:#E1F5EE;color:#085041;}
+.r-card.wrong{background:#FCEBEB;color:#501313;}
+.r-card.skipped{background:#f5f7fa;color:#555;}
+.results-btns{display:flex;flex-direction:column;gap:9px;}
+.retry-btn{background:#1D9E75;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.copy-btn{background:#185FA5;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.save-btn{background:#f5a623;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.fresh-btn{background:#e8edf4;color:#111;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:12px;padding:24px 20px;max-width:320px;width:90%;text-align:center;}
+.modal-title{font-size:1.05rem;font-weight:700;margin-bottom:8px;}
+.modal-msg{font-size:0.9rem;color:#555;margin-bottom:18px;}
+.modal-btns{display:flex;gap:10px;justify-content:center;}
+.modal-cancel{background:#e8edf4;color:#333;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;cursor:pointer;}
+.modal-confirm{background:#E24B4A;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;font-weight:600;cursor:pointer;}
+</style>
+</head>
+<body><div class="quiz-title">[Grant] Math Competition</div><div class="subtitle" id="att-display">Total Attempts: 0</div><div class="instruction">Choose the correct answer for each problem.</div>
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="20"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">20:00</span>
+  </div>
+</div>
+<div id="nav-bar"><span id="nav-count">0 / 28</span><div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div><button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button></div><div id="dot-panel"></div>
+<div class="quiz-area" id="quiz-area">
+  <div class="q-header">
+    <span class="q-num" id="q-num"></span>
+    <span class="tag-badge" id="tag-badge" style="display:none;"></span>
+    
+  </div>
+  <div class="passage-box" id="passage-box" style="display:none;"></div>
+  <div class="context-box" id="context-box" style="display:none;"></div>
+  <div class="q-text" id="q-text"></div>
+  <div class="options" id="options"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-btns">
+    <button class="prev-btn" onclick="goPrev()">Prev</button>
+    <button class="next-btn" id="next-btn" onclick="goNext()">Next</button>
+  </div>
+</div>
+
+<div class="results-screen" id="results-screen">
+  <div class="results-heading" id="results-heading">Results</div>
+  <div class="results-score" id="results-score"></div>
+  <div class="results-grid" id="results-grid"></div>
+  <div class="results-btns">
+    <button class="retry-btn" onclick="retryWrong()">Retry Wrong Ones</button>
+    <button class="copy-btn" onclick="copyRes()">Copy All Results</button>
+    <button class="save-btn" onclick="saveWrongAnswers()">Save Wrong Answers</button>
+    <button class="fresh-btn" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button>
+    <button class="fresh-btn" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <div class="modal-title" id="freshModalTitle">Start Fresh?</div>
+    <div class="modal-msg" id="freshModalText">All progress will be cleared. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>var TITLE = "[Grant] Math Competition";var QUIZ_KEY = "quiz_grantmathcomp_28_20260831_v1";var ATT_KEY = "quiz_grantmathcomp_28_att_20260831_v1";var RAW_QUESTIONS = [{"stem": "Find the number of factors of 2² × 3⁴ × 5³ that are perfect squares.", "opts": ["18", "8", "12", "6"], "ci": 2, "exp": "Even exponents only. For 2 (max 2): {0,2} → 2. For 3 (max 4): {0,2,4} → 3. For 5 (max 3): {0,2} → 2. Total = 2 × 3 × 2 = 12.", "tag": "Chapter 5", "tagcolor": "#185FA5"}, {"stem": "What is the product of the 10th term and the 100th term of the following sequence: -297, -294, -291, ... ?", "opts": ["270", "-27,000", "0", "-270"], "ci": 2, "exp": "The common difference is 3. The 10th term is -297 + 9(3) = -270. The 100th term is -297 + 99(3) = 0. The product is -270 × 0 = 0.", "tag": "Chapter 10", "tagcolor": "#185FA5"}, {"stem": "Simplify <span class=\"rad\"><span class=\"rad-idx\">3</span><span class=\"rad-sign\"><span class=\"rad-tick\">√</span><span class=\"rad-body\">2² × 11</span></span></span> × <span class=\"rad\"><span class=\"rad-idx\">6</span><span class=\"rad-sign\"><span class=\"rad-tick\">√</span><span class=\"rad-body\">2² × 11⁴</span></span></span>.", "opts": ["44", "11", "22", "2"], "ci": 2, "exp": "= 2^(2/3) × 11^(1/3) × 2^(2/6) × 11^(4/6) = 2^(2/3+1/3) × 11^(1/3+2/3) = 2¹ × 11¹ = 22.", "tag": "Chapter 7", "tagcolor": "#185FA5"}, {"stem": "The ratio of unicycles to bicycles to tricycles in a park is 3:2:1. If there are 20 more unicycles than tricycles, how many bicycles are there?", "opts": ["40", "20", "30", "10"], "ci": 1, "exp": "Unicycles − tricycles = 2 parts = 20 → k = 10. Bicycles = 2 × 10 = 20.", "tag": "Chapter 9", "tagcolor": "#185FA5"}, {"stem": "If the product of two prime numbers is 141, what is the sum of the two prime numbers?", "opts": ["50", "52", "48", "47"], "ci": 0, "exp": "141 = 3 × 47. Both 3 and 47 are prime. Their sum = 3 + 47 = 50.", "tag": "Chapter 3", "tagcolor": "#185FA5"}, {"stem": "Find the sum of factors of 2² × 3³ × 5³ that are perfect squares.", "opts": ["650", "936", "1300", "2600"], "ci": 2, "exp": "Even exponents. For 2: {0,2} → (1+4)=5. For 3: {0,2} → (1+9)=10. For 5: {0,2} → (1+25)=26. Sum = 5 × 10 × 26 = 1300.", "tag": "Chapter 5", "tagcolor": "#185FA5"}, {"stem": "The ratio of DVD's to books on a shelf is 7 to 5. If there are 60 books, how many DVD's need to be removed from the shelf to give a new ratio of DVD's to books to be 2 to 3?", "opts": ["28", "44", "40", "56"], "ci": 1, "exp": "Current DVDs = 7/5 × 60 = 84. New DVDs needed = 2/3 × 60 = 40. Remove 84 − 40 = 44.", "tag": "Chapter 9", "tagcolor": "#185FA5"}, {"stem": "How many cubic inches are in <span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">8</span></span> of a cubic yard?", "opts": ["17,496 cubic inches", "17,280 cubic inches", "16,496 cubic inches", "18,224 cubic inches"], "ci": 0, "exp": "1 cubic yard = 27 cubic feet, and 1 cubic foot = 1728 cubic inches, so 1 cubic yard = 27 x 1728 = 46,656 cubic inches. Three eighths of that is 46,656 x 3/8 = 17,496 cubic inches.", "tag": "Chapter 11", "tagcolor": "#185FA5"}, {"stem": "Rank these sunglasses deals from LEAST to MOST expensive per pair: 1 for $14, 3 for $40, 9 for $124.", "opts": ["3 for $40, 9 for $124, 1 for $14", "9 for $124, 3 for $40, 1 for $14", "1 for $14, 9 for $124, 3 for $40", "3 for $40, 1 for $14, 9 for $124"], "ci": 0, "exp": "Per unit: 1 for $14 = $14.00, 3 for $40 ≈ $13.33, 9 for $124 ≈ $13.78. Least to most: 3 for $40, 9 for $124, 1 for $14.", "tag": "Chapter 6", "tagcolor": "#185FA5"}, {"stem": "A company wants to choose a group of 4 representatives from 10 employees to send to a conference. How many ways can this group be formed?", "opts": ["252", "210", "5,040", "120"], "ci": 1, "exp": "A \"group of representatives\" is unordered, so this is a combination: C(10,4) = 210. 5,040 is P(10,4), which would apply if the 4 representatives were assigned distinct ordered roles. 120 is C(10,3), one representative short. 252 is C(10,5), one representative too many.", "tag": "Chapter 14", "tagcolor": "#185FA5"}, {"stem": "If there are 15 boys and 25 girls in a book club, what percent of the book club members are boys?", "opts": ["25%", "60%", "37.5%", "40%"], "ci": 2, "exp": "Total members = 15 + 25 = 40. Boys: 15 ÷ 40 = 0.375 = 37.5%.", "tag": "Chapter 8", "tagcolor": "#185FA5"}, {"stem": "The mail carrier drives his truck for 840 miles every week. If he works 8 hours per day from Monday through Friday, what is his average driving speed in miles per hour?", "opts": ["26.25 mph", "21 mph", "18 mph", "24 mph"], "ci": 1, "exp": "Monday through Friday is 5 days, so he works 5 x 8 = 40 hours per week. His average speed is 840 / 40 = 21 miles per hour.", "tag": "Chapter 11", "tagcolor": "#185FA5"}, {"stem": "If a grandfather clock chimes once at 1 o'clock, twice at 2 o'clock, thrice at 3 o'clock and so on for each of the 12 hours, how many times does it chime in total over the 12 hour period?", "opts": ["66", "78", "72", "90"], "ci": 1, "exp": "The total is 1 + 2 + 3 + ... + 12 = 12 × 13 / 2 = 78.", "tag": "Chapter 10", "tagcolor": "#185FA5"}, {"stem": "How many three letter \"words\" are there if the letters cannot be repeated?", "opts": ["17,576", "13,800", "15,600", "26"], "ci": 2, "exp": "The first letter has 26 choices. Since letters cannot repeat, the second letter has only 25 remaining choices, and the third letter has 24 remaining choices. The total is 26 &times; 25 &times; 24 = 15,600.", "tag": "Chapter 13", "tagcolor": "#185FA5"}, {"stem": "A giant water fountain dispenses 40 quarts of water every minute. How many hours would it take to dispense 960 gallons of water? Express your answer as a mixed number.", "opts": ["2 hours", "1<span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">5</span></span> hours", "1<span class=\"fr\"><span class=\"fn\">1</span><span class=\"fb\"></span><span class=\"fd\">2</span></span> hours", "96 hours"], "ci": 1, "exp": "960 gallons = 960 &times; 4 = 3,840 quarts. At 40 quarts per minute, this takes 3,840 / 40 = 96 minutes, which is 96/60 = 1<span class=\"fr\"><span class=\"fn\">3</span><span class=\"fb\"></span><span class=\"fd\">5</span></span> hours.", "tag": "Chapter 12", "tagcolor": "#185FA5"}, {"stem": "6 workers can build 378 chairs in 7 hours. How many chairs can 4 workers build in 5 hours?", "opts": ["216 chairs", "180 chairs", "135 chairs", "270 chairs"], "ci": 1, "exp": "One worker builds 378 / (6 &times; 7) = 9 chairs per hour. Four workers working for 5 hours build 4 &times; 5 &times; 9 = 180 chairs.", "tag": "Chapter 12", "tagcolor": "#185FA5"}, {"stem": "Find the sum of all factors for 8, 16, 32, and 64. Which set of sums is correct?", "opts": ["16, 32, 64, 128", "15, 31, 63, 127", "14, 30, 62, 126", "15, 31, 63, 128"], "ci": 1, "exp": "8=2³: sum=(2⁴-1)/(2-1)=15. 16=2⁴: sum=31. 32=2⁵: sum=63. 64=2⁶: sum=127. Each is 2^(n+1)-1.", "tag": "Chapter 4", "tagcolor": "#185FA5"}, {"stem": "Solve: 2((2 + 3) × 4 − 18)", "opts": [0, 2, 8, 4], "ci": 3, "exp": "Inner: (2+3) = 5, 5 × 4 = 20, 20 − 18 = 2. Then 2 × 2 = 4.", "tag": "Chapter 1", "tagcolor": "#185FA5"}, {"stem": "Jerry is thinking of a number between 1 and 100. It is a multiple of both 11 and 5. What is the number?", "opts": ["65", "44", "110", "55"], "ci": 3, "exp": "A multiple of both 11 and 5 is a multiple of 55. Between 1 and 100, only 55 qualifies.", "tag": "Chapter 2", "tagcolor": "#185FA5"}, {"stem": "How many two-digit numbers are there if no digits can be repeated?", "opts": ["90", "72", "81", "100"], "ci": 2, "exp": "The first digit of a two-digit number cannot be 0, so it has 9 choices (1&ndash;9). The second digit can be any digit except the one already used for the first digit, which leaves 9 remaining choices (it can include 0, just not the first digit&#39;s value). The total is 9 &times; 9 = 81.", "tag": "Chapter 13", "tagcolor": "#185FA5"}, {"stem": "800 students attend a high school. If the enrollment increases by 20% the next year, how many students will attend the high school next year?", "opts": ["960", "840", "880", "1,000"], "ci": 0, "exp": "Increase = 20% × 800 = 160. Next year: 800 + 160 = 960 students.", "tag": "Chapter 8", "tagcolor": "#185FA5"}, {"stem": "Find the prime factorization AND the number of factors for 480.", "opts": ["2⁵ × 3 × 5 ; 24 factors", "2⁵ × 3² × 5 ; 36 factors", "2⁴ × 3 × 5 ; 20 factors", "2⁵ × 3 × 5 ; 20 factors"], "ci": 0, "exp": "480 = 32 × 15 = 2⁵ × 3 × 5. Number of factors = (5+1)(1+1)(1+1) = 6 × 2 × 2 = 24.", "tag": "Chapter 4", "tagcolor": "#185FA5"}, {"stem": "A store sells boxes: 1 for $3.00 or 11 for $30.00. What is the least John can spend to get exactly 100 boxes?", "opts": ["$273", "$300", "$270", "$276"], "ci": 0, "exp": "9 eleven-packs = 99 boxes + 1 single = 100 boxes. Cost = 9×$30 + 1×$3 = $270 + $3 = $273.", "tag": "Chapter 6", "tagcolor": "#185FA5"}, {"stem": "There are 4 boys and 4 girls standing in a line waiting to purchase movie tickets. How many ways can they stand in a line if all the boys must stand together and all the girls must stand together?", "opts": ["1,152", "2", "40,320", "48"], "ci": 0, "exp": "Treat the block of boys and the block of girls as two units: they can be ordered 2! ways (boys-first or girls-first). Within the boys' block, the 4 boys can be arranged 4! ways, and within the girls' block, the 4 girls can be arranged 4! ways. Total: 2! &times; 4! &times; 4! = 2 &times; 24 &times; 24 = 1,152. Just 2 only counts which block comes first and ignores the arrangements inside each block. 48 (2! &times; 4!) only arranges one of the two blocks internally. 40,320 is 8!, the count with no grouping restriction at all.", "tag": "Chapter 14", "tagcolor": "#185FA5"}, {"stem": "Simplify <span class=\"rad\"><span class=\"rad-idx\">6</span><span class=\"rad-sign\"><span class=\"rad-tick\">√</span><span class=\"rad-body\">2¹⁴</span></span></span> × <span class=\"rad\"><span class=\"rad-idx\">3</span><span class=\"rad-sign\"><span class=\"rad-tick\">√</span><span class=\"rad-body\">2⁵</span></span></span>.", "opts": ["2⁶ = 64", "2⁵ = 32", "2⁴ = 16", "2³ = 8"], "ci": 2, "exp": "2^(14/6) × 2^(5/3) = 2^(7/3) × 2^(5/3) = 2^(12/3) = 2⁴ = 16.", "tag": "Chapter 7", "tagcolor": "#185FA5"}, {"stem": "Solve: 32 − (16 − (8 − (4 − (2 − 1))))", "opts": [23, 19, 21, 17], "ci": 2, "exp": "Start innermost: 2 − 1 = 1. Then 4 − 1 = 3. Then 8 − 3 = 5. Then 16 − 5 = 11. Then 32 − 11 = 21.", "tag": "Chapter 1", "tagcolor": "#185FA5"}, {"stem": "If 5,A3B is a multiple of 9, what is the sum of all possible values of A + B?", "opts": ["10", "9", "12", "11"], "ci": 3, "exp": "Digit sum: 5+A+3+B = 8+A+B must be divisible by 9. So A+B=1 or A+B=10 (since A+B=19 is impossible for single digits). Sum of all possible values: 1+10=11.", "tag": "Chapter 2", "tagcolor": "#185FA5"}, {"stem": "Find the smallest three-digit prime number.", "opts": ["101", "100", "103", "107"], "ci": 0, "exp": "100 = 4×25, not prime. 101 is not divisible by 2,3,5,7 (since 11²=121>101), so 101 is prime.", "tag": "Chapter 3", "tagcolor": "#185FA5"}];var N = RAW_QUESTIONS.length;var ORDER_KEY = QUIZ_KEY + '_order_v1';
+function shuffleArr(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function identityOrder(){var o=[];for(var i=0;i<N;i++)o.push(i);return o;}
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length===0) return false;
+  for(var i=0;i<arr.length;i++){ if(typeof arr[i] !== 'number' || arr[i]<0 || arr[i]>=N) return false; }
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad');
+    return arr;
+  }catch(e){ try{localStorage.removeItem(ORDER_KEY);}catch(e2){} return null; }
+}
+function saveOrder(o){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(o)); }catch(e){} }
+
+var order = loadOrder() || identityOrder();
+if(!loadOrder()) saveOrder(order);
+var pendingFreshMode = 'original';
+
+function defaultState(){
+  return { cur:0, answers:{}, showResults:false, timerTotalSec:null, timerStartedAt:null };
+}
+function loadState(){
+  try{
+    var raw = localStorage.getItem(QUIZ_KEY);
+    if(!raw) return defaultState();
+    var s = JSON.parse(raw);
+    if(typeof s.cur !== 'number' || s.cur<0 || s.cur>=order.length) s.cur = 0;
+    if(typeof s.answers !== 'object' || s.answers===null) s.answers = {};
+    if(typeof s.showResults !== 'boolean') s.showResults = false;
+    if(typeof s.timerTotalSec === 'undefined') s.timerTotalSec = null;
+    if(typeof s.timerStartedAt === 'undefined') s.timerStartedAt = null;
+    return s;
+  }catch(e){ try{localStorage.removeItem(QUIZ_KEY);}catch(e2){} return defaultState(); }
+}
+function saveState(){ try{ localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); }catch(e){} }
+
+var state = loadState();
+var timerInterval = null;
+
+function getAttempts(){ try{ return parseInt(localStorage.getItem(ATT_KEY)||'0',10); }catch(e){ return 0; } }
+function incAttempts(){ try{ localStorage.setItem(ATT_KEY, String(getAttempts()+1)); }catch(e){} }
+function updateAttDisplay(){
+  var el = document.getElementById('att-display');
+  if(el) el.textContent = 'Total Attempts: ' + getAttempts();
+}
+
+function formatTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function renderTimer(){
+  var setupEl = document.getElementById('timerSetup');
+  var runningEl = document.getElementById('timerRunning');
+  var dispEl = document.getElementById('timerDisplay');
+  if(!setupEl||!runningEl||!dispEl) return;
+  if(!state.timerStartedAt){ setupEl.style.display='flex'; runningEl.style.display='none'; return; }
+  setupEl.style.display='none'; runningEl.style.display='flex';
+  var elapsed = (Date.now()-state.timerStartedAt)/1000;
+  var remaining = state.timerTotalSec - elapsed;
+  dispEl.classList.remove('warn','danger');
+  if(remaining<=0){ dispEl.textContent="Time's Up"; dispEl.classList.add('danger'); stopTimerInterval(); return; }
+  dispEl.textContent = formatTime(remaining);
+  if(remaining <= state.timerTotalSec*0.1) dispEl.classList.add('danger');
+  else if(remaining <= state.timerTotalSec*0.25) dispEl.classList.add('warn');
+}
+function startTimer(){
+  var input = document.getElementById('timerMinutesInput');
+  var minutes = parseFloat(input.value);
+  if(!minutes || minutes<=0) minutes=20;
+  state.timerTotalSec = Math.round(minutes*60);
+  state.timerStartedAt = Date.now();
+  saveState(); renderTimer(); startTimerInterval();
+}
+function startTimerInterval(){ stopTimerInterval(); timerInterval=setInterval(renderTimer,1000); }
+function stopTimerInterval(){ if(timerInterval){clearInterval(timerInterval); timerInterval=null;} }
+function resetTimer(){
+  state.timerTotalSec = null; state.timerStartedAt = null;
+  stopTimerInterval(); saveState(); renderTimer();
+}
+
+function render(){
+  updateAttDisplay();
+  var qa = document.getElementById('quiz-area');
+  var rs = document.getElementById('results-screen');
+  if(state.showResults){
+    qa.style.display='none';
+    rs.classList.add('show');
+    renderResults();
+    return;
+  }
+  qa.style.display='block';
+  rs.classList.remove('show');
+
+  var qi = order[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  document.getElementById('q-num').textContent = 'Q' + (state.cur+1) + ' / ' + order.length;
+
+  var badge = document.getElementById('tag-badge');
+  if(q.tag){
+    badge.style.display='inline-block';
+    badge.textContent = q.tag;
+    badge.style.background = q.tagcolor || '#185FA5';
+  } else { badge.style.display='none'; }
+
+  var pbox = document.getElementById('passage-box');
+  if(q.passage){ pbox.style.display='block'; pbox.innerHTML = q.passage; } else { pbox.style.display='none'; }
+  var cbox = document.getElementById('context-box');
+  if(q.context){ cbox.style.display='block'; cbox.innerHTML = q.context; } else { cbox.style.display='none'; }
+
+  document.getElementById('q-text').innerHTML = q.stem;
+
+  
+
+  var answered = state.answers[qi];
+  var optDiv = document.getElementById('options');
+  optDiv.innerHTML='';
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML = optText;
+    btn.disabled = answered !== undefined;
+    if(answered !== undefined){
+      if(idx === q.ci) btn.classList.add(answered===idx ? 'correct' : 'revealed');
+      else if(answered === idx) btn.classList.add('wrong');
+    }
+    btn.onclick = function(){ chooseAnswer(idx); };
+    optDiv.appendChild(btn);
+  });
+
+  var expDiv = document.getElementById('exp-box');
+  if(answered !== undefined && answered !== q.ci){
+    expDiv.style.display='block';
+    expDiv.innerHTML = q.exp;
+  } else {
+    expDiv.style.display='none';
+  }
+
+  var nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = (state.cur >= order.length-1) ? 'Show Results \u2192' : 'Next \u2192';
+
+  updateNav();
+}
+
+function updateNav(){
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  document.getElementById('nav-count').textContent = answered + ' / ' + order.length;
+  document.getElementById('prog-fill').style.width = (answered/order.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel = document.getElementById('dot-panel');
+  if(panel.style.display==='none') return;
+  var html='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var bg = state.answers[qi]===undefined ? '#d7dde6' : (state.answers[qi]===RAW_QUESTIONS[qi].ci ? '#185FA5' : '#E24B4A');
+    html += '<button class="dot" style="background:'+bg+';" onclick="goToQ('+pos+')">'+(pos+1)+'</button>';
+  }
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  if(answered===order.length){
+    html += '<br><button class="results-pill" onclick="showResultsNow()">Results</button>';
+  }
+  panel.innerHTML = html;
+}
+function toggleJump(){
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display==='none' || panel.style.display===''){
+    panel.style.display='block'; btn.innerHTML='Hide &#9652;'; renderDots();
+  } else {
+    panel.style.display='none'; btn.innerHTML='Jump &#9662;';
+  }
+}
+function goToQ(pos){
+  state.cur = pos; state.showResults=false; saveState(); render();
+}
+function showResultsNow(){
+  state.showResults = true; incAttempts(); saveState(); render();
+}
+function chooseAnswer(idx){
+  var qi = order[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState(); render();
+}
+function goPrev(){
+  if(state.cur>0){ state.cur--; saveState(); render(); }
+}
+function goNext(){
+  if(state.cur < order.length-1){ state.cur++; saveState(); render(); }
+  else { state.showResults=true; incAttempts(); saveState(); render(); }
+}
+function renderResults(){
+  var correct=0, wrong=0, skipped=0;
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]===undefined){ skipped++; continue; }
+    if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+  }
+  document.getElementById('results-score').textContent = correct+' correct, '+wrong+' wrong, '+skipped+' skipped - out of '+order.length;
+  var grid = document.getElementById('results-grid');
+  grid.innerHTML='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var card = document.createElement('div');
+    if(state.answers[qi]===undefined){
+      card.className='r-card skipped';
+      card.textContent='Q'+(pos+1)+' Skip';
+    } else {
+      var ok = state.answers[qi]===RAW_QUESTIONS[qi].ci;
+      card.className='r-card '+(ok?'correct':'wrong');
+      card.textContent='Q'+(pos+1)+' '+(ok?'OK':'X');
+    }
+    (function(p){ card.onclick=function(){ state.showResults=false; state.cur=p; saveState(); render(); }; })(pos);
+    grid.appendChild(card);
+  }
+}
+function retryWrong(){
+  var wrong=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      wrong.push(qi);
+    }
+  }
+  if(wrong.length===0) return;
+  wrong.forEach(function(qi){ delete state.answers[qi]; });
+  order = wrong;
+  saveOrder(order);
+  state.cur=0; state.showResults=false;
+  saveState(); render(); renderTimer();
+}
+function copyRes(){
+  var lines=[TITLE+' Results'];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    var s='Q'+(pos+1)+': ';
+    if(a===undefined) s+='Skipped';
+    else s += (a===RAW_QUESTIONS[qi].ci ? 'Correct' : 'Wrong');
+    lines.push(s);
+  }
+  var text = lines.join('\n');
+  try{
+    if(navigator.clipboard){ navigator.clipboard.writeText(text).catch(function(){}); }
+    else { var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+  }catch(e){}
+}
+function saveWrongAnswers(){
+  var wrongItems=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    if(a!==undefined && a!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongItems.push({ question: q.stem, yourAnswer: q.opts[a], correctAnswer: q.opts[q.ci], explanation: q.exp });
+    }
+  }
+  var blob = new Blob([JSON.stringify({title:TITLE, wrongAnswers:wrongItems}, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a2 = document.createElement('a');
+  a2.href = url; a2.download = QUIZ_KEY + '_wrong.json';
+  document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+  URL.revokeObjectURL(url);
+}
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var t = document.getElementById('freshModalTitle');
+  var m = document.getElementById('freshModalText');
+  if(mode==='random'){
+    t.textContent='Start Fresh (Random Order)?';
+    m.textContent='Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    t.textContent='Start Fresh (Original Order)?';
+    m.textContent='Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  order = (pendingFreshMode==='random') ? shuffleArr(identityOrder()) : identityOrder();
+  saveOrder(order);
+  state = defaultState();
+  saveState();
+  resetTimer();
+  closeFreshModal();
+  render();
+  renderTimer();
+}
+
+window.startTimer=startTimer;
+window.toggleJump=toggleJump;
+window.goToQ=goToQ;
+window.showResultsNow=showResultsNow;
+window.chooseAnswer=chooseAnswer;
+window.goPrev=goPrev;
+window.goNext=goNext;
+window.retryWrong=retryWrong;
+window.copyRes=copyRes;
+window.saveWrongAnswers=saveWrongAnswers;
+window.openFreshModalOriginal=openFreshModalOriginal;
+window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;
+window.confirmFresh=confirmFresh;
+
+render();
+renderTimer();
+if(state.timerStartedAt) startTimerInterval();
+</script>
+</body>
+</html>
