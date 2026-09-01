@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT Grammar</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh;padding:12px;max-width:720px;margin:0 auto;}
+.quiz-title{font-size:1.35rem;font-weight:700;text-align:center;color:#111;background:#fff;padding:10px 0 2px}
+.subtitle{text-align:center;font-size:0.85rem;color:#555;background:#fff;padding:2px 0 4px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:2px 12px 10px}
+.timer-bar { background: #fff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; border-radius:10px; margin-bottom:8px;}
+.timer-setup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+.timer-setup label { font-weight: 700; }
+.timer-setup input[type="number"] { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+.timer-start-btn { background: #185FA5; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.timer-running { display: flex; align-items: center; gap: 8px; }
+.timer-label { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.02em; }
+.timer-display { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+.timer-display.warn { color: #f5a623; }
+.timer-display.danger { color: #E24B4A; }
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0;background:#fff;padding:8px 12px;border-radius:10px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;border:none;}
+.results-pill{display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;border:none;}
+.quiz-area{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;}
+.q-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.q-num{font-size:0.82rem;color:#888;}
+.tag-badge{font-size:0.75rem;padding:2px 10px;border-radius:10px;background:#185FA5;color:#fff;font-weight:600;}
+.passage-box,.context-box{background:#f5f7fa;border-left:3px solid #185FA5;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.92rem;color:#333;line-height:1.5;}
+.q-text{font-size:1.08rem;font-weight:600;color:#111;margin-bottom:14px;line-height:1.5;}
+.options{display:flex;flex-direction:column;gap:9px;}
+.opt-btn{background:#e8edf4;color:#111;border:2px solid transparent;border-radius:9px;padding:11px 14px;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.4;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn.revealed{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{margin-top:12px;padding:10px 12px;background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;font-size:0.88rem;color:#333;display:none;}
+.nav-btns{display:flex;justify-content:space-between;margin-top:14px;gap:10px;}
+.prev-btn,.next-btn{padding:9px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer;}
+.prev-btn{background:#e8edf4;color:#333;}
+.next-btn{background:#1D9E75;color:#fff;}
+.results-screen{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;display:none;}
+.results-screen.show{display:block;}
+.results-heading{font-size:1.3rem;font-weight:700;color:#1D9E75;text-align:center;margin-bottom:6px;}
+.results-score{font-size:1rem;text-align:center;color:#555;margin-bottom:14px;}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;margin-bottom:16px;}
+.r-card{border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;font-size:0.82rem;font-weight:600;}
+.r-card.correct{background:#E1F5EE;color:#085041;}
+.r-card.wrong{background:#FCEBEB;color:#501313;}
+.r-card.skipped{background:#f5f7fa;color:#555;}
+.results-btns{display:flex;flex-direction:column;gap:9px;}
+.retry-btn{background:#1D9E75;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.copy-btn{background:#185FA5;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.save-btn{background:#f5a623;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.fresh-btn{background:#e8edf4;color:#111;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:12px;padding:24px 20px;max-width:320px;width:90%;text-align:center;}
+.modal-title{font-size:1.05rem;font-weight:700;margin-bottom:8px;}
+.modal-msg{font-size:0.9rem;color:#555;margin-bottom:18px;}
+.modal-btns{display:flex;gap:10px;justify-content:center;}
+.modal-cancel{background:#e8edf4;color:#333;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;cursor:pointer;}
+.modal-confirm{background:#E24B4A;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;font-weight:600;cursor:pointer;}
+</style>
+</head>
+<body><div class="quiz-title">[Sion] SAT Grammar</div><div class="subtitle" id="att-display">Total Attempts: 0</div><div class="instruction">Choose the revision that best fixes the underlined portion of the passage.</div>
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="20"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">20:00</span>
+  </div>
+</div>
+<div id="nav-bar"><span id="nav-count">0 / 20</span><div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div><button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button></div><div id="dot-panel"></div>
+<div class="quiz-area" id="quiz-area">
+  <div class="q-header">
+    <span class="q-num" id="q-num"></span>
+    <span class="tag-badge" id="tag-badge" style="display:none;"></span>
+
+  </div>
+  <div class="passage-box" id="passage-box" style="display:none;"></div>
+  <div class="context-box" id="context-box" style="display:none;"></div>
+  <div class="q-text" id="q-text"></div>
+  <div class="options" id="options"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-btns">
+    <button class="prev-btn" onclick="goPrev()">Prev</button>
+    <button class="next-btn" id="next-btn" onclick="goNext()">Next</button>
+  </div>
+</div>
+
+<div class="results-screen" id="results-screen">
+  <div class="results-heading" id="results-heading">Results</div>
+  <div class="results-score" id="results-score"></div>
+  <div class="results-grid" id="results-grid"></div>
+  <div class="results-btns">
+    <button class="retry-btn" onclick="retryWrong()">Retry Wrong Ones</button>
+    <button class="copy-btn" onclick="copyRes()">Copy All Results</button>
+    <button class="save-btn" onclick="saveWrongAnswers()">Save Wrong Answers</button>
+    <button class="fresh-btn" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button>
+    <button class="fresh-btn" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <div class="modal-title" id="freshModalTitle">Start Fresh?</div>
+    <div class="modal-msg" id="freshModalText">All progress will be cleared. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>var TITLE = "[Sion] SAT Grammar";var QUIZ_KEY = "quiz_sionsatgrammar_20260901_v1";var ATT_KEY = "quiz_sionsatgrammar_att_20260901_v1";var RAW_QUESTIONS = [{"stem": "Which choice provides the best revision of the underlined portion?", "context": "The museum's new wing, which opened <u>last spring was</u> designed by a team of local architects, features a rotating exhibit on regional textiles.", "opts": ["last spring, was,", "last spring was", "last spring; was", "last spring, was"], "ci": 3, "exp": "The clause \"which opened last spring\" is nonessential information about the new wing and needs a comma closing it off, right before \"was.\" \"last spring, was\" supplies that missing comma. \"last spring was\" leaves the closing comma out entirely. \"last spring; was\" wrongly uses a semicolon, which cannot close a nonessential clause this way. \"last spring, was,\" inserts an extra, unnecessary comma after \"was.\"", "tag": "Comma with Nonessential Clause", "tagcolor": "#185FA5"}, {"stem": "Which choice provides the best revision of the underlined portion?", "context": "The collection of rare manuscripts, housed in a climate-controlled vault since the renovation, <u>remain</u> one of the university's most valuable assets.", "opts": ["remain", "have remained", "remains", "are remaining"], "ci": 2, "exp": "The subject is the singular \"collection,\" not the plural \"manuscripts\" inside the intervening phrase, so the singular verb \"remains\" is required. \"remain\" pairs a singular subject with a plural verb. \"are remaining\" is a plural progressive form that still disagrees with \"collection.\" \"have remained\" is a plural present-perfect form with the same disagreement.", "tag": "Subject-Verb Agreement", "tagcolor": "#1D9E75"}, {"stem": "Which choice provides the best revision of the underlined portion?", "context": "Each of the interns submitted <u>their</u> final report a week before the deadline, impressing the supervising editor.", "opts": ["their", "its", "his or her", "the"], "ci": 2, "exp": "\"Each\" is a singular indefinite pronoun, so it requires a singular possessive like \"his or her.\" \"their\" is plural and does not agree with the singular \"each.\" \"its\" is singular but refers to things, not people, so it does not fit \"interns.\" \"the\" removes the needed possessive meaning entirely, making it unclear whose report is meant.", "tag": "Pronoun-Antecedent Agreement", "tagcolor": "#f5a623"}, {"stem": "Which choice provides the best revision of the underlined portion?", "context": "The award will be presented to <u>whomever</u> submits the most compelling proposal by the end of the month.", "opts": ["whom", "whomever", "who's", "whoever"], "ci": 3, "exp": "The pronoun functions as the subject of the verb \"submits,\" so the subject case \"whoever\" is required. \"whomever\" is the object case, which is incorrect for a subject. \"whom\" is also an object-case pronoun and cannot serve as the subject of \"submits.\" \"who's\" is a contraction of \"who is,\" which does not fit the sentence grammatically at all.", "tag": "Pronoun Case", "tagcolor": "#E24B4A"}, {"stem": "Which choice provides the best revision of the underlined portion?", "context": "The workshop taught participants how to negotiate contracts, <u>managing client relationships, and to resolve</u> disputes efficiently.", "opts": ["manage client relationships, and to resolve", "managing client relationships, and to resolve", "to manage client relationships, and resolving", "to manage client relationships, and to resolve"], "ci": 3, "exp": "All three items in the list must match the infinitive form of \"to negotiate.\" \"to manage client relationships, and to resolve\" keeps every item in the infinitive form. \"managing client relationships, and to resolve\" shifts the second item to a gerund. \"to manage client relationships, and resolving\" shifts the third item to a gerund instead. \"manage client relationships, and to resolve\" drops the \"to\" from the second item, breaking the pattern.", "tag": "Parallel Structure", "tagcolor": "#8e44ad"}, {"stem": "Which choice provides the best revision of the underlined portion?", "context": "<u>Covered in frost, the hikers admired the meadow</u> as the sun rose over the ridge.", "opts": ["Covered in frost, the hikers' meadow was admired", "Covered in frost, the meadow captivated the hikers", "The hikers, covered in frost, admired the meadow", "Covered in frost, the hikers admired the meadow"], "ci": 1, "exp": "The opening phrase \"Covered in frost\" must sit next to the noun it describes, which is the meadow, not the hikers. \"Covered in frost, the meadow captivated the hikers\" places \"the meadow\" right after the modifier. \"Covered in frost, the hikers admired the meadow\" places \"the hikers\" right after the modifier, illogically suggesting the hikers were covered in frost. \"The hikers, covered in frost, admired the meadow\" keeps the same illogical meaning, just repositioned. \"Covered in frost, the hikers' meadow was admired\" places the possessive \"the hikers'\" right after the modifier rather than the meadow itself.", "tag": "Misplaced Modifier", "tagcolor": "#0e7c86"}, {"stem": "Which choice provides the best revision of the underlined portion?", "context": "<u>After finishing the quarterly audit, the report was submitted</u> to the board for review.", "opts": ["After finishing the quarterly audit, the accountant submitted the report", "After the quarterly audit was finished by the report, it was submitted", "After finishing the quarterly audit, the report was submitted", "Finishing the quarterly audit, the report was submitted"], "ci": 0, "exp": "The opening phrase \"After finishing the quarterly audit\" needs a logical doer right after it, since a report cannot finish an audit. \"After finishing the quarterly audit, the accountant submitted the report\" supplies \"the accountant\" as that doer. \"After finishing the quarterly audit, the report was submitted\" leaves the report as the one who finished the audit, which makes no sense. \"After the quarterly audit was finished by the report, it was submitted\" keeps the same illogical idea that the report finished the audit. \"Finishing the quarterly audit, the report was submitted\" repeats the same dangling-modifier error.", "tag": "Dangling Modifier", "tagcolor": "#c0392b"}, {"stem": "Which choice provides the best revision of the underlined portion?", "context": "By the time the technician arrived, the server <u>already crashes</u> twice, forcing the team to restart the entire system.", "opts": ["already crashed", "already crashes", "has already crashed", "had already crashed"], "ci": 3, "exp": "Because the crashing happened before another past event (\"the technician arrived\"), the past-perfect \"had already crashed\" is required. \"already crashes\" is present tense and does not fit a sentence anchored in the past. \"already crashed\" is simple past, which does not show the crashing was completed before the technician arrived. \"has already crashed\" is present perfect, which does not fit a sentence describing events entirely in the past.", "tag": "Verb Tense Consistency", "tagcolor": "#2c3e50"}, {"stem": "Which choice provides the best revision of the underlined portion?", "context": "After several students raised concerns during office hours, the <u>students</u> feedback prompted the instructor to revise the syllabus before the next semester began.", "opts": ["students'", "student's", "students's", "students"], "ci": 0, "exp": "\"students'\" is the correct plural possessive, showing the feedback belongs to multiple students. \"students\" is only plural, with no possessive meaning at all. \"student's\" is a singular possessive, which does not match the several students mentioned earlier in the sentence. \"students's\" is not a standard possessive form in English.", "tag": "Apostrophes and Possessives", "tagcolor": "#16a085"}, {"stem": "Which choice provides the best revision of the underlined portion?", "context": "The negotiations stalled for weeks<u>, the two companies could not agree</u> on a fair licensing fee.", "opts": [", however the two companies could not agree", "; the two companies could not agree", ": the two companies could not agree", ", the two companies could not agree"], "ci": 1, "exp": "Both parts of the sentence are independent clauses, so a semicolon is needed to join them without a conjunction. \"; the two companies could not agree\" correctly uses the semicolon. \", the two companies could not agree\" creates a comma splice, joining two independent clauses with only a comma. \": the two companies could not agree\" misuses a colon, which is not the standard way to join two independent clauses like these. \", however the two companies could not agree\" still leaves a comma splice, since a transitional word like \"however\" needs a semicolon before it, not just a comma.", "tag": "Semicolons", "tagcolor": "#d35400"}, {"stem": "Which choice provides the best revision of the underlined portion?", "context": "The lab required exactly three items before testing could begin<u>,</u> a calibrated scale, a control sample, and a data sheet.", "opts": [" -", ";", ":", ","], "ci": 2, "exp": "A colon correctly introduces the list explaining what the three required items were, since the words before it form a complete sentence. A comma alone cannot introduce a list this way after a complete independent clause. A semicolon is used to join two independent clauses or separate complex list items, not to introduce a simple list like this one. A single dash is not the conventional punctuation for introducing a list after a complete sentence in formal writing.", "tag": "Colons", "tagcolor": "#185FA5"}, {"stem": "Which choice provides the best revision of the underlined portion?", "context": "Rainfall in the region was significantly below average this year. <u>As a result</u>, several farms reported near-record harvests due to a new irrigation technique adopted early in the season.", "opts": ["Nevertheless", "Therefore", "As a result", "Consequently"], "ci": 0, "exp": "The near-record harvests happen despite the low rainfall, so a contrast transition like \"Nevertheless\" fits best. \"As a result,\" \"Consequently,\" and \"Therefore\" all signal a cause-and-effect relationship, but the sentence describes contrast, not the low rainfall causing good harvests.", "tag": "Transitions", "tagcolor": "#1D9E75"}, {"stem": "Which choice provides the best revision of the underlined portion?", "context": "The committee decided to <u>combine together</u> the two proposals into a single, more comprehensive plan.", "opts": ["combine together as one", "combine together", "jointly combine", "combine"], "ci": 3, "exp": "\"combine\" already means to join things together, so adding \"together\" repeats the same idea unnecessarily. \"combine together\" keeps the redundant word. \"jointly combine\" still repeats the idea of joining twice, since \"jointly\" and \"combine\" overlap in meaning. \"combine together as one\" piles on even more redundant wording.", "tag": "Redundancy", "tagcolor": "#f5a623"}, {"stem": "Which choice provides the best revision of the underlined portion?", "context": "<u>In spite of the fact that</u> the software update fixed several bugs, users continued to report crashes on older devices.", "opts": ["In spite of the fact that", "Regardless of the fact that", "Although", "Despite the fact that"], "ci": 2, "exp": "\"Although\" conveys the same contrast in a single concise word. \"In spite of the fact that,\" \"Despite the fact that,\" and \"Regardless of the fact that\" are all wordier phrases that express the same contrast with unnecessary extra words.", "tag": "Concision", "tagcolor": "#E24B4A"}, {"stem": "Which choice provides the best revision of the underlined portion?", "context": "<u>The bridge was closed for repairs. Commuters took a longer route to work.</u>", "opts": ["The bridge was closed for repairs. Commuters took a longer route to work.", "Because the bridge was closed for repairs, commuters took a longer route to work.", "The bridge was closed for repairs, and commuters took a longer route to work, because of that.", "The bridge was closed for repairs, commuters took a longer route to work."], "ci": 1, "exp": "The subordinating conjunction \"Because\" combines the two related ideas into one sentence and clearly shows the cause-and-effect relationship. \"The bridge was closed for repairs. Commuters took a longer route to work.\" leaves the ideas as two choppy, disconnected sentences. \"The bridge was closed for repairs, commuters took a longer route to work.\" creates a comma splice by joining two independent clauses with only a comma. \"The bridge was closed for repairs, and commuters took a longer route to work, because of that.\" is needlessly wordy, repeating the cause-and-effect idea twice.", "tag": "Sentence Combining (Subordination)", "tagcolor": "#8e44ad"}, {"stem": "Which choice provides the best revision of the underlined portion?", "context": "The director wanted to shoot the scene at sunset, <u>so</u> the crew had already dismantled the lighting equipment for the day.", "opts": ["for", "so", "and", "but"], "ci": 3, "exp": "The sentence describes a contrast between what the director wanted and what the crew had already done, so the contrasting conjunction \"but\" is needed. \"so\" incorrectly signals that the crew's action was a result of the director's wish, which is not the relationship described. \"and\" signals simple addition and does not capture the contrast. \"for\" signals a cause in the reverse direction and does not fit here either.", "tag": "Coordinating Conjunctions", "tagcolor": "#0e7c86"}, {"stem": "Which choice provides the best revision of the underlined portion?", "context": "The forecast predicted heavy snow<u>, the school</u> district canceled classes for the entire week.", "opts": [", moreover the school", ", however the school", ". The school", ", the school"], "ci": 2, "exp": "The original joins two independent clauses with only a comma, creating a comma splice. \". The school\" fixes this by ending the first clause with a period and starting a new, capitalized sentence. \", the school\" keeps the comma splice unchanged. \", however the school\" and \", moreover the school\" both add a transitional word but still lack the semicolon or period that a transitional word requires between two independent clauses, so the comma splice remains.", "tag": "Comma Splices", "tagcolor": "#c0392b"}, {"stem": "Which choice provides the best revision of the underlined portion?", "context": "<u>The engineer reviewed the blueprints she found an error in the load calculations</u>.", "opts": ["The engineer reviewed the blueprints, and she found an error in the load calculations", "The engineer reviewed the blueprints; she found, an error in the load calculations", "The engineer reviewed the blueprints she found, an error in the load calculations", "The engineer reviewed the blueprints she found an error in the load calculations"], "ci": 0, "exp": "The original fuses two independent clauses together with no punctuation or conjunction at all, making it a run-on sentence. \"The engineer reviewed the blueprints, and she found an error in the load calculations\" correctly separates the clauses with a comma and the coordinating conjunction \"and.\" \"The engineer reviewed the blueprints she found an error in the load calculations\" is the uncorrected run-on. \"The engineer reviewed the blueprints she found, an error in the load calculations\" adds a comma in the wrong place and still runs the two clauses together. \"The engineer reviewed the blueprints; she found, an error in the load calculations\" correctly separates the clauses with a semicolon but then adds an unnecessary comma before \"an error.\"", "tag": "Run-On Sentences", "tagcolor": "#2c3e50"}, {"stem": "Which choice provides the best revision of the underlined portion?", "context": "The recipe called for two eggs, a cup of flour<u> and a pinch</u> of salt.", "opts": [", but a pinch", " and a pinch", "; and a pinch", ", and a pinch"], "ci": 3, "exp": "In a series of three or more items, a comma is needed before the conjunction that introduces the final item. \", and a pinch\" correctly adds that comma before \"and.\" \" and a pinch\" leaves the required comma out. \", but a pinch\" wrongly uses the contrasting conjunction \"but\" in what should be a simple list. \"; and a pinch\" wrongly uses a semicolon, which is reserved for separating list items that themselves contain internal commas, not simple items like these.", "tag": "Series Commas", "tagcolor": "#16a085"}, {"stem": "Which choice provides the best revision of the underlined portion?", "context": "The new marketing campaign is expected to <u>affect</u> a noticeable increase in quarterly sales.", "opts": ["affects", "affect", "effects", "effect"], "ci": 3, "exp": "The intended meaning here is \"to cause or bring about,\" which is the verb \"effect,\" as in \"effect a change.\" \"affect\" is a different verb meaning \"to influence,\" which does not match the intended meaning of causing the increase. \"effects\" and \"affects\" are both incorrectly conjugated for the singular subject \"campaign\" and carry the same meaning problems as their base forms.", "tag": "Commonly Confused Words", "tagcolor": "#d35400"}];var N = RAW_QUESTIONS.length;var ORDER_KEY = QUIZ_KEY + '_order_v1';
+function shuffleArr(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function identityOrder(){var o=[];for(var i=0;i<N;i++)o.push(i);return o;}
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length===0) return false;
+  for(var i=0;i<arr.length;i++){ if(typeof arr[i] !== 'number' || arr[i]<0 || arr[i]>=N) return false; }
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad');
+    return arr;
+  }catch(e){ try{localStorage.removeItem(ORDER_KEY);}catch(e2){} return null; }
+}
+function saveOrder(o){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(o)); }catch(e){} }
+
+var order = loadOrder() || identityOrder();
+if(!loadOrder()) saveOrder(order);
+var pendingFreshMode = 'original';
+
+function defaultState(){
+  return { cur:0, answers:{}, showResults:false, timerTotalSec:null, timerStartedAt:null };
+}
+function loadState(){
+  try{
+    var raw = localStorage.getItem(QUIZ_KEY);
+    if(!raw) return defaultState();
+    var s = JSON.parse(raw);
+    if(typeof s.cur !== 'number' || s.cur<0 || s.cur>=order.length) s.cur = 0;
+    if(typeof s.answers !== 'object' || s.answers===null) s.answers = {};
+    if(typeof s.showResults !== 'boolean') s.showResults = false;
+    if(typeof s.timerTotalSec === 'undefined') s.timerTotalSec = null;
+    if(typeof s.timerStartedAt === 'undefined') s.timerStartedAt = null;
+    return s;
+  }catch(e){ try{localStorage.removeItem(QUIZ_KEY);}catch(e2){} return defaultState(); }
+}
+function saveState(){ try{ localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); }catch(e){} }
+
+var state = loadState();
+var timerInterval = null;
+
+function getAttempts(){ try{ return parseInt(localStorage.getItem(ATT_KEY)||'0',10); }catch(e){ return 0; } }
+function incAttempts(){ try{ localStorage.setItem(ATT_KEY, String(getAttempts()+1)); }catch(e){} }
+function updateAttDisplay(){
+  var el = document.getElementById('att-display');
+  if(el) el.textContent = 'Total Attempts: ' + getAttempts();
+}
+
+function formatTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function renderTimer(){
+  var setupEl = document.getElementById('timerSetup');
+  var runningEl = document.getElementById('timerRunning');
+  var dispEl = document.getElementById('timerDisplay');
+  if(!setupEl||!runningEl||!dispEl) return;
+  if(!state.timerStartedAt){ setupEl.style.display='flex'; runningEl.style.display='none'; return; }
+  setupEl.style.display='none'; runningEl.style.display='flex';
+  var elapsed = (Date.now()-state.timerStartedAt)/1000;
+  var remaining = state.timerTotalSec - elapsed;
+  dispEl.classList.remove('warn','danger');
+  if(remaining<=0){ dispEl.textContent="Time's Up"; dispEl.classList.add('danger'); stopTimerInterval(); return; }
+  dispEl.textContent = formatTime(remaining);
+  if(remaining <= state.timerTotalSec*0.1) dispEl.classList.add('danger');
+  else if(remaining <= state.timerTotalSec*0.25) dispEl.classList.add('warn');
+}
+function startTimer(){
+  var input = document.getElementById('timerMinutesInput');
+  var minutes = parseFloat(input.value);
+  if(!minutes || minutes<=0) minutes=20;
+  state.timerTotalSec = Math.round(minutes*60);
+  state.timerStartedAt = Date.now();
+  saveState(); renderTimer(); startTimerInterval();
+}
+function startTimerInterval(){ stopTimerInterval(); timerInterval=setInterval(renderTimer,1000); }
+function stopTimerInterval(){ if(timerInterval){clearInterval(timerInterval); timerInterval=null;} }
+function resetTimer(){
+  state.timerTotalSec = null; state.timerStartedAt = null;
+  stopTimerInterval(); saveState(); renderTimer();
+}
+
+function render(){
+  updateAttDisplay();
+  var qa = document.getElementById('quiz-area');
+  var rs = document.getElementById('results-screen');
+  if(state.showResults){
+    qa.style.display='none';
+    rs.classList.add('show');
+    renderResults();
+    return;
+  }
+  qa.style.display='block';
+  rs.classList.remove('show');
+
+  var qi = order[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  document.getElementById('q-num').textContent = 'Q' + (state.cur+1) + ' / ' + order.length;
+
+  var badge = document.getElementById('tag-badge');
+  if(q.tag){
+    badge.style.display='inline-block';
+    badge.textContent = q.tag;
+    badge.style.background = q.tagcolor || '#185FA5';
+  } else { badge.style.display='none'; }
+
+  var pbox = document.getElementById('passage-box');
+  if(q.passage){ pbox.style.display='block'; pbox.innerHTML = q.passage; } else { pbox.style.display='none'; }
+  var cbox = document.getElementById('context-box');
+  if(q.context){ cbox.style.display='block'; cbox.innerHTML = q.context; } else { cbox.style.display='none'; }
+
+  document.getElementById('q-text').innerHTML = q.stem;
+
+
+
+  var answered = state.answers[qi];
+  var optDiv = document.getElementById('options');
+  optDiv.innerHTML='';
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML = optText;
+    btn.disabled = answered !== undefined;
+    if(answered !== undefined){
+      if(idx === q.ci) btn.classList.add(answered===idx ? 'correct' : 'revealed');
+      else if(answered === idx) btn.classList.add('wrong');
+    }
+    btn.onclick = function(){ chooseAnswer(idx); };
+    optDiv.appendChild(btn);
+  });
+
+  var expDiv = document.getElementById('exp-box');
+  if(answered !== undefined && answered !== q.ci){
+    expDiv.style.display='block';
+    expDiv.innerHTML = q.exp;
+  } else {
+    expDiv.style.display='none';
+  }
+
+  var nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = (state.cur >= order.length-1) ? 'Show Results →' : 'Next →';
+
+  updateNav();
+}
+
+function updateNav(){
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  document.getElementById('nav-count').textContent = answered + ' / ' + order.length;
+  document.getElementById('prog-fill').style.width = (answered/order.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel = document.getElementById('dot-panel');
+  if(panel.style.display==='none') return;
+  var html='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var bg = state.answers[qi]===undefined ? '#d7dde6' : (state.answers[qi]===RAW_QUESTIONS[qi].ci ? '#185FA5' : '#E24B4A');
+    html += '<button class="dot" style="background:'+bg+';" onclick="goToQ('+pos+')">'+(pos+1)+'</button>';
+  }
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  if(answered===order.length){
+    html += '<br><button class="results-pill" onclick="showResultsNow()">Results</button>';
+  }
+  panel.innerHTML = html;
+}
+function toggleJump(){
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display==='none' || panel.style.display===''){
+    panel.style.display='block'; btn.innerHTML='Hide &#9652;'; renderDots();
+  } else {
+    panel.style.display='none'; btn.innerHTML='Jump &#9662;';
+  }
+}
+function goToQ(pos){
+  state.cur = pos; state.showResults=false; saveState(); render();
+}
+function showResultsNow(){
+  state.showResults = true; incAttempts(); saveState(); render();
+}
+function chooseAnswer(idx){
+  var qi = order[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState(); render();
+}
+function goPrev(){
+  if(state.cur>0){ state.cur--; saveState(); render(); }
+}
+function goNext(){
+  if(state.cur < order.length-1){ state.cur++; saveState(); render(); }
+  else { state.showResults=true; incAttempts(); saveState(); render(); }
+}
+function renderResults(){
+  var correct=0, wrong=0, skipped=0;
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]===undefined){ skipped++; continue; }
+    if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+  }
+  document.getElementById('results-score').textContent = correct+' correct, '+wrong+' wrong, '+skipped+' skipped - out of '+order.length;
+  var grid = document.getElementById('results-grid');
+  grid.innerHTML='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var card = document.createElement('div');
+    if(state.answers[qi]===undefined){
+      card.className='r-card skipped';
+      card.textContent='Q'+(pos+1)+' Skip';
+    } else {
+      var ok = state.answers[qi]===RAW_QUESTIONS[qi].ci;
+      card.className='r-card '+(ok?'correct':'wrong');
+      card.textContent='Q'+(pos+1)+' '+(ok?'OK':'X');
+    }
+    (function(p){ card.onclick=function(){ state.showResults=false; state.cur=p; saveState(); render(); }; })(pos);
+    grid.appendChild(card);
+  }
+}
+function retryWrong(){
+  var wrong=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      wrong.push(qi);
+    }
+  }
+  if(wrong.length===0) return;
+  wrong.forEach(function(qi){ delete state.answers[qi]; });
+  order = wrong;
+  saveOrder(order);
+  state.cur=0; state.showResults=false;
+  saveState(); render(); renderTimer();
+}
+function copyRes(){
+  var lines=[TITLE+' Results'];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    var s='Q'+(pos+1)+': ';
+    if(a===undefined) s+='Skipped';
+    else s += (a===RAW_QUESTIONS[qi].ci ? 'Correct' : 'Wrong');
+    lines.push(s);
+  }
+  var text = lines.join('\n');
+  try{
+    if(navigator.clipboard){ navigator.clipboard.writeText(text).catch(function(){}); }
+    else { var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+  }catch(e){}
+}
+function saveWrongAnswers(){
+  var wrongItems=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    if(a!==undefined && a!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongItems.push({ question: q.stem, yourAnswer: q.opts[a], correctAnswer: q.opts[q.ci], explanation: q.exp });
+    }
+  }
+  var blob = new Blob([JSON.stringify({title:TITLE, wrongAnswers:wrongItems}, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a2 = document.createElement('a');
+  a2.href = url; a2.download = QUIZ_KEY + '_wrong.json';
+  document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+  URL.revokeObjectURL(url);
+}
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var t = document.getElementById('freshModalTitle');
+  var m = document.getElementById('freshModalText');
+  if(mode==='random'){
+    t.textContent='Start Fresh (Random Order)?';
+    m.textContent='Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    t.textContent='Start Fresh (Original Order)?';
+    m.textContent='Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  order = (pendingFreshMode==='random') ? shuffleArr(identityOrder()) : identityOrder();
+  saveOrder(order);
+  state = defaultState();
+  saveState();
+  resetTimer();
+  closeFreshModal();
+  render();
+  renderTimer();
+}
+
+window.startTimer=startTimer;
+window.toggleJump=toggleJump;
+window.goToQ=goToQ;
+window.showResultsNow=showResultsNow;
+window.chooseAnswer=chooseAnswer;
+window.goPrev=goPrev;
+window.goNext=goNext;
+window.retryWrong=retryWrong;
+window.copyRes=copyRes;
+window.saveWrongAnswers=saveWrongAnswers;
+window.openFreshModalOriginal=openFreshModalOriginal;
+window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;
+window.confirmFresh=confirmFresh;
+
+render();
+renderTimer();
+if(state.timerStartedAt) startTimerInterval();
+</script>
+</body>
+</html>
