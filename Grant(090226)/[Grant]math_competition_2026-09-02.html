@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Math Competition</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh;padding:12px;max-width:720px;margin:0 auto;}
+.quiz-title{font-size:1.35rem;font-weight:700;text-align:center;color:#111;background:#fff;padding:10px 0 2px}
+.subtitle{text-align:center;font-size:0.85rem;color:#555;background:#fff;padding:2px 0 4px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:2px 12px 10px}
+.timer-bar { background: #fff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; border-radius:10px; margin-bottom:8px;}
+.timer-setup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+.timer-setup label { font-weight: 700; }
+.timer-setup input[type="number"] { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+.timer-start-btn { background: #185FA5; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.timer-running { display: flex; align-items: center; gap: 8px; }
+.timer-label { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.02em; }
+.timer-display { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+.timer-display.warn { color: #f5a623; }
+.timer-display.danger { color: #E24B4A; }
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0;background:#fff;padding:8px 12px;border-radius:10px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;border:none;}
+.results-pill{display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;border:none;}
+.quiz-area{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;}
+.q-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.q-num{font-size:0.82rem;color:#888;}
+.tag-badge{font-size:0.75rem;padding:2px 10px;border-radius:10px;background:#185FA5;color:#fff;font-weight:600;}
+.passage-box,.context-box{background:#f5f7fa;border-left:3px solid #185FA5;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.92rem;color:#333;line-height:1.5;}
+.q-text{font-size:1.08rem;font-weight:600;color:#111;margin-bottom:14px;line-height:1.5;}
+.options{display:flex;flex-direction:column;gap:9px;}
+.opt-btn{background:#e8edf4;color:#111;border:2px solid transparent;border-radius:9px;padding:11px 14px;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.4;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn.revealed{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{margin-top:12px;padding:10px 12px;background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;font-size:0.88rem;color:#333;display:none;}
+.nav-btns{display:flex;justify-content:space-between;margin-top:14px;gap:10px;}
+.prev-btn,.next-btn{padding:9px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer;}
+.prev-btn{background:#e8edf4;color:#333;}
+.next-btn{background:#1D9E75;color:#fff;}
+.results-screen{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;display:none;}
+.results-screen.show{display:block;}
+.results-heading{font-size:1.3rem;font-weight:700;color:#1D9E75;text-align:center;margin-bottom:6px;}
+.results-score{font-size:1rem;text-align:center;color:#555;margin-bottom:14px;}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;margin-bottom:16px;}
+.r-card{border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;font-size:0.82rem;font-weight:600;}
+.r-card.correct{background:#E1F5EE;color:#085041;}
+.r-card.wrong{background:#FCEBEB;color:#501313;}
+.r-card.skipped{background:#f5f7fa;color:#555;}
+.results-btns{display:flex;flex-direction:column;gap:9px;}
+.retry-btn{background:#1D9E75;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.copy-btn{background:#185FA5;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.save-btn{background:#f5a623;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.fresh-btn{background:#e8edf4;color:#111;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:12px;padding:24px 20px;max-width:320px;width:90%;text-align:center;}
+.modal-title{font-size:1.05rem;font-weight:700;margin-bottom:8px;}
+.modal-msg{font-size:0.9rem;color:#555;margin-bottom:18px;}
+.modal-btns{display:flex;gap:10px;justify-content:center;}
+.modal-cancel{background:#e8edf4;color:#333;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;cursor:pointer;}
+.modal-confirm{background:#E24B4A;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;font-weight:600;cursor:pointer;}
+</style>
+</head>
+<body><div class="quiz-title">[Grant] Math Competition</div><div class="subtitle" id="att-display">Total Attempts: 0</div><div class="instruction">Choose the correct answer for each problem.</div>
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="20"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">20:00</span>
+  </div>
+</div>
+<div id="nav-bar"><span id="nav-count">0 / 28</span><div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div><button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button></div><div id="dot-panel"></div>
+<div class="quiz-area" id="quiz-area">
+  <div class="q-header">
+    <span class="q-num" id="q-num"></span>
+    <span class="tag-badge" id="tag-badge" style="display:none;"></span>
+  </div>
+  <div class="passage-box" id="passage-box" style="display:none;"></div>
+  <div class="context-box" id="context-box" style="display:none;"></div>
+  <div class="q-text" id="q-text"></div>
+  <div class="options" id="options"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-btns">
+    <button class="prev-btn" onclick="goPrev()">Prev</button>
+    <button class="next-btn" id="next-btn" onclick="goNext()">Next</button>
+  </div>
+</div>
+
+<div class="results-screen" id="results-screen">
+  <div class="results-heading" id="results-heading">Results</div>
+  <div class="results-score" id="results-score"></div>
+  <div class="results-grid" id="results-grid"></div>
+  <div class="results-btns">
+    <button class="retry-btn" onclick="retryWrong()">Retry Wrong Ones</button>
+    <button class="copy-btn" onclick="copyRes()">Copy All Results</button>
+    <button class="save-btn" onclick="saveWrongAnswers()">Save Wrong Answers</button>
+    <button class="fresh-btn" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button>
+    <button class="fresh-btn" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <div class="modal-title" id="freshModalTitle">Start Fresh?</div>
+    <div class="modal-msg" id="freshModalText">All progress will be cleared. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>var TITLE = "[Grant] Math Competition";var QUIZ_KEY = "quiz_grantmathcomp_28_20260902_v1";var ATT_KEY = "quiz_grantmathcomp_28_att_20260902_v1";var RAW_QUESTIONS = [{"stem": "How many prime numbers are between 50 and 100?", "opts": ["12", "11", "10", "9"], "ci": 2, "exp": "The primes are: 53,59,61,67,71,73,79,83,89,97. That is 10 primes.", "tag": "Chapter 3", "tagcolor": "#185FA5"}, {"stem": "Find the sum of all factors of 2⁵ × 3³ × 5³ that are both perfect squares AND divisible by 4.", "opts": ["2600", "1300", "5200", "10400"], "ci": 2, "exp": "Perfect square AND divisible by 4 (=2²): exponent of 2 must be even and ≥2 → {2,4}; exponent of 3 even → {0,2}; exponent of 5 even → {0,2}. Sum = (4+16)(1+9)(1+25) = 20 × 10 × 26 = 5200.", "tag": "Chapter 5", "tagcolor": "#185FA5"}, {"stem": "How many ways can the letters in the word CREAM be arranged?", "opts": ["20", "3,125", "24", "120"], "ci": 3, "exp": "CREAM has 5 different letters, so the count is a straightforward 5! = 120. 24 is 4!, which leaves one letter out. 20 is 5&times;4, which only arranges 2 of the 5 letters. 3,125 is 5<sup>5</sup>, which would allow letters to repeat in the arrangement.", "tag": "Chapter 14", "tagcolor": "#185FA5"}, {"stem": "How many factors do 2¹⁴ × 5⁷ × 11⁵ and 3⁸ × 7³ × 13¹² share?", "opts": ["8", "0", "3", "1"], "ci": 3, "exp": "These two numbers share no prime factors, so their GCD = 1. The only common factor is 1.", "tag": "Chapter 4", "tagcolor": "#185FA5"}, {"stem": "In a quadrilateral, the ratio of the angles is 4:5:11:4. Find the measure of the largest angle. (Hint: The sum of the angles for a quadrilateral is 360 degrees.)", "opts": ["150°", "176°", "132°", "165°"], "ci": 3, "exp": "Total parts = 24. k = 360/24 = 15. Largest angle = 11 × 15 = 165°.", "tag": "Chapter 9", "tagcolor": "#185FA5"}, {"stem": "Angela can feed 7 cows every hour, Bessie can feed 8 cows every hour and Cassie can feed 10 cows every hour. If they all work together, how many hours would it take them to feed 300 cows?", "opts": ["20 hours", "36 hours", "12 hours", "25 hours"], "ci": 2, "exp": "Their combined rate is 7 + 8 + 10 = 25 cows per hour. Time = 300 / 25 = 12 hours.", "tag": "Chapter 12", "tagcolor": "#185FA5"}, {"stem": "There are squares, triangles and circles drawn on the driveway. The ratio of the number of squares to the number of triangles to the number of circles is 14:9:10. If there are 12 more squares than circles, how many total shapes are drawn on the driveway?", "opts": ["66", "99", "33", "132"], "ci": 1, "exp": "Squares − circles = 4 parts = 12 → k = 3. Total = 33 × 3 = 99.", "tag": "Chapter 9", "tagcolor": "#185FA5"}, {"stem": "The five-digit number A5,2A1 is divisible by 3. To make it as large as possible, what is A?", "opts": ["5", "2", "9", "8"], "ci": 3, "exp": "Digit sum: A+5+2+A+1 = 2A+8 must be divisible by 3. Values of A that work: 2 (sum 12), 5 (sum 18), 8 (sum 24). Largest is A=8.", "tag": "Chapter 2", "tagcolor": "#185FA5"}, {"stem": "Find the sum of the first 25 positive even integers.", "opts": ["675", "600", "625", "650"], "ci": 3, "exp": "The sum of the first n positive even integers is n(n+1). With n = 25, the sum is 25 × 26 = 650.", "tag": "Chapter 10", "tagcolor": "#185FA5"}, {"stem": "Simplify <span class=\"rad\"><span class=\"rad-idx\">3</span><span class=\"rad-sign\"><span class=\"rad-tick\">√</span><span class=\"rad-body\"><span class=\"rad\"><span class=\"rad-idx\">3</span><span class=\"rad-sign\"><span class=\"rad-tick\">√</span><span class=\"rad-body\"><span class=\"rad\"><span class=\"rad-idx\">2</span><span class=\"rad-sign\"><span class=\"rad-tick\">√</span><span class=\"rad-body\">9⁹</span></span></span></span></span></span></span></span></span>.", "opts": ["¹⁸√9⁹", "27", "9", "3"], "ci": 3, "exp": "³√(³√(²√(9⁹))) = (9⁹)^(1/2 × 1/3 × 1/3) = 9^(9/18) = 9^(1/2) = √9 = 3.", "tag": "Chapter 7", "tagcolor": "#185FA5"}, {"stem": "A smartphone is selling for $800 in January. One month later, in February, the phone was 20% off the original price. In the following month, March, the phone's price increased by 20% from February. How much was the phone's price in March?", "opts": ["$780", "$800", "$760", "$768"], "ci": 3, "exp": "February price: $800 × 0.80 = $640. March price: $640 × 1.20 = $768.", "tag": "Chapter 8", "tagcolor": "#185FA5"}, {"stem": "Find the positive difference between the sum of the first 30 positive even integers and the sum of the first 30 positive odd integers.", "opts": ["15", "60", "0", "30"], "ci": 3, "exp": "The sum of the first 30 even integers is 30 × 31 = 930. The sum of the first 30 odd integers is 30² = 900. The positive difference is 930 - 900 = 30.", "tag": "Chapter 10", "tagcolor": "#185FA5"}, {"stem": "Robin is driving ahead of Will by 20 miles traveling in the same direction. If Robin is driving at a constant speed of 39 miles per hour and Will is driving at a constant speed of 51 miles per hour, how many minutes will it take Will to catch up to Robin?", "opts": ["60 minutes", "20 minutes", "240 minutes", "100 minutes"], "ci": 3, "exp": "Will closes the gap at a rate of 51 &minus; 39 = 12 miles per hour. Time to close the 20-mile gap = 20 / 12 = 5/3 hours, which is 5/3 &times; 60 = 100 minutes.", "tag": "Chapter 12", "tagcolor": "#185FA5"}, {"stem": "How many ways are there to make 25 cents using quarters, dimes, and/or nickels?", "opts": ["5", "4", "3", "6"], "ci": 1, "exp": "1 quarter; 2 dimes+1 nickel; 1 dime+3 nickels; 5 nickels. That is 4 ways.", "tag": "Chapter 6", "tagcolor": "#185FA5"}, {"stem": "Solve: 5(2 + 4 + 6 + 8 + 10)", "opts": [100, 160, 120, 150], "ci": 3, "exp": "2+4+6+8+10 = 30. Then 5 × 30 = 150.", "tag": "Chapter 1", "tagcolor": "#185FA5"}, {"stem": "Solve: 32 ÷ 16 × 6 ÷ 3 × 10 ÷ 5 + 18 ÷ 9 × 12 ÷ 6 × 8 ÷ 4", "opts": [16, 20, 8, 12], "ci": 0, "exp": "First part: 32÷16=2, ×6=12, ÷3=4, ×10=40, ÷5=8. Second part: 18÷9=2, ×12=24, ÷6=4, ×8=32, ÷4=8. Sum: 8+8=16.", "tag": "Chapter 1", "tagcolor": "#185FA5"}, {"stem": "Barbara has a plastic container that consists of red, blue and green marbles. If there are 200 marbles in the container in which 25% are green, 20% are red and the remaining marbles are blue, how many marbles are blue?", "opts": ["90", "110", "120", "100"], "ci": 1, "exp": "Green + Red = 25% + 20% = 45%. Blue = 100% − 45% = 55%. 55% × 200 = 110 blue marbles.", "tag": "Chapter 8", "tagcolor": "#185FA5"}, {"stem": "What is the smallest three-digit number that is a multiple of 5?", "opts": ["105", "100", "110", "95"], "ci": 1, "exp": "The smallest three-digit number is 100, and 100 = 5 × 20, so it is a multiple of 5.", "tag": "Chapter 2", "tagcolor": "#185FA5"}, {"stem": "How many five-digit even numbers can be created?", "opts": ["50,000", "90,000", "45,000", "40,000"], "ci": 2, "exp": "The first digit cannot be 0, so it has 9 choices (1&ndash;9). The three middle digits are unrestricted, with 10 choices each. The last digit must make the number even, so it must be 0, 2, 4, 6, or 8, giving 5 choices. The total is 9 &times; 10 &times; 10 &times; 10 &times; 5 = 45,000.", "tag": "Chapter 13", "tagcolor": "#185FA5"}, {"stem": "Find the number of ODD factors for 2² × 3⁴ × 5² × 7⁴.", "opts": ["75", "150", "225", "45"], "ci": 0, "exp": "Odd factors: set exponent of 2 to 0. Remaining choices: (4+1)(2+1)(4+1) = 5 × 3 × 5 = 75.", "tag": "Chapter 5", "tagcolor": "#185FA5"}, {"stem": "Shirts: 2 for $19, 5 for $45, 20 for $170. Logan needs exactly 132 shirts. What is the least he can pay?", "opts": ["$1,119", "$1,134", "$1,140", "$1,129"], "ci": 3, "exp": "Best combo: 6×20 (=120) + 2×5 (=10) + 1×2 (=2) = 132 shirts. Cost = 6×$170 + 2×$45 + 1×$19 = $1,020 + $90 + $19 = $1,129.", "tag": "Chapter 6", "tagcolor": "#185FA5"}, {"stem": "How many two letter \"words\" consisting of a consonant and a vowel are there? Hint: Order matters.", "opts": ["105", "26", "441", "210"], "ci": 3, "exp": "Since order matters, both arrangements are allowed: consonant-then-vowel and vowel-then-consonant. Consonant-then-vowel gives 21 &times; 5 = 105 words, and vowel-then-consonant gives 5 &times; 21 = 105 words. Adding these together: 105 + 105 = 210.", "tag": "Chapter 13", "tagcolor": "#185FA5"}, {"stem": "Find the number of factors for 13⁹ × 31⁴.", "opts": ["40", "50", "45", "36"], "ci": 1, "exp": "Number of factors = (9+1)(4+1) = 10 × 5 = 50.", "tag": "Chapter 4", "tagcolor": "#185FA5"}, {"stem": "Review Problem: Convert 5 pounds to ounces.", "opts": ["85 ounces", "70 ounces", "75 ounces", "80 ounces"], "ci": 3, "exp": "1 pound = 16 ounces, so 5 pounds = 5 x 16 = 80 ounces.", "tag": "Chapter 11", "tagcolor": "#185FA5"}, {"stem": "Find the largest perfect square less than 500.", "opts": ["476", "484", "496", "441"], "ci": 1, "exp": "√499 ≈ 22.3, so the largest integer whose square is less than 500 is 22. 22² = 484.", "tag": "Chapter 7", "tagcolor": "#185FA5"}, {"stem": "Express 252 as a product of prime factors using exponents.", "opts": ["2³ × 3² × 7", "2² × 3² × 7", "2² × 3 × 7²", "2² × 3² × 5"], "ci": 1, "exp": "252 = 4 × 63 = 4 × 9 × 7 = 2² × 3² × 7.", "tag": "Chapter 3", "tagcolor": "#185FA5"}, {"stem": "Darry mows grass at an average rate of 660 square feet per hour. What is his average speed in square inches per minute?", "opts": ["1,650 square inches per minute", "1,728 square inches per minute", "1,440 square inches per minute", "1,584 square inches per minute"], "ci": 3, "exp": "1 square foot = 144 square inches, so 660 square feet = 660 x 144 = 95,040 square inches per hour. Dividing by 60 minutes in an hour: 95,040 / 60 = 1,584 square inches per minute.", "tag": "Chapter 11", "tagcolor": "#185FA5"}, {"stem": "There are 6 balls arranged in a row: 2 red, 2 white, 1 blue and 1 yellow. If the 2 red balls are identical and the 2 white balls are identical, how many ways can the balls be arranged?", "opts": ["180", "90", "720", "360"], "ci": 0, "exp": "There are 6 balls total, with 2 identical red balls and 2 identical white balls, so the count is 6!/(2!&times;2!) = 720/4 = 180. 720 is plain 6!, which treats every ball as distinguishable. 360 only divides out one identical pair (either the reds or the whites), not both. 90 divides by an extra factor of 2, as though a third pair were also identical.", "tag": "Chapter 14", "tagcolor": "#185FA5"}];var N = RAW_QUESTIONS.length;var ORDER_KEY = QUIZ_KEY + '_order_v1';
+function shuffleArr(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function identityOrder(){var o=[];for(var i=0;i<N;i++)o.push(i);return o;}
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length===0) return false;
+  for(var i=0;i<arr.length;i++){ if(typeof arr[i] !== 'number' || arr[i]<0 || arr[i]>=N) return false; }
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad');
+    return arr;
+  }catch(e){ try{localStorage.removeItem(ORDER_KEY);}catch(e2){} return null; }
+}
+function saveOrder(o){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(o)); }catch(e){} }
+
+var order = loadOrder() || identityOrder();
+if(!loadOrder()) saveOrder(order);
+var pendingFreshMode = 'original';
+
+function defaultState(){
+  return { cur:0, answers:{}, showResults:false, timerTotalSec:null, timerStartedAt:null };
+}
+function loadState(){
+  try{
+    var raw = localStorage.getItem(QUIZ_KEY);
+    if(!raw) return defaultState();
+    var s = JSON.parse(raw);
+    if(typeof s.cur !== 'number' || s.cur<0 || s.cur>=order.length) s.cur = 0;
+    if(typeof s.answers !== 'object' || s.answers===null) s.answers = {};
+    if(typeof s.showResults !== 'boolean') s.showResults = false;
+    if(typeof s.timerTotalSec === 'undefined') s.timerTotalSec = null;
+    if(typeof s.timerStartedAt === 'undefined') s.timerStartedAt = null;
+    return s;
+  }catch(e){ try{localStorage.removeItem(QUIZ_KEY);}catch(e2){} return defaultState(); }
+}
+function saveState(){ try{ localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); }catch(e){} }
+
+var state = loadState();
+var timerInterval = null;
+
+function getAttempts(){ try{ return parseInt(localStorage.getItem(ATT_KEY)||'0',10); }catch(e){ return 0; } }
+function incAttempts(){ try{ localStorage.setItem(ATT_KEY, String(getAttempts()+1)); }catch(e){} }
+function updateAttDisplay(){
+  var el = document.getElementById('att-display');
+  if(el) el.textContent = 'Total Attempts: ' + getAttempts();
+}
+
+function formatTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function renderTimer(){
+  var setupEl = document.getElementById('timerSetup');
+  var runningEl = document.getElementById('timerRunning');
+  var dispEl = document.getElementById('timerDisplay');
+  if(!setupEl||!runningEl||!dispEl) return;
+  if(!state.timerStartedAt){ setupEl.style.display='flex'; runningEl.style.display='none'; return; }
+  setupEl.style.display='none'; runningEl.style.display='flex';
+  var elapsed = (Date.now()-state.timerStartedAt)/1000;
+  var remaining = state.timerTotalSec - elapsed;
+  dispEl.classList.remove('warn','danger');
+  if(remaining<=0){ dispEl.textContent="Time's Up"; dispEl.classList.add('danger'); stopTimerInterval(); return; }
+  dispEl.textContent = formatTime(remaining);
+  if(remaining <= state.timerTotalSec*0.1) dispEl.classList.add('danger');
+  else if(remaining <= state.timerTotalSec*0.25) dispEl.classList.add('warn');
+}
+function startTimer(){
+  var input = document.getElementById('timerMinutesInput');
+  var minutes = parseFloat(input.value);
+  if(!minutes || minutes<=0) minutes=20;
+  state.timerTotalSec = Math.round(minutes*60);
+  state.timerStartedAt = Date.now();
+  saveState(); renderTimer(); startTimerInterval();
+}
+function startTimerInterval(){ stopTimerInterval(); timerInterval=setInterval(renderTimer,1000); }
+function stopTimerInterval(){ if(timerInterval){clearInterval(timerInterval); timerInterval=null;} }
+function resetTimer(){
+  state.timerTotalSec = null; state.timerStartedAt = null;
+  stopTimerInterval(); saveState(); renderTimer();
+}
+
+function render(){
+  updateAttDisplay();
+  var qa = document.getElementById('quiz-area');
+  var rs = document.getElementById('results-screen');
+  if(state.showResults){
+    qa.style.display='none';
+    rs.classList.add('show');
+    renderResults();
+    return;
+  }
+  qa.style.display='block';
+  rs.classList.remove('show');
+
+  var qi = order[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  document.getElementById('q-num').textContent = 'Q' + (state.cur+1) + ' / ' + order.length;
+
+  var badge = document.getElementById('tag-badge');
+  if(q.tag){
+    badge.style.display='inline-block';
+    badge.textContent = q.tag;
+    badge.style.background = q.tagcolor || '#185FA5';
+  } else { badge.style.display='none'; }
+
+  var pbox = document.getElementById('passage-box');
+  if(q.passage){ pbox.style.display='block'; pbox.innerHTML = q.passage; } else { pbox.style.display='none'; }
+  var cbox = document.getElementById('context-box');
+  if(q.context){ cbox.style.display='block'; cbox.innerHTML = q.context; } else { cbox.style.display='none'; }
+
+  document.getElementById('q-text').innerHTML = q.stem;
+
+
+  var answered = state.answers[qi];
+  var optDiv = document.getElementById('options');
+  optDiv.innerHTML='';
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML = optText;
+    btn.disabled = answered !== undefined;
+    if(answered !== undefined){
+      if(idx === q.ci) btn.classList.add(answered===idx ? 'correct' : 'revealed');
+      else if(answered === idx) btn.classList.add('wrong');
+    }
+    btn.onclick = function(){ chooseAnswer(idx); };
+    optDiv.appendChild(btn);
+  });
+
+  var expDiv = document.getElementById('exp-box');
+  if(answered !== undefined && answered !== q.ci){
+    expDiv.style.display='block';
+    expDiv.innerHTML = q.exp;
+  } else {
+    expDiv.style.display='none';
+  }
+
+  var nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = (state.cur >= order.length-1) ? 'Show Results →' : 'Next →';
+
+  updateNav();
+}
+
+function updateNav(){
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  document.getElementById('nav-count').textContent = answered + ' / ' + order.length;
+  document.getElementById('prog-fill').style.width = (answered/order.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel = document.getElementById('dot-panel');
+  if(panel.style.display==='none') return;
+  var html='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var bg = state.answers[qi]===undefined ? '#d7dde6' : (state.answers[qi]===RAW_QUESTIONS[qi].ci ? '#185FA5' : '#E24B4A');
+    html += '<button class="dot" style="background:'+bg+';" onclick="goToQ('+pos+')">'+(pos+1)+'</button>';
+  }
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  if(answered===order.length){
+    html += '<br><button class="results-pill" onclick="showResultsNow()">Results</button>';
+  }
+  panel.innerHTML = html;
+}
+function toggleJump(){
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display==='none' || panel.style.display===''){
+    panel.style.display='block'; btn.innerHTML='Hide &#9652;'; renderDots();
+  } else {
+    panel.style.display='none'; btn.innerHTML='Jump &#9662;';
+  }
+}
+function goToQ(pos){
+  state.cur = pos; state.showResults=false; saveState(); render();
+}
+function showResultsNow(){
+  state.showResults = true; incAttempts(); saveState(); render();
+}
+function chooseAnswer(idx){
+  var qi = order[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState(); render();
+}
+function goPrev(){
+  if(state.cur>0){ state.cur--; saveState(); render(); }
+}
+function goNext(){
+  if(state.cur < order.length-1){ state.cur++; saveState(); render(); }
+  else { state.showResults=true; incAttempts(); saveState(); render(); }
+}
+function renderResults(){
+  var correct=0, wrong=0, skipped=0;
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]===undefined){ skipped++; continue; }
+    if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+  }
+  document.getElementById('results-score').textContent = correct+' correct, '+wrong+' wrong, '+skipped+' skipped - out of '+order.length;
+  var grid = document.getElementById('results-grid');
+  grid.innerHTML='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var card = document.createElement('div');
+    if(state.answers[qi]===undefined){
+      card.className='r-card skipped';
+      card.textContent='Q'+(pos+1)+' Skip';
+    } else {
+      var ok = state.answers[qi]===RAW_QUESTIONS[qi].ci;
+      card.className='r-card '+(ok?'correct':'wrong');
+      card.textContent='Q'+(pos+1)+' '+(ok?'OK':'X');
+    }
+    (function(p){ card.onclick=function(){ state.showResults=false; state.cur=p; saveState(); render(); }; })(pos);
+    grid.appendChild(card);
+  }
+}
+function retryWrong(){
+  var wrong=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      wrong.push(qi);
+    }
+  }
+  if(wrong.length===0) return;
+  wrong.forEach(function(qi){ delete state.answers[qi]; });
+  order = wrong;
+  saveOrder(order);
+  state.cur=0; state.showResults=false;
+  saveState(); render(); renderTimer();
+}
+function copyRes(){
+  var lines=[TITLE+' Results'];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    var s='Q'+(pos+1)+': ';
+    if(a===undefined) s+='Skipped';
+    else s += (a===RAW_QUESTIONS[qi].ci ? 'Correct' : 'Wrong');
+    lines.push(s);
+  }
+  var text = lines.join('\n');
+  try{
+    if(navigator.clipboard){ navigator.clipboard.writeText(text).catch(function(){}); }
+    else { var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+  }catch(e){}
+}
+function saveWrongAnswers(){
+  var wrongItems=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    if(a!==undefined && a!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongItems.push({ question: q.stem, yourAnswer: q.opts[a], correctAnswer: q.opts[q.ci], explanation: q.exp });
+    }
+  }
+  var blob = new Blob([JSON.stringify({title:TITLE, wrongAnswers:wrongItems}, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a2 = document.createElement('a');
+  a2.href = url; a2.download = QUIZ_KEY + '_wrong.json';
+  document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+  URL.revokeObjectURL(url);
+}
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var t = document.getElementById('freshModalTitle');
+  var m = document.getElementById('freshModalText');
+  if(mode==='random'){
+    t.textContent='Start Fresh (Random Order)?';
+    m.textContent='Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    t.textContent='Start Fresh (Original Order)?';
+    m.textContent='Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  order = (pendingFreshMode==='random') ? shuffleArr(identityOrder()) : identityOrder();
+  saveOrder(order);
+  state = defaultState();
+  saveState();
+  resetTimer();
+  closeFreshModal();
+  render();
+  renderTimer();
+}
+
+window.startTimer=startTimer;
+window.toggleJump=toggleJump;
+window.goToQ=goToQ;
+window.showResultsNow=showResultsNow;
+window.chooseAnswer=chooseAnswer;
+window.goPrev=goPrev;
+window.goNext=goNext;
+window.retryWrong=retryWrong;
+window.copyRes=copyRes;
+window.saveWrongAnswers=saveWrongAnswers;
+window.openFreshModalOriginal=openFreshModalOriginal;
+window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;
+window.confirmFresh=confirmFresh;
+
+render();
+renderTimer();
+if(state.timerStartedAt) startTimerInterval();
+</script>
+</body>
+</html>
