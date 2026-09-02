@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] English</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh;padding:12px;max-width:720px;margin:0 auto;}
+.quiz-title{font-size:1.35rem;font-weight:700;text-align:center;color:#111;background:#fff;padding:10px 0 2px}
+.subtitle{text-align:center;font-size:0.85rem;color:#555;background:#fff;padding:2px 0 4px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:2px 12px 10px}
+.timer-bar { background: #fff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; border-radius:10px; margin-bottom:8px;}
+.timer-setup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+.timer-setup label { font-weight: 700; }
+.timer-setup input[type="number"] { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+.timer-start-btn { background: #185FA5; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.timer-running { display: flex; align-items: center; gap: 8px; }
+.timer-label { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.02em; }
+.timer-display { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+.timer-display.warn { color: #f5a623; }
+.timer-display.danger { color: #E24B4A; }
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0;background:#fff;padding:8px 12px;border-radius:10px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;border:none;}
+.results-pill{display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;border:none;}
+.quiz-area{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;}
+.q-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.q-num{font-size:0.82rem;color:#888;}
+.tag-badge{font-size:0.75rem;padding:2px 10px;border-radius:10px;background:#185FA5;color:#fff;font-weight:600;}
+.passage-box,.context-box{background:#f5f7fa;border-left:3px solid #185FA5;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.92rem;color:#333;line-height:1.5;}
+.q-text{font-size:1.08rem;font-weight:600;color:#111;margin-bottom:14px;line-height:1.5;}
+.options{display:flex;flex-direction:column;gap:9px;}
+.opt-btn{background:#e8edf4;color:#111;border:2px solid transparent;border-radius:9px;padding:11px 14px;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.4;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn.revealed{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{margin-top:12px;padding:10px 12px;background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;font-size:0.88rem;color:#333;display:none;}
+.nav-btns{display:flex;justify-content:space-between;margin-top:14px;gap:10px;}
+.prev-btn,.next-btn{padding:9px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer;}
+.prev-btn{background:#e8edf4;color:#333;}
+.next-btn{background:#1D9E75;color:#fff;}
+.results-screen{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;display:none;}
+.results-screen.show{display:block;}
+.results-heading{font-size:1.3rem;font-weight:700;color:#1D9E75;text-align:center;margin-bottom:6px;}
+.results-score{font-size:1rem;text-align:center;color:#555;margin-bottom:14px;}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;margin-bottom:16px;}
+.r-card{border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;font-size:0.82rem;font-weight:600;}
+.r-card.correct{background:#E1F5EE;color:#085041;}
+.r-card.wrong{background:#FCEBEB;color:#501313;}
+.r-card.skipped{background:#f5f7fa;color:#555;}
+.results-btns{display:flex;flex-direction:column;gap:9px;}
+.retry-btn{background:#1D9E75;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.copy-btn{background:#185FA5;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.save-btn{background:#f5a623;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.fresh-btn{background:#e8edf4;color:#111;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:12px;padding:24px 20px;max-width:320px;width:90%;text-align:center;}
+.modal-title{font-size:1.05rem;font-weight:700;margin-bottom:8px;}
+.modal-msg{font-size:0.9rem;color:#555;margin-bottom:18px;}
+.modal-btns{display:flex;gap:10px;justify-content:center;}
+.modal-cancel{background:#e8edf4;color:#333;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;cursor:pointer;}
+.modal-confirm{background:#E24B4A;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;font-weight:600;cursor:pointer;}
+</style>
+</head>
+<body><div class="quiz-title">[Grant] English</div><div class="subtitle" id="att-display">Total Attempts: 0</div><div class="instruction">Read the passage, then answer the questions below.</div>
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="20"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">20:00</span>
+  </div>
+</div>
+<div id="nav-bar"><span id="nav-count">0 / 9</span><div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div><button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button></div><div id="dot-panel"></div>
+<div class="quiz-area" id="quiz-area">
+  <div class="q-header">
+    <span class="q-num" id="q-num"></span>
+    <span class="tag-badge" id="tag-badge" style="display:none;"></span>
+  </div>
+  <div class="passage-box" id="passage-box" style="display:none;"></div>
+  <div class="context-box" id="context-box" style="display:none;"></div>
+  <div class="q-text" id="q-text"></div>
+  <div class="options" id="options"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-btns">
+    <button class="prev-btn" onclick="goPrev()">Prev</button>
+    <button class="next-btn" id="next-btn" onclick="goNext()">Next</button>
+  </div>
+</div>
+
+<div class="results-screen" id="results-screen">
+  <div class="results-heading" id="results-heading">Results</div>
+  <div class="results-score" id="results-score"></div>
+  <div class="results-grid" id="results-grid"></div>
+  <div class="results-btns">
+    <button class="retry-btn" onclick="retryWrong()">Retry Wrong Ones</button>
+    <button class="copy-btn" onclick="copyRes()">Copy All Results</button>
+    <button class="save-btn" onclick="saveWrongAnswers()">Save Wrong Answers</button>
+    <button class="fresh-btn" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button>
+    <button class="fresh-btn" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <div class="modal-title" id="freshModalTitle">Start Fresh?</div>
+    <div class="modal-msg" id="freshModalText">All progress will be cleared. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>var TITLE = "[Grant] English";var QUIZ_KEY = "quiz_grantenglish_9_20260902_v1";var ATT_KEY = "quiz_grantenglish_9_att_20260902_v1";var RAW_QUESTIONS = [{"stem": "What is the main idea of the passage?", "opts": ["A baker's accidental substitution of ingredients led to the invention of a cookie that became a beloved American dessert.", "The Toll House Inn was the most popular vacation destination in Massachusetts during the 1930s.", "Chocolate companies have always designed their bars to be easily broken into chunks.", "Baking cookies for hotel guests was a common practice throughout New England in the 1930s."], "ci": 0, "exp": "The passage centers on Ruth Wakefield's accidental substitution of chopped chocolate for baker's chocolate, which led to the invention of the chocolate chip cookie that became a beloved American dessert. The other choices describe minor details or unsupported generalizations rather than the passage's main idea.", "passage": "<b>Read the passage, then answer the questions below.</b><br><br>In the 1930s, a woman named Ruth Wakefield ran a small inn in Massachusetts called the Toll House Inn, where she was famous for baking rich, buttery cookies for her guests. One afternoon, while preparing a batch of her favorite chocolate cookies, she realized she had run out of the baker's chocolate her recipe called for.<br><br>Rather than making a trip to the store, Ruth grabbed a bar of semi-sweet chocolate and broke it into small chunks, assuming the pieces would melt smoothly into the dough as it baked, just as the baker's chocolate always had. To her surprise, the chocolate chunks held their shape in the oven, softening only slightly instead of dissolving completely into the batter.<br><br>When Ruth pulled the tray from the oven, she found something entirely new: a golden cookie studded with soft, gooey pockets of chocolate throughout. Her guests were thrilled with the unexpected treat, and word of the delicious cookie spread quickly among visitors to the inn.<br><br>As demand for Ruth's chocolate cookies grew, so did the sales of the semi-sweet chocolate bar she used. Executives at the chocolate company noticed the unusual spike in sales near Whitman, Massachusetts, and eventually traced it back to Ruth's popular recipe. Curious, representatives visited the inn and asked to license her recipe for their own packaging.<br><br>Ruth agreed to a deal: in exchange for allowing the company to print her recipe on every package of chocolate bars, she would receive a lifetime supply of chocolate. The company also began selling a specially scored chocolate bar, designed to be broken apart easily into the very chunks Ruth's recipe required.<br><br>What started as a simple substitution born of necessity transformed into one of the most beloved desserts in American history. Today, chocolate chip cookies remain a household staple, and few who enjoy them realize that their invention traces back to a resourceful innkeeper improvising with what she had on hand."}, {"stem": "According to the passage, what happened when Ruth put the chocolate chunks into the oven?", "opts": ["The chunks melted completely, blending smoothly into the dough as baker's chocolate normally would.", "The chunks burned before the rest of the cookie finished baking.", "The chunks softened only slightly and kept their shape instead of dissolving into the batter.", "The chunks caused the dough to rise higher than usual."], "ci": 2, "exp": "The passage states the chocolate chunks \"held their shape in the oven, softening only slightly instead of dissolving completely into the batter,\" showing that they softened only slightly and kept their shape rather than melting away.", "passage": "<b>Read the passage, then answer the questions below.</b><br><br>In the 1930s, a woman named Ruth Wakefield ran a small inn in Massachusetts called the Toll House Inn, where she was famous for baking rich, buttery cookies for her guests. One afternoon, while preparing a batch of her favorite chocolate cookies, she realized she had run out of the baker's chocolate her recipe called for.<br><br>Rather than making a trip to the store, Ruth grabbed a bar of semi-sweet chocolate and broke it into small chunks, assuming the pieces would melt smoothly into the dough as it baked, just as the baker's chocolate always had. To her surprise, the chocolate chunks held their shape in the oven, softening only slightly instead of dissolving completely into the batter.<br><br>When Ruth pulled the tray from the oven, she found something entirely new: a golden cookie studded with soft, gooey pockets of chocolate throughout. Her guests were thrilled with the unexpected treat, and word of the delicious cookie spread quickly among visitors to the inn.<br><br>As demand for Ruth's chocolate cookies grew, so did the sales of the semi-sweet chocolate bar she used. Executives at the chocolate company noticed the unusual spike in sales near Whitman, Massachusetts, and eventually traced it back to Ruth's popular recipe. Curious, representatives visited the inn and asked to license her recipe for their own packaging.<br><br>Ruth agreed to a deal: in exchange for allowing the company to print her recipe on every package of chocolate bars, she would receive a lifetime supply of chocolate. The company also began selling a specially scored chocolate bar, designed to be broken apart easily into the very chunks Ruth's recipe required.<br><br>What started as a simple substitution born of necessity transformed into one of the most beloved desserts in American history. Today, chocolate chip cookies remain a household staple, and few who enjoy them realize that their invention traces back to a resourceful innkeeper improvising with what she had on hand."}, {"stem": "As used in the passage, the word \"resourceful\" most nearly means", "opts": ["wasteful", "inventive", "forgetful", "cautious"], "ci": 1, "exp": "The passage describes Ruth as \"improvising with what she had on hand\" after running out of an ingredient, which describes someone who is inventive or resourceful in solving a problem, not wasteful, forgetful, or cautious.", "passage": "<b>Read the passage, then answer the questions below.</b><br><br>In the 1930s, a woman named Ruth Wakefield ran a small inn in Massachusetts called the Toll House Inn, where she was famous for baking rich, buttery cookies for her guests. One afternoon, while preparing a batch of her favorite chocolate cookies, she realized she had run out of the baker's chocolate her recipe called for.<br><br>Rather than making a trip to the store, Ruth grabbed a bar of semi-sweet chocolate and broke it into small chunks, assuming the pieces would melt smoothly into the dough as it baked, just as the baker's chocolate always had. To her surprise, the chocolate chunks held their shape in the oven, softening only slightly instead of dissolving completely into the batter.<br><br>When Ruth pulled the tray from the oven, she found something entirely new: a golden cookie studded with soft, gooey pockets of chocolate throughout. Her guests were thrilled with the unexpected treat, and word of the delicious cookie spread quickly among visitors to the inn.<br><br>As demand for Ruth's chocolate cookies grew, so did the sales of the semi-sweet chocolate bar she used. Executives at the chocolate company noticed the unusual spike in sales near Whitman, Massachusetts, and eventually traced it back to Ruth's popular recipe. Curious, representatives visited the inn and asked to license her recipe for their own packaging.<br><br>Ruth agreed to a deal: in exchange for allowing the company to print her recipe on every package of chocolate bars, she would receive a lifetime supply of chocolate. The company also began selling a specially scored chocolate bar, designed to be broken apart easily into the very chunks Ruth's recipe required.<br><br>What started as a simple substitution born of necessity transformed into one of the most beloved desserts in American history. Today, chocolate chip cookies remain a household staple, and few who enjoy them realize that their invention traces back to a resourceful innkeeper improvising with what she had on hand."}, {"stem": "As used in the passage, the word \"licensed\" most nearly means", "opts": ["officially permitted the use of", "completely forbid the use of", "accidentally discovered", "permanently destroyed"], "ci": 0, "exp": "In context, the chocolate company representatives \"asked to license her recipe for their own packaging,\" meaning they wanted official permission to use it, matching \"officially permitted the use of.\"", "passage": "<b>Read the passage, then answer the questions below.</b><br><br>In the 1930s, a woman named Ruth Wakefield ran a small inn in Massachusetts called the Toll House Inn, where she was famous for baking rich, buttery cookies for her guests. One afternoon, while preparing a batch of her favorite chocolate cookies, she realized she had run out of the baker's chocolate her recipe called for.<br><br>Rather than making a trip to the store, Ruth grabbed a bar of semi-sweet chocolate and broke it into small chunks, assuming the pieces would melt smoothly into the dough as it baked, just as the baker's chocolate always had. To her surprise, the chocolate chunks held their shape in the oven, softening only slightly instead of dissolving completely into the batter.<br><br>When Ruth pulled the tray from the oven, she found something entirely new: a golden cookie studded with soft, gooey pockets of chocolate throughout. Her guests were thrilled with the unexpected treat, and word of the delicious cookie spread quickly among visitors to the inn.<br><br>As demand for Ruth's chocolate cookies grew, so did the sales of the semi-sweet chocolate bar she used. Executives at the chocolate company noticed the unusual spike in sales near Whitman, Massachusetts, and eventually traced it back to Ruth's popular recipe. Curious, representatives visited the inn and asked to license her recipe for their own packaging.<br><br>Ruth agreed to a deal: in exchange for allowing the company to print her recipe on every package of chocolate bars, she would receive a lifetime supply of chocolate. The company also began selling a specially scored chocolate bar, designed to be broken apart easily into the very chunks Ruth's recipe required.<br><br>What started as a simple substitution born of necessity transformed into one of the most beloved desserts in American history. Today, chocolate chip cookies remain a household staple, and few who enjoy them realize that their invention traces back to a resourceful innkeeper improvising with what she had on hand."}, {"stem": "Based on the passage, what can be inferred about baker's chocolate compared to the semi-sweet chocolate bar Ruth used instead?", "opts": ["Baker's chocolate melts more smoothly and completely during baking than the semi-sweet bar did.", "Baker's chocolate was more expensive than the semi-sweet chocolate bar.", "Baker's chocolate was not sold anywhere near the Toll House Inn.", "Baker's chocolate and the semi-sweet bar behave identically when baked."], "ci": 0, "exp": "Since Ruth expected the semi-sweet chocolate to melt \"just as the baker's chocolate always had,\" but it instead held its shape, the passage implies baker's chocolate normally melts more smoothly and completely, unlike the semi-sweet bar.", "passage": "<b>Read the passage, then answer the questions below.</b><br><br>In the 1930s, a woman named Ruth Wakefield ran a small inn in Massachusetts called the Toll House Inn, where she was famous for baking rich, buttery cookies for her guests. One afternoon, while preparing a batch of her favorite chocolate cookies, she realized she had run out of the baker's chocolate her recipe called for.<br><br>Rather than making a trip to the store, Ruth grabbed a bar of semi-sweet chocolate and broke it into small chunks, assuming the pieces would melt smoothly into the dough as it baked, just as the baker's chocolate always had. To her surprise, the chocolate chunks held their shape in the oven, softening only slightly instead of dissolving completely into the batter.<br><br>When Ruth pulled the tray from the oven, she found something entirely new: a golden cookie studded with soft, gooey pockets of chocolate throughout. Her guests were thrilled with the unexpected treat, and word of the delicious cookie spread quickly among visitors to the inn.<br><br>As demand for Ruth's chocolate cookies grew, so did the sales of the semi-sweet chocolate bar she used. Executives at the chocolate company noticed the unusual spike in sales near Whitman, Massachusetts, and eventually traced it back to Ruth's popular recipe. Curious, representatives visited the inn and asked to license her recipe for their own packaging.<br><br>Ruth agreed to a deal: in exchange for allowing the company to print her recipe on every package of chocolate bars, she would receive a lifetime supply of chocolate. The company also began selling a specially scored chocolate bar, designed to be broken apart easily into the very chunks Ruth's recipe required.<br><br>What started as a simple substitution born of necessity transformed into one of the most beloved desserts in American history. Today, chocolate chip cookies remain a household staple, and few who enjoy them realize that their invention traces back to a resourceful innkeeper improvising with what she had on hand."}, {"stem": "What effect did the popularity of Ruth's cookies have on the chocolate company?", "opts": ["The company went out of business due to declining chocolate bar sales.", "The company noticed a spike in chocolate bar sales and eventually traced it to Ruth's recipe.", "The company stopped producing semi-sweet chocolate bars entirely.", "The company relocated its headquarters to Whitman, Massachusetts."], "ci": 1, "exp": "The passage states that executives \"noticed the unusual spike in sales near Whitman, Massachusetts, and eventually traced it back to Ruth's popular recipe,\" showing that the company noticed increased sales and traced them to her recipe.", "passage": "<b>Read the passage, then answer the questions below.</b><br><br>In the 1930s, a woman named Ruth Wakefield ran a small inn in Massachusetts called the Toll House Inn, where she was famous for baking rich, buttery cookies for her guests. One afternoon, while preparing a batch of her favorite chocolate cookies, she realized she had run out of the baker's chocolate her recipe called for.<br><br>Rather than making a trip to the store, Ruth grabbed a bar of semi-sweet chocolate and broke it into small chunks, assuming the pieces would melt smoothly into the dough as it baked, just as the baker's chocolate always had. To her surprise, the chocolate chunks held their shape in the oven, softening only slightly instead of dissolving completely into the batter.<br><br>When Ruth pulled the tray from the oven, she found something entirely new: a golden cookie studded with soft, gooey pockets of chocolate throughout. Her guests were thrilled with the unexpected treat, and word of the delicious cookie spread quickly among visitors to the inn.<br><br>As demand for Ruth's chocolate cookies grew, so did the sales of the semi-sweet chocolate bar she used. Executives at the chocolate company noticed the unusual spike in sales near Whitman, Massachusetts, and eventually traced it back to Ruth's popular recipe. Curious, representatives visited the inn and asked to license her recipe for their own packaging.<br><br>Ruth agreed to a deal: in exchange for allowing the company to print her recipe on every package of chocolate bars, she would receive a lifetime supply of chocolate. The company also began selling a specially scored chocolate bar, designed to be broken apart easily into the very chunks Ruth's recipe required.<br><br>What started as a simple substitution born of necessity transformed into one of the most beloved desserts in American history. Today, chocolate chip cookies remain a household staple, and few who enjoy them realize that their invention traces back to a resourceful innkeeper improvising with what she had on hand."}, {"stem": "Which sequence correctly reflects the order of events described in the passage?", "opts": ["Ruth ran out of baker's chocolate, substituted a chopped chocolate bar, guests enjoyed the new cookie, and the company later licensed her recipe.", "The company licensed Ruth's recipe, guests enjoyed the new cookie, and then Ruth ran out of baker's chocolate.", "Ruth received a lifetime supply of chocolate, then invented the cookie by accident.", "The scored chocolate bar was created first, which inspired Ruth to invent the cookie."], "ci": 0, "exp": "The passage describes events in this order: Ruth ran out of baker's chocolate, substituted chopped chocolate, guests loved the result, and the company later approached her to license the recipe.", "passage": "<b>Read the passage, then answer the questions below.</b><br><br>In the 1930s, a woman named Ruth Wakefield ran a small inn in Massachusetts called the Toll House Inn, where she was famous for baking rich, buttery cookies for her guests. One afternoon, while preparing a batch of her favorite chocolate cookies, she realized she had run out of the baker's chocolate her recipe called for.<br><br>Rather than making a trip to the store, Ruth grabbed a bar of semi-sweet chocolate and broke it into small chunks, assuming the pieces would melt smoothly into the dough as it baked, just as the baker's chocolate always had. To her surprise, the chocolate chunks held their shape in the oven, softening only slightly instead of dissolving completely into the batter.<br><br>When Ruth pulled the tray from the oven, she found something entirely new: a golden cookie studded with soft, gooey pockets of chocolate throughout. Her guests were thrilled with the unexpected treat, and word of the delicious cookie spread quickly among visitors to the inn.<br><br>As demand for Ruth's chocolate cookies grew, so did the sales of the semi-sweet chocolate bar she used. Executives at the chocolate company noticed the unusual spike in sales near Whitman, Massachusetts, and eventually traced it back to Ruth's popular recipe. Curious, representatives visited the inn and asked to license her recipe for their own packaging.<br><br>Ruth agreed to a deal: in exchange for allowing the company to print her recipe on every package of chocolate bars, she would receive a lifetime supply of chocolate. The company also began selling a specially scored chocolate bar, designed to be broken apart easily into the very chunks Ruth's recipe required.<br><br>What started as a simple substitution born of necessity transformed into one of the most beloved desserts in American history. Today, chocolate chip cookies remain a household staple, and few who enjoy them realize that their invention traces back to a resourceful innkeeper improvising with what she had on hand."}, {"stem": "How does the passage contrast the chocolate bar sold before Ruth's recipe became popular with the chocolate bar sold afterward?", "opts": ["The original bar was sold only in Massachusetts, while the new bar was sold nationwide.", "The original bar was a solid, unscored bar, while the new bar was specially scored to break apart into chunks easily.", "The original bar was much more expensive than the new bar.", "The original bar contained nuts, while the new bar did not."], "ci": 1, "exp": "The passage notes the company \"began selling a specially scored chocolate bar, designed to be broken apart easily into the very chunks Ruth's recipe required,\" implying the earlier bar was not designed this way, so the bar changed from a solid, unscored form to one made to break apart easily.", "passage": "<b>Read the passage, then answer the questions below.</b><br><br>In the 1930s, a woman named Ruth Wakefield ran a small inn in Massachusetts called the Toll House Inn, where she was famous for baking rich, buttery cookies for her guests. One afternoon, while preparing a batch of her favorite chocolate cookies, she realized she had run out of the baker's chocolate her recipe called for.<br><br>Rather than making a trip to the store, Ruth grabbed a bar of semi-sweet chocolate and broke it into small chunks, assuming the pieces would melt smoothly into the dough as it baked, just as the baker's chocolate always had. To her surprise, the chocolate chunks held their shape in the oven, softening only slightly instead of dissolving completely into the batter.<br><br>When Ruth pulled the tray from the oven, she found something entirely new: a golden cookie studded with soft, gooey pockets of chocolate throughout. Her guests were thrilled with the unexpected treat, and word of the delicious cookie spread quickly among visitors to the inn.<br><br>As demand for Ruth's chocolate cookies grew, so did the sales of the semi-sweet chocolate bar she used. Executives at the chocolate company noticed the unusual spike in sales near Whitman, Massachusetts, and eventually traced it back to Ruth's popular recipe. Curious, representatives visited the inn and asked to license her recipe for their own packaging.<br><br>Ruth agreed to a deal: in exchange for allowing the company to print her recipe on every package of chocolate bars, she would receive a lifetime supply of chocolate. The company also began selling a specially scored chocolate bar, designed to be broken apart easily into the very chunks Ruth's recipe required.<br><br>What started as a simple substitution born of necessity transformed into one of the most beloved desserts in American history. Today, chocolate chip cookies remain a household staple, and few who enjoy them realize that their invention traces back to a resourceful innkeeper improvising with what she had on hand."}, {"stem": "What is the author's main purpose in writing this passage?", "opts": ["To criticize chocolate companies for profiting from a home baker's original idea.", "To explain how a simple kitchen improvisation led to the invention of a widely loved dessert.", "To compare different recipes for baking cookies at home.", "To argue that baker's chocolate is superior to semi-sweet chocolate for baking."], "ci": 1, "exp": "The passage traces the accidental origin of the chocolate chip cookie from Ruth's improvised substitution to its lasting popularity, matching a purpose of explaining how the invention came about rather than criticizing companies, comparing recipes, or arguing about chocolate quality.", "passage": "<b>Read the passage, then answer the questions below.</b><br><br>In the 1930s, a woman named Ruth Wakefield ran a small inn in Massachusetts called the Toll House Inn, where she was famous for baking rich, buttery cookies for her guests. One afternoon, while preparing a batch of her favorite chocolate cookies, she realized she had run out of the baker's chocolate her recipe called for.<br><br>Rather than making a trip to the store, Ruth grabbed a bar of semi-sweet chocolate and broke it into small chunks, assuming the pieces would melt smoothly into the dough as it baked, just as the baker's chocolate always had. To her surprise, the chocolate chunks held their shape in the oven, softening only slightly instead of dissolving completely into the batter.<br><br>When Ruth pulled the tray from the oven, she found something entirely new: a golden cookie studded with soft, gooey pockets of chocolate throughout. Her guests were thrilled with the unexpected treat, and word of the delicious cookie spread quickly among visitors to the inn.<br><br>As demand for Ruth's chocolate cookies grew, so did the sales of the semi-sweet chocolate bar she used. Executives at the chocolate company noticed the unusual spike in sales near Whitman, Massachusetts, and eventually traced it back to Ruth's popular recipe. Curious, representatives visited the inn and asked to license her recipe for their own packaging.<br><br>Ruth agreed to a deal: in exchange for allowing the company to print her recipe on every package of chocolate bars, she would receive a lifetime supply of chocolate. The company also began selling a specially scored chocolate bar, designed to be broken apart easily into the very chunks Ruth's recipe required.<br><br>What started as a simple substitution born of necessity transformed into one of the most beloved desserts in American history. Today, chocolate chip cookies remain a household staple, and few who enjoy them realize that their invention traces back to a resourceful innkeeper improvising with what she had on hand."}];var N = RAW_QUESTIONS.length;var ORDER_KEY = QUIZ_KEY + '_order_v1';
+function shuffleArr(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function identityOrder(){var o=[];for(var i=0;i<N;i++)o.push(i);return o;}
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length===0) return false;
+  for(var i=0;i<arr.length;i++){ if(typeof arr[i] !== 'number' || arr[i]<0 || arr[i]>=N) return false; }
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad');
+    return arr;
+  }catch(e){ try{localStorage.removeItem(ORDER_KEY);}catch(e2){} return null; }
+}
+function saveOrder(o){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(o)); }catch(e){} }
+
+var order = loadOrder() || identityOrder();
+if(!loadOrder()) saveOrder(order);
+var pendingFreshMode = 'original';
+
+function defaultState(){
+  return { cur:0, answers:{}, showResults:false, timerTotalSec:null, timerStartedAt:null };
+}
+function loadState(){
+  try{
+    var raw = localStorage.getItem(QUIZ_KEY);
+    if(!raw) return defaultState();
+    var s = JSON.parse(raw);
+    if(typeof s.cur !== 'number' || s.cur<0 || s.cur>=order.length) s.cur = 0;
+    if(typeof s.answers !== 'object' || s.answers===null) s.answers = {};
+    if(typeof s.showResults !== 'boolean') s.showResults = false;
+    if(typeof s.timerTotalSec === 'undefined') s.timerTotalSec = null;
+    if(typeof s.timerStartedAt === 'undefined') s.timerStartedAt = null;
+    return s;
+  }catch(e){ try{localStorage.removeItem(QUIZ_KEY);}catch(e2){} return defaultState(); }
+}
+function saveState(){ try{ localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); }catch(e){} }
+
+var state = loadState();
+var timerInterval = null;
+
+function getAttempts(){ try{ return parseInt(localStorage.getItem(ATT_KEY)||'0',10); }catch(e){ return 0; } }
+function incAttempts(){ try{ localStorage.setItem(ATT_KEY, String(getAttempts()+1)); }catch(e){} }
+function updateAttDisplay(){
+  var el = document.getElementById('att-display');
+  if(el) el.textContent = 'Total Attempts: ' + getAttempts();
+}
+
+function formatTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function renderTimer(){
+  var setupEl = document.getElementById('timerSetup');
+  var runningEl = document.getElementById('timerRunning');
+  var dispEl = document.getElementById('timerDisplay');
+  if(!setupEl||!runningEl||!dispEl) return;
+  if(!state.timerStartedAt){ setupEl.style.display='flex'; runningEl.style.display='none'; return; }
+  setupEl.style.display='none'; runningEl.style.display='flex';
+  var elapsed = (Date.now()-state.timerStartedAt)/1000;
+  var remaining = state.timerTotalSec - elapsed;
+  dispEl.classList.remove('warn','danger');
+  if(remaining<=0){ dispEl.textContent="Time's Up"; dispEl.classList.add('danger'); stopTimerInterval(); return; }
+  dispEl.textContent = formatTime(remaining);
+  if(remaining <= state.timerTotalSec*0.1) dispEl.classList.add('danger');
+  else if(remaining <= state.timerTotalSec*0.25) dispEl.classList.add('warn');
+}
+function startTimer(){
+  var input = document.getElementById('timerMinutesInput');
+  var minutes = parseFloat(input.value);
+  if(!minutes || minutes<=0) minutes=20;
+  state.timerTotalSec = Math.round(minutes*60);
+  state.timerStartedAt = Date.now();
+  saveState(); renderTimer(); startTimerInterval();
+}
+function startTimerInterval(){ stopTimerInterval(); timerInterval=setInterval(renderTimer,1000); }
+function stopTimerInterval(){ if(timerInterval){clearInterval(timerInterval); timerInterval=null;} }
+function resetTimer(){
+  state.timerTotalSec = null; state.timerStartedAt = null;
+  stopTimerInterval(); saveState(); renderTimer();
+}
+
+function render(){
+  updateAttDisplay();
+  var qa = document.getElementById('quiz-area');
+  var rs = document.getElementById('results-screen');
+  if(state.showResults){
+    qa.style.display='none';
+    rs.classList.add('show');
+    renderResults();
+    return;
+  }
+  qa.style.display='block';
+  rs.classList.remove('show');
+
+  var qi = order[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  document.getElementById('q-num').textContent = 'Q' + (state.cur+1) + ' / ' + order.length;
+
+  var badge = document.getElementById('tag-badge');
+  if(q.tag){
+    badge.style.display='inline-block';
+    badge.textContent = q.tag;
+    badge.style.background = q.tagcolor || '#185FA5';
+  } else { badge.style.display='none'; }
+
+  var pbox = document.getElementById('passage-box');
+  if(q.passage){ pbox.style.display='block'; pbox.innerHTML = q.passage; } else { pbox.style.display='none'; }
+  var cbox = document.getElementById('context-box');
+  if(q.context){ cbox.style.display='block'; cbox.innerHTML = q.context; } else { cbox.style.display='none'; }
+
+  document.getElementById('q-text').innerHTML = q.stem;
+
+
+  var answered = state.answers[qi];
+  var optDiv = document.getElementById('options');
+  optDiv.innerHTML='';
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML = optText;
+    btn.disabled = answered !== undefined;
+    if(answered !== undefined){
+      if(idx === q.ci) btn.classList.add(answered===idx ? 'correct' : 'revealed');
+      else if(answered === idx) btn.classList.add('wrong');
+    }
+    btn.onclick = function(){ chooseAnswer(idx); };
+    optDiv.appendChild(btn);
+  });
+
+  var expDiv = document.getElementById('exp-box');
+  if(answered !== undefined && answered !== q.ci){
+    expDiv.style.display='block';
+    expDiv.innerHTML = q.exp;
+  } else {
+    expDiv.style.display='none';
+  }
+
+  var nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = (state.cur >= order.length-1) ? 'Show Results →' : 'Next →';
+
+  updateNav();
+}
+
+function updateNav(){
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  document.getElementById('nav-count').textContent = answered + ' / ' + order.length;
+  document.getElementById('prog-fill').style.width = (answered/order.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel = document.getElementById('dot-panel');
+  if(panel.style.display==='none') return;
+  var html='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var bg = state.answers[qi]===undefined ? '#d7dde6' : (state.answers[qi]===RAW_QUESTIONS[qi].ci ? '#185FA5' : '#E24B4A');
+    html += '<button class="dot" style="background:'+bg+';" onclick="goToQ('+pos+')">'+(pos+1)+'</button>';
+  }
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  if(answered===order.length){
+    html += '<br><button class="results-pill" onclick="showResultsNow()">Results</button>';
+  }
+  panel.innerHTML = html;
+}
+function toggleJump(){
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display==='none' || panel.style.display===''){
+    panel.style.display='block'; btn.innerHTML='Hide &#9652;'; renderDots();
+  } else {
+    panel.style.display='none'; btn.innerHTML='Jump &#9662;';
+  }
+}
+function goToQ(pos){
+  state.cur = pos; state.showResults=false; saveState(); render();
+}
+function showResultsNow(){
+  state.showResults = true; incAttempts(); saveState(); render();
+}
+function chooseAnswer(idx){
+  var qi = order[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState(); render();
+}
+function goPrev(){
+  if(state.cur>0){ state.cur--; saveState(); render(); }
+}
+function goNext(){
+  if(state.cur < order.length-1){ state.cur++; saveState(); render(); }
+  else { state.showResults=true; incAttempts(); saveState(); render(); }
+}
+function renderResults(){
+  var correct=0, wrong=0, skipped=0;
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]===undefined){ skipped++; continue; }
+    if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+  }
+  document.getElementById('results-score').textContent = correct+' correct, '+wrong+' wrong, '+skipped+' skipped - out of '+order.length;
+  var grid = document.getElementById('results-grid');
+  grid.innerHTML='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var card = document.createElement('div');
+    if(state.answers[qi]===undefined){
+      card.className='r-card skipped';
+      card.textContent='Q'+(pos+1)+' Skip';
+    } else {
+      var ok = state.answers[qi]===RAW_QUESTIONS[qi].ci;
+      card.className='r-card '+(ok?'correct':'wrong');
+      card.textContent='Q'+(pos+1)+' '+(ok?'OK':'X');
+    }
+    (function(p){ card.onclick=function(){ state.showResults=false; state.cur=p; saveState(); render(); }; })(pos);
+    grid.appendChild(card);
+  }
+}
+function retryWrong(){
+  var wrong=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      wrong.push(qi);
+    }
+  }
+  if(wrong.length===0) return;
+  wrong.forEach(function(qi){ delete state.answers[qi]; });
+  order = wrong;
+  saveOrder(order);
+  state.cur=0; state.showResults=false;
+  saveState(); render(); renderTimer();
+}
+function copyRes(){
+  var lines=[TITLE+' Results'];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    var s='Q'+(pos+1)+': ';
+    if(a===undefined) s+='Skipped';
+    else s += (a===RAW_QUESTIONS[qi].ci ? 'Correct' : 'Wrong');
+    lines.push(s);
+  }
+  var text = lines.join('\n');
+  try{
+    if(navigator.clipboard){ navigator.clipboard.writeText(text).catch(function(){}); }
+    else { var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+  }catch(e){}
+}
+function saveWrongAnswers(){
+  var wrongItems=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    if(a!==undefined && a!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongItems.push({ question: q.stem, yourAnswer: q.opts[a], correctAnswer: q.opts[q.ci], explanation: q.exp });
+    }
+  }
+  var blob = new Blob([JSON.stringify({title:TITLE, wrongAnswers:wrongItems}, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a2 = document.createElement('a');
+  a2.href = url; a2.download = QUIZ_KEY + '_wrong.json';
+  document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+  URL.revokeObjectURL(url);
+}
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var t = document.getElementById('freshModalTitle');
+  var m = document.getElementById('freshModalText');
+  if(mode==='random'){
+    t.textContent='Start Fresh (Random Order)?';
+    m.textContent='Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    t.textContent='Start Fresh (Original Order)?';
+    m.textContent='Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  order = (pendingFreshMode==='random') ? shuffleArr(identityOrder()) : identityOrder();
+  saveOrder(order);
+  state = defaultState();
+  saveState();
+  resetTimer();
+  closeFreshModal();
+  render();
+  renderTimer();
+}
+
+window.startTimer=startTimer;
+window.toggleJump=toggleJump;
+window.goToQ=goToQ;
+window.showResultsNow=showResultsNow;
+window.chooseAnswer=chooseAnswer;
+window.goPrev=goPrev;
+window.goNext=goNext;
+window.retryWrong=retryWrong;
+window.copyRes=copyRes;
+window.saveWrongAnswers=saveWrongAnswers;
+window.openFreshModalOriginal=openFreshModalOriginal;
+window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;
+window.confirmFresh=confirmFresh;
+
+render();
+renderTimer();
+if(state.timerStartedAt) startTimerInterval();
+</script>
+</body>
+</html>
