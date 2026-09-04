@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 5 Quiz</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Georgia, serif; background: #f5f6fa; color: #111111; font-size: 1rem; }
+
+/* Timer */
+#qzTimerBar {
+  position: sticky; top: 0; z-index: 100;
+  background: #fff; border-bottom: 2px solid #d7dde6;
+  padding: 8px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+#qzTimerSetup { display: flex; align-items: center; gap: 8px; }
+#qzTimerSetup label { font-size: 0.88rem; color: #555; }
+#qzTimerSetup input { width: 56px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.88rem; }
+#qzTimerStartBtn { background: #1D9E75; color: #fff; border: none; border-radius: 4px; padding: 5px 12px; font-size: 0.88rem; cursor: pointer; }
+#qzTimerRunning { display: none; align-items: center; gap: 10px; }
+#qzTimerRunning span { font-size: 0.88rem; color: #555; }
+#qzCountdown { font-family: monospace; font-size: 1.05rem; font-weight: bold; color: #111; min-width: 56px; }
+#qzPauseBtn { background: #f5a623; color: #fff; border: none; border-radius: 4px; padding: 5px 10px; font-size: 0.82rem; cursor: pointer; }
+#qzResetBtn { background: #e2e8f0; color: #333; border: none; border-radius: 4px; padding: 5px 10px; font-size: 0.82rem; cursor: pointer; }
+
+/* App */
+#appWrap { max-width: 780px; margin: 0 auto; padding: 20px 16px 60px; }
+h1 { font-size: 1.45rem; color: #1D9E75; text-align: center; margin-bottom: 4px; }
+.instruction { text-align: center; font-size: 0.88rem; color: #555; margin-bottom: 10px; }
+#subtitle { text-align: center; font-size: 0.82rem; color: #555; margin-bottom: 14px; }
+
+/* Nav bar */
+#navBar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+#navCount { font-size: 0.88rem; color: #444; white-space: nowrap; }
+#progressBarWrap { flex: 1; height: 7px; background: #d7dde6; border-radius: 4px; min-width: 80px; }
+#progressBarFill { height: 100%; background: #1D9E75; border-radius: 4px; width: 0%; transition: width 0.3s; }
+#jumpToggle { font-size: 0.82rem; color: #185FA5; cursor: pointer; text-decoration: underline; white-space: nowrap; }
+#dotPanel { display: none; max-height: 170px; overflow-y: auto; padding: 8px 0; margin-bottom: 10px; }
+.dotRow { display: flex; flex-wrap: wrap; gap: 5px; }
+.dot {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: #d7dde6; color: #333; font-size: 0.7rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-weight: bold; border: 2px solid transparent;
+}
+.dot.correct { background: #1D9E75; color: #fff; }
+.dot.wrong { background: #E24B4A; color: #fff; }
+#resultsPill { display: none; margin-top: 6px; }
+#resultsPill button { background: #1D9E75; color: #fff; border: none; border-radius: 12px; padding: 4px 14px; font-size: 0.82rem; cursor: pointer; }
+
+/* Quiz area */
+#quizArea { display: none; }
+.qnum { font-size: 0.82rem; color: #888; margin-bottom: 6px; }
+.qtag { display: inline-block; background: #e8edf4; color: #444; border-radius: 10px; padding: 2px 10px; font-size: 0.76rem; margin-bottom: 10px; }
+.qtext { font-size: 1.02rem; line-height: 1.65; margin-bottom: 16px; }
+.qtext .underline { text-decoration: underline; }
+.options { display: flex; flex-direction: column; gap: 9px; margin-bottom: 18px; }
+.opt {
+  background: #e8edf4; color: #111111; border: 2px solid transparent;
+  border-radius: 7px; padding: 10px 14px; cursor: pointer;
+  font-size: 0.97rem; line-height: 1.5; text-align: left; transition: background 0.15s;
+}
+.opt:hover { background: #dce3ee; }
+.opt.correct { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+.opt.wrong { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+.explanation {
+  border: 2px solid #f5a623; background: #fffbf0;
+  border-radius: 7px; padding: 12px 14px; font-size: 0.93rem;
+  line-height: 1.6; margin-bottom: 16px; display: none;
+}
+
+/* Bottom nav */
+#bottomNav { display: flex; justify-content: space-between; margin-top: 10px; }
+#prevBtn { background: #e2e8f0; color: #333; border: none; border-radius: 6px; padding: 9px 20px; font-size: 0.95rem; cursor: pointer; }
+#prevBtn:disabled { opacity: 0.4; cursor: default; }
+#nextBtn { background: #1D9E75; color: #fff; border: none; border-radius: 6px; padding: 9px 22px; font-size: 0.95rem; cursor: pointer; }
+
+/* Results */
+#resultsArea { display: none; }
+#resultsArea h2 { color: #1D9E75; text-align: center; margin-bottom: 18px; font-size: 1.3rem; }
+#summaryGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-bottom: 22px; }
+.sumCard {
+  border-radius: 7px; padding: 10px 8px; text-align: center; cursor: pointer; font-size: 0.82rem;
+}
+.sumCard.correct { background: #E1F5EE; border: 2px solid #1D9E75; color: #085041; }
+.sumCard.wrong { background: #FCEBEB; border: 2px solid #E24B4A; color: #501313; }
+.sumCard.skipped { background: #f5f6fa; border: 2px solid #d7dde6; color: #555; }
+.sumCard .snum { font-weight: bold; font-size: 1rem; }
+#resultsBtns { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+#retryBtn { background: #1D9E75; color: #fff; border: none; border-radius: 6px; padding: 10px 28px; font-size: 1rem; cursor: pointer; }
+#copyBtn { background: #185FA5; color: #fff; border: none; border-radius: 6px; padding: 10px 28px; font-size: 1rem; cursor: pointer; }
+#freshBtnOriginal, #freshBtnRandom { background: #e2e8f0; color: #333; border: none; border-radius: 6px; padding: 10px 28px; font-size: 1rem; cursor: pointer; }
+
+/* Modal */
+#modalOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: center; justify-content: center; }
+#modalOverlay.active { display: flex; }
+#modalBox { background: #fff; border-radius: 10px; padding: 28px 24px; max-width: 360px; width: 90%; text-align: center; }
+#modalBox p { margin-bottom: 20px; font-size: 1rem; line-height: 1.5; }
+#modalBtns { display: flex; gap: 12px; justify-content: center; }
+#modalCancel { background: #e2e8f0; color: #333; border: none; border-radius: 6px; padding: 8px 20px; cursor: pointer; }
+#modalConfirm { background: #E24B4A; color: #fff; border: none; border-radius: 6px; padding: 8px 20px; cursor: pointer; }
+
+/* Fraction display */
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; font-size: 0.9em; line-height: 1.2; margin: 0 2px; }
+.frac .num { border-bottom: 1px solid currentColor; padding: 0 2px; }
+.frac .den { padding: 0 2px; }
+</style>
+</head>
+<body>
+
+<div id="qzTimerBar">
+  <div id="qzTimerSetup">
+    <label>Timer (min):</label>
+    <input type="number" id="qzMinInput" value="20" min="1" max="120">
+    <button id="qzTimerStartBtn" onclick="window.qzStartTimer()">Start Timer</button>
+  </div>
+  <div id="qzTimerRunning">
+    <span>Time Left:</span>
+    <span id="qzCountdown">20:00</span>
+    <button id="qzPauseBtn" onclick="window.qzTogglePause()">Pause</button>
+    <button id="qzResetBtn" onclick="window.qzTimerReset()">Reset</button>
+  </div>
+</div>
+
+<div id="appWrap">
+  <h1>Chapter 5 Quiz</h1>
+  <p class="instruction">Read each problem carefully and select the best answer.</p>
+  <div id="subtitle">Loading...</div>
+
+  <div id="navBar">
+    <span id="navCount">0 / 6</span>
+    <div id="progressBarWrap"><div id="progressBarFill"></div></div>
+    <span id="jumpToggle" onclick="window.toggleDots()">Jump</span>
+  </div>
+  <div id="dotPanel"><div class="dotRow" id="dotRow"></div><div id="resultsPill"><button onclick="window.goResults()">Results</button></div></div>
+
+  <div id="quizArea"></div>
+
+  <div id="bottomNav">
+    <button id="prevBtn" onclick="window.goPrev()">Prev</button>
+    <button id="nextBtn" onclick="window.goNext()">Next</button>
+  </div>
+
+  <div id="resultsArea">
+    <h2>Results</h2>
+    <div id="summaryGrid"></div>
+    <div id="resultsBtns">
+      <button id="retryBtn" onclick="window.retryWrong()">Retry Wrong Ones</button>
+      <button id="copyBtn" onclick="window.copyResults()">Copy All Results</button>
+      <button id="freshBtnOriginal" onclick="window.openFreshModal('original')">Start Fresh (Original Order)</button>
+      <button id="freshBtnRandom" onclick="window.openFreshModal('random')">Start Fresh (Random Order)</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalOverlay">
+  <div id="modalBox">
+    <h3 id="modalTitle" style="margin-bottom:10px;font-size:1.05rem;">Start Fresh (Original Order)?</h3>
+    <p id="modalMsg">Questions will return to their original order, and all progress will be reset.</p>
+    <div id="modalBtns">
+      <button id="modalCancel" onclick="window.closeModal()">Cancel</button>
+      <button id="modalConfirm" onclick="window.doFresh()">Yes, Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var QUIZ_ID = 'ch5_sion_2026';
+  var SK = 'quiz_' + QUIZ_ID + '_v1';
+  var ATT_KEY = 'quiz_' + QUIZ_ID + '_att_v1';
+
+  // Helper for fractions
+  function frac(n, d) {
+    return '<span class="frac"><span class="num">' + n + '</span><span class="den">' + d + '</span></span>';
+  }
+
+  var questions = [
+    {
+      id: 'e1', section: 'Example 5.1',
+      text: 'A sequence of three real numbers forms an arithmetic progression with a first term of 9. If 2 is added to the 2<sup>nd</sup> term and 20 is added to the 3<sup>rd</sup> term, the three resulting numbers form a geometric progression. What is the smallest possible value for the 3<sup>rd</sup> term of the geometric progression? (AMC 12)',
+      opts: ['49', '9', '1', '&minus;3'],
+      ci: 2,
+      exp: 'Let the arithmetic progression be 9, 9+d, 9+2d. After the changes, the three numbers 9, 11+d, 29+2d form a geometric progression, so (11+d)<sup>2</sup>=9(29+2d). Expanding gives d<sup>2</sup>+4d&minus;140=0, so d=10 or d=&minus;14. If d=10, the geometric progression is 9, 21, 49, with 3rd term 49. If d=&minus;14, the geometric progression is 9, &minus;3, 1, with 3rd term 1. The smallest possible value is 1.'
+    },
+    {
+      id: 'e2', section: 'Example 5.2',
+      text: 'Compute the unique positive integer n such that<br><br>2&middot;2<sup>2</sup> + 3&middot;2<sup>3</sup> + 4&middot;2<sup>4</sup> + &hellip; + n&middot;2<sup>n</sup> = 2<sup>n+10</sup>.',
+      opts: ['512', '513', '514', '511'],
+      ci: 1,
+      exp: 'The sum &Sigma;<sub>k=1</sub><sup>n</sup> k&middot;2<sup>k</sup> = (n&minus;1)2<sup>n+1</sup>+2, so subtracting the k=1 term (which is 2) gives &Sigma;<sub>k=2</sub><sup>n</sup> k&middot;2<sup>k</sup> = (n&minus;1)2<sup>n+1</sup>. Setting this equal to 2<sup>n+10</sup> gives (n&minus;1)2<sup>n+1</sup>=2<sup>n+10</sup>, so n&minus;1=2<sup>9</sup>=512, meaning n=513.'
+    },
+    {
+      id: 'e3', section: 'Example 5.3',
+      text: 'Evaluate<br><br><span class="frac"><span class="num">&infin;</span><span class="den"></span></span>&Sigma;<sub>n=3</sub> <span class="frac"><span class="num">1</span><span class="den">n<sup>5</sup> &minus; 5n<sup>3</sup> + 4n</span></span>. (Purple Comet)',
+      opts: ['<span class="frac"><span class="num">1</span><span class="den">120</span></span>', '<span class="frac"><span class="num">1</span><span class="den">96</span></span>', '<span class="frac"><span class="num">1</span><span class="den">72</span></span>', '<span class="frac"><span class="num">1</span><span class="den">48</span></span>'],
+      ci: 3,
+      exp: 'Factor the denominator: n<sup>5</sup>&minus;5n<sup>3</sup>+4n = n(n<sup>2</sup>&minus;1)(n<sup>2</sup>&minus;4) = (n&minus;2)(n&minus;1)n(n+1)(n+2), the product of 5 consecutive integers. Using the telescoping identity 1/[(n&minus;2)(n&minus;1)n(n+1)(n+2)] = (1/4)&middot;{1/[(n&minus;2)(n&minus;1)n(n+1)] &minus; 1/[(n&minus;1)n(n+1)(n+2)]}, the sum from n=3 to &infin; telescopes down to (1/4)&middot;1/(1&middot;2&middot;3&middot;4) = 1/96.'
+    },
+    {
+      id: 'e4', section: 'Example 5.4',
+      text: 'You have 8 cubes of size 1 through 8. A tower is to be built using all 8 cubes according to the following rules: a) Any cube may be the bottom cube in the tower. b) The cube immediately on top of a cube with size k must have size at most k + 2. How many different towers can be constructed?',
+      opts: ['1458', '1512', '1440', '972'],
+      ci: 0,
+      exp: 'Build the tower one cube at a time by size, tracking how many "slots" are available for the next cube. Placing the smallest cubes first, each new cube can go on top of the current tower or be inserted so that a bigger cube ends up directly on top of it as long as the size gap of at most 2 is respected. Careful casework (or a recursive count building up from cube 1 to cube 8) on the number of valid insertion points at each stage gives a running product that totals 1458 distinct towers.'
+    },
+    {
+      id: 'e5', section: 'Example 5.5',
+      text: 'The numbers in the sequence 1, 6, 15, 28, 45, &hellip; are called the hexagonal numbers. What is the 11<sup>th</sup> hexagonal number?',
+      opts: ['225', '231', '210', '242'],
+      ci: 1,
+      exp: 'The nth hexagonal number is given by H<sub>n</sub> = n(2n&minus;1). Checking: H<sub>1</sub>=1, H<sub>2</sub>=6, H<sub>3</sub>=15, H<sub>4</sub>=28, H<sub>5</sub>=45, matching the given sequence. So H<sub>11</sub> = 11(2&middot;11&minus;1) = 11&middot;21 = 231.'
+    },
+    {
+      id: 'e6', section: 'Example 5.6',
+      text: 'A computer system considers a string of decimal digits a valid codeword if it contains an even number of 0s. Find a closed form for a<sub>n</sub>, the number of valid n-digit codewords.',
+      opts: ['8<sup>n</sup> + 10<sup>n</sup>', '<span class="frac"><span class="num">1</span><span class="den">2</span></span>(10<sup>n</sup> &minus; 8<sup>n</sup>)', '<span class="frac"><span class="num">1</span><span class="den">2</span></span>(8<sup>n</sup> + 10<sup>n</sup>)', '<span class="frac"><span class="num">1</span><span class="den">2</span></span>(9<sup>n</sup> + 10<sup>n</sup>)'],
+      ci: 2,
+      exp: 'Let a<sub>n</sub> count n-digit strings (digits 0&ndash;9) with an even number of 0s, and let b<sub>n</sub> count those with an odd number of 0s, so a<sub>n</sub>+b<sub>n</sub>=10<sup>n</sup>. Each string either starts with a nonzero digit (9 choices, keeping the parity of 0s the same as an (n&minus;1)-digit string) or a 0 (flipping the parity). This gives a<sub>n</sub>&minus;b<sub>n</sub> = 8<sup>n</sup> (this can be seen by tracking the difference d<sub>n</sub>=a<sub>n</sub>&minus;b<sub>n</sub>, which satisfies d<sub>n</sub>=8&middot;d<sub>n&minus;1</sub> since 8 of the 10 digit choices preserve the sign of the difference and the other 2 choices for digit 0 cancel, starting from d<sub>0</sub>=1, so d<sub>n</sub>=8<sup>n</sup>). Solving a<sub>n</sub>+b<sub>n</sub>=10<sup>n</sup> and a<sub>n</sub>&minus;b<sub>n</sub>=8<sup>n</sup> together gives a<sub>n</sub> = (1/2)(8<sup>n</sup>+10<sup>n</sup>).'
+    }
+
+  ];
+
+  var totalQ = questions.length;
+  var ORDER_KEY = SK + '_order_v1';
+  function identityOrder(){var a=[];for(var i=0;i<totalQ;i++)a.push(i);return a;}
+  function isValidOrder(o){if(!Array.isArray(o)||o.length!==totalQ)return false;var seen={};for(var i=0;i<o.length;i++){if(typeof o[i]!=='number'||o[i]<0||o[i]>=totalQ||seen[o[i]])return false;seen[o[i]]=true;}return true;}
+  function loadOrder(){try{var o=JSON.parse(localStorage.getItem(ORDER_KEY)||'null');return isValidOrder(o)?o:null;}catch(e){return null;}}
+  function saveOrder(o){localStorage.setItem(ORDER_KEY,JSON.stringify(o));}
+  function randomOrder(){var a=identityOrder();for(var k=a.length-1;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t;}return a;}
+  var currentOrder = loadOrder() || identityOrder();
+  saveOrder(currentOrder);
+  var pendingFreshMode = 'original';
+
+  var state = {
+    cur: 0,
+    answers: {},
+    shuffles: {},
+    showResults: false,
+    retryMode: false,
+    retryList: []
+  };
+
+  function getList() {
+    if (state.retryMode) return state.retryList;
+    var l = [];
+    for (var i = 0; i < totalQ; i++) l.push(i);
+    return l;
+  }
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(SK);
+      if (!raw) return;
+      var s = JSON.parse(raw);
+      if (typeof s.answers !== 'object' || typeof s.shuffles !== 'object') return;
+      if (s.retryMode && !Array.isArray(s.retryList)) return;
+      var listLen = s.retryMode ? s.retryList.length : totalQ;
+      if (typeof s.cur !== 'number' || s.cur < 0 || s.cur >= listLen) return;
+      state = s;
+    } catch(e) {
+      localStorage.removeItem(SK);
+    }
+  }
+
+  function saveState() {
+    localStorage.setItem(SK, JSON.stringify(state));
+  }
+
+  function getShuffleFor(idx) {
+    if (state.shuffles[idx]) return state.shuffles[idx];
+    var q = questions[idx];
+    var arr = q.opts.map(function(o, i){ return i; });
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    state.shuffles[idx] = arr;
+    return arr;
+  }
+
+  function answeredCount() {
+    return Object.keys(state.answers).length;
+  }
+
+  function updateNav() {
+    var list = getList();
+    var ac = 0;
+    for (var k = 0; k < list.length; k++) {
+      if (state.answers[currentOrder[list[k]]] !== undefined) ac++;
+    }
+    document.getElementById('navCount').textContent = ac + ' / ' + list.length;
+    document.getElementById('progressBarFill').style.width = (ac / list.length * 100) + '%';
+    // dots
+    var dr = document.getElementById('dotRow');
+    dr.innerHTML = '';
+    for (var i = 0; i < list.length; i++) {
+      var qi = currentOrder[list[i]];
+      var d = document.createElement('span');
+      d.className = 'dot';
+      if (state.answers[qi] !== undefined) {
+        var q = questions[qi];
+        var shuffle = getShuffleFor(qi);
+        var chosen = shuffle[state.answers[qi]];
+        d.className = 'dot ' + (chosen === q.ci ? 'correct' : 'wrong');
+      }
+      d.textContent = i + 1;
+      (function(ii){ d.onclick = function(){ window.jumpTo(ii); }; })(i);
+      dr.appendChild(d);
+    }
+    // show results pill if all answered
+    var rp = document.getElementById('resultsPill');
+    rp.style.display = (ac === list.length) ? 'block' : 'none';
+    // subtitle
+    var att = parseInt(localStorage.getItem(ATT_KEY) || '0');
+    document.getElementById('subtitle').textContent = 'Chapter 5 | Total Attempts: ' + att;
+  }
+
+  function render() {
+    updateNav();
+    if (state.showResults) {
+      showResultsScreen();
+      return;
+    }
+    document.getElementById('resultsArea').style.display = 'none';
+    document.getElementById('quizArea').style.display = 'block';
+
+    var list = getList();
+    var posInOrder = list[state.cur];
+    var idx = currentOrder[posInOrder];
+    var q = questions[idx];
+    var shuffle = getShuffleFor(idx);
+    var answered = state.answers[idx] !== undefined;
+
+    var html = '<div class="qnum">Question ' + (state.cur + 1) + ' of ' + list.length + '</div>';
+    html += '<div class="qtag">' + q.section + '</div>';
+    // Format question text - handle newlines
+    var qtextFormatted = q.text.replace(/\n/g, '<br>');
+    html += '<div class="qtext">' + qtextFormatted + '</div>';
+    html += '<div class="options">';
+    for (var i = 0; i < shuffle.length; i++) {
+      var origIdx = shuffle[i];
+      var cls = 'opt';
+      if (answered) {
+        if (i === state.answers[idx]) {
+          cls += (origIdx === q.ci) ? ' correct' : ' wrong';
+        } else if (origIdx === q.ci) {
+          cls += ' correct';
+        }
+      }
+      var disabled = answered ? 'style="cursor:default"' : '';
+      html += '<button class="' + cls + '" onclick="window.chooseOpt(' + i + ')" ' + disabled + '>' + q.opts[origIdx] + '</button>';
+    }
+    html += '</div>';
+    // explanation: show only on wrong answer (math competition style for all)
+    if (answered) {
+      var chosenOrig = shuffle[state.answers[idx]];
+      var isWrong = chosenOrig !== q.ci;
+      if (isWrong) {
+        html += '<div class="explanation" style="display:block">' + q.exp + '</div>';
+      }
+    }
+    document.getElementById('quizArea').innerHTML = html;
+
+    // Prev/Next
+    document.getElementById('prevBtn').disabled = (state.cur === 0);
+    var isLast = (state.cur === list.length - 1);
+    var nextBtn = document.getElementById('nextBtn');
+    nextBtn.textContent = isLast ? 'See Results →' : 'Next';
+
+    document.getElementById('bottomNav').style.display = 'flex';
+  }
+
+  function showResultsScreen() {
+    document.getElementById('quizArea').style.display = 'none';
+    document.getElementById('bottomNav').style.display = 'none';
+    document.getElementById('resultsArea').style.display = 'block';
+
+    var list = getList();
+    var h2 = document.querySelector('#resultsArea h2');
+    if (h2) h2.textContent = state.retryMode ? 'Retry Results' : 'Results';
+
+    var grid = document.getElementById('summaryGrid');
+    grid.innerHTML = '';
+    for (var i = 0; i < list.length; i++) {
+      var qi = currentOrder[list[i]];
+      var q = questions[qi];
+      var card = document.createElement('div');
+      var shuffle = state.shuffles[qi] || getShuffleFor(qi);
+      if (state.answers[qi] === undefined) {
+        card.className = 'sumCard skipped';
+        card.innerHTML = '<div class="snum">Q' + (i+1) + '</div><div>Skipped</div>';
+      } else {
+        var chosenOrig = shuffle[state.answers[qi]];
+        var correct = chosenOrig === q.ci;
+        card.className = 'sumCard ' + (correct ? 'correct' : 'wrong');
+        card.innerHTML = '<div class="snum">Q' + (i+1) + '</div><div>' + (correct ? 'Correct' : 'Wrong') + '</div>';
+      }
+      (function(ii){ card.onclick = function(){ state.showResults = false; state.cur = ii; render(); }; })(i);
+      grid.appendChild(card);
+    }
+    var att = parseInt(localStorage.getItem(ATT_KEY) || '0');
+    document.getElementById('subtitle').textContent = 'Chapter 5 | Total Attempts: ' + att;
+  }
+
+  window.chooseOpt = function(i) {
+    var list = getList();
+    var posInOrder = list[state.cur];
+    var qi = currentOrder[posInOrder];
+    if (state.answers[qi] !== undefined) return;
+    state.answers[qi] = i;
+    saveState();
+    render();
+  };
+
+  window.goPrev = function() {
+    if (state.cur > 0) { state.cur--; saveState(); render(); }
+  };
+
+  window.goNext = function() {
+    var list = getList();
+    if (state.cur === list.length - 1) {
+      window.goResults();
+    } else {
+      state.cur++;
+      saveState();
+      render();
+    }
+  };
+
+  window.goResults = function() {
+    if (!state.retryMode) {
+      var att = parseInt(localStorage.getItem(ATT_KEY) || '0');
+      localStorage.setItem(ATT_KEY, att + 1);
+    }
+    state.showResults = true;
+    saveState();
+    render();
+  };
+
+  window.jumpTo = function(i) {
+    state.showResults = false;
+    state.cur = i;
+    saveState();
+    render();
+  };
+
+  window.toggleDots = function() {
+    var dp = document.getElementById('dotPanel');
+    dp.style.display = dp.style.display === 'block' ? 'none' : 'block';
+  };
+
+  window.retryWrong = function() {
+    var list = getList();
+    var wrongs = [];
+    for (var k = 0; k < list.length; k++) {
+      var posInOrder = list[k];
+      var qi = currentOrder[posInOrder];
+      var shuffle = state.shuffles[qi] || getShuffleFor(qi);
+      if (state.answers[qi] !== undefined) {
+        var chosenOrig = shuffle[state.answers[qi]];
+        if (chosenOrig !== questions[qi].ci) {
+          wrongs.push(posInOrder);
+        }
+      }
+    }
+    if (wrongs.length === 0) return;
+    for (var j = 0; j < wrongs.length; j++) {
+      var qiWrong = currentOrder[wrongs[j]];
+      delete state.answers[qiWrong];
+      delete state.shuffles[qiWrong];
+    }
+    state.retryMode = true;
+    state.retryList = wrongs;
+    state.showResults = false;
+    state.cur = 0;
+    saveState();
+    render();
+  };
+
+  window.copyResults = function() {
+    var list = getList();
+    var lines = ['Chapter 5 Quiz Results'];
+    var correct = 0;
+    for (var i = 0; i < list.length; i++) {
+      var qi = currentOrder[list[i]];
+      var q = questions[qi];
+      var shuffle = state.shuffles[qi] || getShuffleFor(qi);
+      var status = 'Skipped';
+      if (state.answers[qi] !== undefined) {
+        var chosenOrig = shuffle[state.answers[qi]];
+        status = (chosenOrig === q.ci) ? 'Correct' : 'Wrong';
+        if (status === 'Correct') correct++;
+      }
+      lines.push('Q' + (i+1) + ' (' + q.section + '): ' + status);
+    }
+    lines.push('Score: ' + correct + ' / ' + list.length);
+    navigator.clipboard.writeText(lines.join('\n')).catch(function(){});
+  };
+
+  window.openFreshModal = function(mode) {
+    pendingFreshMode = mode;
+    if (mode === 'random') {
+      document.getElementById('modalTitle').textContent = 'Start Fresh (Random Order)?';
+      document.getElementById('modalMsg').textContent = 'Questions will be reshuffled into a new random order, and all progress will be reset.';
+    } else {
+      document.getElementById('modalTitle').textContent = 'Start Fresh (Original Order)?';
+      document.getElementById('modalMsg').textContent = 'Questions will return to their original order, and all progress will be reset.';
+    }
+    document.getElementById('modalOverlay').classList.add('active');
+  };
+
+  window.doFresh = function() {
+    localStorage.removeItem(SK);
+    currentOrder = (pendingFreshMode === 'random') ? randomOrder() : identityOrder();
+    saveOrder(currentOrder);
+    state = { cur: 0, answers: {}, shuffles: {}, showResults: false, retryMode: false, retryList: [] };
+    window.qzTimerReset();
+    closeModal();
+    render();
+  };
+
+  window.closeModal = function() {
+    document.getElementById('modalOverlay').classList.remove('active');
+  };
+
+  // Init
+  loadState();
+  render();
+})();
+
+// Timer IIFE
+(function(){
+  var TIMER_KEY = 'qzTimer_ch5_sion_2026';
+  var timerInterval = null;
+  var pausedRemaining = null;
+  var startedAt = null;
+  var totalSecs = null;
+
+  function fmt(s) {
+    var m = Math.floor(s / 60);
+    var sec = s % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
+
+  function tick() {
+    var elapsed = Math.floor((Date.now() - startedAt) / 1000);
+    var remaining = totalSecs - elapsed;
+    if (remaining <= 0) {
+      remaining = 0;
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    var el = document.getElementById('qzCountdown');
+    el.textContent = remaining === 0 ? "Time's Up" : fmt(remaining);
+    var pct = remaining / totalSecs;
+    if (pct <= 0.10) { el.style.color = '#E24B4A'; }
+    else if (pct <= 0.25) { el.style.color = '#f5a623'; }
+    else { el.style.color = '#111'; }
+  }
+
+  window.qzStartTimer = function() {
+    var mins = parseInt(document.getElementById('qzMinInput').value) || 20;
+    totalSecs = mins * 60;
+    pausedRemaining = null;
+    startedAt = Date.now();
+    document.getElementById('qzTimerSetup').style.display = 'none';
+    var run = document.getElementById('qzTimerRunning');
+    run.style.display = 'flex';
+    document.getElementById('qzPauseBtn').textContent = 'Pause';
+    clearInterval(timerInterval);
+    tick();
+    timerInterval = setInterval(tick, 500);
+  };
+
+  window.qzTogglePause = function() {
+    var btn = document.getElementById('qzPauseBtn');
+    if (btn.textContent === 'Pause') {
+      // pause
+      clearInterval(timerInterval);
+      timerInterval = null;
+      var elapsed = Math.floor((Date.now() - startedAt) / 1000);
+      pausedRemaining = Math.max(0, totalSecs - elapsed);
+      btn.textContent = 'Resume';
+    } else {
+      // resume
+      startedAt = Date.now() - (totalSecs - pausedRemaining) * 1000;
+      pausedRemaining = null;
+      timerInterval = setInterval(tick, 500);
+      btn.textContent = 'Pause';
+    }
+  };
+
+  window.qzTimerReset = function() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    pausedRemaining = null;
+    startedAt = null;
+    totalSecs = null;
+    document.getElementById('qzCountdown').textContent = '00:00';
+    document.getElementById('qzCountdown').style.color = '#111';
+    document.getElementById('qzTimerRunning').style.display = 'none';
+    document.getElementById('qzTimerSetup').style.display = 'flex';
+    localStorage.removeItem('qzTimer_ch5_sion_2026');
+  };
+})();
+</script>
+</body>
+</html>
