@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Advanced SAT Reading</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh;padding:12px;max-width:720px;margin:0 auto;}
+.quiz-title{font-size:1.35rem;font-weight:700;text-align:center;color:#111;background:#fff;padding:10px 0 2px}
+.subtitle{text-align:center;font-size:0.85rem;color:#555;background:#fff;padding:2px 0 4px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:2px 12px 10px}
+.timer-bar { background: #fff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; border-radius:10px; margin-bottom:8px;}
+.timer-setup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+.timer-setup label { font-weight: 700; }
+.timer-setup input[type="number"] { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+.timer-start-btn { background: #185FA5; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.timer-running { display: flex; align-items: center; gap: 8px; }
+.timer-label { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.02em; }
+.timer-display { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+.timer-display.warn { color: #f5a623; }
+.timer-display.danger { color: #E24B4A; }
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0;background:#fff;padding:8px 12px;border-radius:10px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;border:none;}
+.results-pill{display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;border:none;}
+.quiz-area{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;}
+.q-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.q-num{font-size:0.82rem;color:#888;}
+.tag-badge{font-size:0.75rem;padding:2px 10px;border-radius:10px;background:#185FA5;color:#fff;font-weight:600;}
+.passage-box,.context-box{background:#f5f7fa;border-left:3px solid #185FA5;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.92rem;color:#333;line-height:1.5;}
+.q-text{font-size:1.08rem;font-weight:600;color:#111;margin-bottom:14px;line-height:1.5;}
+.options{display:flex;flex-direction:column;gap:9px;}
+.opt-btn{background:#e8edf4;color:#111;border:2px solid transparent;border-radius:9px;padding:11px 14px;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.4;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn.revealed{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{margin-top:12px;padding:10px 12px;background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;font-size:0.88rem;color:#333;display:none;}
+.nav-btns{display:flex;justify-content:space-between;margin-top:14px;gap:10px;}
+.prev-btn,.next-btn{padding:9px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer;}
+.prev-btn{background:#e8edf4;color:#333;}
+.next-btn{background:#1D9E75;color:#fff;}
+.results-screen{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;display:none;}
+.results-screen.show{display:block;}
+.results-heading{font-size:1.3rem;font-weight:700;color:#1D9E75;text-align:center;margin-bottom:6px;}
+.results-score{font-size:1rem;text-align:center;color:#555;margin-bottom:14px;}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;margin-bottom:16px;}
+.r-card{border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;font-size:0.82rem;font-weight:600;}
+.r-card.correct{background:#E1F5EE;color:#085041;}
+.r-card.wrong{background:#FCEBEB;color:#501313;}
+.r-card.skipped{background:#f5f7fa;color:#555;}
+.results-btns{display:flex;flex-direction:column;gap:9px;}
+.retry-btn{background:#1D9E75;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.copy-btn{background:#185FA5;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.save-btn{background:#f5a623;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.fresh-btn{background:#e8edf4;color:#111;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:12px;padding:24px 20px;max-width:320px;width:90%;text-align:center;}
+.modal-title{font-size:1.05rem;font-weight:700;margin-bottom:8px;}
+.modal-msg{font-size:0.9rem;color:#555;margin-bottom:18px;}
+.modal-btns{display:flex;gap:10px;justify-content:center;}
+.modal-cancel{background:#e8edf4;color:#333;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;cursor:pointer;}
+.modal-confirm{background:#E24B4A;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;font-weight:600;cursor:pointer;}
+
+</style>
+</head>
+<body><div class="quiz-title">[Sion] Advanced SAT Reading</div><div class="subtitle" id="att-display">Total Attempts: 0</div><div class="instruction">Read each passage, then choose the best answer.</div>
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="20"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">20:00</span>
+  </div>
+</div>
+<div id="nav-bar"><span id="nav-count">0 / 12</span><div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div><button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button></div><div id="dot-panel"></div>
+<div class="quiz-area" id="quiz-area">
+  <div class="q-header">
+    <span class="q-num" id="q-num"></span>
+    <span class="tag-badge" id="tag-badge" style="display:none;"></span>
+  </div>
+  <div class="passage-box" id="passage-box" style="display:none;"></div>
+  <div class="context-box" id="context-box" style="display:none;"></div>
+  <div class="q-text" id="q-text"></div>
+  <div class="options" id="options"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-btns">
+    <button class="prev-btn" onclick="goPrev()">Prev</button>
+    <button class="next-btn" id="next-btn" onclick="goNext()">Next</button>
+  </div>
+</div>
+
+<div class="results-screen" id="results-screen">
+  <div class="results-heading" id="results-heading">Results</div>
+  <div class="results-score" id="results-score"></div>
+  <div class="results-grid" id="results-grid"></div>
+  <div class="results-btns">
+    <button class="retry-btn" onclick="retryWrong()">Retry Wrong Ones</button>
+    <button class="copy-btn" onclick="copyRes()">Copy All Results</button>
+    <button class="save-btn" onclick="saveWrongAnswers()">Save Wrong Answers</button>
+    <button class="fresh-btn" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button>
+    <button class="fresh-btn" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <div class="modal-title" id="freshModalTitle">Start Fresh?</div>
+    <div class="modal-msg" id="freshModalText">All progress will be cleared. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>var TITLE = "[Sion] Advanced SAT Reading";var QUIZ_KEY = "quiz_sionadvreading_12_20260907_v1";var ATT_KEY = "quiz_sionadvreading_12_att_20260907_v1";var RAW_QUESTIONS = [{"stem": "What can reasonably be inferred about the bakery's financial situation from the passage?", "passage": "The following text is adapted from a local newspaper feature on small businesses.<br><br>The bakery's front display, once rotated weekly with new pastries, has shown the same three items for over a month. The owner, who used to greet every customer by name, now spends most mornings in the back office with the door closed, and the shop's hours, formerly seven days a week, have quietly shrunk to five.", "opts": ["The bakery is thriving and has recently expanded its menu significantly.", "The bakery appears to be struggling, as suggested by reduced variety, reduced hours, and the owner's withdrawal from the front of the shop.", "The owner has decided to retire and hand the bakery over to new management.", "The bakery has closed permanently and will not reopen."], "ci": 1, "exp": "The unchanged display, shrinking hours, and the owner's retreat into the back office all point to signs of struggle, though the passage never states the bakery has closed or that the owner is retiring.", "tag": "Inferences", "tagcolor": "#f5a623"}, {"stem": "What can reasonably be inferred about the archaeologist's expectations before opening the tomb chamber?", "passage": "The following text is adapted from a field journal entry.<br><br>I had prepared a full inventory sheet, printed in triplicate, certain that whatever lay beyond the sealed door would need careful, systematic recording. When the door finally gave way, the chamber beyond held nothing but a single overturned jar and centuries of settled dust. I folded the inventory sheets back into my bag without unfolding a pen.", "opts": ["The archaeologist expected to find a chamber filled with numerous artifacts requiring extensive documentation.", "The archaeologist expected to find the chamber completely empty from the very beginning.", "The archaeologist had already documented the chamber's contents before opening the door.", "The archaeologist believed the tomb had been destroyed by an earthquake."], "ci": 0, "exp": "Preparing a detailed inventory sheet \"in triplicate\" suggests the archaeologist anticipated a chamber full of items needing careful documentation, an expectation undercut by the nearly empty room actually found.", "tag": "Inferences", "tagcolor": "#f5a623"}, {"stem": "Which claim is best supported by the data described in the passage?", "passage": "The following text is adapted from a report on urban gardening programs.<br><br>A city compared two neighborhoods after introducing community garden plots in one of them. Over three years, the neighborhood with the new gardens saw a 22 percent increase in reported neighbor-to-neighbor interactions, while the neighborhood without gardens saw almost no change, a difference researchers attributed to residents spending shared time planting and maintaining the plots together.", "opts": ["Community gardens have no measurable effect on how neighbors interact with one another.", "Introducing community garden plots may increase social interaction among neighbors compared to neighborhoods without such gardens.", "Neighborhoods without gardens reported significantly more interactions than neighborhoods with gardens.", "All cities should immediately replace every park with a community garden."], "ci": 1, "exp": "The 22 percent increase in reported interactions in the gardening neighborhood, compared to almost no change elsewhere, directly supports the claim that community gardens may boost neighborly interaction relative to neighborhoods without them.", "tag": "Command of Evidence", "tagcolor": "#1D9E75"}, {"stem": "What is the main effect of the phrase \"the silence had weight\" in the passage?", "passage": "The following text is adapted from a short story. The narrator waits alone in an empty auditorium after a rehearsal has ended.<br><br>Everyone had filed out through the side doors nearly an hour before, their voices trailing off into the parking lot until even the echo of them was gone. I stayed in my seat, and the silence had weight, pressing down over the rows of empty chairs like something that had been left behind on purpose and now expected to be noticed.", "opts": ["It literally describes a heavy object that fell onto the auditorium seats.", "It suggests the narrator has fallen asleep and is dreaming about the auditorium.", "It conveys the silence as an oppressive, almost physical presence rather than a simple absence of sound.", "It indicates that the auditorium's ceiling was structurally unsound and at risk of collapse."], "ci": 2, "exp": "Describing silence as having \"weight\" that \"presses down\" is figurative language that turns an absence of sound into an oppressive, almost tangible presence, rather than describing a literal object or structural danger.", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"stem": "What is the main purpose of this passage?", "passage": "The following text is adapted from a marine biology article on coral reef restoration.<br><br>For decades, reef restoration meant transplanting coral fragments and hoping for the best, a method that succeeded often enough to seem sufficient but failed too often to be called reliable. Recent projects have shifted focus toward selecting coral strains that already show tolerance to warmer water, breeding them in nurseries before ever placing them on a reef. The change is not merely technical; it reflects an admission that restoration can no longer treat ocean temperatures as a temporary obstacle to work around.", "opts": ["To describe the discovery of a brand-new species of coral in tropical waters.", "To explain a shift in restoration strategy from simple transplanting toward selecting heat-tolerant coral strains.", "To argue that coral reefs cannot be restored under any circumstances.", "To compare coral restoration costs across different countries."], "ci": 1, "exp": "The passage traces a change from the older transplanting method to a newer approach centered on breeding heat-tolerant coral strains, explaining both what changed and why, which is its central purpose.", "tag": "Text Structure and Purpose", "tagcolor": "#0d9488"}, {"stem": "How would the researchers in Text 2 most likely respond to the recommendation in Text 1 that schools eliminate standardized testing entirely?", "passage": "Text 1<br>Some education researchers argue that standardized tests fail to capture a student's full range of abilities and recommend that schools eliminate them entirely in favor of project-based assessments graded solely by classroom teachers.<br><br>Text 2<br>Other researchers caution that teacher-graded project assessments, without any standardized component, have shown wide grading inconsistencies between different teachers and schools, making it harder to compare student progress across a district or identify which schools most need additional resources.", "opts": ["They would fully support eliminating standardized testing with no reservations.", "They would argue that removing all standardized components could create grading inconsistencies that make it harder to compare student progress across schools.", "They would argue that project-based assessments should never be used under any circumstances.", "They would claim that classroom teachers are entirely incapable of grading fairly."], "ci": 1, "exp": "Text 2 highlights grading inconsistencies and difficulty comparing progress across schools as a specific consequence of removing standardized components entirely, directly complicating Text 1's recommendation.", "tag": "Cross-Text Connections", "tagcolor": "#d6336c"}, {"stem": "How does the passage structure its discussion of the new office building's design?", "passage": "The following text is adapted from an architecture review.<br><br>The building's exterior gives little away: a plain grid of glass and steel that could belong to any decade of the last fifty years. Only inside does the design reveal its purpose, with a central atrium that funnels daylight down through eight floors and cuts the building's electricity use for lighting by nearly half. The architects, it seems, were content to let the building's ordinary face conceal an uncommonly ambitious interior.", "opts": ["It first describes the plain exterior, then reveals how the more distinctive interior design serves a practical energy-saving purpose.", "It lists every material used in the building's construction in chronological order.", "It argues that the building's exterior design is superior to its interior design.", "It compares the building to several other famous skyscrapers around the world."], "ci": 0, "exp": "The passage begins with the unremarkable exterior and then moves to the atrium's daylight-funneling design and its energy benefits, structuring the discussion as a contrast between plain outside and purposeful inside.", "tag": "Text Structure and Purpose", "tagcolor": "#0d9488"}, {"stem": "Which choice completes the text with the most logical and precise word or phrase?", "passage": "The following text is adapted from a summary of a contract dispute.<br><br>The two companies had negotiated the agreement's terms so ____ that even their own lawyers later disagreed about what a single clause meant, leaving a judge to spend three months untangling language that both sides insisted, at the time, had been perfectly clear.", "opts": ["precisely", "ambiguously", "efficiently", "briefly"], "ci": 1, "exp": "\"Ambiguously\" matches the description of lawyers disagreeing about a clause's meaning and a judge needing months to untangle it; \"precisely,\" \"efficiently,\" and \"briefly\" would not produce such prolonged confusion.", "tag": "Words in Context", "tagcolor": "#7b61ff"}, {"stem": "How does the repetition of the phrase \"they said it would pass\" affect the passage?", "passage": "The following text is adapted from a personal essay about a difficult year.<br><br>They said it would pass, the first time I called, and I believed them. They said it would pass when the weeks became months, and I believed them a little less. They said it would pass again in the new year, and by then the words had worn smooth from overuse, no longer a comfort so much as a sound I had learned to expect.", "opts": ["It emphasizes how a once-comforting phrase gradually loses its meaning and reassurance through repeated, unfulfilled use.", "It shows that the narrator stopped listening to other people entirely after the first conversation.", "It suggests that multiple different people were arguing with each other about the same topic.", "It proves that the difficult situation described in the essay was resolved quickly."], "ci": 0, "exp": "Repeating \"they said it would pass\" while noting the narrator's belief \"a little less\" each time, and describing the words as \"worn smooth,\" shows the phrase losing its comforting power through repetition without resolution.", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"stem": "How would the author of Text 2 most likely respond to the claim in Text 1 that remote work universally increases employee productivity?", "passage": "Text 1<br>Advocates of remote work argue that employees freed from commutes and office distractions consistently produce more, pointing to survey data in which most remote workers report finishing tasks faster than they did in the office.<br><br>Text 2<br>Other analysts note that self-reported productivity surveys may not capture reality, especially in collaborative fields like software development, where remote teams have shown longer delays in projects requiring frequent real-time coordination between multiple people.", "opts": ["The author of Text 2 would fully agree that remote work always increases productivity in every field.", "The author of Text 2 would suggest that Text 1's conclusion may not hold in collaborative fields where frequent real-time coordination is required.", "The author of Text 2 would argue that productivity cannot be measured in any workplace setting.", "The author of Text 2 would claim that commuting always improves employee focus and output."], "ci": 1, "exp": "Text 2 raises collaborative fields like software development, where remote teams show coordination delays, directly challenging Text 1's broader claim that remote work universally boosts productivity.", "tag": "Cross-Text Connections", "tagcolor": "#d6336c"}, {"stem": "Which choice completes the text with the most logical and precise word or phrase?", "passage": "The following text is adapted from a profile of a jazz pianist.<br><br>Critics who once dismissed her playing as too ____ , all flourishes and no restraint, changed their tune after her later recordings, in which the same technical daring was reined in by a newfound patience, each note left room to breathe before the next arrived.", "opts": ["reserved", "ornate", "monotonous", "hesitant"], "ci": 1, "exp": "\"Ornate\" fits the description of playing defined by \"flourishes and no restraint,\" a criticism the passage contrasts with her later, more patient style; \"reserved,\" \"monotonous,\" and \"hesitant\" all describe qualities inconsistent with excessive flourish.", "tag": "Words in Context", "tagcolor": "#7b61ff"}, {"stem": "Which claim is best supported by the results described in the passage?", "passage": "The following text is adapted from a study on exercise and memory.<br><br>Researchers tracked two groups of older adults over six months. One group walked briskly for thirty minutes three times a week; the other maintained their usual, largely sedentary routines. At the end of the study, the walking group scored, on average, 18 percent higher on a standardized memory test than the sedentary group, a gap that had not existed when the study began.", "opts": ["Memory ability is entirely determined by genetics and cannot be influenced by lifestyle.", "Regular brisk walking over several months may improve memory performance in older adults compared to a sedentary routine.", "Standardized memory tests are not a reliable way to measure cognitive ability.", "Older adults who walk briskly will always outperform younger adults on memory tests."], "ci": 1, "exp": "The walking group's 18 percent higher average score, emerging only after the six-month period, directly supports the claim that regular brisk walking can improve memory performance compared to remaining sedentary.", "tag": "Command of Evidence", "tagcolor": "#1D9E75"}];var N = RAW_QUESTIONS.length;var ORDER_KEY = QUIZ_KEY + '_order_v1';
+function shuffleArr(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function identityOrder(){var o=[];for(var i=0;i<N;i++)o.push(i);return o;}
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length===0) return false;
+  for(var i=0;i<arr.length;i++){ if(typeof arr[i] !== 'number' || arr[i]<0 || arr[i]>=N) return false; }
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad');
+    return arr;
+  }catch(e){ try{localStorage.removeItem(ORDER_KEY);}catch(e2){} return null; }
+}
+function saveOrder(o){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(o)); }catch(e){} }
+
+var order = loadOrder() || identityOrder();
+if(!loadOrder()) saveOrder(order);
+var pendingFreshMode = 'original';
+
+function defaultState(){
+  return { cur:0, answers:{}, showResults:false, timerTotalSec:null, timerStartedAt:null };
+}
+function loadState(){
+  try{
+    var raw = localStorage.getItem(QUIZ_KEY);
+    if(!raw) return defaultState();
+    var s = JSON.parse(raw);
+    if(typeof s.cur !== 'number' || s.cur<0 || s.cur>=order.length) s.cur = 0;
+    if(typeof s.answers !== 'object' || s.answers===null) s.answers = {};
+    if(typeof s.showResults !== 'boolean') s.showResults = false;
+    if(typeof s.timerTotalSec === 'undefined') s.timerTotalSec = null;
+    if(typeof s.timerStartedAt === 'undefined') s.timerStartedAt = null;
+    return s;
+  }catch(e){ try{localStorage.removeItem(QUIZ_KEY);}catch(e2){} return defaultState(); }
+}
+function saveState(){ try{ localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); }catch(e){} }
+
+var state = loadState();
+var timerInterval = null;
+
+function getAttempts(){ try{ return parseInt(localStorage.getItem(ATT_KEY)||'0',10); }catch(e){ return 0; } }
+function incAttempts(){ try{ localStorage.setItem(ATT_KEY, String(getAttempts()+1)); }catch(e){} }
+function updateAttDisplay(){
+  var el = document.getElementById('att-display');
+  if(el) el.textContent = 'Total Attempts: ' + getAttempts();
+}
+
+function formatTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function renderTimer(){
+  var setupEl = document.getElementById('timerSetup');
+  var runningEl = document.getElementById('timerRunning');
+  var dispEl = document.getElementById('timerDisplay');
+  if(!setupEl||!runningEl||!dispEl) return;
+  if(!state.timerStartedAt){ setupEl.style.display='flex'; runningEl.style.display='none'; return; }
+  setupEl.style.display='none'; runningEl.style.display='flex';
+  var elapsed = (Date.now()-state.timerStartedAt)/1000;
+  var remaining = state.timerTotalSec - elapsed;
+  dispEl.classList.remove('warn','danger');
+  if(remaining<=0){ dispEl.textContent="Time's Up"; dispEl.classList.add('danger'); stopTimerInterval(); return; }
+  dispEl.textContent = formatTime(remaining);
+  if(remaining <= state.timerTotalSec*0.1) dispEl.classList.add('danger');
+  else if(remaining <= state.timerTotalSec*0.25) dispEl.classList.add('warn');
+}
+function startTimer(){
+  var input = document.getElementById('timerMinutesInput');
+  var minutes = parseFloat(input.value);
+  if(!minutes || minutes<=0) minutes=20;
+  state.timerTotalSec = Math.round(minutes*60);
+  state.timerStartedAt = Date.now();
+  saveState(); renderTimer(); startTimerInterval();
+}
+function startTimerInterval(){ stopTimerInterval(); timerInterval=setInterval(renderTimer,1000); }
+function stopTimerInterval(){ if(timerInterval){clearInterval(timerInterval); timerInterval=null;} }
+function resetTimer(){
+  state.timerTotalSec = null; state.timerStartedAt = null;
+  stopTimerInterval(); saveState(); renderTimer();
+}
+
+function render(){
+  updateAttDisplay();
+  var qa = document.getElementById('quiz-area');
+  var rs = document.getElementById('results-screen');
+  if(state.showResults){
+    qa.style.display='none';
+    rs.classList.add('show');
+    renderResults();
+    return;
+  }
+  qa.style.display='block';
+  rs.classList.remove('show');
+
+  var qi = order[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  document.getElementById('q-num').textContent = 'Q' + (state.cur+1) + ' / ' + order.length;
+
+  var badge = document.getElementById('tag-badge');
+  if(q.tag){
+    badge.style.display='inline-block';
+    badge.textContent = q.tag;
+    badge.style.background = q.tagcolor || '#185FA5';
+  } else { badge.style.display='none'; }
+
+  var pbox = document.getElementById('passage-box');
+  if(q.passage){ pbox.style.display='block'; pbox.innerHTML = q.passage; } else { pbox.style.display='none'; }
+  var cbox = document.getElementById('context-box');
+  if(q.context){ cbox.style.display='block'; cbox.innerHTML = q.context; } else { cbox.style.display='none'; }
+
+  document.getElementById('q-text').innerHTML = q.stem;
+
+
+  var answered = state.answers[qi];
+  var optDiv = document.getElementById('options');
+  optDiv.innerHTML='';
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML = optText;
+    btn.disabled = answered !== undefined;
+    if(answered !== undefined){
+      if(idx === q.ci) btn.classList.add(answered===idx ? 'correct' : 'revealed');
+      else if(answered === idx) btn.classList.add('wrong');
+    }
+    btn.onclick = function(){ chooseAnswer(idx); };
+    optDiv.appendChild(btn);
+  });
+
+  var expDiv = document.getElementById('exp-box');
+  if(answered !== undefined && answered !== q.ci){
+    expDiv.style.display='block';
+    expDiv.innerHTML = q.exp;
+  } else {
+    expDiv.style.display='none';
+  }
+
+  var nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = (state.cur >= order.length-1) ? 'Show Results →' : 'Next →';
+
+  updateNav();
+}
+
+function updateNav(){
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  document.getElementById('nav-count').textContent = answered + ' / ' + order.length;
+  document.getElementById('prog-fill').style.width = (answered/order.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel = document.getElementById('dot-panel');
+  if(panel.style.display==='none') return;
+  var html='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var bg = state.answers[qi]===undefined ? '#d7dde6' : (state.answers[qi]===RAW_QUESTIONS[qi].ci ? '#185FA5' : '#E24B4A');
+    html += '<button class="dot" style="background:'+bg+';" onclick="goToQ('+pos+')">'+(pos+1)+'</button>';
+  }
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  if(answered===order.length){
+    html += '<br><button class="results-pill" onclick="showResultsNow()">Results</button>';
+  }
+  panel.innerHTML = html;
+}
+function toggleJump(){
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display==='none' || panel.style.display===''){
+    panel.style.display='block'; btn.innerHTML='Hide &#9652;'; renderDots();
+  } else {
+    panel.style.display='none'; btn.innerHTML='Jump &#9662;';
+  }
+}
+function goToQ(pos){
+  state.cur = pos; state.showResults=false; saveState(); render();
+}
+function showResultsNow(){
+  state.showResults = true; incAttempts(); saveState(); render();
+}
+function chooseAnswer(idx){
+  var qi = order[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState(); render();
+}
+function goPrev(){
+  if(state.cur>0){ state.cur--; saveState(); render(); }
+}
+function goNext(){
+  if(state.cur < order.length-1){ state.cur++; saveState(); render(); }
+  else { state.showResults=true; incAttempts(); saveState(); render(); }
+}
+function renderResults(){
+  var correct=0, wrong=0, skipped=0;
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]===undefined){ skipped++; continue; }
+    if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+  }
+  document.getElementById('results-score').textContent = correct+' correct, '+wrong+' wrong, '+skipped+' skipped - out of '+order.length;
+  var grid = document.getElementById('results-grid');
+  grid.innerHTML='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var card = document.createElement('div');
+    if(state.answers[qi]===undefined){
+      card.className='r-card skipped';
+      card.textContent='Q'+(pos+1)+' Skip';
+    } else {
+      var ok = state.answers[qi]===RAW_QUESTIONS[qi].ci;
+      card.className='r-card '+(ok?'correct':'wrong');
+      card.textContent='Q'+(pos+1)+' '+(ok?'OK':'X');
+    }
+    (function(p){ card.onclick=function(){ state.showResults=false; state.cur=p; saveState(); render(); }; })(pos);
+    grid.appendChild(card);
+  }
+}
+function retryWrong(){
+  var wrong=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      wrong.push(qi);
+    }
+  }
+  if(wrong.length===0) return;
+  wrong.forEach(function(qi){ delete state.answers[qi]; });
+  order = wrong;
+  saveOrder(order);
+  state.cur=0; state.showResults=false;
+  saveState(); render(); renderTimer();
+}
+function copyRes(){
+  var lines=[TITLE+' Results'];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    var s='Q'+(pos+1)+': ';
+    if(a===undefined) s+='Skipped';
+    else s += (a===RAW_QUESTIONS[qi].ci ? 'Correct' : 'Wrong');
+    lines.push(s);
+  }
+  var text = lines.join('\n');
+  try{
+    if(navigator.clipboard){ navigator.clipboard.writeText(text).catch(function(){}); }
+    else { var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+  }catch(e){}
+}
+function saveWrongAnswers(){
+  var wrongItems=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    if(a!==undefined && a!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongItems.push({ question: q.stem, yourAnswer: q.opts[a], correctAnswer: q.opts[q.ci], explanation: q.exp });
+    }
+  }
+  var blob = new Blob([JSON.stringify({title:TITLE, wrongAnswers:wrongItems}, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a2 = document.createElement('a');
+  a2.href = url; a2.download = QUIZ_KEY + '_wrong.json';
+  document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+  URL.revokeObjectURL(url);
+}
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var t = document.getElementById('freshModalTitle');
+  var m = document.getElementById('freshModalText');
+  if(mode==='random'){
+    t.textContent='Start Fresh (Random Order)?';
+    m.textContent='Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    t.textContent='Start Fresh (Original Order)?';
+    m.textContent='Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  order = (pendingFreshMode==='random') ? shuffleArr(identityOrder()) : identityOrder();
+  saveOrder(order);
+  state = defaultState();
+  saveState();
+  resetTimer();
+  closeFreshModal();
+  render();
+  renderTimer();
+}
+
+window.startTimer=startTimer;
+window.toggleJump=toggleJump;
+window.goToQ=goToQ;
+window.showResultsNow=showResultsNow;
+window.chooseAnswer=chooseAnswer;
+window.goPrev=goPrev;
+window.goNext=goNext;
+window.retryWrong=retryWrong;
+window.copyRes=copyRes;
+window.saveWrongAnswers=saveWrongAnswers;
+window.openFreshModalOriginal=openFreshModalOriginal;
+window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;
+window.confirmFresh=confirmFresh;
+
+render();
+renderTimer();
+if(state.timerStartedAt) startTimerInterval();
+</script>
+</body>
+</html>
