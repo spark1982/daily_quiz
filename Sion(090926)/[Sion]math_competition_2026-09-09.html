@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Math Competition</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh;padding:12px;max-width:720px;margin:0 auto;}
+.quiz-title{font-size:1.35rem;font-weight:700;text-align:center;color:#111;background:#fff;padding:10px 0 2px}
+.subtitle{text-align:center;font-size:0.85rem;color:#555;background:#fff;padding:2px 0 4px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:2px 12px 10px}
+.timer-bar { background: #fff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; border-radius:10px; margin-bottom:8px;}
+.timer-setup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+.timer-setup label { font-weight: 700; }
+.timer-setup input[type="number"] { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+.timer-start-btn { background: #185FA5; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.timer-running { display: flex; align-items: center; gap: 8px; }
+.timer-label { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.02em; }
+.timer-display { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+.timer-display.warn { color: #f5a623; }
+.timer-display.danger { color: #E24B4A; }
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0;background:#fff;padding:8px 12px;border-radius:10px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;border:none;}
+.results-pill{display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;border:none;}
+.quiz-area{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;}
+.q-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.q-num{font-size:0.82rem;color:#888;}
+.tag-badge{font-size:0.75rem;padding:2px 10px;border-radius:10px;background:#185FA5;color:#fff;font-weight:600;}
+.passage-box,.context-box{background:#f5f7fa;border-left:3px solid #185FA5;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.92rem;color:#333;line-height:1.5;}
+.q-text{font-size:1.08rem;font-weight:600;color:#111;margin-bottom:14px;line-height:1.5;}
+.options{display:flex;flex-direction:column;gap:9px;}
+.opt-btn{background:#e8edf4;color:#111;border:2px solid transparent;border-radius:9px;padding:11px 14px;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.4;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn.revealed{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{margin-top:12px;padding:10px 12px;background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;font-size:0.88rem;color:#333;display:none;}
+.nav-btns{display:flex;justify-content:space-between;margin-top:14px;gap:10px;}
+.prev-btn,.next-btn{padding:9px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer;}
+.prev-btn{background:#e8edf4;color:#333;}
+.next-btn{background:#1D9E75;color:#fff;}
+.results-screen{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;display:none;}
+.results-screen.show{display:block;}
+.results-heading{font-size:1.3rem;font-weight:700;color:#1D9E75;text-align:center;margin-bottom:6px;}
+.results-score{font-size:1rem;text-align:center;color:#555;margin-bottom:14px;}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;margin-bottom:16px;}
+.r-card{border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;font-size:0.82rem;font-weight:600;}
+.r-card.correct{background:#E1F5EE;color:#085041;}
+.r-card.wrong{background:#FCEBEB;color:#501313;}
+.r-card.skipped{background:#f5f7fa;color:#555;}
+.results-btns{display:flex;flex-direction:column;gap:9px;}
+.retry-btn{background:#1D9E75;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.copy-btn{background:#185FA5;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.save-btn{background:#f5a623;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.fresh-btn{background:#e8edf4;color:#111;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:12px;padding:24px 20px;max-width:320px;width:90%;text-align:center;}
+.modal-title{font-size:1.05rem;font-weight:700;margin-bottom:8px;}
+.modal-msg{font-size:0.9rem;color:#555;margin-bottom:18px;}
+.modal-btns{display:flex;gap:10px;justify-content:center;}
+.modal-cancel{background:#e8edf4;color:#333;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;cursor:pointer;}
+.modal-confirm{background:#E24B4A;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;font-weight:600;cursor:pointer;}
+.frac{display:inline-flex;flex-direction:column;align-items:stretch;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;}
+.frac .num{padding:0 2px;}
+.frac .den{border-top:1.4px solid #111;padding:0 2px;}
+.bigsum{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05;margin:0 4px;}
+.bigsum .bs-sup{font-size:0.68em;}
+.bigsum .bs-sigma{font-size:1.5em;margin:1px 0;}
+.bigsum .bs-sub{font-size:0.6em;white-space:nowrap;}
+.hexdiagram{text-align:center;margin:14px 0;}
+.hexdiagram svg{max-width:460px;width:100%;}
+</style>
+
+</head>
+<body><div class="quiz-title">[Sion] Math Competition</div><div class="subtitle" id="att-display">Total Attempts: 0</div><div class="instruction">Choose the correct answer for each problem. Two problems are drawn from each of five chapters.</div>
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="20"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">20:00</span>
+  </div>
+</div>
+<div id="nav-bar"><span id="nav-count">0 / 10</span><div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div><button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button></div><div id="dot-panel"></div>
+<div class="quiz-area" id="quiz-area">
+  <div class="q-header">
+    <span class="q-num" id="q-num"></span>
+    <span class="tag-badge" id="tag-badge" style="display:none;"></span>
+  </div>
+  <div class="passage-box" id="passage-box" style="display:none;"></div>
+  <div class="context-box" id="context-box" style="display:none;"></div>
+  <div class="q-text" id="q-text"></div>
+  <div class="options" id="options"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-btns">
+    <button class="prev-btn" onclick="goPrev()">Prev</button>
+    <button class="next-btn" id="next-btn" onclick="goNext()">Next</button>
+  </div>
+</div>
+
+<div class="results-screen" id="results-screen">
+  <div class="results-heading" id="results-heading">Results</div>
+  <div class="results-score" id="results-score"></div>
+  <div class="results-grid" id="results-grid"></div>
+  <div class="results-btns">
+    <button class="retry-btn" onclick="retryWrong()">Retry Wrong Ones</button>
+    <button class="copy-btn" onclick="copyRes()">Copy All Results</button>
+    <button class="save-btn" onclick="saveWrongAnswers()">Save Wrong Answers</button>
+    <button class="fresh-btn" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button>
+    <button class="fresh-btn" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <div class="modal-title" id="freshModalTitle">Start Fresh?</div>
+    <div class="modal-msg" id="freshModalText">All progress will be cleared. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>var TITLE = "[Sion] Math Competition";var QUIZ_KEY = "quiz_sionmathcomp_10_20260909_v1";var ATT_KEY = "quiz_sionmathcomp_10_att_20260909_v1";var RAW_QUESTIONS = [{"stem": "For any a and b, we will define a \"move that adds (a,b)\" as a move from any point (c,d) to the point (c+a,d+b). A particle moves according to the following rules. If a move added (p,q) to get to the current position, the next move will add either (p&minus;1,q) or (p,q&minus;1) to move to the next position. Neither p nor q can ever be negative. Particle A starts at (0,0) and moves to (3,4). Particle A will continue to move according to the preceding rules. When the particle can no longer move according to the preceding rules, it is located at point (r,r). What is the value of r? (MathCounts)", "opts": ["7", "21", "14", "12"], "ci": 2, "exp": "The expression s+t (sum of coordinates added) starts at 3+4=7. Each subsequent move adds (7&minus;1), (7&minus;2), ..., (7&minus;6)=1, totaling r+r=7+(7&minus;1)+(7&minus;2)+...+(7&minus;6)=7+6+5+...+1=28, so r=14.", "tag": "Chapter 2", "tagcolor": "#1D9E75"}, {"stem": "The sum of the ages of the 33 students in a class is 430 years. Are there 20 students in the class such that the sum of their ages is greater than 260?", "opts": ["there are not", "there are"], "ci": 1, "exp": "Suppose every group of 20 has sum &le; 260. The 13 remaining students have sum &ge; 430 &minus; 260 = 170, so average age &ge; 170/13 > 13. Then the 20 youngest students have sum &le; 260, but the 20 oldest have sum = 430 minus the 13 youngest. Since the 13 youngest average under 430/33 &approx; 13, the 20 oldest sum exceeds 260. So there are such 20 students.", "tag": "Chapter 1", "tagcolor": "#185FA5"}, {"stem": "Lupe went to the store and paid for her purchase with a $10 bill. She found that the digits making the amount of her purchase could be rearranged to make the amount she received back in change. If her purchase amount and her change amount were different and each amount was at least $1, how many possible amounts of change could she have received? (MathCounts)", "opts": ["10", "4", "8", "6"], "ci": 2, "exp": "The answer is 8.", "tag": "Chapter 3", "tagcolor": "#f5a623"}, {"stem": "Is it true that in any group of 8 people, there are two people in the group who have the same number of friends among the people in the group?", "opts": ["false", "true"], "ci": 1, "exp": "Each person can have 0 to 7 friends in the group, but 0 friends and 7 friends cannot both occur simultaneously. So there are at most 7 possible values for 8 people, and by Pigeonhole at least two share the same number of friends.", "tag": "Chapter 1", "tagcolor": "#185FA5"}, {"stem": "The only people living in an island are knights and liars. The knights always tell the truth, while the liars always lie. A traveler met three islanders and asked each one of them: \"How many of the other two islanders are knights?\" The first one said: \"None.\" The second one said: \"One.\" What did the third one say? (Moscow)", "opts": ["\"One\"", "\"Two\"", "\"None\"", "\"Three\""], "ci": 0, "exp": "The answer is \"One\".", "tag": "Chapter 3", "tagcolor": "#f5a623"}, {"stem": "Let a = 3<sup><span class=\"frac\"><span class=\"num\">1</span><span class=\"den\">223</span></span></sup> + 1 and for all n &ge; 3 let<br><br>f(n) = <span style=\"display:inline-flex;align-items:center;vertical-align:middle\"><span style=\"font-size:1.4em;line-height:1;font-weight:300\">(</span><span style=\"display:inline-flex;flex-direction:column;align-items:center;font-size:0.82em;line-height:1.3;margin:0 1px\"><span>n</span><span>0</span></span><span style=\"font-size:1.4em;line-height:1;font-weight:300\">)</span></span>a<sup>n&minus;1</sup> &minus; <span style=\"display:inline-flex;align-items:center;vertical-align:middle\"><span style=\"font-size:1.4em;line-height:1;font-weight:300\">(</span><span style=\"display:inline-flex;flex-direction:column;align-items:center;font-size:0.82em;line-height:1.3;margin:0 1px\"><span>n</span><span>1</span></span><span style=\"font-size:1.4em;line-height:1;font-weight:300\">)</span></span>a<sup>n&minus;2</sup> + <span style=\"display:inline-flex;align-items:center;vertical-align:middle\"><span style=\"font-size:1.4em;line-height:1;font-weight:300\">(</span><span style=\"display:inline-flex;flex-direction:column;align-items:center;font-size:0.82em;line-height:1.3;margin:0 1px\"><span>n</span><span>2</span></span><span style=\"font-size:1.4em;line-height:1;font-weight:300\">)</span></span>a<sup>n&minus;3</sup> &minus; &hellip; + (&minus;1)<sup>n&minus;1</sup><span style=\"display:inline-flex;align-items:center;vertical-align:middle\"><span style=\"font-size:1.4em;line-height:1;font-weight:300\">(</span><span style=\"display:inline-flex;flex-direction:column;align-items:center;font-size:0.82em;line-height:1.3;margin:0 1px\"><span>n</span><span>n&minus;1</span></span><span style=\"font-size:1.4em;line-height:1;font-weight:300\">)</span></span>a<sup>0</sup>.<br><br>Find f(2007) + f(2008). (Purple Comet)", "opts": ["6561", "19683/2", "59049", "19683"], "ci": 3, "exp": "a&middot;f(n)=(a&minus;1)<sup>n</sup>&minus;(&minus;1)<sup>n</sup>. Since a&minus;1=3<sup>1/223</sup>, f(n)=(3<sup>n/223</sup>&minus;(&minus;1)<sup>n</sup>)/a. Then f(2007)+f(2008)=3<sup>2007/223</sup>&middot;(1+3<sup>1/223</sup>)/a=3<sup>9</sup>=19683.", "tag": "Chapter 2", "tagcolor": "#1D9E75"}, {"stem": "The polynomial p(x) satisfies p(&minus;x) = &minus;p(x). When p(x) is divided by x &minus; 3, the remainder is 6. Find the remainder when p(x) is divided by x<sup>2</sup> &minus; 9.", "opts": ["6", "2x", "x + 6", "&minus;2x"], "ci": 1, "exp": "Since the remainder when p(x) is divided by x&minus;3 is 6, p(3)=6. Because p is an odd function, p(&minus;3)=&minus;p(3)=&minus;6. The remainder when dividing by x<sup>2</sup>&minus;9=(x&minus;3)(x+3) has the form ax+b, so 3a+b=6 and &minus;3a+b=&minus;6. Adding these gives 2b=0, so b=0, and then a=2. The remainder is 2x.", "tag": "Chapter 4", "tagcolor": "#7b61ff"}, {"stem": "You have 8 cubes of size 1 through 8. A tower is to be built using all 8 cubes according to the following rules: a) Any cube may be the bottom cube in the tower. b) The cube immediately on top of a cube with size k must have size at most k + 2. How many different towers can be constructed?", "opts": ["1458", "1440", "1512", "972"], "ci": 0, "exp": "Build the tower one cube at a time by size, tracking how many \"slots\" are available for the next cube. Placing the smallest cubes first, each new cube can go on top of the current tower or be inserted so that a bigger cube ends up directly on top of it as long as the size gap of at most 2 is respected. Careful casework (or a recursive count building up from cube 1 to cube 8) on the number of valid insertion points at each stage gives a running product that totals 1458 distinct towers.", "tag": "Chapter 5", "tagcolor": "#E24B4A"}, {"stem": "The polynomial P(x) has remainder 99 when divided by x &minus; 19 and remainder 19 when divided by x &minus; 99. What is the remainder when P(x) is divided by (x &minus; 19)(x &minus; 99)? (AHSME)", "opts": ["&minus;x + 80", "&minus;x + 118", "118", "x + 118"], "ci": 1, "exp": "The remainder has the form ax+b. Since P(19)=99, we need 19a+b=99, and since P(99)=19, we need 99a+b=19. Subtracting gives 80a=&minus;80, so a=&minus;1, and then b=118. The remainder is &minus;x+118.", "tag": "Chapter 4", "tagcolor": "#7b61ff"}, {"stem": "A computer system considers a string of decimal digits a valid codeword if it contains an even number of 0s. Find a closed form for a<sub>n</sub>, the number of valid n-digit codewords.", "opts": ["8<sup>n</sup> + 10<sup>n</sup>", "<span class=\"frac\"><span class=\"num\">1</span><span class=\"den\">2</span></span>(9<sup>n</sup> + 10<sup>n</sup>)", "<span class=\"frac\"><span class=\"num\">1</span><span class=\"den\">2</span></span>(8<sup>n</sup> + 10<sup>n</sup>)", "<span class=\"frac\"><span class=\"num\">1</span><span class=\"den\">2</span></span>(10<sup>n</sup> &minus; 8<sup>n</sup>)"], "ci": 2, "exp": "Let a<sub>n</sub> count n-digit strings (digits 0&ndash;9) with an even number of 0s, and let b<sub>n</sub> count those with an odd number of 0s, so a<sub>n</sub>+b<sub>n</sub>=10<sup>n</sup>. Each string either starts with a nonzero digit (9 choices, keeping the parity of 0s the same as an (n&minus;1)-digit string) or a 0 (flipping the parity). This gives a<sub>n</sub>&minus;b<sub>n</sub> = 8<sup>n</sup> (this can be seen by tracking the difference d<sub>n</sub>=a<sub>n</sub>&minus;b<sub>n</sub>, which satisfies d<sub>n</sub>=8&middot;d<sub>n&minus;1</sub> since 8 of the 10 digit choices preserve the sign of the difference and the other 2 choices for digit 0 cancel, starting from d<sub>0</sub>=1, so d<sub>n</sub>=8<sup>n</sup>). Solving a<sub>n</sub>+b<sub>n</sub>=10<sup>n</sup> and a<sub>n</sub>&minus;b<sub>n</sub>=8<sup>n</sup> together gives a<sub>n</sub> = (1/2)(8<sup>n</sup>+10<sup>n</sup>).", "tag": "Chapter 5", "tagcolor": "#E24B4A"}];var N = RAW_QUESTIONS.length;var ORDER_KEY = QUIZ_KEY + '_order_v1';
+function shuffleArr(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function identityOrder(){var o=[];for(var i=0;i<N;i++)o.push(i);return o;}
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length===0) return false;
+  for(var i=0;i<arr.length;i++){ if(typeof arr[i] !== 'number' || arr[i]<0 || arr[i]>=N) return false; }
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad');
+    return arr;
+  }catch(e){ try{localStorage.removeItem(ORDER_KEY);}catch(e2){} return null; }
+}
+function saveOrder(o){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(o)); }catch(e){} }
+
+var order = loadOrder() || identityOrder();
+if(!loadOrder()) saveOrder(order);
+var pendingFreshMode = 'original';
+
+function defaultState(){
+  return { cur:0, answers:{}, showResults:false, timerTotalSec:null, timerStartedAt:null };
+}
+function loadState(){
+  try{
+    var raw = localStorage.getItem(QUIZ_KEY);
+    if(!raw) return defaultState();
+    var s = JSON.parse(raw);
+    if(typeof s.cur !== 'number' || s.cur<0 || s.cur>=order.length) s.cur = 0;
+    if(typeof s.answers !== 'object' || s.answers===null) s.answers = {};
+    if(typeof s.showResults !== 'boolean') s.showResults = false;
+    if(typeof s.timerTotalSec === 'undefined') s.timerTotalSec = null;
+    if(typeof s.timerStartedAt === 'undefined') s.timerStartedAt = null;
+    return s;
+  }catch(e){ try{localStorage.removeItem(QUIZ_KEY);}catch(e2){} return defaultState(); }
+}
+function saveState(){ try{ localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); }catch(e){} }
+
+var state = loadState();
+var timerInterval = null;
+
+function getAttempts(){ try{ return parseInt(localStorage.getItem(ATT_KEY)||'0',10); }catch(e){ return 0; } }
+function incAttempts(){ try{ localStorage.setItem(ATT_KEY, String(getAttempts()+1)); }catch(e){} }
+function updateAttDisplay(){
+  var el = document.getElementById('att-display');
+  if(el) el.textContent = 'Total Attempts: ' + getAttempts();
+}
+
+function formatTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function renderTimer(){
+  var setupEl = document.getElementById('timerSetup');
+  var runningEl = document.getElementById('timerRunning');
+  var dispEl = document.getElementById('timerDisplay');
+  if(!setupEl||!runningEl||!dispEl) return;
+  if(!state.timerStartedAt){ setupEl.style.display='flex'; runningEl.style.display='none'; return; }
+  setupEl.style.display='none'; runningEl.style.display='flex';
+  var elapsed = (Date.now()-state.timerStartedAt)/1000;
+  var remaining = state.timerTotalSec - elapsed;
+  dispEl.classList.remove('warn','danger');
+  if(remaining<=0){ dispEl.textContent="Time's Up"; dispEl.classList.add('danger'); stopTimerInterval(); return; }
+  dispEl.textContent = formatTime(remaining);
+  if(remaining <= state.timerTotalSec*0.1) dispEl.classList.add('danger');
+  else if(remaining <= state.timerTotalSec*0.25) dispEl.classList.add('warn');
+}
+function startTimer(){
+  var input = document.getElementById('timerMinutesInput');
+  var minutes = parseFloat(input.value);
+  if(!minutes || minutes<=0) minutes=20;
+  state.timerTotalSec = Math.round(minutes*60);
+  state.timerStartedAt = Date.now();
+  saveState(); renderTimer(); startTimerInterval();
+}
+function startTimerInterval(){ stopTimerInterval(); timerInterval=setInterval(renderTimer,1000); }
+function stopTimerInterval(){ if(timerInterval){clearInterval(timerInterval); timerInterval=null;} }
+function resetTimer(){
+  state.timerTotalSec = null; state.timerStartedAt = null;
+  stopTimerInterval(); saveState(); renderTimer();
+}
+
+function render(){
+  updateAttDisplay();
+  var qa = document.getElementById('quiz-area');
+  var rs = document.getElementById('results-screen');
+  if(state.showResults){
+    qa.style.display='none';
+    rs.classList.add('show');
+    renderResults();
+    return;
+  }
+  qa.style.display='block';
+  rs.classList.remove('show');
+
+  var qi = order[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  document.getElementById('q-num').textContent = 'Q' + (state.cur+1) + ' / ' + order.length;
+
+  var badge = document.getElementById('tag-badge');
+  if(q.tag){
+    badge.style.display='inline-block';
+    badge.textContent = q.tag;
+    badge.style.background = q.tagcolor || '#185FA5';
+  } else { badge.style.display='none'; }
+
+  var pbox = document.getElementById('passage-box');
+  if(q.passage){ pbox.style.display='block'; pbox.innerHTML = q.passage; } else { pbox.style.display='none'; }
+  var cbox = document.getElementById('context-box');
+  if(q.context){ cbox.style.display='block'; cbox.innerHTML = q.context; } else { cbox.style.display='none'; }
+
+  document.getElementById('q-text').innerHTML = q.stem;
+
+
+  var answered = state.answers[qi];
+  var optDiv = document.getElementById('options');
+  optDiv.innerHTML='';
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML = optText;
+    btn.disabled = answered !== undefined;
+    if(answered !== undefined){
+      if(idx === q.ci) btn.classList.add(answered===idx ? 'correct' : 'revealed');
+      else if(answered === idx) btn.classList.add('wrong');
+    }
+    btn.onclick = function(){ chooseAnswer(idx); };
+    optDiv.appendChild(btn);
+  });
+
+  var expDiv = document.getElementById('exp-box');
+  if(answered !== undefined && answered !== q.ci){
+    expDiv.style.display='block';
+    expDiv.innerHTML = q.exp;
+  } else {
+    expDiv.style.display='none';
+  }
+
+  var nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = (state.cur >= order.length-1) ? 'Show Results →' : 'Next →';
+
+  updateNav();
+
+}
+
+function updateNav(){
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  document.getElementById('nav-count').textContent = answered + ' / ' + order.length;
+  document.getElementById('prog-fill').style.width = (answered/order.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel = document.getElementById('dot-panel');
+  if(panel.style.display==='none') return;
+  var html='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var bg = state.answers[qi]===undefined ? '#d7dde6' : (state.answers[qi]===RAW_QUESTIONS[qi].ci ? '#185FA5' : '#E24B4A');
+    html += '<button class="dot" style="background:'+bg+';" onclick="goToQ('+pos+')">'+(pos+1)+'</button>';
+  }
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  if(answered===order.length){
+    html += '<br><button class="results-pill" onclick="showResultsNow()">Results</button>';
+  }
+  panel.innerHTML = html;
+}
+function toggleJump(){
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display==='none' || panel.style.display===''){
+    panel.style.display='block'; btn.innerHTML='Hide &#9652;'; renderDots();
+  } else {
+    panel.style.display='none'; btn.innerHTML='Jump &#9662;';
+  }
+}
+function goToQ(pos){
+  state.cur = pos; state.showResults=false; saveState(); render();
+}
+function showResultsNow(){
+  state.showResults = true; incAttempts(); saveState(); render();
+}
+function chooseAnswer(idx){
+  var qi = order[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState(); render();
+}
+function goPrev(){
+  if(state.cur>0){ state.cur--; saveState(); render(); }
+}
+function goNext(){
+  if(state.cur < order.length-1){ state.cur++; saveState(); render(); }
+  else { state.showResults=true; incAttempts(); saveState(); render(); }
+}
+function renderResults(){
+  var correct=0, wrong=0, skipped=0;
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]===undefined){ skipped++; continue; }
+    if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+  }
+  document.getElementById('results-score').textContent = correct+' correct, '+wrong+' wrong, '+skipped+' skipped - out of '+order.length;
+  var grid = document.getElementById('results-grid');
+  grid.innerHTML='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var card = document.createElement('div');
+    if(state.answers[qi]===undefined){
+      card.className='r-card skipped';
+      card.textContent='Q'+(pos+1)+' Skip';
+    } else {
+      var ok = state.answers[qi]===RAW_QUESTIONS[qi].ci;
+      card.className='r-card '+(ok?'correct':'wrong');
+      card.textContent='Q'+(pos+1)+' '+(ok?'OK':'X');
+    }
+    (function(p){ card.onclick=function(){ state.showResults=false; state.cur=p; saveState(); render(); }; })(pos);
+    grid.appendChild(card);
+  }
+}
+function retryWrong(){
+  var wrong=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      wrong.push(qi);
+    }
+  }
+  if(wrong.length===0) return;
+  wrong.forEach(function(qi){ delete state.answers[qi]; });
+  order = wrong;
+  saveOrder(order);
+  state.cur=0; state.showResults=false;
+  saveState(); render(); renderTimer();
+}
+function copyRes(){
+  var lines=[TITLE+' Results'];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    var s='Q'+(pos+1)+': ';
+    if(a===undefined) s+='Skipped';
+    else s += (a===RAW_QUESTIONS[qi].ci ? 'Correct' : 'Wrong');
+    lines.push(s);
+  }
+  var text = lines.join('\n');
+  try{
+    if(navigator.clipboard){ navigator.clipboard.writeText(text).catch(function(){}); }
+    else { var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+  }catch(e){}
+}
+function saveWrongAnswers(){
+  var wrongItems=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    if(a!==undefined && a!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongItems.push({ question: q.stem, yourAnswer: q.opts[a], correctAnswer: q.opts[q.ci], explanation: q.exp });
+    }
+  }
+  var blob = new Blob([JSON.stringify({title:TITLE, wrongAnswers:wrongItems}, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a2 = document.createElement('a');
+  a2.href = url; a2.download = QUIZ_KEY + '_wrong.json';
+  document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+  URL.revokeObjectURL(url);
+}
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var t = document.getElementById('freshModalTitle');
+  var m = document.getElementById('freshModalText');
+  if(mode==='random'){
+    t.textContent='Start Fresh (Random Order)?';
+    m.textContent='Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    t.textContent='Start Fresh (Original Order)?';
+    m.textContent='Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  order = (pendingFreshMode==='random') ? shuffleArr(identityOrder()) : identityOrder();
+  saveOrder(order);
+  state = defaultState();
+  saveState();
+  resetTimer();
+  closeFreshModal();
+  render();
+  renderTimer();
+}
+
+window.startTimer=startTimer;
+window.toggleJump=toggleJump;
+window.goToQ=goToQ;
+window.showResultsNow=showResultsNow;
+window.chooseAnswer=chooseAnswer;
+window.goPrev=goPrev;
+window.goNext=goNext;
+window.retryWrong=retryWrong;
+window.copyRes=copyRes;
+window.saveWrongAnswers=saveWrongAnswers;
+window.openFreshModalOriginal=openFreshModalOriginal;
+window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;
+window.confirmFresh=confirmFresh;
+
+render();
+renderTimer();
+if(state.timerStartedAt) startTimerInterval();
+</script>
+</body>
+</html>
