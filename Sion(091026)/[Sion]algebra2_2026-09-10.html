@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Algebra 2</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh;padding:12px;max-width:720px;margin:0 auto;}
+.quiz-title{font-size:1.35rem;font-weight:700;text-align:center;color:#111;background:#fff;padding:10px 0 2px}
+.subtitle{text-align:center;font-size:0.85rem;color:#555;background:#fff;padding:2px 0 4px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:2px 12px 10px}
+.timer-bar { background: #fff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; border-radius:10px; margin-bottom:8px;}
+.timer-setup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+.timer-setup label { font-weight: 700; }
+.timer-setup input[type="number"] { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+.timer-start-btn { background: #185FA5; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.timer-running { display: flex; align-items: center; gap: 8px; }
+.timer-label { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.02em; }
+.timer-display { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+.timer-display.warn { color: #f5a623; }
+.timer-display.danger { color: #E24B4A; }
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0;background:#fff;padding:8px 12px;border-radius:10px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;border:none;}
+.results-pill{display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;border:none;}
+.quiz-area{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;}
+.q-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.q-num{font-size:0.82rem;color:#888;}
+.tag-badge{font-size:0.75rem;padding:2px 10px;border-radius:10px;background:#185FA5;color:#fff;font-weight:600;}
+.passage-box,.context-box{background:#f5f7fa;border-left:3px solid #185FA5;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.92rem;color:#333;line-height:1.5;}
+.q-text{font-size:1.08rem;font-weight:600;color:#111;margin-bottom:14px;line-height:1.5;}
+.options{display:flex;flex-direction:column;gap:9px;}
+.opt-btn{background:#e8edf4;color:#111;border:2px solid transparent;border-radius:9px;padding:11px 14px;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.4;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn.revealed{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{margin-top:12px;padding:10px 12px;background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;font-size:0.88rem;color:#333;display:none;}
+.nav-btns{display:flex;justify-content:space-between;margin-top:14px;gap:10px;}
+.prev-btn,.next-btn{padding:9px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer;}
+.prev-btn{background:#e8edf4;color:#333;}
+.next-btn{background:#1D9E75;color:#fff;}
+.results-screen{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;display:none;}
+.results-screen.show{display:block;}
+.results-heading{font-size:1.3rem;font-weight:700;color:#1D9E75;text-align:center;margin-bottom:6px;}
+.results-score{font-size:1rem;text-align:center;color:#555;margin-bottom:14px;}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;margin-bottom:16px;}
+.r-card{border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;font-size:0.82rem;font-weight:600;}
+.r-card.correct{background:#E1F5EE;color:#085041;}
+.r-card.wrong{background:#FCEBEB;color:#501313;}
+.r-card.skipped{background:#f5f7fa;color:#555;}
+.results-btns{display:flex;flex-direction:column;gap:9px;}
+.retry-btn{background:#1D9E75;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.copy-btn{background:#185FA5;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.save-btn{background:#f5a623;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.fresh-btn{background:#e8edf4;color:#111;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:12px;padding:24px 20px;max-width:320px;width:90%;text-align:center;}
+.modal-title{font-size:1.05rem;font-weight:700;margin-bottom:8px;}
+.modal-msg{font-size:0.9rem;color:#555;margin-bottom:18px;}
+.modal-btns{display:flex;gap:10px;justify-content:center;}
+.modal-cancel{background:#e8edf4;color:#333;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;cursor:pointer;}
+.modal-confirm{background:#E24B4A;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;font-weight:600;cursor:pointer;}
+
+</style>
+
+</head>
+<body><div class="quiz-title">[Sion] Algebra 2</div><div class="subtitle" id="att-display">Total Attempts: 0</div><div class="instruction">Choose the correct answer for each question.</div>
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="20"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">20:00</span>
+  </div>
+</div>
+<div id="nav-bar"><span id="nav-count">0 / 10</span><div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div><button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button></div><div id="dot-panel"></div>
+<div class="quiz-area" id="quiz-area">
+  <div class="q-header">
+    <span class="q-num" id="q-num"></span>
+    <span class="tag-badge" id="tag-badge" style="display:none;"></span>
+    
+  </div>
+  <div class="passage-box" id="passage-box" style="display:none;"></div>
+  <div class="context-box" id="context-box" style="display:none;"></div>
+  <div class="q-text" id="q-text"></div>
+  <div class="options" id="options"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-btns">
+    <button class="prev-btn" onclick="goPrev()">Prev</button>
+    <button class="next-btn" id="next-btn" onclick="goNext()">Next</button>
+  </div>
+</div>
+
+<div class="results-screen" id="results-screen">
+  <div class="results-heading" id="results-heading">Results</div>
+  <div class="results-score" id="results-score"></div>
+  <div class="results-grid" id="results-grid"></div>
+  <div class="results-btns">
+    <button class="retry-btn" onclick="retryWrong()">Retry Wrong Ones</button>
+    <button class="copy-btn" onclick="copyRes()">Copy All Results</button>
+    <button class="save-btn" onclick="saveWrongAnswers()">Save Wrong Answers</button>
+    <button class="fresh-btn" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button>
+    <button class="fresh-btn" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <div class="modal-title" id="freshModalTitle">Start Fresh?</div>
+    <div class="modal-msg" id="freshModalText">All progress will be cleared. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>var TITLE = "[Sion] Algebra 2";var QUIZ_KEY = "quiz_sionalgebra2_10_20260910_v1";var ATT_KEY = "quiz_sionalgebra2_10_att_20260910_v1";var RAW_QUESTIONS = [{"stem": "The graph of a quadratic function is shown below.<br><svg width=\"280\" height=\"270\" viewBox=\"0 0 280 270\" style=\"display:block;margin:10px auto;background:#fff;\"><line x1=\"30.0\" y1=\"230.0\" x2=\"30.0\" y2=\"-20.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"60.0\" y1=\"230.0\" x2=\"60.0\" y2=\"-20.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"90.0\" y1=\"230.0\" x2=\"90.0\" y2=\"-20.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"120.0\" y1=\"230.0\" x2=\"120.0\" y2=\"-20.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"150.0\" y1=\"230.0\" x2=\"150.0\" y2=\"-20.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"180.0\" y1=\"230.0\" x2=\"180.0\" y2=\"-20.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"210.0\" y1=\"230.0\" x2=\"210.0\" y2=\"-20.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"240.0\" y1=\"230.0\" x2=\"240.0\" y2=\"-20.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"270.0\" y1=\"230.0\" x2=\"270.0\" y2=\"-20.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"30.0\" y1=\"230.0\" x2=\"270.0\" y2=\"230.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"30.0\" y1=\"207.3\" x2=\"270.0\" y2=\"207.3\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"30.0\" y1=\"184.5\" x2=\"270.0\" y2=\"184.5\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"30.0\" y1=\"161.8\" x2=\"270.0\" y2=\"161.8\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"30.0\" y1=\"139.1\" x2=\"270.0\" y2=\"139.1\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"30.0\" y1=\"116.4\" x2=\"270.0\" y2=\"116.4\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"30.0\" y1=\"93.6\" x2=\"270.0\" y2=\"93.6\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"30.0\" y1=\"70.9\" x2=\"270.0\" y2=\"70.9\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"30.0\" y1=\"48.2\" x2=\"270.0\" y2=\"48.2\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"30.0\" y1=\"25.5\" x2=\"270.0\" y2=\"25.5\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"30.0\" y1=\"2.7\" x2=\"270.0\" y2=\"2.7\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"30.0\" y1=\"-20.0\" x2=\"270.0\" y2=\"-20.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"30.0\" y1=\"116.4\" x2=\"270.0\" y2=\"116.4\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"90.0\" y1=\"230.0\" x2=\"90.0\" y2=\"-20.0\" stroke=\"#333\" stroke-width=\"1.5\"/><text x=\"30.0\" y=\"128.4\" font-size=\"9\" text-anchor=\"middle\" fill=\"#666\">-2</text><text x=\"150.0\" y=\"128.4\" font-size=\"9\" text-anchor=\"middle\" fill=\"#666\">2</text><text x=\"210.0\" y=\"128.4\" font-size=\"9\" text-anchor=\"middle\" fill=\"#666\">4</text><text x=\"270.0\" y=\"128.4\" font-size=\"9\" text-anchor=\"middle\" fill=\"#666\">6</text><text x=\"82.0\" y=\"233.0\" font-size=\"9\" text-anchor=\"middle\" fill=\"#666\">-5</text><text x=\"82.0\" y=\"187.5\" font-size=\"9\" text-anchor=\"middle\" fill=\"#666\">-3</text><text x=\"82.0\" y=\"142.1\" font-size=\"9\" text-anchor=\"middle\" fill=\"#666\">-1</text><text x=\"82.0\" y=\"96.6\" font-size=\"9\" text-anchor=\"middle\" fill=\"#666\">1</text><text x=\"82.0\" y=\"51.2\" font-size=\"9\" text-anchor=\"middle\" fill=\"#666\">3</text><text x=\"82.0\" y=\"5.7\" font-size=\"9\" text-anchor=\"middle\" fill=\"#666\">5</text><polyline points=\"60.00,207.27 60.60,204.55 61.20,201.85 61.80,199.17 62.40,196.51 63.00,193.86 63.60,191.24 64.20,188.63 64.80,186.04 65.40,183.46 66.00,180.91 66.60,178.37 67.20,175.85 67.80,173.35 68.40,170.87 69.00,168.41 69.60,165.96 70.20,163.54 70.80,161.13 71.40,158.74 72.00,156.36 72.60,154.01 73.20,151.67 73.80,149.35 74.40,147.05 75.00,144.77 75.60,142.51 76.20,140.26 76.80,138.04 77.40,135.83 78.00,133.64 78.60,131.46 79.20,129.31 79.80,127.17 80.40,125.05 81.00,122.95 81.60,120.87 82.20,118.81 82.80,116.76 83.40,114.74 84.00,112.73 84.60,110.74 85.20,108.76 85.80,106.81 86.40,104.87 87.00,102.95 87.60,101.05 88.20,99.17 88.80,97.31 89.40,95.46 90.00,93.64 90.60,91.83 91.20,90.04 91.80,88.26 92.40,86.51 93.00,84.77 93.60,83.05 94.20,81.35 94.80,79.67 95.40,78.01 96.00,76.36 96.60,74.74 97.20,73.13 97.80,71.54 98.40,69.96 99.00,68.41 99.60,66.87 100.20,65.35 100.80,63.85 101.40,62.37 102.00,60.91 102.60,59.46 103.20,58.04 103.80,56.63 104.40,55.24 105.00,53.86 105.60,52.51 106.20,51.17 106.80,49.85 107.40,48.55 108.00,47.27 108.60,46.01 109.20,44.76 109.80,43.54 110.40,42.33 111.00,41.14 111.60,39.96 112.20,38.81 112.80,37.67 113.40,36.55 114.00,35.45 114.60,34.37 115.20,33.31 115.80,32.26 116.40,31.24 117.00,30.23 117.60,29.24 118.20,28.26 118.80,27.31 119.40,26.37 120.00,25.45 120.60,24.55 121.20,23.67 121.80,22.81 122.40,21.96 123.00,21.14 123.60,20.33 124.20,19.54 124.80,18.76 125.40,18.01 126.00,17.27 126.60,16.55 127.20,15.85 127.80,15.17 128.40,14.51 129.00,13.86 129.60,13.24 130.20,12.63 130.80,12.04 131.40,11.46 132.00,10.91 132.60,10.37 133.20,9.85 133.80,9.35 134.40,8.87 135.00,8.41 135.60,7.96 136.20,7.54 136.80,7.13 137.40,6.74 138.00,6.36 138.60,6.01 139.20,5.67 139.80,5.35 140.40,5.05 141.00,4.77 141.60,4.51 142.20,4.26 142.80,4.04 143.40,3.83 144.00,3.64 144.60,3.46 145.20,3.31 145.80,3.17 146.40,3.05 147.00,2.95 147.60,2.87 148.20,2.81 148.80,2.76 149.40,2.74 150.00,2.73 150.60,2.74 151.20,2.76 151.80,2.81 152.40,2.87 153.00,2.95 153.60,3.05 154.20,3.17 154.80,3.31 155.40,3.46 156.00,3.64 156.60,3.83 157.20,4.04 157.80,4.26 158.40,4.51 159.00,4.77 159.60,5.05 160.20,5.35 160.80,5.67 161.40,6.01 162.00,6.36 162.60,6.74 163.20,7.13 163.80,7.54 164.40,7.96 165.00,8.41 165.60,8.87 166.20,9.35 166.80,9.85 167.40,10.37 168.00,10.91 168.60,11.46 169.20,12.04 169.80,12.63 170.40,13.24 171.00,13.86 171.60,14.51 172.20,15.17 172.80,15.85 173.40,16.55 174.00,17.27 174.60,18.01 175.20,18.76 175.80,19.54 176.40,20.33 177.00,21.14 177.60,21.96 178.20,22.81 178.80,23.67 179.40,24.55 180.00,25.45 180.60,26.37 181.20,27.31 181.80,28.26 182.40,29.24 183.00,30.23 183.60,31.24 184.20,32.26 184.80,33.31 185.40,34.37 186.00,35.45 186.60,36.55 187.20,37.67 187.80,38.81 188.40,39.96 189.00,41.14 189.60,42.33 190.20,43.54 190.80,44.76 191.40,46.01 192.00,47.27 192.60,48.55 193.20,49.85 193.80,51.17 194.40,52.51 195.00,53.86 195.60,55.24 196.20,56.63 196.80,58.04 197.40,59.46 198.00,60.91 198.60,62.37 199.20,63.85 199.80,65.35 200.40,66.87 201.00,68.41 201.60,69.96 202.20,71.54 202.80,73.13 203.40,74.74 204.00,76.36 204.60,78.01 205.20,79.67 205.80,81.35 206.40,83.05 207.00,84.77 207.60,86.51 208.20,88.26 208.80,90.04 209.40,91.83 210.00,93.64 210.60,95.46 211.20,97.31 211.80,99.17 212.40,101.05 213.00,102.95 213.60,104.87 214.20,106.81 214.80,108.76 215.40,110.74 216.00,112.73 216.60,114.74 217.20,116.76 217.80,118.81 218.40,120.87 219.00,122.95 219.60,125.05 220.20,127.17 220.80,129.31 221.40,131.46 222.00,133.64 222.60,135.83 223.20,138.04 223.80,140.26 224.40,142.51 225.00,144.77 225.60,147.05 226.20,149.35 226.80,151.67 227.40,154.01 228.00,156.36 228.60,158.74 229.20,161.13 229.80,163.54 230.40,165.96 231.00,168.41 231.60,170.87 232.20,173.35 232.80,175.85 233.40,178.37 234.00,180.91 234.60,183.46 235.20,186.04 235.80,188.63 236.40,191.24 237.00,193.86 237.60,196.51 238.20,199.17 238.80,201.85 239.40,204.55 240.00,207.27\" fill=\"none\" stroke=\"#185FA5\" stroke-width=\"2.2\"/></svg>Which equation represents this function in vertex form?", "opts": ["f(x) = &minus;(x&minus;2)&sup2; &minus; 5", "f(x) = (x&minus;2)&sup2; + 5", "f(x) = &minus;(x+2)&sup2; + 5", "f(x) = &minus;(x&minus;2)&sup2; + 5"], "ci": 3, "exp": "The parabola opens downward, so the leading coefficient is negative (eliminating option B). The vertex lies to the right of the y-axis, so the form must be (x&minus;2)&sup2; (eliminating option C). The vertex lies above the x-axis, so k is positive (eliminating option D). The correct equation is f(x) = &minus;(x&minus;2)&sup2; + 5.", "tag": "Quadratic Functions - Vertex Form & Transformations", "tagcolor": "#185FA5"}, {"stem": "A farmer has 200 meters of fencing to enclose a rectangular pen along the side of a barn (the barn forms one side of the pen, so no fencing is needed there). If x represents the width of each of the two sides perpendicular to the barn, the enclosed area is A(x) = x(200&minus;2x). What value of x maximizes the enclosed area?", "opts": ["66.7 meters", "100 meters", "50 meters", "25 meters"], "ci": 2, "exp": "A(x) = 200x &minus; 2x&sup2; is a downward parabola with a = &minus;2, b = 200. The maximum occurs at x = &minus;b/(2a) = &minus;200/(2 &times; &minus;2) = 50 meters.", "tag": "Quadratic Functions - Optimization", "tagcolor": "#185FA5"}, {"stem": "Condense the expression into a single logarithm: 3 log x &minus; log y + 2 log z", "opts": ["log(x&sup3; + z&sup2; &minus; y)", "log(x&sup3;z&sup2;&middot;y)", "log(<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>x&sup3;+z&sup2;</span><span style=\"border-top:1.4px solid #111;\">y</span></span>)", "log(<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>x&sup3;z&sup2;</span><span style=\"border-top:1.4px solid #111;\">y</span></span>)"], "ci": 3, "exp": "Using the power rule, 3 log x = log(x&sup3;) and 2 log z = log(z&sup2;). Using the product and quotient rules: log(x&sup3;) + log(z&sup2;) &minus; log(y) = log(<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>x&sup3;z&sup2;</span><span style=\"border-top:1.4px solid #111;\">y</span></span>).", "tag": "Logarithm Properties - Expanding/Condensing", "tagcolor": "#185FA5"}, {"stem": "Solve for matrix X: 2X + <span style=\"display:inline-flex;align-items:stretch;vertical-align:middle;margin:0 3px;\"><span style=\"border-left:1.6px solid #111;width:4px;\"></span><table style=\"border-collapse:collapse;display:inline-table;\"><tr><td style=\"padding:1px 6px;text-align:center;\">1</td><td style=\"padding:1px 6px;text-align:center;\">2</td></tr><tr><td style=\"padding:1px 6px;text-align:center;\">3</td><td style=\"padding:1px 6px;text-align:center;\">4</td></tr></table><span style=\"border-right:1.6px solid #111;width:4px;\"></span></span> = <span style=\"display:inline-flex;align-items:stretch;vertical-align:middle;margin:0 3px;\"><span style=\"border-left:1.6px solid #111;width:4px;\"></span><table style=\"border-collapse:collapse;display:inline-table;\"><tr><td style=\"padding:1px 6px;text-align:center;\">7</td><td style=\"padding:1px 6px;text-align:center;\">6</td></tr><tr><td style=\"padding:1px 6px;text-align:center;\">5</td><td style=\"padding:1px 6px;text-align:center;\">8</td></tr></table><span style=\"border-right:1.6px solid #111;width:4px;\"></span></span>", "opts": ["<span style=\"display:inline-flex;align-items:stretch;vertical-align:middle;margin:0 3px;\"><span style=\"border-left:1.6px solid #111;width:4px;\"></span><table style=\"border-collapse:collapse;display:inline-table;\"><tr><td style=\"padding:1px 6px;text-align:center;\">4</td><td style=\"padding:1px 6px;text-align:center;\">4</td></tr><tr><td style=\"padding:1px 6px;text-align:center;\">4</td><td style=\"padding:1px 6px;text-align:center;\">6</td></tr></table><span style=\"border-right:1.6px solid #111;width:4px;\"></span></span>", "<span style=\"display:inline-flex;align-items:stretch;vertical-align:middle;margin:0 3px;\"><span style=\"border-left:1.6px solid #111;width:4px;\"></span><table style=\"border-collapse:collapse;display:inline-table;\"><tr><td style=\"padding:1px 6px;text-align:center;\">3</td><td style=\"padding:1px 6px;text-align:center;\">2</td></tr><tr><td style=\"padding:1px 6px;text-align:center;\">1</td><td style=\"padding:1px 6px;text-align:center;\">2</td></tr></table><span style=\"border-right:1.6px solid #111;width:4px;\"></span></span>", "<span style=\"display:inline-flex;align-items:stretch;vertical-align:middle;margin:0 3px;\"><span style=\"border-left:1.6px solid #111;width:4px;\"></span><table style=\"border-collapse:collapse;display:inline-table;\"><tr><td style=\"padding:1px 6px;text-align:center;\">8</td><td style=\"padding:1px 6px;text-align:center;\">8</td></tr><tr><td style=\"padding:1px 6px;text-align:center;\">8</td><td style=\"padding:1px 6px;text-align:center;\">12</td></tr></table><span style=\"border-right:1.6px solid #111;width:4px;\"></span></span>", "<span style=\"display:inline-flex;align-items:stretch;vertical-align:middle;margin:0 3px;\"><span style=\"border-left:1.6px solid #111;width:4px;\"></span><table style=\"border-collapse:collapse;display:inline-table;\"><tr><td style=\"padding:1px 6px;text-align:center;\">6</td><td style=\"padding:1px 6px;text-align:center;\">4</td></tr><tr><td style=\"padding:1px 6px;text-align:center;\">2</td><td style=\"padding:1px 6px;text-align:center;\">4</td></tr></table><span style=\"border-right:1.6px solid #111;width:4px;\"></span></span>"], "ci": 1, "exp": "Subtract A from both sides: 2X = <span style=\"display:inline-flex;align-items:stretch;vertical-align:middle;margin:0 3px;\"><span style=\"border-left:1.6px solid #111;width:4px;\"></span><table style=\"border-collapse:collapse;display:inline-table;\"><tr><td style=\"padding:1px 6px;text-align:center;\">7</td><td style=\"padding:1px 6px;text-align:center;\">6</td></tr><tr><td style=\"padding:1px 6px;text-align:center;\">5</td><td style=\"padding:1px 6px;text-align:center;\">8</td></tr></table><span style=\"border-right:1.6px solid #111;width:4px;\"></span></span> &minus; <span style=\"display:inline-flex;align-items:stretch;vertical-align:middle;margin:0 3px;\"><span style=\"border-left:1.6px solid #111;width:4px;\"></span><table style=\"border-collapse:collapse;display:inline-table;\"><tr><td style=\"padding:1px 6px;text-align:center;\">1</td><td style=\"padding:1px 6px;text-align:center;\">2</td></tr><tr><td style=\"padding:1px 6px;text-align:center;\">3</td><td style=\"padding:1px 6px;text-align:center;\">4</td></tr></table><span style=\"border-right:1.6px solid #111;width:4px;\"></span></span> = <span style=\"display:inline-flex;align-items:stretch;vertical-align:middle;margin:0 3px;\"><span style=\"border-left:1.6px solid #111;width:4px;\"></span><table style=\"border-collapse:collapse;display:inline-table;\"><tr><td style=\"padding:1px 6px;text-align:center;\">6</td><td style=\"padding:1px 6px;text-align:center;\">4</td></tr><tr><td style=\"padding:1px 6px;text-align:center;\">2</td><td style=\"padding:1px 6px;text-align:center;\">4</td></tr></table><span style=\"border-right:1.6px solid #111;width:4px;\"></span></span>. Divide every entry by 2: X = <span style=\"display:inline-flex;align-items:stretch;vertical-align:middle;margin:0 3px;\"><span style=\"border-left:1.6px solid #111;width:4px;\"></span><table style=\"border-collapse:collapse;display:inline-table;\"><tr><td style=\"padding:1px 6px;text-align:center;\">3</td><td style=\"padding:1px 6px;text-align:center;\">2</td></tr><tr><td style=\"padding:1px 6px;text-align:center;\">1</td><td style=\"padding:1px 6px;text-align:center;\">2</td></tr></table><span style=\"border-right:1.6px solid #111;width:4px;\"></span></span>.", "tag": "Matrices - Solving Matrix Equations", "tagcolor": "#185FA5"}, {"stem": "The ellipse below is centered at the origin.<br><svg width=\"280\" height=\"200\" viewBox=\"0 0 280 200\" style=\"display:block;margin:10px auto;background:#fff;\"><line x1=\"20.0\" y1=\"190.0\" x2=\"20.0\" y2=\"10.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"40.0\" y1=\"190.0\" x2=\"40.0\" y2=\"10.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"60.0\" y1=\"190.0\" x2=\"60.0\" y2=\"10.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"80.0\" y1=\"190.0\" x2=\"80.0\" y2=\"10.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"100.0\" y1=\"190.0\" x2=\"100.0\" y2=\"10.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"120.0\" y1=\"190.0\" x2=\"120.0\" y2=\"10.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"140.0\" y1=\"190.0\" x2=\"140.0\" y2=\"10.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"160.0\" y1=\"190.0\" x2=\"160.0\" y2=\"10.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"180.0\" y1=\"190.0\" x2=\"180.0\" y2=\"10.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"200.0\" y1=\"190.0\" x2=\"200.0\" y2=\"10.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"220.0\" y1=\"190.0\" x2=\"220.0\" y2=\"10.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"240.0\" y1=\"190.0\" x2=\"240.0\" y2=\"10.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"260.0\" y1=\"190.0\" x2=\"260.0\" y2=\"10.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"20.0\" y1=\"190.0\" x2=\"260.0\" y2=\"190.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"20.0\" y1=\"167.5\" x2=\"260.0\" y2=\"167.5\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"20.0\" y1=\"145.0\" x2=\"260.0\" y2=\"145.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"20.0\" y1=\"122.5\" x2=\"260.0\" y2=\"122.5\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"20.0\" y1=\"100.0\" x2=\"260.0\" y2=\"100.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"20.0\" y1=\"77.5\" x2=\"260.0\" y2=\"77.5\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"20.0\" y1=\"55.0\" x2=\"260.0\" y2=\"55.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"20.0\" y1=\"32.5\" x2=\"260.0\" y2=\"32.5\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"20.0\" y1=\"10.0\" x2=\"260.0\" y2=\"10.0\" stroke=\"#e0e0e0\" stroke-width=\"1\"/><line x1=\"20.0\" y1=\"100.0\" x2=\"260.0\" y2=\"100.0\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"140.0\" y1=\"190.0\" x2=\"140.0\" y2=\"10.0\" stroke=\"#333\" stroke-width=\"1.5\"/><text x=\"40.0\" y=\"112.0\" font-size=\"9\" text-anchor=\"middle\" fill=\"#666\">-5</text><text x=\"80.0\" y=\"112.0\" font-size=\"9\" text-anchor=\"middle\" fill=\"#666\">-3</text><text x=\"200.0\" y=\"112.0\" font-size=\"9\" text-anchor=\"middle\" fill=\"#666\">3</text><text x=\"240.0\" y=\"112.0\" font-size=\"9\" text-anchor=\"middle\" fill=\"#666\">5</text><text x=\"131.0\" y=\"170.5\" font-size=\"9\" text-anchor=\"middle\" fill=\"#666\">-3</text><text x=\"131.0\" y=\"35.5\" font-size=\"9\" text-anchor=\"middle\" fill=\"#666\">3</text><ellipse cx=\"140.0\" cy=\"100.0\" rx=\"100.0\" ry=\"67.5\" fill=\"none\" stroke=\"#185FA5\" stroke-width=\"2.2\"/></svg>Which equation represents this ellipse in standard form?", "opts": ["<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>x&sup2;</span><span style=\"border-top:1.4px solid #111;\">5</span></span> + <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>y&sup2;</span><span style=\"border-top:1.4px solid #111;\">3</span></span> = 1", "<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>x&sup2;</span><span style=\"border-top:1.4px solid #111;\">25</span></span> + <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>y&sup2;</span><span style=\"border-top:1.4px solid #111;\">9</span></span> = 1", "<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>x&sup2;</span><span style=\"border-top:1.4px solid #111;\">9</span></span> + <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>y&sup2;</span><span style=\"border-top:1.4px solid #111;\">25</span></span> = 1", "<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>x&sup2;</span><span style=\"border-top:1.4px solid #111;\">25</span></span> &minus; <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>y&sup2;</span><span style=\"border-top:1.4px solid #111;\">9</span></span> = 1"], "ci": 1, "exp": "The ellipse crosses the x-axis at &plusmn;5, so a = 5 and a&sup2; = 25. It crosses the y-axis at &plusmn;3, so b = 3 and b&sup2; = 9. The standard form is <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>x&sup2;</span><span style=\"border-top:1.4px solid #111;\">25</span></span> + <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>y&sup2;</span><span style=\"border-top:1.4px solid #111;\">9</span></span> = 1.", "tag": "Ellipses - Equation & Classification", "tagcolor": "#185FA5"}, {"stem": "In the right triangle below, find tan(&theta;).<br><svg width=\"220\" height=\"180\" viewBox=\"0 0 220 180\" style=\"display:block;margin:10px auto;background:#fff;\"><polygon points=\"30,150 198,150 30,80\" fill=\"none\" stroke=\"#333\" stroke-width=\"2\"/><rect x=\"30\" y=\"140\" width=\"10\" height=\"10\" fill=\"none\" stroke=\"#333\" stroke-width=\"1.2\"/><text x=\"114\" y=\"166\" font-size=\"12\" text-anchor=\"middle\" fill=\"#333\">12</text><text x=\"16\" y=\"115\" font-size=\"12\" text-anchor=\"middle\" fill=\"#333\">5</text><text x=\"124\" y=\"111\" font-size=\"12\" text-anchor=\"middle\" fill=\"#333\">13</text><text x=\"182\" y=\"142\" font-size=\"13\" text-anchor=\"middle\" fill=\"#185FA5\">&theta;</text></svg>", "opts": ["<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>12</span><span style=\"border-top:1.4px solid #111;\">13</span></span>", "<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">12</span></span>", "<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">13</span></span>", "<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>12</span><span style=\"border-top:1.4px solid #111;\">5</span></span>"], "ci": 1, "exp": "Relative to &theta;, the opposite side is 5 and the adjacent side is 12, so tan(&theta;) = opposite/adjacent = <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">12</span></span>.", "tag": "Trigonometric Ratios - Right Triangle", "tagcolor": "#185FA5"}, {"stem": "What is the domain of f(x) = (x+3)/(x&sup2;&minus;9)?", "opts": ["all real numbers except x = 0", "all real numbers except x = 3", "all real numbers except x = &minus;3", "all real numbers except x = 3 and x = &minus;3"], "ci": 3, "exp": "The denominator x&sup2;&minus;9 = (x&minus;3)(x+3) equals zero when x = 3 or x = &minus;3. Even though (x+3) also appears in the numerator, the function is still undefined at x = &minus;3 (a removable discontinuity), so both values are excluded from the domain.", "tag": "Rational Functions - Domain & Range", "tagcolor": "#185FA5"}, {"stem": "Convert 150&deg; to radians.", "opts": ["<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>3&pi;</span><span style=\"border-top:1.4px solid #111;\">5</span></span>", "<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5&pi;</span><span style=\"border-top:1.4px solid #111;\">3</span></span>", "<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5&pi;</span><span style=\"border-top:1.4px solid #111;\">6</span></span>", "<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>6&pi;</span><span style=\"border-top:1.4px solid #111;\">5</span></span>"], "ci": 2, "exp": "Multiply by &pi;/180&deg;: 150&deg; &times; &pi;/180&deg; = <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>150&pi;</span><span style=\"border-top:1.4px solid #111;\">180</span></span> = <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5&pi;</span><span style=\"border-top:1.4px solid #111;\">6</span></span>.", "tag": "Radian & Degree Conversion", "tagcolor": "#185FA5"}, {"stem": "Multiply: (3 + 2i)(1 &minus; 4i)", "opts": ["&minus;5 &minus; 10i", "3 &minus; 8i", "11 + 10i", "11 &minus; 10i"], "ci": 3, "exp": "(3+2i)(1&minus;4i) = 3 &minus; 12i + 2i &minus; 8i&sup2; = 3 &minus; 10i &minus; 8(&minus;1) = 3 &minus; 10i + 8 = 11 &minus; 10i.", "tag": "Complex Numbers - Multiplication", "tagcolor": "#185FA5"}, {"stem": "What is the modulus of the complex number 5 &minus; 12i?", "opts": ["13", "15", "17", "7"], "ci": 0, "exp": "The modulus of a + bi is &radic;(a&sup2;+b&sup2;). Here, &radic;(5&sup2;+12&sup2;) = &radic;(25+144) = &radic;169 = 13.", "tag": "Complex Numbers - Operations", "tagcolor": "#185FA5"}];var N = RAW_QUESTIONS.length;var ORDER_KEY = QUIZ_KEY + '_order_v1';
+function shuffleArr(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function identityOrder(){var o=[];for(var i=0;i<N;i++)o.push(i);return o;}
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length===0) return false;
+  for(var i=0;i<arr.length;i++){ if(typeof arr[i] !== 'number' || arr[i]<0 || arr[i]>=N) return false; }
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad');
+    return arr;
+  }catch(e){ try{localStorage.removeItem(ORDER_KEY);}catch(e2){} return null; }
+}
+function saveOrder(o){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(o)); }catch(e){} }
+
+var order = loadOrder() || identityOrder();
+if(!loadOrder()) saveOrder(order);
+var pendingFreshMode = 'original';
+
+function defaultState(){
+  return { cur:0, answers:{}, showResults:false, timerTotalSec:null, timerStartedAt:null };
+}
+function loadState(){
+  try{
+    var raw = localStorage.getItem(QUIZ_KEY);
+    if(!raw) return defaultState();
+    var s = JSON.parse(raw);
+    if(typeof s.cur !== 'number' || s.cur<0 || s.cur>=order.length) s.cur = 0;
+    if(typeof s.answers !== 'object' || s.answers===null) s.answers = {};
+    if(typeof s.showResults !== 'boolean') s.showResults = false;
+    if(typeof s.timerTotalSec === 'undefined') s.timerTotalSec = null;
+    if(typeof s.timerStartedAt === 'undefined') s.timerStartedAt = null;
+    return s;
+  }catch(e){ try{localStorage.removeItem(QUIZ_KEY);}catch(e2){} return defaultState(); }
+}
+function saveState(){ try{ localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); }catch(e){} }
+
+var state = loadState();
+var timerInterval = null;
+
+function getAttempts(){ try{ return parseInt(localStorage.getItem(ATT_KEY)||'0',10); }catch(e){ return 0; } }
+function incAttempts(){ try{ localStorage.setItem(ATT_KEY, String(getAttempts()+1)); }catch(e){} }
+function updateAttDisplay(){
+  var el = document.getElementById('att-display');
+  if(el) el.textContent = 'Total Attempts: ' + getAttempts();
+}
+
+function formatTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function renderTimer(){
+  var setupEl = document.getElementById('timerSetup');
+  var runningEl = document.getElementById('timerRunning');
+  var dispEl = document.getElementById('timerDisplay');
+  if(!setupEl||!runningEl||!dispEl) return;
+  if(!state.timerStartedAt){ setupEl.style.display='flex'; runningEl.style.display='none'; return; }
+  setupEl.style.display='none'; runningEl.style.display='flex';
+  var elapsed = (Date.now()-state.timerStartedAt)/1000;
+  var remaining = state.timerTotalSec - elapsed;
+  dispEl.classList.remove('warn','danger');
+  if(remaining<=0){ dispEl.textContent="Time's Up"; dispEl.classList.add('danger'); stopTimerInterval(); return; }
+  dispEl.textContent = formatTime(remaining);
+  if(remaining <= state.timerTotalSec*0.1) dispEl.classList.add('danger');
+  else if(remaining <= state.timerTotalSec*0.25) dispEl.classList.add('warn');
+}
+function startTimer(){
+  var input = document.getElementById('timerMinutesInput');
+  var minutes = parseFloat(input.value);
+  if(!minutes || minutes<=0) minutes=20;
+  state.timerTotalSec = Math.round(minutes*60);
+  state.timerStartedAt = Date.now();
+  saveState(); renderTimer(); startTimerInterval();
+}
+function startTimerInterval(){ stopTimerInterval(); timerInterval=setInterval(renderTimer,1000); }
+function stopTimerInterval(){ if(timerInterval){clearInterval(timerInterval); timerInterval=null;} }
+function resetTimer(){
+  state.timerTotalSec = null; state.timerStartedAt = null;
+  stopTimerInterval(); saveState(); renderTimer();
+}
+
+function render(){
+  updateAttDisplay();
+  var qa = document.getElementById('quiz-area');
+  var rs = document.getElementById('results-screen');
+  if(state.showResults){
+    qa.style.display='none';
+    rs.classList.add('show');
+    renderResults();
+    return;
+  }
+  qa.style.display='block';
+  rs.classList.remove('show');
+
+  var qi = order[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  document.getElementById('q-num').textContent = 'Q' + (state.cur+1) + ' / ' + order.length;
+
+  var badge = document.getElementById('tag-badge');
+  if(q.tag){
+    badge.style.display='inline-block';
+    badge.textContent = q.tag;
+    badge.style.background = q.tagcolor || '#185FA5';
+  } else { badge.style.display='none'; }
+
+  var pbox = document.getElementById('passage-box');
+  if(q.passage){ pbox.style.display='block'; pbox.innerHTML = q.passage; } else { pbox.style.display='none'; }
+  var cbox = document.getElementById('context-box');
+  if(q.context){ cbox.style.display='block'; cbox.innerHTML = q.context; } else { cbox.style.display='none'; }
+
+  document.getElementById('q-text').innerHTML = q.stem;
+
+
+  var answered = state.answers[qi];
+  var optDiv = document.getElementById('options');
+  optDiv.innerHTML='';
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML = optText;
+    btn.disabled = answered !== undefined;
+    if(answered !== undefined){
+      if(idx === q.ci) btn.classList.add(answered===idx ? 'correct' : 'revealed');
+      else if(answered === idx) btn.classList.add('wrong');
+    }
+    btn.onclick = function(){ chooseAnswer(idx); };
+    optDiv.appendChild(btn);
+  });
+
+  var expDiv = document.getElementById('exp-box');
+  if(answered !== undefined && answered !== q.ci){
+    expDiv.style.display='block';
+    expDiv.innerHTML = q.exp;
+  } else {
+    expDiv.style.display='none';
+  }
+
+  var nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = (state.cur >= order.length-1) ? 'Show Results →' : 'Next →';
+
+  updateNav();
+
+}
+
+function updateNav(){
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  document.getElementById('nav-count').textContent = answered + ' / ' + order.length;
+  document.getElementById('prog-fill').style.width = (answered/order.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel = document.getElementById('dot-panel');
+  if(panel.style.display==='none') return;
+  var html='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var bg = state.answers[qi]===undefined ? '#d7dde6' : (state.answers[qi]===RAW_QUESTIONS[qi].ci ? '#185FA5' : '#E24B4A');
+    html += '<button class="dot" style="background:'+bg+';" onclick="goToQ('+pos+')">'+(pos+1)+'</button>';
+  }
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  if(answered===order.length){
+    html += '<br><button class="results-pill" onclick="showResultsNow()">Results</button>';
+  }
+  panel.innerHTML = html;
+}
+function toggleJump(){
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display==='none' || panel.style.display===''){
+    panel.style.display='block'; btn.innerHTML='Hide &#9652;'; renderDots();
+  } else {
+    panel.style.display='none'; btn.innerHTML='Jump &#9662;';
+  }
+}
+function goToQ(pos){
+  state.cur = pos; state.showResults=false; saveState(); render();
+}
+function showResultsNow(){
+  state.showResults = true; incAttempts(); saveState(); render();
+}
+function chooseAnswer(idx){
+  var qi = order[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState(); render();
+}
+function goPrev(){
+  if(state.cur>0){ state.cur--; saveState(); render(); }
+}
+function goNext(){
+  if(state.cur < order.length-1){ state.cur++; saveState(); render(); }
+  else { state.showResults=true; incAttempts(); saveState(); render(); }
+}
+function renderResults(){
+  var correct=0, wrong=0, skipped=0;
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]===undefined){ skipped++; continue; }
+    if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+  }
+  document.getElementById('results-score').textContent = correct+' correct, '+wrong+' wrong, '+skipped+' skipped - out of '+order.length;
+  var grid = document.getElementById('results-grid');
+  grid.innerHTML='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var card = document.createElement('div');
+    if(state.answers[qi]===undefined){
+      card.className='r-card skipped';
+      card.textContent='Q'+(pos+1)+' Skip';
+    } else {
+      var ok = state.answers[qi]===RAW_QUESTIONS[qi].ci;
+      card.className='r-card '+(ok?'correct':'wrong');
+      card.textContent='Q'+(pos+1)+' '+(ok?'OK':'X');
+    }
+    (function(p){ card.onclick=function(){ state.showResults=false; state.cur=p; saveState(); render(); }; })(pos);
+    grid.appendChild(card);
+  }
+}
+function retryWrong(){
+  var wrong=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      wrong.push(qi);
+    }
+  }
+  if(wrong.length===0) return;
+  wrong.forEach(function(qi){ delete state.answers[qi]; });
+  order = wrong;
+  saveOrder(order);
+  state.cur=0; state.showResults=false;
+  saveState(); render(); renderTimer();
+}
+function copyRes(){
+  var lines=[TITLE+' Results'];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    var s='Q'+(pos+1)+': ';
+    if(a===undefined) s+='Skipped';
+    else s += (a===RAW_QUESTIONS[qi].ci ? 'Correct' : 'Wrong');
+    lines.push(s);
+  }
+  var text = lines.join('\n');
+  try{
+    if(navigator.clipboard){ navigator.clipboard.writeText(text).catch(function(){}); }
+    else { var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+  }catch(e){}
+}
+function saveWrongAnswers(){
+  var wrongItems=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    if(a!==undefined && a!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongItems.push({ question: q.stem, yourAnswer: q.opts[a], correctAnswer: q.opts[q.ci], explanation: q.exp });
+    }
+  }
+  var blob = new Blob([JSON.stringify({title:TITLE, wrongAnswers:wrongItems}, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a2 = document.createElement('a');
+  a2.href = url; a2.download = QUIZ_KEY + '_wrong.json';
+  document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+  URL.revokeObjectURL(url);
+}
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var t = document.getElementById('freshModalTitle');
+  var m = document.getElementById('freshModalText');
+  if(mode==='random'){
+    t.textContent='Start Fresh (Random Order)?';
+    m.textContent='Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    t.textContent='Start Fresh (Original Order)?';
+    m.textContent='Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  order = (pendingFreshMode==='random') ? shuffleArr(identityOrder()) : identityOrder();
+  saveOrder(order);
+  state = defaultState();
+  saveState();
+  resetTimer();
+  closeFreshModal();
+  render();
+  renderTimer();
+}
+
+window.startTimer=startTimer;
+window.toggleJump=toggleJump;
+window.goToQ=goToQ;
+window.showResultsNow=showResultsNow;
+window.chooseAnswer=chooseAnswer;
+window.goPrev=goPrev;
+window.goNext=goNext;
+window.retryWrong=retryWrong;
+window.copyRes=copyRes;
+window.saveWrongAnswers=saveWrongAnswers;
+window.openFreshModalOriginal=openFreshModalOriginal;
+window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;
+window.confirmFresh=confirmFresh;
+
+render();
+renderTimer();
+if(state.timerStartedAt) startTimerInterval();
+
+</script>
+</body>
+</html>
