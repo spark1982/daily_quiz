@@ -125,6 +125,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh
   </div>
 </div>
 <script>var TITLE = "[Both] Korean";var QUIZ_KEY = "quiz_bothkorean_10_20260908_v1";var ATT_KEY = "quiz_bothkorean_10_att_20260908_v1";var RAW_QUESTIONS = [{"stem": "사자를 도와주다.", "opts": ["Help the tiger.", "Be afraid of the lion.", "Be afraid of the tiger.", "Help the lion."], "ci": 3, "exp": "\"사자를 도와주다.\" means \"Help the lion.\"", "tag": "Combo", "tagcolor": "#7b61ff", "tts": "사자를 도와주다."}, {"stem": "피아노를 치다.", "opts": ["Fix the clock.", "Fix the piano.", "Play the piano.", "Play the clock."], "ci": 2, "exp": "\"피아노를 치다.\" means \"Play the piano.\"", "tag": "Combo", "tagcolor": "#7b61ff", "tts": "피아노를 치다."}, {"stem": "물을 마시다.", "opts": ["Drink the coffee.", "Drink water.", "Mix the coffee.", "Mix water."], "ci": 1, "exp": "\"물을 마시다.\" means \"Drink water.\"", "tag": "Combo", "tagcolor": "#7b61ff", "tts": "물을 마시다."}, {"stem": "꽃을 모으다.", "opts": ["Collect flowers.", "Collect a tree.", "Draw a tree.", "Draw flowers."], "ci": 0, "exp": "\"꽃을 모으다.\" means \"Collect flowers.\"", "tag": "Combo", "tagcolor": "#7b61ff", "tts": "꽃을 모으다."}, {"stem": "노래를 듣다.", "opts": ["Listen to the piano.", "Learn a song.", "Listen to a song.", "Learn the piano."], "ci": 2, "exp": "\"노래를 듣다.\" means \"Listen to a song.\"", "tag": "Combo", "tagcolor": "#7b61ff", "tts": "노래를 듣다."}, {"stem": "사슴이 기뻐하다.", "opts": ["The duck gets angry.", "The deer is glad.", "The deer gets angry.", "The duck is glad."], "ci": 1, "exp": "\"사슴이 기뻐하다.\" means \"The deer is glad.\"", "tag": "Combo", "tagcolor": "#7b61ff", "tts": "사슴이 기뻐하다."}, {"stem": "구두를 놓다.", "opts": ["Sell the shoes.", "Put down the hat.", "Sell the hat.", "Put down the shoes."], "ci": 3, "exp": "\"구두를 놓다.\" means \"Put down the shoes.\"", "tag": "Combo", "tagcolor": "#7b61ff", "tts": "구두를 놓다."}, {"stem": "의자를 들다.", "opts": ["Fix the bag.", "Lift the bag.", "Lift the chair.", "Fix the chair."], "ci": 2, "exp": "\"의자를 들다.\" means \"Lift the chair.\"", "tag": "Combo", "tagcolor": "#7b61ff", "tts": "의자를 들다."}, {"stem": "버터가 녹다.", "opts": ["The dew freezes.", "The dew melts.", "The butter melts.", "The butter freezes."], "ci": 2, "exp": "\"버터가 녹다.\" means \"The butter melts.\"", "tag": "Combo", "tagcolor": "#7b61ff", "tts": "버터가 녹다."}, {"stem": "불을 끄다.", "opts": ["Turn on the light.", "Turn off the clock.", "Turn off the light.", "Turn on the clock."], "ci": 2, "exp": "\"불을 끄다.\" means \"Turn off the light.\"", "tag": "Combo", "tagcolor": "#7b61ff", "tts": "불을 끄다."}];var N = RAW_QUESTIONS.length;var ORDER_KEY = QUIZ_KEY + '_order_v1';
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
 function shuffleArr(arr){
   var a = arr.slice();
   for(var i=a.length-1;i>0;i--){
@@ -180,6 +181,37 @@ function incAttempts(){ try{ localStorage.setItem(ATT_KEY, String(getAttempts()+
 function updateAttDisplay(){
   var el = document.getElementById('att-display');
   if(el) el.textContent = 'Total Attempts: ' + getAttempts();
+}
+
+function reportResult(){
+  try{
+    var correct=0, wrong=0, skipped=0;
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos];
+      if(state.answers[qi]===undefined){ skipped++; continue; }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+    }
+    var total = order.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0
+    };
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
 }
 
 function formatTime(sec){
@@ -320,7 +352,7 @@ function goToQ(pos){
   state.cur = pos; state.showResults=false; saveState(); render();
 }
 function showResultsNow(){
-  state.showResults = true; incAttempts(); saveState(); render();
+  state.showResults = true; incAttempts(); saveState(); render(); reportResult();
 }
 function chooseAnswer(idx){
   var qi = order[state.cur];
@@ -333,7 +365,7 @@ function goPrev(){
 }
 function goNext(){
   if(state.cur < order.length-1){ state.cur++; saveState(); render(); }
-  else { state.showResults=true; incAttempts(); saveState(); render(); }
+  else { state.showResults=true; incAttempts(); saveState(); render(); reportResult(); }
 }
 function renderResults(){
   var correct=0, wrong=0, skipped=0;

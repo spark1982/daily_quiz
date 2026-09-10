@@ -123,6 +123,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh
   </div>
 </div>
 <script>var TITLE = "[Grant] Sentence Building";var QUIZ_KEY = "quiz_grantsentbuild_8_20260908_v1";var ATT_KEY = "quiz_grantsentbuild_8_att_20260908_v1";var RAW_QUESTIONS = [{"stem": "The _____ scientist worked.", "opts": ["salty", "circular", "musical", "curious"], "ci": 3, "exp": "\"Curious\" logically describes a scientist's inquisitive nature. \"Salty,\" \"circular,\" and \"musical\" are all adjectives, but none sensibly describes a scientist.", "tag": "Adjective", "tagcolor": "#185FA5"}, {"stem": "The curious scientist _____ worked.", "opts": ["colorfully", "diligently", "musically", "legally"], "ci": 1, "exp": "\"Diligently\" naturally describes the hardworking way a scientist might work. \"Colorfully,\" \"legally,\" and \"musically\" are all adverbs, but none makes sense describing how a scientist works.", "tag": "Adverb", "tagcolor": "#1D9E75"}, {"stem": "The curious scientist diligently worked _____.", "opts": ["underneath the volcano", "in the laboratory", "across the desert", "through the mirror"], "ci": 1, "exp": "\"In the laboratory\" describes a sensible location for a scientist to work. \"Underneath the volcano,\" \"across the desert,\" and \"through the mirror\" are all prepositional phrases, but none logically fits where a scientist would work.", "tag": "Prepositional Phrase", "tagcolor": "#f5a623"}, {"stem": "The curious scientist diligently worked in the laboratory _____.", "opts": ["to paint the fence", "to launch the rocket", "to bake a cake", "to discover a cure"], "ci": 3, "exp": "\"To discover a cure\" gives a logical reason for a scientist to work diligently in a laboratory. \"To bake a cake,\" \"to launch the rocket,\" and \"to paint the fence\" are all purpose clauses, but none explains why a scientist would work.", "tag": "Purpose Clause", "tagcolor": "#E24B4A"}, {"stem": "The _____ explorer climbed.", "opts": ["wooden", "circular", "salty", "brave"], "ci": 3, "exp": "\"Brave\" logically describes an explorer's courage needed for climbing. \"Salty,\" \"circular,\" and \"wooden\" are all adjectives, but none sensibly describes an explorer.", "tag": "Adjective", "tagcolor": "#185FA5"}, {"stem": "The brave explorer _____ climbed.", "opts": ["mathematically", "steadily", "musically", "legally"], "ci": 1, "exp": "\"Steadily\" naturally describes the controlled way an explorer might climb. \"Musically,\" \"legally,\" and \"mathematically\" are all adverbs, but none makes sense describing how an explorer climbs.", "tag": "Adverb", "tagcolor": "#1D9E75"}, {"stem": "The brave explorer steadily climbed _____.", "opts": ["underneath the ocean", "through the mirror", "up the mountain", "inside the calculator"], "ci": 2, "exp": "\"Up the mountain\" describes a sensible place for an explorer to climb. \"Inside the calculator,\" \"through the mirror,\" and \"underneath the ocean\" are all prepositional phrases, but none logically fits where an explorer would climb.", "tag": "Prepositional Phrase", "tagcolor": "#f5a623"}, {"stem": "The brave explorer steadily climbed up the mountain _____.", "opts": ["to solve the equation", "to plant the flag at the summit", "to bake a cake", "to fix the broken engine"], "ci": 1, "exp": "\"To plant the flag at the summit\" gives a logical reason for an explorer to climb steadily and bravely. \"To bake a cake,\" \"to fix the broken engine,\" and \"to solve the equation\" are all purpose clauses, but none explains why an explorer would climb.", "tag": "Purpose Clause", "tagcolor": "#E24B4A"}];var N = RAW_QUESTIONS.length;var ORDER_KEY = QUIZ_KEY + '_order_v1';
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
 function shuffleArr(arr){
   var a = arr.slice();
   for(var i=a.length-1;i>0;i--){
@@ -178,6 +179,37 @@ function incAttempts(){ try{ localStorage.setItem(ATT_KEY, String(getAttempts()+
 function updateAttDisplay(){
   var el = document.getElementById('att-display');
   if(el) el.textContent = 'Total Attempts: ' + getAttempts();
+}
+
+function reportResult(){
+  try{
+    var correct=0, wrong=0, skipped=0;
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos];
+      if(state.answers[qi]===undefined){ skipped++; continue; }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+    }
+    var total = order.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0
+    };
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
 }
 
 function formatTime(sec){
@@ -313,7 +345,7 @@ function goToQ(pos){
   state.cur = pos; state.showResults=false; saveState(); render();
 }
 function showResultsNow(){
-  state.showResults = true; incAttempts(); saveState(); render();
+  state.showResults = true; incAttempts(); saveState(); render(); reportResult();
 }
 function chooseAnswer(idx){
   var qi = order[state.cur];
@@ -326,7 +358,7 @@ function goPrev(){
 }
 function goNext(){
   if(state.cur < order.length-1){ state.cur++; saveState(); render(); }
-  else { state.showResults=true; incAttempts(); saveState(); render(); }
+  else { state.showResults=true; incAttempts(); saveState(); render(); reportResult(); }
 }
 function renderResults(){
   var correct=0, wrong=0, skipped=0;
