@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Algebra 2</title>
+<style>
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh;padding:12px;max-width:720px;margin:0 auto;}
+.quiz-title{font-size:1.35rem;font-weight:700;text-align:center;color:#111;background:#fff;padding:10px 0 2px}
+.subtitle{text-align:center;font-size:0.85rem;color:#555;background:#fff;padding:2px 0 4px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:2px 12px 10px}
+.timer-bar { background: #fff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; border-radius:10px; margin-bottom:8px;}
+.timer-setup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+.timer-setup label { font-weight: 700; }
+.timer-setup input[type="number"] { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+.timer-start-btn { background: #185FA5; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.timer-running { display: flex; align-items: center; gap: 8px; }
+.timer-label { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.02em; }
+.timer-display { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+.timer-display.warn { color: #f5a623; }
+.timer-display.danger { color: #E24B4A; }
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0;background:#fff;padding:8px 12px;border-radius:10px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;border:none;}
+.results-pill{display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;border:none;}
+.quiz-area{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;}
+.q-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.q-num{font-size:0.82rem;color:#888;}
+.tag-badge{font-size:0.75rem;padding:2px 10px;border-radius:10px;background:#185FA5;color:#fff;font-weight:600;}
+.passage-box,.context-box{background:#f5f7fa;border-left:3px solid #185FA5;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.92rem;color:#333;line-height:1.5;}
+.context-label{font-size:0.92rem;font-weight:600;color:#333;margin-bottom:8px;line-height:1.4;}
+.q-text{font-size:1.08rem;font-weight:600;color:#111;margin-bottom:14px;line-height:1.5;}
+.tts-btn{background:#e8f2ff;color:#185FA5;border:1.5px solid #185FA5;border-radius:8px;padding:6px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-bottom:12px;display:inline-block;}
+.hint-btn{background:#fff8e1;color:#a5720a;border:1.5px solid #f5a623;border-radius:8px;padding:7px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-top:12px;margin-bottom:12px;display:inline-block;}
+.hint-box{background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.88rem;color:#6b5215;line-height:1.5;display:none;}
+.hint-box.show{display:block;}
+.options{display:flex;flex-direction:column;gap:9px;}
+.opt-btn{background:#e8edf4;color:#111;border:2px solid transparent;border-radius:9px;padding:11px 14px;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.4;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn.revealed{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{margin-top:12px;padding:10px 12px;background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;font-size:0.88rem;color:#333;display:none;}
+.nav-btns{display:flex;justify-content:space-between;margin-top:14px;gap:10px;}
+.prev-btn,.next-btn{padding:9px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer;}
+.prev-btn{background:#e8edf4;color:#333;}
+.next-btn{background:#1D9E75;color:#fff;}
+.results-screen{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;display:none;}
+.results-screen.show{display:block;}
+.results-heading{font-size:1.3rem;font-weight:700;color:#1D9E75;text-align:center;margin-bottom:6px;}
+.results-score{font-size:1rem;text-align:center;color:#555;margin-bottom:14px;}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;margin-bottom:16px;}
+.r-card{border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;font-size:0.82rem;font-weight:600;}
+.r-card.correct{background:#E1F5EE;color:#085041;}
+.r-card.wrong{background:#FCEBEB;color:#501313;}
+.r-card.skipped{background:#f5f7fa;color:#555;}
+.results-btns{display:flex;flex-direction:column;gap:9px;}
+.retry-btn{background:#1D9E75;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.copy-btn{background:#185FA5;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.save-btn{background:#f5a623;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.fresh-btn{background:#e8edf4;color:#111;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:12px;padding:24px 20px;max-width:320px;width:90%;text-align:center;}
+.modal-title{font-size:1.05rem;font-weight:700;margin-bottom:8px;}
+.modal-msg{font-size:0.9rem;color:#555;margin-bottom:18px;}
+.modal-btns{display:flex;gap:10px;justify-content:center;}
+.modal-cancel{background:#e8edf4;color:#333;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;cursor:pointer;}
+.modal-confirm{background:#E24B4A;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;font-weight:600;cursor:pointer;}
+
+
+</style>
+</head>
+<body><div class="quiz-title">[Sion] Algebra 2</div><div class="subtitle" id="att-display">Total Attempts: 0</div><div class="instruction">Choose the correct answer for each problem.</div>
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="20"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">20:00</span>
+  </div>
+</div>
+<div id="nav-bar"><span id="nav-count">0 / 10</span><div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div><button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button></div><div id="dot-panel"></div>
+<div class="quiz-area" id="quiz-area">
+  <div class="q-header">
+    <span class="q-num" id="q-num"></span>
+    <span class="tag-badge" id="tag-badge" style="display:none;"></span>
+  </div>
+  <div class="passage-box" id="passage-box" style="display:none;"></div>
+  <div class="context-label" id="context-label" style="display:none;"></div>
+  <div class="context-box" id="context-box" style="display:none;"></div>
+  <div class="q-text" id="q-text"></div>
+  <button class="tts-btn" id="tts-btn" onclick="speak()" style="display:none;">&#128266; Listen</button>
+  <div class="options" id="options"></div>
+  <button class="hint-btn" id="hint-btn" onclick="toggleHint()" style="display:none;">Show Hint</button>
+  <div class="hint-box" id="hint-box"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-btns">
+    <button class="prev-btn" onclick="goPrev()">Prev</button>
+    <button class="next-btn" id="next-btn" onclick="goNext()">Next</button>
+  </div>
+</div>
+
+<div class="results-screen" id="results-screen">
+  <div class="results-heading" id="results-heading">Results</div>
+  <div class="results-score" id="results-score"></div>
+  <div class="results-grid" id="results-grid"></div>
+  <div class="results-btns">
+    <button class="retry-btn" onclick="retryWrong()">Retry Wrong Ones</button>
+    <button class="copy-btn" onclick="copyRes()">Copy All Results</button>
+    <button class="save-btn" onclick="saveWrongAnswers()">Save Wrong Answers</button>
+    <button class="fresh-btn" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button>
+    <button class="fresh-btn" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <div class="modal-title" id="freshModalTitle">Start Fresh?</div>
+    <div class="modal-msg" id="freshModalText">All progress will be cleared. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>var TITLE = "[Sion] Algebra 2";var QUIZ_KEY = "quiz_sionalgebra2_10_2026-09-12_v1";var ATT_KEY = "quiz_sionalgebra2_10_att_2026-09-12_v1";var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';var RAW_QUESTIONS = [{"stem": "If sin&theta; = <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>3</span><span style=\"border-top:1.4px solid #111;\">5</span></span> and &theta; is in Quadrant I, find cos&theta;.", "opts": ["<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>3</span><span style=\"border-top:1.4px solid #111;\">4</span></span>", "<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">4</span></span>", "<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>2</span><span style=\"border-top:1.4px solid #111;\">5</span></span>", "<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>4</span><span style=\"border-top:1.4px solid #111;\">5</span></span>"], "ci": 3, "exp": "Using sin&sup2;&theta; + cos&sup2;&theta; = 1: cos&sup2;&theta; = 1 &minus; <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>9</span><span style=\"border-top:1.4px solid #111;\">25</span></span> = <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>16</span><span style=\"border-top:1.4px solid #111;\">25</span></span>. Since &theta; is in Quadrant I, cos&theta; is positive, so cos&theta; = <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>4</span><span style=\"border-top:1.4px solid #111;\">5</span></span>."}, {"stem": "The graph of an absolute value function is shown below. Which equation represents this function?<br><svg width=\"300\" height=\"260\" viewBox=\"0 0 300 260\" style=\"display:block;margin:10px auto;\"><line x1=\"-10\" y1=\"200\" x2=\"230\" y2=\"200\" stroke=\"#888\" stroke-width=\"1.5\"/><line x1=\"130\" y1=\"260\" x2=\"130\" y2=\"40\" stroke=\"#888\" stroke-width=\"1.5\"/><line x1=\"-10\" y1=\"197\" x2=\"-10\" y2=\"203\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"-10\" y=\"215\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-7</text><line x1=\"10\" y1=\"197\" x2=\"10\" y2=\"203\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"10\" y=\"215\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-6</text><line x1=\"30\" y1=\"197\" x2=\"30\" y2=\"203\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"30\" y=\"215\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-5</text><line x1=\"50\" y1=\"197\" x2=\"50\" y2=\"203\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"50\" y=\"215\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-4</text><line x1=\"70\" y1=\"197\" x2=\"70\" y2=\"203\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"70\" y=\"215\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-3</text><line x1=\"90\" y1=\"197\" x2=\"90\" y2=\"203\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"90\" y=\"215\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-2</text><line x1=\"110\" y1=\"197\" x2=\"110\" y2=\"203\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"110\" y=\"215\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-1</text><line x1=\"150\" y1=\"197\" x2=\"150\" y2=\"203\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"150\" y=\"215\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">1</text><line x1=\"170\" y1=\"197\" x2=\"170\" y2=\"203\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"170\" y=\"215\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">2</text><line x1=\"190\" y1=\"197\" x2=\"190\" y2=\"203\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"190\" y=\"215\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">3</text><line x1=\"210\" y1=\"197\" x2=\"210\" y2=\"203\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"210\" y=\"215\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">4</text><line x1=\"230\" y1=\"197\" x2=\"230\" y2=\"203\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"230\" y=\"215\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">5</text><line x1=\"127\" y1=\"260\" x2=\"133\" y2=\"260\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"263\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-3</text><line x1=\"127\" y1=\"240\" x2=\"133\" y2=\"240\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"243\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-2</text><line x1=\"127\" y1=\"220\" x2=\"133\" y2=\"220\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"223\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-1</text><line x1=\"127\" y1=\"180\" x2=\"133\" y2=\"180\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"183\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">1</text><line x1=\"127\" y1=\"160\" x2=\"133\" y2=\"160\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"163\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">2</text><line x1=\"127\" y1=\"140\" x2=\"133\" y2=\"140\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"143\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">3</text><line x1=\"127\" y1=\"120\" x2=\"133\" y2=\"120\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"123\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">4</text><line x1=\"127\" y1=\"100\" x2=\"133\" y2=\"100\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"103\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">5</text><line x1=\"127\" y1=\"80\" x2=\"133\" y2=\"80\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"83\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">6</text><line x1=\"127\" y1=\"60\" x2=\"133\" y2=\"60\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"63\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">7</text><line x1=\"127\" y1=\"40\" x2=\"133\" y2=\"40\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"43\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">8</text><path d=\"M 10.0,140.0 L 20.0,150.0 L 30.0,160.0 L 40.0,170.0 L 50.0,180.0 L 60.0,190.0 L 70.0,200.0 L 80.0,210.0 L 90.0,220.0 L 100.0,210.0 L 110.0,200.0 L 120.0,190.0 L 130.0,180.0 L 140.0,170.0 L 150.0,160.0 L 160.0,150.0 L 170.0,140.0 L 180.0,130.0 L 190.0,120.0 L 200.0,110.0 L 210.0,100.0 L 220.0,90.0 L 230.0,80.0 L 240.0,70.0 L 250.0,60.0\" fill=\"none\" stroke=\"#185FA5\" stroke-width=\"2.5\"/><circle cx=\"90\" cy=\"220\" r=\"4\" fill=\"#E24B4A\"/></svg>", "opts": ["y = |x &minus; 2| + 1", "y = |x &minus; 2| &minus; 1", "y = |x + 2| + 1", "y = |x + 2| &minus; 1"], "ci": 3, "exp": "The graph's sharp corner (vertex) sits 2 units to the left of the y-axis and 1 unit below the x-axis. A horizontal shift left by 2 gives (x + 2) inside the absolute value, and a vertical shift down by 1 subtracts 1 outside: y = |x + 2| &minus; 1."}, {"stem": "The graph of a quadratic function is shown below. Which equation represents this function in vertex form?<br><svg width=\"260\" height=\"260\" viewBox=\"0 0 260 260\" style=\"display:block;margin:10px auto;\"><line x1=\"10\" y1=\"230\" x2=\"210\" y2=\"230\" stroke=\"#888\" stroke-width=\"1.5\"/><line x1=\"30\" y1=\"250\" x2=\"30\" y2=\"50\" stroke=\"#888\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"227\" x2=\"10\" y2=\"233\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"10\" y=\"245\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-1</text><line x1=\"50\" y1=\"227\" x2=\"50\" y2=\"233\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"50\" y=\"245\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">1</text><line x1=\"70\" y1=\"227\" x2=\"70\" y2=\"233\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"70\" y=\"245\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">2</text><line x1=\"90\" y1=\"227\" x2=\"90\" y2=\"233\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"90\" y=\"245\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">3</text><line x1=\"110\" y1=\"227\" x2=\"110\" y2=\"233\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"110\" y=\"245\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">4</text><line x1=\"130\" y1=\"227\" x2=\"130\" y2=\"233\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"130\" y=\"245\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">5</text><line x1=\"150\" y1=\"227\" x2=\"150\" y2=\"233\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"150\" y=\"245\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">6</text><line x1=\"170\" y1=\"227\" x2=\"170\" y2=\"233\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"170\" y=\"245\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">7</text><line x1=\"190\" y1=\"227\" x2=\"190\" y2=\"233\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"190\" y=\"245\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">8</text><line x1=\"210\" y1=\"227\" x2=\"210\" y2=\"233\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"210\" y=\"245\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">9</text><line x1=\"27\" y1=\"250\" x2=\"33\" y2=\"250\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"20\" y=\"253\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-1</text><line x1=\"27\" y1=\"210\" x2=\"33\" y2=\"210\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"20\" y=\"213\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">1</text><line x1=\"27\" y1=\"190\" x2=\"33\" y2=\"190\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"20\" y=\"193\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">2</text><line x1=\"27\" y1=\"170\" x2=\"33\" y2=\"170\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"20\" y=\"173\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">3</text><line x1=\"27\" y1=\"150\" x2=\"33\" y2=\"150\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"20\" y=\"153\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">4</text><line x1=\"27\" y1=\"130\" x2=\"33\" y2=\"130\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"20\" y=\"133\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">5</text><line x1=\"27\" y1=\"110\" x2=\"33\" y2=\"110\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"20\" y=\"113\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">6</text><line x1=\"27\" y1=\"90\" x2=\"33\" y2=\"90\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"20\" y=\"93\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">7</text><line x1=\"27\" y1=\"70\" x2=\"33\" y2=\"70\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"20\" y=\"73\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">8</text><line x1=\"27\" y1=\"50\" x2=\"33\" y2=\"50\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"20\" y=\"53\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">9</text><path d=\"M 40.0,65.0 L 45.0,88.8 L 50.0,110.0 L 55.0,128.8 L 60.0,145.0 L 65.0,158.8 L 70.0,170.0 L 75.0,178.8 L 80.0,185.0 L 85.0,188.8 L 90.0,190.0 L 95.0,188.8 L 100.0,185.0 L 105.0,178.8 L 110.0,170.0 L 115.0,158.8 L 120.0,145.0 L 125.0,128.8 L 130.0,110.0 L 135.0,88.8 L 140.0,65.0\" fill=\"none\" stroke=\"#185FA5\" stroke-width=\"2.5\"/><circle cx=\"90\" cy=\"190\" r=\"4\" fill=\"#E24B4A\"/></svg>", "opts": ["y = (x &minus; 2)&sup2; + 3", "y = (x + 3)&sup2; + 2", "y = (x &minus; 3)&sup2; &minus; 2", "y = (x &minus; 3)&sup2; + 2"], "ci": 3, "exp": "The lowest point (vertex) of the parabola sits 3 units to the right of the y-axis and 2 units above the x-axis. Vertex form y = (x &minus; h)&sup2; + k uses the vertex (h, k), so with vertex (3, 2): y = (x &minus; 3)&sup2; + 2."}, {"stem": "Solve for x: 3<sup>x+1</sup> = 81", "opts": ["x = 3", "x = 5", "x = 2", "x = 4"], "ci": 0, "exp": "81 = 3&#8308; (3 to the 4th power), so 3<sup>x+1</sup> = 3&#8308; means x + 1 = 4. Subtracting 1 from both sides: x = 3."}, {"stem": "If f(x) = 2x &minus; 6, what is f<sup>&minus;1</sup>(x)?", "opts": ["f<sup>&minus;1</sup>(x) = <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>x &minus; 6</span><span style=\"border-top:1.4px solid #111;\">2</span></span>", "f<sup>&minus;1</sup>(x) = <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>x + 6</span><span style=\"border-top:1.4px solid #111;\">2</span></span>", "f<sup>&minus;1</sup>(x) = <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>x</span><span style=\"border-top:1.4px solid #111;\">2</span></span> + 6", "f<sup>&minus;1</sup>(x) = 2x + 6"], "ci": 1, "exp": "Set y = 2x &minus; 6 and swap x and y: x = 2y &minus; 6. Add 6 to both sides: x + 6 = 2y. Divide by 2: y = <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>x + 6</span><span style=\"border-top:1.4px solid #111;\">2</span></span>. So f<sup>&minus;1</sup>(x) = <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>x + 6</span><span style=\"border-top:1.4px solid #111;\">2</span></span>."}, {"stem": "Condense into a single logarithm: log&#8322;5 + log&#8322;3 &minus; log&#8322;2", "opts": ["log&#8322;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>15</span><span style=\"border-top:1.4px solid #111;\">2</span></span>", "log&#8322;4", "log&#8322;6", "log&#8322;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>2</span><span style=\"border-top:1.4px solid #111;\">15</span></span>"], "ci": 0, "exp": "Adding logs with the same base multiplies their arguments: log&#8322;5 + log&#8322;3 = log&#8322;15. Subtracting a log divides: log&#8322;15 &minus; log&#8322;2 = log&#8322;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>15</span><span style=\"border-top:1.4px solid #111;\">2</span></span>."}, {"stem": "Which polynomial function has the zeros shown in the graph below?<br><svg width=\"290\" height=\"220\" viewBox=\"0 0 290 220\" style=\"display:block;margin:10px auto;\"><line x1=\"40\" y1=\"170\" x2=\"220\" y2=\"170\" stroke=\"#888\" stroke-width=\"1.5\"/><line x1=\"130\" y1=\"278\" x2=\"130\" y2=\"62\" stroke=\"#888\" stroke-width=\"1.5\"/><line x1=\"40\" y1=\"167\" x2=\"40\" y2=\"173\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"40\" y=\"185\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-5</text><line x1=\"58\" y1=\"167\" x2=\"58\" y2=\"173\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"58\" y=\"185\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-4</text><line x1=\"76\" y1=\"167\" x2=\"76\" y2=\"173\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"76\" y=\"185\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-3</text><line x1=\"94\" y1=\"167\" x2=\"94\" y2=\"173\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"94\" y=\"185\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-2</text><line x1=\"112\" y1=\"167\" x2=\"112\" y2=\"173\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"112\" y=\"185\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-1</text><line x1=\"148\" y1=\"167\" x2=\"148\" y2=\"173\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"148\" y=\"185\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">1</text><line x1=\"166\" y1=\"167\" x2=\"166\" y2=\"173\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"166\" y=\"185\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">2</text><line x1=\"184\" y1=\"167\" x2=\"184\" y2=\"173\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"184\" y=\"185\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">3</text><line x1=\"202\" y1=\"167\" x2=\"202\" y2=\"173\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"202\" y=\"185\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">4</text><line x1=\"220\" y1=\"167\" x2=\"220\" y2=\"173\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"220\" y=\"185\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">5</text><line x1=\"127\" y1=\"278\" x2=\"133\" y2=\"278\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"281\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-6</text><line x1=\"127\" y1=\"260\" x2=\"133\" y2=\"260\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"263\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-5</text><line x1=\"127\" y1=\"242\" x2=\"133\" y2=\"242\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"245\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-4</text><line x1=\"127\" y1=\"224\" x2=\"133\" y2=\"224\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"227\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-3</text><line x1=\"127\" y1=\"206\" x2=\"133\" y2=\"206\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"209\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-2</text><line x1=\"127\" y1=\"188\" x2=\"133\" y2=\"188\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"191\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">-1</text><line x1=\"127\" y1=\"152\" x2=\"133\" y2=\"152\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"155\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">1</text><line x1=\"127\" y1=\"134\" x2=\"133\" y2=\"134\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"137\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">2</text><line x1=\"127\" y1=\"116\" x2=\"133\" y2=\"116\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"119\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">3</text><line x1=\"127\" y1=\"98\" x2=\"133\" y2=\"98\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"101\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">4</text><line x1=\"127\" y1=\"80\" x2=\"133\" y2=\"80\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"83\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">5</text><line x1=\"127\" y1=\"62\" x2=\"133\" y2=\"62\" stroke=\"#888\" stroke-width=\"1\"/><text x=\"120\" y=\"65\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">6</text><path d=\"M 61.6,270.2 L 63.4,254.4 L 65.2,239.6 L 67.0,225.7 L 68.8,212.8 L 70.6,200.8 L 72.4,189.7 L 74.2,179.4 L 76.0,170.0 L 77.8,161.4 L 79.6,153.6 L 81.4,146.5 L 83.2,140.2 L 85.0,134.6 L 86.8,129.6 L 88.6,125.3 L 90.4,121.6 L 92.2,118.5 L 94.0,116.0 L 95.8,114.0 L 97.6,112.5 L 99.4,111.6 L 101.2,111.0 L 103.0,110.9 L 104.8,111.2 L 106.6,111.9 L 108.4,113.0 L 110.2,114.3 L 112.0,116.0 L 113.8,117.9 L 115.6,120.1 L 117.4,122.5 L 119.2,125.1 L 121.0,127.8 L 122.8,130.7 L 124.6,133.7 L 126.4,136.7 L 128.2,139.9 L 130.0,143.0 L 131.8,146.1 L 133.6,149.3 L 135.4,152.3 L 137.2,155.3 L 139.0,158.2 L 140.8,160.9 L 142.6,163.5 L 144.4,165.9 L 146.2,168.1 L 148.0,170.0 L 149.8,171.7 L 151.6,173.0 L 153.4,174.1 L 155.2,174.8 L 157.0,175.1 L 158.8,175.0 L 160.6,174.4 L 162.4,173.5 L 164.2,172.0 L 166.0,170.0 L 167.8,167.5 L 169.6,164.4 L 171.4,160.7 L 173.2,156.4 L 175.0,151.4 L 176.8,145.8 L 178.6,139.5 L 180.4,132.4 L 182.2,124.6 L 184.0,116.0 L 185.8,106.6 L 187.6,96.3 L 189.4,85.2 L 191.2,73.2\" fill=\"none\" stroke=\"#185FA5\" stroke-width=\"2.5\"/><circle cx=\"76.0\" cy=\"170.0\" r=\"4\" fill=\"#E24B4A\"/><circle cx=\"148.0\" cy=\"170.0\" r=\"4\" fill=\"#E24B4A\"/><circle cx=\"166.0\" cy=\"170.0\" r=\"4\" fill=\"#E24B4A\"/></svg>", "opts": ["y = (x &minus; 3)(x + 1)(x + 2)", "y = (x + 3)(x &minus; 1)(x &minus; 2)", "y = (x + 3)(x &minus; 1)(x + 2)", "y = (x &minus; 3)(x &minus; 1)(x &minus; 2)"], "ci": 1, "exp": "The graph crosses the x-axis at x = &minus;3, x = 1, and x = 2. A polynomial with these zeros has factors (x &minus; (&minus;3)), (x &minus; 1), and (x &minus; 2), which is (x + 3)(x &minus; 1)(x &minus; 2)."}, {"stem": "If f(x) = x&sup2; + 1 and g(x) = 3x &minus; 2, find (f + g)(2).", "opts": ["11", "8", "7", "9"], "ci": 3, "exp": "f(2) = 2&sup2; + 1 = 5. g(2) = 3(2) &minus; 2 = 4. (f + g)(2) = f(2) + g(2) = 5 + 4 = 9."}, {"stem": "Which conic section is represented by the equation <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>x&sup2;</span><span style=\"border-top:1.4px solid #111;\">9</span></span> &minus; <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>y&sup2;</span><span style=\"border-top:1.4px solid #111;\">4</span></span> = 1?", "opts": ["Circle", "Hyperbola", "Parabola", "Ellipse"], "ci": 1, "exp": "This equation has the form (x&sup2;/a&sup2;) &minus; (y&sup2;/b&sup2;) = 1, with x&sup2; and y&sup2; terms subtracted rather than added. This subtracted, both-squared form is the standard form of a hyperbola."}, {"stem": "Simplify: 16<sup><span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>3</span><span style=\"border-top:1.4px solid #111;\">4</span></span></sup>", "opts": ["64", "12", "6", "8"], "ci": 3, "exp": "16<sup><span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>3</span><span style=\"border-top:1.4px solid #111;\">4</span></span></sup> means take the 4th root of 16, then cube the result: 16<sup><span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">4</span></span></sup> = 2, and 2&sup3; = 8."}];var N = RAW_QUESTIONS.length;var ORDER_KEY = QUIZ_KEY + '_order_v1';
+function shuffleArr(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function identityOrder(){var o=[];for(var i=0;i<N;i++)o.push(i);return o;}
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length===0) return false;
+  for(var i=0;i<arr.length;i++){ if(typeof arr[i] !== 'number' || arr[i]<0 || arr[i]>=N) return false; }
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad');
+    return arr;
+  }catch(e){ try{localStorage.removeItem(ORDER_KEY);}catch(e2){} return null; }
+}
+function saveOrder(o){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(o)); }catch(e){} }
+
+var order = loadOrder() || identityOrder();
+if(!loadOrder()) saveOrder(order);
+var pendingFreshMode = 'original';
+
+function defaultState(){
+  return { cur:0, answers:{}, showResults:false, timerTotalSec:null, timerStartedAt:null };
+}
+function loadState(){
+  try{
+    var raw = localStorage.getItem(QUIZ_KEY);
+    if(!raw) return defaultState();
+    var s = JSON.parse(raw);
+    if(typeof s.cur !== 'number' || s.cur<0 || s.cur>=order.length) s.cur = 0;
+    if(typeof s.answers !== 'object' || s.answers===null) s.answers = {};
+    if(typeof s.showResults !== 'boolean') s.showResults = false;
+    if(typeof s.timerTotalSec === 'undefined') s.timerTotalSec = null;
+    if(typeof s.timerStartedAt === 'undefined') s.timerStartedAt = null;
+    return s;
+  }catch(e){ try{localStorage.removeItem(QUIZ_KEY);}catch(e2){} return defaultState(); }
+}
+function saveState(){ try{ localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); }catch(e){} }
+
+var state = loadState();
+var timerInterval = null;
+var hintShown = false;
+function toggleHint(){
+  hintShown = !hintShown;
+  var hintBtn = document.getElementById('hint-btn');
+  var hintBox = document.getElementById('hint-box');
+  if(hintShown){ hintBox.classList.add('show'); hintBtn.textContent='Hide Hint'; }
+  else { hintBox.classList.remove('show'); hintBtn.textContent='Show Hint'; }
+}
+window.toggleHint=toggleHint;
+
+function speak(){
+  try{
+    var qi = order[state.cur];
+    var q = RAW_QUESTIONS[qi];
+    if(!q || !q.tts) return;
+    if(!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(q.tts);
+    u.lang = 'ko-KR';
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+window.speak=speak;
+
+function getAttempts(){ try{ return parseInt(localStorage.getItem(ATT_KEY)||'0',10); }catch(e){ return 0; } }
+function incAttempts(){ try{ localStorage.setItem(ATT_KEY, String(getAttempts()+1)); }catch(e){} }
+function updateAttDisplay(){
+  var el = document.getElementById('att-display');
+  if(el) el.textContent = 'Total Attempts: ' + getAttempts();
+}
+
+function formatTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function renderTimer(){
+  var setupEl = document.getElementById('timerSetup');
+  var runningEl = document.getElementById('timerRunning');
+  var dispEl = document.getElementById('timerDisplay');
+  if(!setupEl||!runningEl||!dispEl) return;
+  if(!state.timerStartedAt){ setupEl.style.display='flex'; runningEl.style.display='none'; return; }
+  setupEl.style.display='none'; runningEl.style.display='flex';
+  var elapsed = (Date.now()-state.timerStartedAt)/1000;
+  var remaining = state.timerTotalSec - elapsed;
+  dispEl.classList.remove('warn','danger');
+  if(remaining<=0){ dispEl.textContent="Time's Up"; dispEl.classList.add('danger'); stopTimerInterval(); return; }
+  dispEl.textContent = formatTime(remaining);
+  if(remaining <= state.timerTotalSec*0.1) dispEl.classList.add('danger');
+  else if(remaining <= state.timerTotalSec*0.25) dispEl.classList.add('warn');
+}
+function startTimer(){
+  var input = document.getElementById('timerMinutesInput');
+  var minutes = parseFloat(input.value);
+  if(!minutes || minutes<=0) minutes=20;
+  state.timerTotalSec = Math.round(minutes*60);
+  state.timerStartedAt = Date.now();
+  saveState(); renderTimer(); startTimerInterval();
+}
+function startTimerInterval(){ stopTimerInterval(); timerInterval=setInterval(renderTimer,1000); }
+function stopTimerInterval(){ if(timerInterval){clearInterval(timerInterval); timerInterval=null;} }
+function resetTimer(){
+  state.timerTotalSec = null; state.timerStartedAt = null;
+  stopTimerInterval(); saveState(); renderTimer();
+}
+
+function render(){
+  updateAttDisplay();
+  var qa = document.getElementById('quiz-area');
+  var rs = document.getElementById('results-screen');
+  if(state.showResults){
+    qa.style.display='none';
+    rs.classList.add('show');
+    renderResults();
+    return;
+  }
+  qa.style.display='block';
+  rs.classList.remove('show');
+
+  var qi = order[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  document.getElementById('q-num').textContent = 'Q' + (state.cur+1) + ' / ' + order.length;
+
+  var badge = document.getElementById('tag-badge');
+  if(q.tag){
+    badge.style.display='inline-block';
+    badge.textContent = q.tag;
+    badge.style.background = q.tagcolor || '#185FA5';
+  } else { badge.style.display='none'; }
+
+  var pbox = document.getElementById('passage-box');
+  if(q.passage){ pbox.style.display='block'; pbox.innerHTML = q.passage; } else { pbox.style.display='none'; }
+
+  var clabel = document.getElementById('context-label');
+  if(q.contextLabel){ clabel.style.display='block'; clabel.textContent = q.contextLabel; } else { clabel.style.display='none'; }
+  var cbox = document.getElementById('context-box');
+  if(q.context){ cbox.style.display='block'; cbox.innerHTML = q.context; } else { cbox.style.display='none'; }
+
+  document.getElementById('q-text').innerHTML = q.stem;
+
+  var ttsBtn = document.getElementById('tts-btn');
+  if(ttsBtn){ ttsBtn.style.display = q.tts ? 'inline-block' : 'none'; }
+
+  hintShown = false;
+  var hintBtn = document.getElementById('hint-btn');
+  var hintBox = document.getElementById('hint-box');
+  if(q.hint){
+    hintBtn.style.display='inline-block';
+    hintBtn.textContent='Show Hint';
+    hintBox.innerHTML = q.hint;
+    hintBox.classList.remove('show');
+  } else {
+    hintBtn.style.display='none';
+    hintBox.classList.remove('show');
+  }
+
+  var answered = state.answers[qi];
+  var optDiv = document.getElementById('options');
+  optDiv.innerHTML='';
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML = optText;
+    btn.disabled = answered !== undefined;
+    if(answered !== undefined){
+      if(idx === q.ci) btn.classList.add(answered===idx ? 'correct' : 'revealed');
+      else if(answered === idx) btn.classList.add('wrong');
+    }
+    btn.onclick = function(){ chooseAnswer(idx); };
+    optDiv.appendChild(btn);
+  });
+
+  var expDiv = document.getElementById('exp-box');
+  if(answered !== undefined && answered !== q.ci){
+    expDiv.style.display='block';
+    expDiv.innerHTML = q.exp;
+  } else {
+    expDiv.style.display='none';
+  }
+
+  var nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = (state.cur >= order.length-1) ? 'Show Results \u2192' : 'Next \u2192';
+
+  updateNav();
+}
+
+function updateNav(){
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  document.getElementById('nav-count').textContent = answered + ' / ' + order.length;
+  document.getElementById('prog-fill').style.width = (answered/order.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel = document.getElementById('dot-panel');
+  if(panel.style.display==='none') return;
+  var html='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var bg = state.answers[qi]===undefined ? '#d7dde6' : (state.answers[qi]===RAW_QUESTIONS[qi].ci ? '#185FA5' : '#E24B4A');
+    html += '<button class="dot" style="background:'+bg+';" onclick="goToQ('+pos+')">'+(pos+1)+'</button>';
+  }
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  if(answered===order.length){
+    html += '<br><button class="results-pill" onclick="showResultsNow()">Results</button>';
+  }
+  panel.innerHTML = html;
+}
+function toggleJump(){
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display==='none' || panel.style.display===''){
+    panel.style.display='block'; btn.innerHTML='Hide &#9652;'; renderDots();
+  } else {
+    panel.style.display='none'; btn.innerHTML='Jump &#9662;';
+  }
+}
+function goToQ(pos){
+  state.cur = pos; state.showResults=false; saveState(); render();
+}
+function showResultsNow(){
+  state.showResults = true; incAttempts(); saveState(); render(); reportResult();
+}
+function chooseAnswer(idx){
+  var qi = order[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState(); render();
+}
+function goPrev(){
+  if(state.cur>0){ state.cur--; saveState(); render(); }
+}
+function goNext(){
+  if(state.cur < order.length-1){ state.cur++; saveState(); render(); }
+  else { state.showResults=true; incAttempts(); saveState(); render(); reportResult(); }
+}
+function reportResult(){
+  try{
+    var correct=0, wrong=0, skipped=0;
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos];
+      if(state.answers[qi]===undefined){ skipped++; continue; }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+    }
+    var total = order.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0
+    };
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
+}
+function renderResults(){
+  var correct=0, wrong=0, skipped=0;
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]===undefined){ skipped++; continue; }
+    if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+  }
+  document.getElementById('results-score').textContent = correct+' correct, '+wrong+' wrong, '+skipped+' skipped - out of '+order.length;
+  var grid = document.getElementById('results-grid');
+  grid.innerHTML='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var card = document.createElement('div');
+    if(state.answers[qi]===undefined){
+      card.className='r-card skipped';
+      card.textContent='Q'+(pos+1)+' Skip';
+    } else {
+      var ok = state.answers[qi]===RAW_QUESTIONS[qi].ci;
+      card.className='r-card '+(ok?'correct':'wrong');
+      card.textContent='Q'+(pos+1)+' '+(ok?'OK':'X');
+    }
+    (function(p){ card.onclick=function(){ state.showResults=false; state.cur=p; saveState(); render(); }; })(pos);
+    grid.appendChild(card);
+  }
+}
+function retryWrong(){
+  var wrong=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      wrong.push(qi);
+    }
+  }
+  if(wrong.length===0) return;
+  wrong.forEach(function(qi){ delete state.answers[qi]; });
+  order = wrong;
+  saveOrder(order);
+  state.cur=0; state.showResults=false;
+  saveState(); render(); renderTimer();
+}
+function copyRes(){
+  var lines=[TITLE+' Results'];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    var s='Q'+(pos+1)+': ';
+    if(a===undefined) s+='Skipped';
+    else s += (a===RAW_QUESTIONS[qi].ci ? 'Correct' : 'Wrong');
+    lines.push(s);
+  }
+  var text = lines.join('\n');
+  try{
+    if(navigator.clipboard){ navigator.clipboard.writeText(text).catch(function(){}); }
+    else { var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+  }catch(e){}
+}
+function saveWrongAnswers(){
+  var wrongItems=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    if(a!==undefined && a!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongItems.push({ question: q.stem, yourAnswer: q.opts[a], correctAnswer: q.opts[q.ci], explanation: q.exp });
+    }
+  }
+  var blob = new Blob([JSON.stringify({title:TITLE, wrongAnswers:wrongItems}, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a2 = document.createElement('a');
+  a2.href = url; a2.download = QUIZ_KEY + '_wrong.json';
+  document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+  URL.revokeObjectURL(url);
+}
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var t = document.getElementById('freshModalTitle');
+  var m = document.getElementById('freshModalText');
+  if(mode==='random'){
+    t.textContent='Start Fresh (Random Order)?';
+    m.textContent='Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    t.textContent='Start Fresh (Original Order)?';
+    m.textContent='Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  order = (pendingFreshMode==='random') ? shuffleArr(identityOrder()) : identityOrder();
+  saveOrder(order);
+  state = defaultState();
+  saveState();
+  resetTimer();
+  closeFreshModal();
+  render();
+  renderTimer();
+}
+
+window.startTimer=startTimer;
+window.toggleJump=toggleJump;
+window.goToQ=goToQ;
+window.showResultsNow=showResultsNow;
+window.chooseAnswer=chooseAnswer;
+window.goPrev=goPrev;
+window.goNext=goNext;
+window.retryWrong=retryWrong;
+window.copyRes=copyRes;
+window.saveWrongAnswers=saveWrongAnswers;
+window.openFreshModalOriginal=openFreshModalOriginal;
+window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;
+window.confirmFresh=confirmFresh;
+
+render();
+renderTimer();
+if(state.timerStartedAt) startTimerInterval();
+
+</script>
+</body>
+</html>
