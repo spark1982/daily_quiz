@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] English</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0 auto;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+.title-hd{text-align:center;font-size:1.5rem;font-weight:800;color:#185FA5;padding:10px 0 2px;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;min-height:1px;}
+#nav-bar{display:flex;align-items:center;gap:8px;margin:10px 0;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:140px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.q-tag{display:inline-block;color:#fff;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:8px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.passage-box{background:#f5f7fa;border-left:4px solid #185FA5;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.88rem;color:#222;line-height:1.6;max-height:260px;overflow-y:auto;}
+.context-label{font-size:0.92rem;font-weight:600;color:#333;margin-bottom:8px;line-height:1.4;}
+.context-box{background:#f5f7fa;border-left:4px solid #185FA5;border-radius:8px;padding:10px 14px;margin-bottom:12px;line-height:1.6;}
+.q-text{font-size:1.05rem;font-weight:700;color:#111;margin-bottom:12px;line-height:1.5;}
+.opt-btn{display:block;width:100%;padding:12px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.95rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;}
+.hint-btn{background:#fff8e1;color:#a5720a;border:1.5px solid #f5a623;border-radius:8px;padding:7px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-top:12px;margin-bottom:12px;display:inline-block;}
+.hint-box{background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.88rem;color:#6b5215;line-height:1.5;display:none;}
+.hint-box.show{display:block;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:10px;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+.timer-box{text-align:center;font-size:1.1rem;font-weight:800;margin-bottom:8px;}
+.timer-box.warn{color:#E24B4A;}
+.pause-btn{background:#e8edf4;color:#185FA5;border:none;border-radius:8px;padding:6px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;}
+.pause-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.96);z-index:90;align-items:center;justify-content:center;font-size:1.3rem;font-weight:800;color:#185FA5;}
+
+.frac{display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;}
+.frac .den{border-top:1.4px solid #111;}
+</style>
+</head>
+<body>
+<div class="title-hd">[Grant] English</div>
+<div class="instruction" id="instruction">Read the passage(s) and answer each question.</div>
+<div id="nav-bar">
+  <span id="nav-count">0 / N</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+<div id="quizArea" style="display:none;">
+  <div><span class="q-tag" id="q-tag-label"></span></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="context-label" id="context-label" style="display:none;"></div>
+  <div class="passage-box" id="passage-box" style="display:none;"></div>
+  <div class="context-box" id="context-box" style="display:none;"></div>
+  <div class="q-text" id="q-text" style="display:inline;"></div>
+  <button id="tts-btn" onclick="speakCurrent()" title="Listen" style="display:none;background:#e8edf4;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:0.95rem;margin-left:6px;vertical-align:middle;">&#128264;</button>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="saveWrong()" style="display:block;width:100%;padding:13px;background:#f5a623;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Save Wrong Answers</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal(false)" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var TITLE = "[Grant] English";
+var QUIZ_KEY = "grantenglish";
+var LS_KEY = "quiz_grantenglish_20260915";
+var ATT_KEY = "quiz_grantenglish_att_20260915";
+var TAG_COLORS = {"Title Selection": "#185FA5", "Main Idea": "#185FA5", "Author's Purpose": "#185FA5", "Summary": "#185FA5", "Theme": "#185FA5", "Genre": "#185FA5", "Setting / Situation": "#185FA5", "Supporting Details (Textual Evidence)": "#185FA5", "Supporting Details (Fact Retrieval)": "#185FA5", "Cause & Effect": "#185FA5", "Character Traits & Motivation": "#185FA5", "Inference": "#185FA5", "Predict": "#185FA5", "Tone": "#185FA5", "Point of View": "#185FA5", "Text Structure": "#185FA5", "Fact vs. Opinion": "#185FA5", "Vocabulary in Context (Context Clues)": "#185FA5", "Synonym": "#185FA5", "Antonym": "#185FA5", "Analogy": "#185FA5", "Figurative Language": "#185FA5", "Preposition Usage": "#185FA5", "Paired Passage — Synthesis (Similarities)": "#185FA5", "Paired Passage — Contrast (Differences)": "#185FA5"};
+var REPORT_ENDPOINT = "https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec";
+var RAW_QUESTIONS = [{"stem": "Which of the following would be the best title for this passage?", "opts": ["The Science Fair Surprise", "How Volcanoes Work", "Ruby's Backpack", "Best in the Class"], "ci": 0, "exp": "The story centers on an unexpected turn of events at the science fair — Jake's volcano breaking and his sister's surprise help — which \"The Science Fair Surprise\" captures best.", "tag": "Title Selection", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "Which sentence best states the main idea of the passage?", "opts": ["Volcanoes are formed by pressure that builds up inside the Earth.", "A brother's science project takes an unexpected turn, and his sister's help teaches him the value of teamwork.", "Science fairs are held every year at Jake's school.", "Jake's sister Ruby always gets in his way when he works."], "ci": 1, "exp": "The passage follows Jake's broken project and how Ruby's help changes his outlook, which is the central idea running through the whole story.", "tag": "Main Idea", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "Why did the author write this text?", "opts": ["To persuade readers to enter science fairs", "To inform readers about volcano chemistry", "To entertain readers with a story about a lesson learned", "To warn readers about the dangers of walking near curbs"], "ci": 2, "exp": "The text tells a short narrative with characters, a conflict, and a resolution, which is meant to entertain and share a lesson rather than to persuade, inform, or warn.", "tag": "Author's Purpose", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "Which option is the best summary of the passage?", "opts": ["Jake wins first place at the science fair with a giant volcano model he built entirely alone over three weeks.", "Ruby enters her own volcano into the competition and beats her brother.", "Jake decides to skip the science fair after his model breaks on the bus.", "Jake's volcano breaks on the way to the fair, but his sister Ruby helps him rebuild it, and Jake comes to value her help more than winning."], "ci": 3, "exp": "This option captures the key events in order — the model breaking, Ruby's help, and Jake's changed perspective — without adding false details.", "tag": "Summary", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "What is the central theme or lesson of the story?", "opts": ["Practice always guarantees success.", "Sharing an experience with someone you love can matter more than winning.", "Science fairs are not fair to younger siblings.", "It is best to always work completely alone."], "ci": 1, "exp": "Jake's realization at the end — that having Ruby's help mattered more than winning — is the lesson the story builds toward.", "tag": "Theme", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "What genre is this passage?", "opts": ["Realistic fiction", "Myth", "Poetry", "Nonfiction news article"], "ci": 0, "exp": "The passage tells an invented story about believable characters and everyday events, which makes it realistic fiction rather than a myth, poem, or news article.", "tag": "Genre", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "Where and when does most of the story's action take place?", "opts": ["In a science classroom, a year before the fair", "At Jake's school, on the morning of the science fair", "At Ruby's school, during summer vacation", "In a chemistry laboratory, late at night"], "ci": 1, "exp": "Although Jake built the model at home earlier, the key events — the model breaking and being rebuilt — happen at school on the morning of the fair.", "tag": "Setting / Situation", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "Which detail from the text best supports the idea that Jake originally preferred working on the project without his sister?", "opts": ["He mixed baking soda and vinegar in his garage.", "He preferred working alone and quietly ignored her questions.", "He carried his volcano carefully to school.", "He felt proud watching his little sister beam beside him."], "ci": 1, "exp": "This detail directly states that Jake preferred working alone and ignored Ruby, showing his original attitude toward including her.", "tag": "Supporting Details (Textual Evidence)", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "According to the passage, how long had Jake been building his volcano model before the science fair?", "opts": ["Three days", "One week", "Three weeks", "Three months"], "ci": 2, "exp": "The passage states directly, \"Jake had spent three weeks building a volcano model.\"", "tag": "Supporting Details (Fact Retrieval)", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "What caused Jake's volcano model to break?", "opts": ["He tripped on the curb while stepping off the bus.", "Ruby accidentally knocked it off a table.", "It was left out in the rain overnight.", "The judges dropped it during inspection."], "ci": 0, "exp": "The passage says Jake \"tripped on the curb\" and the model \"slipped from his hands and shattered,\" showing the direct cause.", "tag": "Cause & Effect", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "Which character trait best describes Ruby, based on her actions in the story?", "opts": ["Lazy and indifferent", "Resourceful and caring", "Arrogant and boastful", "Fearful and shy"], "ci": 1, "exp": "Ruby comes prepared with spare supplies and helps rebuild the project without being asked, showing that she is resourceful and caring toward her brother.", "tag": "Character Traits & Motivation", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "What can we infer about Jake's feelings toward Ruby by the end of the passage?", "opts": ["He feels annoyed that she interfered with his project.", "He feels grateful and proud of her.", "He feels embarrassed to be seen with her.", "He feels indifferent and barely notices her help."], "ci": 1, "exp": "Jake \"felt proud watching his little sister\" and realized her help mattered more than winning, which shows gratitude and pride rather than annoyance or indifference.", "tag": "Inference", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "Based on the story up to the moment Jake stares at his shattered volcano, what will most likely happen next?", "opts": ["He will give up and go home without entering the fair.", "Someone will help him find a way to still take part in the fair.", "The science fair will be cancelled because of the accident.", "Jake will decide to build an entirely different kind of project."], "ci": 1, "exp": "Given that Ruby is nearby with spare supplies and the story's warm tone, it is most likely that help will arrive rather than the fair ending or being cancelled.", "tag": "Predict", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "Which word best describes the author's tone in the paragraph where Jake stares at the wreckage of his volcano?", "opts": ["Humorous", "Sympathetic", "Sarcastic", "Indifferent"], "ci": 1, "exp": "The description of Jake's nervous, worried reaction is written with sympathy for his disappointment, not humor, sarcasm, or indifference.", "tag": "Tone", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "Is this passage written in first-person, second-person, or third-person point of view?", "opts": ["First-person", "Second-person", "Third-person", "Third-person, but only from Ruby's perspective"], "ci": 2, "exp": "The narrator refers to \"Jake\" and \"Ruby\" by name and uses \"he\" and \"she\" rather than \"I\" or \"you,\" which shows a third-person point of view that follows Jake overall, not Ruby alone.", "tag": "Point of View", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "How is the passage structured?", "opts": ["Chronological — events are told in the order they happened", "Compare and contrast — two unrelated stories are compared", "Problem and solution only, with no clear timeline", "Cause and effect only, with events told out of order"], "ci": 0, "exp": "The story moves in time order: building the model, the accident on the way to school, the repair, and then the aftermath, which is a chronological structure.", "tag": "Text Structure", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "Read the second underlined sentence in the passage (\"the volcano itself did not matter nearly as much as who helped him build it\"). Is this a fact or an opinion?", "opts": ["Fact", "Opinion", "Both a fact and an opinion equally", "Neither a fact nor an opinion"], "ci": 1, "exp": "This sentence expresses Jake's personal feeling about what mattered most to him, which cannot be proven true or false — that makes it an opinion, not a fact.", "tag": "Fact vs. Opinion", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "Based on the passage, what is the meaning of the underlined word \"reluctant\"?", "opts": ["Excited and eager", "Unwilling or hesitant", "Confused and lost", "Angry and frustrated"], "ci": 1, "exp": "The surrounding context — Jake's nervous stomach and his shattered project — shows he did not want to walk in without a project, meaning he was unwilling, or reluctant.", "tag": "Vocabulary in Context (Context Clues)", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "Which word is a synonym for \"reluctant\" as used in the passage?", "opts": ["Eager", "Hesitant", "Confident", "Curious"], "ci": 1, "exp": "\"Hesitant\" means unwilling or slow to act, which matches the meaning of \"reluctant\" in the passage.", "tag": "Synonym", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "Which word is the antonym of \"reluctant\" as used in the passage?", "opts": ["Hesitant", "Nervous", "Eager", "Unwilling"], "ci": 2, "exp": "\"Eager\" means willing and enthusiastic, which is the opposite of \"reluctant.\"", "tag": "Antonym", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "Complete the analogy — Seed : Plant :: Spark : ________.", "opts": ["Water", "Fire", "Rock", "Cloud"], "ci": 1, "exp": "A seed grows into a plant, just as a spark grows into a fire — both show something small starting something larger.", "tag": "Analogy", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "What type of figurative language is used in the underlined phrase, \"his stomach twisting into a nervous knot\"?", "opts": ["Simile", "Metaphor", "Personification", "Hyperbole"], "ci": 1, "exp": "The phrase directly compares Jake's stomach to a knot without using \"like\" or \"as,\" which makes it a metaphor.", "tag": "Figurative Language", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "Fill in the blank with the correct preposition: \"Jake has been interested in volcanoes _____ he was seven years old.\"", "opts": ["for", "since", "during", "by"], "ci": 1, "exp": "\"Since\" is used with a specific starting point in time (\"he was seven years old\"), showing an action that began then and continues.", "tag": "Preposition Usage", "tagcolor": "#185FA5", "passage": "Jake had spent three weeks building a volcano model for the school science fair, and he was determined to win first place. Every afternoon after class, he mixed baking soda and vinegar in his garage, testing how high the eruption would spray. His little sister, Ruby, often peeked through the door, giggling at the fizzy mess, but Jake never wanted to include her; he preferred working alone and quietly ignored her questions.<br><br>On the morning of the fair, Jake carried his volcano carefully to school, but as he stepped off the bus, he tripped on the curb. The model slipped from his hands and shattered into pieces of dried clay. Jake stared at the wreckage, and he felt <u>reluctant</u> to walk into the gym without a project &mdash; <u>his stomach twisting into a nervous knot</u>.<br><br>Just then, Ruby appeared with her backpack, pulling out a small bag of extra baking soda and a spare bottle of vinegar she had packed just in case. Together, brother and sister rebuilt a smaller volcano right there in the hallway, using a cardboard box someone had thrown away. It was not as tall as Jake's original design, but it worked perfectly when the judges arrived.<br><br>Jake did not win first place that day, but he felt proud watching his little sister beam beside him. As they walked home together, Jake realized that <u>the volcano itself did not matter nearly as much as who helped him build it</u>."}, {"stem": "Based on Passage A and Passage B, what is one similarity between Ben's and Priya's experiences?", "opts": ["Both lost their first match at the same chess tournament.", "Both quit the chess club permanently after the tournament.", "Both were expected to win the entire tournament.", "Both refused to shake their opponent's hand."], "ci": 0, "exp": "Both passages state that Ben and Priya each lost their first match at the same tournament, which is the clear shared detail between the two accounts.", "tag": "Paired Passage — Synthesis (Similarities)", "tagcolor": "#185FA5", "passage": "<strong>Passage A</strong><br>Ben trained for the citywide chess tournament for two months, studying famous games every night. He had wanted to prove that his months of practice would pay off immediately. When he lost his first match to a much younger player, Ben felt embarrassed and refused to shake his opponent's hand. He packed his bag and left the tournament early, telling his coach that chess was a waste of time. His parents tried to encourage him, but he brushed off their words. For weeks afterward, Ben avoided the chess club altogether, insisting he had no interest in playing again.<br><br><strong>Passage B</strong><br>Priya also lost her first match at the same chess tournament, to a player who had studied far longer than she had. Instead of leaving, Priya stayed to watch the rest of the matches, taking notes on strategies she had never considered. That evening, she asked her opponent for tips and thanked him for a challenging game. Her parents were surprised by how calmly she handled the disappointing result. By the next week, Priya had signed up for extra lessons, eager to improve before the tournament returned, and she even offered to help her younger cousin practice for his upcoming match."}, {"stem": "How does Ben's reaction to losing differ from Priya's reaction, according to the two passages?", "opts": ["Ben left early and avoided chess afterward, while Priya stayed, learned from the loss, and sought more practice.", "Ben calmly asked for tips, while Priya angrily left the tournament.", "Both reacted in exactly the same way, showing no real difference.", "Priya quit chess entirely, while Ben signed up for more lessons."], "ci": 0, "exp": "Passage A shows Ben leaving early and avoiding chess afterward, while Passage B shows Priya staying, learning, and signing up for lessons — a clear contrast in how each handled losing.", "tag": "Paired Passage — Contrast (Differences)", "tagcolor": "#185FA5", "passage": "<strong>Passage A</strong><br>Ben trained for the citywide chess tournament for two months, studying famous games every night. He had wanted to prove that his months of practice would pay off immediately. When he lost his first match to a much younger player, Ben felt embarrassed and refused to shake his opponent's hand. He packed his bag and left the tournament early, telling his coach that chess was a waste of time. His parents tried to encourage him, but he brushed off their words. For weeks afterward, Ben avoided the chess club altogether, insisting he had no interest in playing again.<br><br><strong>Passage B</strong><br>Priya also lost her first match at the same chess tournament, to a player who had studied far longer than she had. Instead of leaving, Priya stayed to watch the rest of the matches, taking notes on strategies she had never considered. That evening, she asked her opponent for tips and thanked him for a challenging game. Her parents were surprised by how calmly she handled the disappointing result. By the next week, Priya had signed up for extra lessons, eager to improve before the tournament returned, and she even offered to help her younger cousin practice for his upcoming match."}];
+var DEBATE_MODE = false;
+var TIMED = false;
+var TIME_LIMIT = 40;
+var TTS_LANG = "ko-KR";
+
+var order = [];
+var state = {};
+var hintShown = false;
+var paused = false;
+var timerHandle = null;
+
+function loadAttempts(){ return parseInt(localStorage.getItem(ATT_KEY)||'0',10); }
+function incAttempts(){ localStorage.setItem(ATT_KEY, loadAttempts()+1); }
+
+function defaultOrder(){ var a=[]; for(var i=0;i<RAW_QUESTIONS.length;i++) a.push(i); return a; }
+
+function resetState(randomOrder){
+  order = defaultOrder();
+  if (randomOrder) {
+    for (var k=order.length-1;k>0;k--) { var j=Math.floor(Math.random()*(k+1)); var t=order[k]; order[k]=order[j]; order[j]=t; }
+  }
+  state = { cur:0, answers:{}, shuffles:{}, showResults:false, order:order.slice() };
+  if (TIMED) {
+    state.timers = {};
+    for (var i=0;i<RAW_QUESTIONS.length;i++) state.timers[i] = { remaining: TIME_LIMIT, timedOut:false, running:false };
+  }
+}
+
+function loadState(){
+  try {
+    var s = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+    if (s && typeof s.cur === 'number' && s.answers && s.order) {
+      state = s;
+      order = s.order;
+    } else {
+      resetState(false);
+    }
+  } catch(e) {
+    localStorage.removeItem(LS_KEY);
+    resetState(false);
+  }
+}
+
+function saveState(){
+  state.order = order;
+  localStorage.setItem(LS_KEY, JSON.stringify(state));
+}
+
+function getShuffle(qi){
+  if (!state.shuffles[qi]) {
+    var n = RAW_QUESTIONS[qi].opts.length;
+    var a = []; for (var i=0;i<n;i++) a.push(i);
+    for (var k=n-1;k>0;k--) { var j=Math.floor(Math.random()*(k+1)); var t=a[k]; a[k]=a[j]; a[j]=t; }
+    state.shuffles[qi] = a;
+  }
+  return state.shuffles[qi];
+}
+function getCSI(qi){ return getShuffle(qi).indexOf(RAW_QUESTIONS[qi].ci); }
+
+function isTimedOut(qi){ return TIMED && state.timers && state.timers[qi] && state.timers[qi].timedOut; }
+function isAnswered(qi){ return state.answers[qi] !== undefined || isTimedOut(qi); }
+function isCorrectAns(qi){ return state.answers[qi] !== undefined && state.answers[qi] === getCSI(qi); }
+
+function updateNav(){
+  var ans = 0;
+  for (var p=0;p<order.length;p++) if (isAnswered(order[p])) ans++;
+  document.getElementById('nav-count').textContent = ans + ' / ' + order.length;
+  document.getElementById('prog-fill').style.width = (order.length? (ans/order.length*100):0).toFixed(1) + '%';
+  renderDots();
+}
+
+function toggleJump(){
+  var p = document.getElementById('dot-panel');
+  var b = document.getElementById('jump-btn');
+  if (p.style.display === 'none' || !p.style.display) {
+    p.style.display = 'block'; b.innerHTML = 'Hide &#9652;'; renderDots();
+  } else {
+    p.style.display = 'none'; b.innerHTML = 'Jump &#9662;';
+  }
+}
+
+function renderDots(){
+  var p = document.getElementById('dot-panel');
+  if (p.style.display === 'none' || !p.style.display) return;
+  var h = '';
+  for (var pos=0; pos<order.length; pos++) {
+    var qi = order[pos];
+    var bg = !isAnswered(qi) ? '#d7dde6' : (isCorrectAns(qi) ? '#185FA5' : '#E24B4A');
+    h += '<span class="dot" style="background:'+bg+';" onclick="goToQ('+qi+')">' + (pos+1) + '</span>';
+  }
+  var allAns = true;
+  for (var pos2=0; pos2<order.length; pos2++) if (!isAnswered(order[pos2])) { allAns = false; break; }
+  if (allAns && order.length>0) {
+    h += '<br><span onclick="finishQuiz()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';
+  }
+  p.innerHTML = h;
+}
+
+function goToQ(qi){
+  var pos = order.indexOf(qi);
+  if (pos === -1) pos = 0;
+  state.cur = pos; state.showResults = false; saveState(); render();
+  document.getElementById('dot-panel').style.display = 'none';
+  document.getElementById('jump-btn').innerHTML = 'Jump &#9662;';
+}
+
+function speak(text, lang){
+  try {
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = lang || 'en-US';
+    window.speechSynthesis.speak(u);
+  } catch(e){}
+}
+
+function speakCurrent(){
+  var qi = order[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  if (q && q.tts) speak(q.tts, TTS_LANG);
+}
+window.speakCurrent = speakCurrent;
+
+function updateAttDisplay(){ /* no-op placeholder for subtitle; title fixed */ }
+
+
+
+function render(){
+  if (state.showResults) { renderResults(); return; }
+  document.getElementById('quizArea').style.display = 'block';
+  document.getElementById('resultsArea').style.display = 'none';
+  updateNav();
+
+  var pos = state.cur;
+  var qi = order[pos];
+  var q = RAW_QUESTIONS[qi];
+
+  document.getElementById('q-num').textContent = 'Question ' + (pos+1) + ' of ' + order.length;
+
+
+  var tagEl = document.getElementById('q-tag-label');
+  if (q.tag) {
+    tagEl.style.display = 'inline-block';
+    tagEl.textContent = q.tag;
+    tagEl.style.background = TAG_COLORS[q.tag] || '#185FA5';
+  } else {
+    tagEl.style.display = 'none';
+  }
+
+
+  var pb = document.getElementById('passage-box');
+  if (q.passage) { pb.style.display='block'; pb.innerHTML = q.passage; } else { pb.style.display='none'; }
+
+
+
+  document.getElementById('q-text').innerHTML = q.stem;
+  var ttsBtn = document.getElementById('tts-btn');
+  if (q.tts) { ttsBtn.style.display = 'inline-block'; } else { ttsBtn.style.display = 'none'; }
+
+  var sh = getShuffle(qi);
+  var ans = state.answers[qi];
+  var csi = getCSI(qi);
+  var timedOut = TIMED && state.timers[qi] && state.timers[qi].timedOut;
+  var html = '';
+  for (var s=0; s<sh.length; s++) {
+    var oi = sh[s];
+    var cls = 'opt-btn';
+    var dis = '';
+    if (ans !== undefined || timedOut) {
+      dis = 'disabled';
+      if (s === csi) cls += ' correct';
+      else if (s === ans) cls += ' wrong';
+    }
+    html += '<button class="'+cls+'" '+dis+' onclick="pick('+qi+','+s+')">' + q.opts[oi] + '</button>';
+  }
+  document.getElementById('opts-area').innerHTML = html;
+
+
+
+  var eb = document.getElementById('exp-box');
+  if ((ans !== undefined && ans !== csi) || timedOut) {
+    eb.style.display = 'block';
+    eb.textContent = q.exp;
+  } else {
+    eb.style.display = 'none';
+  }
+
+  document.getElementById('next-btn').textContent = (pos === order.length-1) ? 'See Results →' : 'Next';
+  document.querySelector('.prev-btn').disabled = (pos === 0);
+
+
+}
+
+function pick(qi, si){
+  if (state.answers[qi] !== undefined) return;
+  if (TIMED && state.timers[qi] && state.timers[qi].timedOut) return;
+  state.answers[qi] = si;
+
+  saveState(); render();
+}
+
+function finishQuiz(){
+  state.showResults = true;
+  incAttempts();
+  saveState(); render(); reportResult();
+}
+
+function goNext(){
+  if (state.cur === order.length-1) { finishQuiz(); return; }
+  state.cur = Math.min(order.length-1, state.cur+1);
+  saveState(); render();
+}
+
+function go(dir){
+
+  if (dir === 1) {
+    if (state.cur === order.length - 1) {
+      state.showResults = true; incAttempts(); saveState(); render(); reportResult();
+      return;
+    }
+    state.cur = Math.min(order.length-1, state.cur+1);
+    saveState(); render();
+    return;
+  }
+  state.cur = Math.max(0, state.cur-1);
+  saveState(); render();
+}
+
+function renderResults(){
+  document.getElementById('quizArea').style.display = 'none';
+  document.getElementById('resultsArea').style.display = 'block';
+
+  updateNav();
+
+  var c=0,w=0,sk=0;
+  for (var pos=0; pos<order.length; pos++) {
+    var qi = order[pos];
+    if (!isAnswered(qi)) sk++;
+    else if (isCorrectAns(qi)) c++;
+    else w++;
+  }
+  document.getElementById('results-summary').innerHTML =
+    '<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;' +
+    '<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;' +
+    '<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+
+  var html = '';
+  for (var pos2=0; pos2<order.length; pos2++) {
+    var qi2 = order[pos2];
+    var label,bg,tc;
+    if (!isAnswered(qi2)) { label='Skipped'; bg='#d7dde6'; tc='#555'; }
+    else if (isCorrectAns(qi2)) { label='Correct'; bg='#E1F5EE'; tc='#085041'; }
+    else { label = isTimedOut(qi2) ? 'Timed Out' : 'Wrong'; bg='#FCEBEB'; tc='#501313'; }
+    var stemText = String(RAW_QUESTIONS[qi2].stem).replace(/<[^>]*>/g,'').substring(0,60);
+    html += '<div class="results-card" onclick="goToQ('+qi2+')">' +
+      '<span style="font-size:0.95rem;font-weight:600;color:#333;">Q'+(pos2+1)+'. '+stemText+'</span>' +
+      '<span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';white-space:nowrap;">'+label+'</span>' +
+      '</div>';
+  }
+  document.getElementById('results-cards').innerHTML = html;
+}
+
+function retryWrong(){
+  var wrongQi = [];
+  for (var pos=0; pos<order.length; pos++) {
+    var qi = order[pos];
+    if (isAnswered(qi) && !isCorrectAns(qi)) {
+      wrongQi.push(qi);
+    }
+  }
+  if (wrongQi.length === 0) return;
+  for (var i=0;i<wrongQi.length;i++) {
+    delete state.answers[wrongQi[i]];
+    delete state.shuffles[wrongQi[i]];
+    if (TIMED && state.timers) { state.timers[wrongQi[i]] = { remaining: TIME_LIMIT, timedOut:false, running:false }; }
+  }
+  order = wrongQi;
+  state.order = order;
+  state.cur = 0; state.showResults = false;
+  saveState(); render();
+}
+
+function toggleHint(){
+  hintShown = !hintShown;
+  var b = document.getElementById('hint-btn'), x = document.getElementById('hint-box');
+  if (hintShown) { x.classList.add('show'); b.textContent='Hide Hint'; }
+  else { x.classList.remove('show'); b.textContent='Show Hint'; }
+}
+window.toggleHint = toggleHint;
+
+function stripTags(s){ return String(s).replace(/<[^>]*>/g,''); }
+
+function copyRes(){
+  var lines = [TITLE + ' - Results'];
+  for (var pos=0; pos<order.length; pos++) {
+    var qi = order[pos];
+    var lbl = !isAnswered(qi) ? 'Skipped' : (isCorrectAns(qi) ? 'Correct' : (isTimedOut(qi) ? 'Timed Out' : 'Wrong'));
+    lines.push('Q'+(pos+1)+' '+stripTags(RAW_QUESTIONS[qi].stem)+': '+lbl);
+  }
+  var txt = lines.join('\n');
+  if (navigator.clipboard) { navigator.clipboard.writeText(txt).catch(function(){ fallbackCopy(txt); }); }
+  else { fallbackCopy(txt); }
+}
+
+function fallbackCopy(txt){
+  var ta = document.createElement('textarea');
+  ta.value = txt;
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e){}
+  document.body.removeChild(ta);
+}
+
+function saveWrong(){
+  var wrongAnswers = [];
+  for (var pos=0; pos<order.length; pos++) {
+    var qi = order[pos];
+    var a = state.answers[qi];
+    if (isAnswered(qi) && !isCorrectAns(qi)) {
+      var q = RAW_QUESTIONS[qi];
+      var sh = getShuffle(qi);
+      wrongAnswers.push({
+        question: stripTags(q.stem),
+        yourAnswer: (a===undefined) ? '(no answer - time ran out)' : stripTags(q.opts[sh[a]]),
+        correctAnswer: stripTags(q.opts[q.ci]),
+        explanation: stripTags(q.exp)
+      });
+    }
+  }
+  var payload = { title: TITLE, wrongAnswers: wrongAnswers };
+  try {
+    var blob = new Blob([JSON.stringify(payload, null, 1)], {type:'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a2 = document.createElement('a');
+    a2.href = url;
+    a2.download = QUIZ_KEY + '_wrong.json';
+    document.body.appendChild(a2);
+    a2.click();
+    document.body.removeChild(a2);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  } catch(e){}
+}
+
+var freshRandom = false;
+function openFreshModal(randomOrder){ freshRandom = !!randomOrder; document.getElementById('freshModal').style.display='flex'; }
+function confirmFresh(){
+  document.getElementById('freshModal').style.display='none';
+  localStorage.removeItem(LS_KEY);
+
+  resetState(freshRandom);
+  saveState(); render();
+}
+
+function reportResult(){
+  try {
+    var correct=0, wrong=0, skipped=0;
+    for (var pos=0; pos<order.length; pos++) {
+      var qi = order[pos];
+      var a = state.answers[qi];
+
+      if (a===undefined) {
+        skipped++;
+        continue;
+      }
+      if (a===getCSI(qi)) correct++; else wrong++;
+    }
+    var total = order.length;
+    var childName = 'Unknown';
+    if (TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if (TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if (TITLE.indexOf('[Both]')===0) childName='Both';
+    else if (TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName, quizTitle: TITLE, quizKey: QUIZ_KEY,
+      attemptNumber: loadAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0
+    };
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST', mode: 'no-cors',
+      headers: {'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  } catch(e){}
+}
+
+window.pick = pick;
+window.go = go;
+window.goToQ = goToQ;
+window.finishQuiz = finishQuiz;
+window.toggleJump = toggleJump;
+window.retryWrong = retryWrong;
+window.copyRes = copyRes;
+window.saveWrong = saveWrong;
+window.openFreshModal = openFreshModal;
+window.confirmFresh = confirmFresh;
+window.speak = speak;
+
+
+loadState(); saveState(); render();
+})();
+</script>
+</body>
+</html>
