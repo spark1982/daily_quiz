@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Math</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0 auto;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;}
+.title-hd{text-align:center;font-size:1.5rem;font-weight:800;color:#185FA5;padding:10px 0 2px;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;margin-bottom:10px;min-height:1px;}
+#nav-bar{display:flex;align-items:center;gap:8px;margin:10px 0;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:140px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.q-tag{display:inline-block;color:#fff;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:8px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.passage-box{background:#f5f7fa;border-left:4px solid #185FA5;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.88rem;color:#222;line-height:1.6;max-height:260px;overflow-y:auto;}
+.context-label{font-size:0.92rem;font-weight:600;color:#333;margin-bottom:8px;line-height:1.4;}
+.context-box{background:#f5f7fa;border-left:4px solid #185FA5;border-radius:8px;padding:10px 14px;margin-bottom:12px;line-height:1.6;}
+.q-text{font-size:1.05rem;font-weight:700;color:#111;margin-bottom:12px;line-height:1.5;}
+.opt-btn{display:block;width:100%;padding:12px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.95rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;}
+.hint-btn{background:#fff8e1;color:#a5720a;border:1.5px solid #f5a623;border-radius:8px;padding:7px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-top:12px;margin-bottom:12px;display:inline-block;}
+.hint-box{background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.88rem;color:#6b5215;line-height:1.5;display:none;}
+.hint-box.show{display:block;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#185FA5;}
+.next-btn{background:#185FA5;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:10px;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:320px;margin:20px;text-align:center;}
+.timer-box{text-align:center;font-size:1.1rem;font-weight:800;margin-bottom:8px;}
+.timer-box.warn{color:#E24B4A;}
+.pause-btn{background:#e8edf4;color:#185FA5;border:none;border-radius:8px;padding:6px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;}
+.pause-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.96);z-index:90;align-items:center;justify-content:center;font-size:1.3rem;font-weight:800;color:#185FA5;}
+
+.frac{display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;}
+.frac .den{border-top:1.4px solid #111;}
+.bigsum{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1;margin:0 3px;font-size:0.85em;}
+.bigsum .bs-sup{font-size:0.75em;}
+.bigsum .bs-sigma{font-size:1.6em;line-height:0.9;}
+.bigsum .bs-sub{font-size:0.75em;}
+.hexdiagram{margin:10px 0;text-align:center;}
+</style>
+</head>
+<body>
+<div class="title-hd">[Grant] Math</div>
+<div class="instruction" id="instruction">Choose the correct answer for each problem.</div>
+<div id="nav-bar">
+  <span id="nav-count">0 / N</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+<div id="quizArea" style="display:none;">
+  <div><span class="q-tag" id="q-tag-label"></span></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="context-label" id="context-label" style="display:none;"></div>
+  <div class="passage-box" id="passage-box" style="display:none;"></div>
+  <div class="context-box" id="context-box" style="display:none;"></div>
+  <div class="q-text" id="q-text" style="display:inline;"></div>
+  <button id="tts-btn" onclick="speakCurrent()" title="Listen" style="display:none;background:#e8edf4;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:0.95rem;margin-left:6px;vertical-align:middle;">&#128264;</button>
+  <button class="hint-btn" id="hint-btn" onclick="toggleHint()" style="display:none;">Show Hint</button>
+  <div class="hint-box" id="hint-box"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#185FA5;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="saveWrong()" style="display:block;width:100%;padding:13px;background:#f5a623;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Save Wrong Answers</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModal(false)" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh</button>
+</div>
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <p style="font-size:1.05rem;font-weight:600;margin:0 0 16px;">Start fresh? All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="document.getElementById('freshModal').style.display='none';" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+var TITLE = "[Grant] Math";
+var QUIZ_KEY = "grantmath";
+var LS_KEY = "quiz_grantmath_20260916";
+var ATT_KEY = "quiz_grantmath_att_20260916";
+var TAG_COLORS = {"Decimals": "#1D9E75", "Fractions": "#185FA5", "Integers": "#f5a623", "Exponent Laws": "#7b61ff", "Linear Equations": "#0d9488", "Unit Conversion": "#E24B4A"};
+var REPORT_ENDPOINT = "https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec";
+var RAW_QUESTIONS = [{"stem": "(<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>7</span><span style=\"border-top:1.4px solid #111;\">6</span></span> + 2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">3</span></span>) &times; 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>3</span><span style=\"border-top:1.4px solid #111;\">4</span></span> &minus; 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">6</span></span> = ?", "opts": ["4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>7</span><span style=\"border-top:1.4px solid #111;\">12</span></span>", "4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">24</span></span>", "4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>7</span><span style=\"border-top:1.4px solid #111;\">24</span></span>", "3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>7</span><span style=\"border-top:1.4px solid #111;\">24</span></span>"], "ci": 2, "exp": "7/6 + 2&frac13; = 7/6 + 7/3 = 7/6 + 14/6 = 21/6 = 7/2. Then 7/2 &times; 1&frac34; = 7/2 &times; 7/4 = 49/8. Finally 49/8 &minus; 1&frac56; = 49/8 &minus; 11/6 = 147/24 &minus; 44/24 = 103/24 = 4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>7</span><span style=\"border-top:1.4px solid #111;\">24</span></span>.", "tag": "Fractions", "tagcolor": "#185FA5"}, {"stem": "(<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">3</span></span> &minus; 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">4</span></span>) + 2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">6</span></span> &times; 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">2</span></span> = ?", "opts": ["4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">3</span></span>", "3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>2</span><span style=\"border-top:1.4px solid #111;\">3</span></span>", "3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">12</span></span>", "4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>2</span><span style=\"border-top:1.4px solid #111;\">3</span></span>"], "ci": 3, "exp": "5/3 &minus; 1&frac14; = 20/12 &minus; 15/12 = 5/12. Then 2&frac56; &times; 1&frac12; = 17/6 &times; 3/2 = 51/12 = 4&frac14;. Finally 5/12 + 4&frac14; = 5/12 + 51/12 = 56/12 = 4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>2</span><span style=\"border-top:1.4px solid #111;\">3</span></span>.", "tag": "Fractions", "tagcolor": "#185FA5"}, {"stem": "(<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>9</span><span style=\"border-top:1.4px solid #111;\">4</span></span> + 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">3</span></span>) &minus; 2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">2</span></span> &divide; 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">5</span></span> = ?", "opts": ["1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">4</span></span>", "1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">2</span></span>", "1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>2</span><span style=\"border-top:1.4px solid #111;\">3</span></span>", "2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">2</span></span>"], "ci": 1, "exp": "9/4 + 1&frac13; = 27/12 + 16/12 = 43/12. Then 2&frac12; &divide; 1&frac15; = 5/2 &divide; 6/5 = 5/2 &times; 5/6 = 25/12. Finally 43/12 &minus; 25/12 = 18/12 = 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">2</span></span>.", "tag": "Fractions", "tagcolor": "#185FA5"}, {"stem": "(<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>11</span><span style=\"border-top:1.4px solid #111;\">6</span></span> &times; 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">2</span></span>) + 2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>3</span><span style=\"border-top:1.4px solid #111;\">4</span></span> &minus; 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">6</span></span> = ?", "opts": ["1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">6</span></span>", "4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>2</span><span style=\"border-top:1.4px solid #111;\">3</span></span>", "3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>2</span><span style=\"border-top:1.4px solid #111;\">3</span></span>", "3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">3</span></span>"], "ci": 2, "exp": "11/6 &times; 1&frac12; = 11/6 &times; 3/2 = 33/12 = 2&frac34;. Then 2&frac34; + 2&frac34; = 5&frac12;. Finally 5&frac12; &minus; 1&frac56; = 33/6 &minus; 11/6 = 22/6 = 3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>2</span><span style=\"border-top:1.4px solid #111;\">3</span></span>.", "tag": "Fractions", "tagcolor": "#185FA5"}, {"stem": "(4.75 + 2.3) &times; 1.5 &minus; 0.825 = ?", "opts": ["10.25", "9.75", "9.5", "9.325"], "ci": 1, "exp": "4.75 + 2.3 = 7.05. Then 7.05 &times; 1.5 = 10.575. Finally 10.575 &minus; 0.825 = 9.75.", "tag": "Decimals", "tagcolor": "#1D9E75"}, {"stem": "(12.6 &minus; 3.45) &divide; 1.25 + 0.6 = ?", "opts": ["8.32", "7.02", "7.92", "7.32"], "ci": 2, "exp": "12.6 &minus; 3.45 = 9.15. Then 9.15 &divide; 1.25 = 7.32. Finally 7.32 + 0.6 = 7.92.", "tag": "Decimals", "tagcolor": "#1D9E75"}, {"stem": "(2.125 + 1.4) &times; 0.8 &minus; 0.75 = ?", "opts": ["2.82", "2.57", "1.97", "2.07"], "ci": 3, "exp": "2.125 + 1.4 = 3.525. Then 3.525 &times; 0.8 = 2.82. Finally 2.82 &minus; 0.75 = 2.07.", "tag": "Decimals", "tagcolor": "#1D9E75"}, {"stem": "(7.5 &minus; 1.35) + 0.6 &times; 2.25 = ?", "opts": ["6.9", "7.5", "7.65", "6.15"], "ci": 1, "exp": "First multiply: 0.6 &times; 2.25 = 1.35. Then 7.5 &minus; 1.35 = 6.15. Finally 6.15 + 1.35 = 7.5.", "tag": "Decimals", "tagcolor": "#1D9E75"}, {"stem": "(&minus;6 + (&minus;9)) &divide; (&minus;5) &minus; 4 &times; (&minus;3) = ?", "opts": ["9", "-9", "15", "21"], "ci": 2, "exp": "&minus;6 + (&minus;9) = &minus;15. Then &minus;15 &divide; (&minus;5) = 3. Also 4 &times; (&minus;3) = &minus;12. Finally 3 &minus; (&minus;12) = 15.", "tag": "Integers", "tagcolor": "#f5a623"}, {"stem": "(&minus;7 &times; (&minus;2)) + (&minus;18) &divide; 3 &minus; 5 = ?", "opts": ["23", "8", "-3", "3"], "ci": 3, "exp": "&minus;7 &times; (&minus;2) = 14. Then (&minus;18) &divide; 3 = &minus;6. So 14 + (&minus;6) = 8. Finally 8 &minus; 5 = 3.", "tag": "Integers", "tagcolor": "#f5a623"}, {"stem": "(10 &minus; (&minus;15)) &divide; 5 + (&minus;6) &times; 2 = ?", "opts": ["-17", "-7", "17", "7"], "ci": 1, "exp": "10 &minus; (&minus;15) = 25. Then 25 &divide; 5 = 5. Also &minus;6 &times; 2 = &minus;12. Finally 5 + (&minus;12) = &minus;7.", "tag": "Integers", "tagcolor": "#f5a623"}, {"stem": "(&minus;20 &divide; (&minus;4)) &minus; 3 &times; (&minus;7) + (&minus;11) = ?", "opts": ["-15", "5", "26", "15"], "ci": 3, "exp": "&minus;20 &divide; (&minus;4) = 5. Then 3 &times; (&minus;7) = &minus;21, so 5 &minus; (&minus;21) = 26. Finally 26 + (&minus;11) = 15.", "tag": "Integers", "tagcolor": "#f5a623"}, {"stem": "(x&sup2;)&sup3; &times; x&#8308; &divide; x&sup2; = ?", "opts": ["x&#8311;", "x&#8309;", "x&#8312;", "x&#8310;"], "ci": 2, "exp": "(x&sup2;)&sup3; = x&#8310; (power of a power: multiply exponents). Then x&#8310; &times; x&#8308; = x&sup1;&#8304; (product rule: add exponents). Finally x&sup1;&#8304; &divide; x&sup2; = x&#8312; (quotient rule: subtract exponents).", "tag": "Exponent Laws", "tagcolor": "#7b61ff"}, {"stem": "x&#8309; &times; x&sup3; &divide; (x&sup2;)&sup2; = ?", "opts": ["x&#8310;", "x&sup2;", "x&#8308;", "x&sup3;"], "ci": 2, "exp": "x&#8309; &times; x&sup3; = x&#8312; (product rule). (x&sup2;)&sup2; = x&#8308; (power of a power). Finally x&#8312; &divide; x&#8308; = x&#8308; (quotient rule).", "tag": "Exponent Laws", "tagcolor": "#7b61ff"}, {"stem": "(x&sup3;)&sup2; &divide; x&#8308; &times; x&#8309; = ?", "opts": ["x&#8309;", "x&#8312;", "x&#8310;", "x&#8311;"], "ci": 3, "exp": "(x&sup3;)&sup2; = x&#8310; (power of a power). Then x&#8310; &divide; x&#8308; = x&sup2; (quotient rule). Finally x&sup2; &times; x&#8309; = x&#8311; (product rule).", "tag": "Exponent Laws", "tagcolor": "#7b61ff"}, {"stem": "x&#8310; &divide; x&sup2; &times; (x&sup2;)&sup3; = ?", "opts": ["x&sup1;&#8304;", "x&#8312;", "x&#8311;", "x&#8309;"], "ci": 0, "exp": "x&#8310; &divide; x&sup2; = x&#8308; (quotient rule). (x&sup2;)&sup3; = x&#8310; (power of a power). Finally x&#8308; &times; x&#8310; = x&sup1;&#8304; (product rule).", "tag": "Exponent Laws", "tagcolor": "#7b61ff"}, {"stem": "Solve for x: 8x &minus; 3 = 3x + 27", "opts": ["x = 6", "x = 4", "x = 5", "x = 8"], "ci": 0, "exp": "Subtract 3x from both sides: 5x &minus; 3 = 27. Add 3 to both sides: 5x = 30. Divide by 5: x = 6.", "tag": "Linear Equations", "tagcolor": "#0d9488"}, {"stem": "Solve for x: 9x + 4 = 4x + 39", "opts": ["x = 6", "x = 7", "x = 5", "x = 9"], "ci": 1, "exp": "Subtract 4x from both sides: 5x + 4 = 39. Subtract 4 from both sides: 5x = 35. Divide by 5: x = 7.", "tag": "Linear Equations", "tagcolor": "#0d9488"}, {"stem": "Solve for x: 4(x + 3) + 3x = 47", "opts": ["x = 6", "x = 5", "x = 7", "x = 4"], "ci": 1, "exp": "Distribute: 4x + 12 + 3x = 47. Combine like terms: 7x + 12 = 47. Subtract 12: 7x = 35. Divide by 7: x = 5.", "tag": "Linear Equations", "tagcolor": "#0d9488"}, {"stem": "Solve for x: 8x &minus; 3(x &minus; 2) = 2x + 30", "opts": ["x = 7", "x = 6", "x = 9", "x = 8"], "ci": 3, "exp": "Distribute: 8x &minus; 3x + 6 = 2x + 30. Combine like terms: 5x + 6 = 2x + 30. Subtract 2x: 3x + 6 = 30. Subtract 6: 3x = 24. Divide by 3: x = 8.", "tag": "Linear Equations", "tagcolor": "#0d9488"}, {"stem": "A hiking trail is 4.6 kilometers long. How many meters is that?", "opts": ["4,600 meters", "46 meters", "460 meters", "4.6 meters"], "ci": 0, "exp": "1 kilometer = 1,000 meters, so 4.6 km &times; 1,000 = 4,600 meters.", "tag": "Unit Conversion", "tagcolor": "#E24B4A"}, {"stem": "A recipe calls for 750 milliliters of milk. How many liters is that?", "opts": ["7.5 liters", "0.75 liters", "0.075 liters", "75 liters"], "ci": 1, "exp": "1 liter = 1,000 milliliters, so 750 &divide; 1,000 = 0.75 liters.", "tag": "Unit Conversion", "tagcolor": "#E24B4A"}, {"stem": "Sarah's pet turtle weighs 2.5 kilograms. How many grams is that?", "opts": ["2.5 grams", "250 grams", "25,000 grams", "2,500 grams"], "ci": 3, "exp": "1 kilogram = 1,000 grams, so 2.5 &times; 1,000 = 2,500 grams.", "tag": "Unit Conversion", "tagcolor": "#E24B4A"}, {"stem": "The football field is 100 yards long. How many feet is that?", "opts": ["3,600 feet", "300 feet", "33 feet", "30 feet"], "ci": 1, "exp": "1 yard = 3 feet, so 100 &times; 3 = 300 feet.", "tag": "Unit Conversion", "tagcolor": "#E24B4A"}];
+var DEBATE_MODE = false;
+var TIMED = false;
+var TIME_LIMIT = 40;
+var TTS_LANG = "ko-KR";
+
+var order = [];
+var state = {};
+var hintShown = false;
+var paused = false;
+var timerHandle = null;
+
+function loadAttempts(){ return parseInt(localStorage.getItem(ATT_KEY)||'0',10); }
+function incAttempts(){ localStorage.setItem(ATT_KEY, loadAttempts()+1); }
+
+function defaultOrder(){ var a=[]; for(var i=0;i<RAW_QUESTIONS.length;i++) a.push(i); return a; }
+
+function resetState(randomOrder){
+  order = defaultOrder();
+  if (randomOrder) {
+    for (var k=order.length-1;k>0;k--) { var j=Math.floor(Math.random()*(k+1)); var t=order[k]; order[k]=order[j]; order[j]=t; }
+  }
+  state = { cur:0, answers:{}, shuffles:{}, showResults:false, order:order.slice() };
+  if (TIMED) {
+    state.timers = {};
+    for (var i=0;i<RAW_QUESTIONS.length;i++) state.timers[i] = { remaining: TIME_LIMIT, timedOut:false, running:false };
+  }
+}
+
+function loadState(){
+  try {
+    var s = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+    if (s && typeof s.cur === 'number' && s.answers && s.order) {
+      state = s;
+      order = s.order;
+    } else {
+      resetState(false);
+    }
+  } catch(e) {
+    localStorage.removeItem(LS_KEY);
+    resetState(false);
+  }
+}
+
+function saveState(){
+  state.order = order;
+  localStorage.setItem(LS_KEY, JSON.stringify(state));
+}
+
+function getShuffle(qi){
+  if (!state.shuffles[qi]) {
+    var n = RAW_QUESTIONS[qi].opts.length;
+    var a = []; for (var i=0;i<n;i++) a.push(i);
+    for (var k=n-1;k>0;k--) { var j=Math.floor(Math.random()*(k+1)); var t=a[k]; a[k]=a[j]; a[j]=t; }
+    state.shuffles[qi] = a;
+  }
+  return state.shuffles[qi];
+}
+function getCSI(qi){ return getShuffle(qi).indexOf(RAW_QUESTIONS[qi].ci); }
+
+function isTimedOut(qi){ return TIMED && state.timers && state.timers[qi] && state.timers[qi].timedOut; }
+function isAnswered(qi){ return state.answers[qi] !== undefined || isTimedOut(qi); }
+function isCorrectAns(qi){ return state.answers[qi] !== undefined && state.answers[qi] === getCSI(qi); }
+
+function updateNav(){
+  var ans = 0;
+  for (var p=0;p<order.length;p++) if (isAnswered(order[p])) ans++;
+  document.getElementById('nav-count').textContent = ans + ' / ' + order.length;
+  document.getElementById('prog-fill').style.width = (order.length? (ans/order.length*100):0).toFixed(1) + '%';
+  renderDots();
+}
+
+function toggleJump(){
+  var p = document.getElementById('dot-panel');
+  var b = document.getElementById('jump-btn');
+  if (p.style.display === 'none' || !p.style.display) {
+    p.style.display = 'block'; b.innerHTML = 'Hide &#9652;'; renderDots();
+  } else {
+    p.style.display = 'none'; b.innerHTML = 'Jump &#9662;';
+  }
+}
+
+function renderDots(){
+  var p = document.getElementById('dot-panel');
+  if (p.style.display === 'none' || !p.style.display) return;
+  var h = '';
+  for (var pos=0; pos<order.length; pos++) {
+    var qi = order[pos];
+    var bg = !isAnswered(qi) ? '#d7dde6' : (isCorrectAns(qi) ? '#185FA5' : '#E24B4A');
+    h += '<span class="dot" style="background:'+bg+';" onclick="goToQ('+qi+')">' + (pos+1) + '</span>';
+  }
+  var allAns = true;
+  for (var pos2=0; pos2<order.length; pos2++) if (!isAnswered(order[pos2])) { allAns = false; break; }
+  if (allAns && order.length>0) {
+    h += '<br><span onclick="finishQuiz()" style="display:inline-block;margin-top:6px;background:#185FA5;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';
+  }
+  p.innerHTML = h;
+}
+
+function goToQ(qi){
+  var pos = order.indexOf(qi);
+  if (pos === -1) pos = 0;
+  state.cur = pos; state.showResults = false; saveState(); render();
+  document.getElementById('dot-panel').style.display = 'none';
+  document.getElementById('jump-btn').innerHTML = 'Jump &#9662;';
+}
+
+function speak(text, lang){
+  try {
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = lang || 'en-US';
+    window.speechSynthesis.speak(u);
+  } catch(e){}
+}
+
+function speakCurrent(){
+  var qi = order[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  if (q && q.tts) speak(q.tts, TTS_LANG);
+}
+window.speakCurrent = speakCurrent;
+
+function updateAttDisplay(){ /* no-op placeholder for subtitle; title fixed */ }
+
+
+
+function render(){
+  if (state.showResults) { renderResults(); return; }
+  document.getElementById('quizArea').style.display = 'block';
+  document.getElementById('resultsArea').style.display = 'none';
+  updateNav();
+
+  var pos = state.cur;
+  var qi = order[pos];
+  var q = RAW_QUESTIONS[qi];
+
+  document.getElementById('q-num').textContent = 'Question ' + (pos+1) + ' of ' + order.length;
+
+  var tagEl = document.getElementById('q-tag-label');
+  if (q.tag) {
+    tagEl.style.display = 'inline-block';
+    tagEl.textContent = q.tag;
+    tagEl.style.background = q.tagcolor || TAG_COLORS[q.tag] || '#185FA5';
+  } else {
+    tagEl.style.display = 'none';
+  }
+
+  var clEl = document.getElementById('context-label');
+  if (q.contextLabel) { clEl.style.display='block'; clEl.textContent = q.contextLabel; } else { clEl.style.display='none'; }
+
+  var cbEl = document.getElementById('context-box');
+  if (q.context) { cbEl.style.display='block'; cbEl.innerHTML = q.context; } else { cbEl.style.display='none'; }
+
+  var pb = document.getElementById('passage-box');
+  if (q.passage) { pb.style.display='block'; pb.innerHTML = q.passage; } else { pb.style.display='none'; }
+
+  document.getElementById('q-text').innerHTML = q.stem;
+  var ttsBtn = document.getElementById('tts-btn');
+  if (q.tts) { ttsBtn.style.display = 'inline-block'; } else { ttsBtn.style.display = 'none'; }
+
+  hintShown = false;
+  var hintBtn = document.getElementById('hint-btn'), hintBox = document.getElementById('hint-box');
+  if (q.hint) { hintBtn.style.display='inline-block'; hintBtn.textContent='Show Hint'; hintBox.innerHTML=q.hint; hintBox.classList.remove('show'); } else { hintBtn.style.display='none'; hintBox.classList.remove('show'); }
+
+  var sh = getShuffle(qi);
+  var ans = state.answers[qi];
+  var csi = getCSI(qi);
+  var timedOut = TIMED && state.timers[qi] && state.timers[qi].timedOut;
+  var html = '';
+  for (var s=0; s<sh.length; s++) {
+    var oi = sh[s];
+    var cls = 'opt-btn';
+    var dis = '';
+    if (ans !== undefined || timedOut) {
+      dis = 'disabled';
+      if (s === csi) cls += ' correct';
+      else if (s === ans) cls += ' wrong';
+    }
+    html += '<button class="'+cls+'" '+dis+' onclick="pick('+qi+','+s+')">' + q.opts[oi] + '</button>';
+  }
+  document.getElementById('opts-area').innerHTML = html;
+
+  var eb = document.getElementById('exp-box');
+  if ((ans !== undefined && ans !== csi) || timedOut) {
+    eb.style.display = 'block';
+    eb.innerHTML = q.exp;
+  } else {
+    eb.style.display = 'none';
+  }
+
+  document.getElementById('next-btn').textContent = (pos === order.length-1) ? 'See Results \u2192' : 'Next';
+  document.querySelector('.prev-btn').disabled = (pos === 0);
+
+}
+
+function pick(qi, si){
+  if (state.answers[qi] !== undefined) return;
+  if (TIMED && state.timers[qi] && state.timers[qi].timedOut) return;
+    state.answers[qi] = si;
+  saveState(); render();
+}
+
+function finishQuiz(){
+  state.showResults = true;
+  incAttempts();
+  saveState(); render(); reportResult();
+}
+
+function goNext(){
+  if (state.cur === order.length-1) { finishQuiz(); return; }
+  state.cur = Math.min(order.length-1, state.cur+1);
+  saveState(); render();
+}
+
+function go(dir){
+  if (dir === 1) {
+    if (state.cur === order.length - 1) {
+      state.showResults = true; incAttempts(); saveState(); render(); reportResult();
+      return;
+    }
+    state.cur = Math.min(order.length-1, state.cur+1);
+    saveState(); render();
+    return;
+  }
+  state.cur = Math.max(0, state.cur-1);
+  saveState(); render();
+}
+
+function renderResults(){
+  document.getElementById('quizArea').style.display = 'none';
+  document.getElementById('resultsArea').style.display = 'block';
+  updateAttDisplay();
+  updateNav();
+
+  var c=0,w=0,sk=0;
+  for (var pos=0; pos<order.length; pos++) {
+    var qi = order[pos];
+    if (!isAnswered(qi)) sk++;
+    else if (isCorrectAns(qi)) c++;
+    else w++;
+  }
+  document.getElementById('results-summary').innerHTML =
+    '<span style="color:#1D9E75;font-weight:700;">'+c+'</span> correct &nbsp;' +
+    '<span style="color:#E24B4A;font-weight:700;">'+w+'</span> wrong &nbsp;' +
+    '<span style="color:#888;font-weight:700;">'+sk+'</span> skipped';
+
+  var html = '';
+  for (var pos2=0; pos2<order.length; pos2++) {
+    var qi2 = order[pos2];
+    var label,bg,tc;
+    if (!isAnswered(qi2)) { label='Skipped'; bg='#d7dde6'; tc='#555'; }
+    else if (isCorrectAns(qi2)) { label='Correct'; bg='#E1F5EE'; tc='#085041'; }
+    else { label = isTimedOut(qi2) ? 'Timed Out' : 'Wrong'; bg='#FCEBEB'; tc='#501313'; }
+    var stemText = String(RAW_QUESTIONS[qi2].stem).replace(/<[^>]*>/g,'').substring(0,60);
+    html += '<div class="results-card" onclick="goToQ('+qi2+')">' +
+      '<span style="font-size:0.95rem;font-weight:600;color:#333;">Q'+(pos2+1)+'. '+stemText+'</span>' +
+      '<span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:'+bg+';color:'+tc+';white-space:nowrap;">'+label+'</span>' +
+      '</div>';
+  }
+  document.getElementById('results-cards').innerHTML = html;
+}
+
+function retryWrong(){
+  var wrongQi = [];
+  for (var pos=0; pos<order.length; pos++) {
+    var qi = order[pos];
+    if (isAnswered(qi) && !isCorrectAns(qi)) {
+      wrongQi.push(qi);
+    }
+  }
+  if (wrongQi.length === 0) return;
+  for (var i=0;i<wrongQi.length;i++) {
+    delete state.answers[wrongQi[i]];
+    delete state.shuffles[wrongQi[i]];
+    if (TIMED && state.timers) { state.timers[wrongQi[i]] = { remaining: TIME_LIMIT, timedOut:false, running:false }; }
+  }
+  order = wrongQi;
+  state.order = order;
+  state.cur = 0; state.showResults = false;
+  saveState(); render();
+}
+
+function toggleHint(){
+  hintShown = !hintShown;
+  var b = document.getElementById('hint-btn'), x = document.getElementById('hint-box');
+  if (hintShown) { x.classList.add('show'); b.textContent='Hide Hint'; }
+  else { x.classList.remove('show'); b.textContent='Show Hint'; }
+}
+window.toggleHint = toggleHint;
+
+function stripTags(s){ return String(s).replace(/<[^>]*>/g,''); }
+
+function copyRes(){
+  var lines = [TITLE + ' - Results'];
+  for (var pos=0; pos<order.length; pos++) {
+    var qi = order[pos];
+    var lbl = !isAnswered(qi) ? 'Skipped' : (isCorrectAns(qi) ? 'Correct' : (isTimedOut(qi) ? 'Timed Out' : 'Wrong'));
+    lines.push('Q'+(pos+1)+' '+stripTags(RAW_QUESTIONS[qi].stem)+': '+lbl);
+  }
+  var txt = lines.join('\n');
+  if (navigator.clipboard) { navigator.clipboard.writeText(txt).catch(function(){ fallbackCopy(txt); }); }
+  else { fallbackCopy(txt); }
+}
+
+function fallbackCopy(txt){
+  var ta = document.createElement('textarea');
+  ta.value = txt;
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e){}
+  document.body.removeChild(ta);
+}
+
+function saveWrong(){
+  var wrongAnswers = [];
+  for (var pos=0; pos<order.length; pos++) {
+    var qi = order[pos];
+    var a = state.answers[qi];
+    if (isAnswered(qi) && !isCorrectAns(qi)) {
+      var q = RAW_QUESTIONS[qi];
+      var sh = getShuffle(qi);
+      wrongAnswers.push({
+        question: stripTags(q.stem),
+        yourAnswer: (a===undefined) ? '(no answer - time ran out)' : stripTags(q.opts[sh[a]]),
+        correctAnswer: stripTags(q.opts[q.ci]),
+        explanation: stripTags(q.exp)
+      });
+    }
+  }
+  var payload = { title: TITLE, wrongAnswers: wrongAnswers };
+  try {
+    var blob = new Blob([JSON.stringify(payload, null, 1)], {type:'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a2 = document.createElement('a');
+    a2.href = url;
+    a2.download = QUIZ_KEY + '_wrong.json';
+    document.body.appendChild(a2);
+    a2.click();
+    document.body.removeChild(a2);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  } catch(e){}
+}
+
+var freshRandom = false;
+function openFreshModal(randomOrder){ freshRandom = !!randomOrder; document.getElementById('freshModal').style.display='flex'; }
+function confirmFresh(){
+  document.getElementById('freshModal').style.display='none';
+  localStorage.removeItem(LS_KEY);
+  resetState(freshRandom);
+  saveState(); render();
+}
+
+function reportResult(){
+  try {
+    var correct=0, wrong=0, skipped=0, timedout=0;
+    for (var pos=0; pos<order.length; pos++) {
+      var qi = order[pos];
+      var a = state.answers[qi];
+      var t = state.timers ? state.timers[qi] : null;
+      if (a===undefined) {
+        if (t && t.timedOut) timedout++; else skipped++;
+        continue;
+      }
+      if (a===getCSI(qi)) correct++; else wrong++;
+    }
+    var total = order.length;
+    var childName = 'Unknown';
+    if (TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if (TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if (TITLE.indexOf('[Both]')===0) childName='Both';
+    else if (TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName, quizTitle: TITLE, quizKey: QUIZ_KEY,
+      attemptNumber: loadAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, timedOut: timedout, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0
+    };
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST', mode: 'no-cors',
+      headers: {'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  } catch(e){}
+}
+
+window.pick = pick;
+window.go = go;
+window.goToQ = goToQ;
+window.finishQuiz = finishQuiz;
+window.toggleJump = toggleJump;
+window.retryWrong = retryWrong;
+window.copyRes = copyRes;
+window.saveWrong = saveWrong;
+window.openFreshModal = openFreshModal;
+window.confirmFresh = confirmFresh;
+window.speak = speak;
+
+loadState(); saveState(); render();
+})();
+</script>
+</body>
+</html>
