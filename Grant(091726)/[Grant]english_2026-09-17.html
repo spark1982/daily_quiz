@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] English</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh;padding:12px;max-width:720px;margin:0 auto;}
+.quiz-title{font-size:1.35rem;font-weight:700;text-align:center;color:#111;background:#fff;padding:10px 0 2px}
+.subtitle{text-align:center;font-size:0.85rem;color:#555;background:#fff;padding:2px 0 4px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:2px 12px 10px}
+.timer-bar { background: #fff; border-bottom: 1px solid #d0dce8; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; border-radius:10px; margin-bottom:8px;}
+.timer-setup { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #444; }
+.timer-setup label { font-weight: 700; }
+.timer-setup input[type="number"] { width: 56px; padding: 5px 6px; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+.timer-start-btn { background: #185FA5; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.timer-running { display: flex; align-items: center; gap: 8px; }
+.timer-label { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.02em; }
+.timer-display { font-size: 1.1rem; font-weight: 900; color: #185FA5; font-family: 'Courier New', monospace; letter-spacing: 0.02em; }
+.timer-display.warn { color: #f5a623; }
+.timer-display.danger { color: #E24B4A; }
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0;background:#fff;padding:8px 12px;border-radius:10px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;border:none;}
+.results-pill{display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;border:none;}
+.quiz-area{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;}
+.q-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.q-num{font-size:0.82rem;color:#888;}
+.tag-badge{font-size:0.75rem;padding:2px 10px;border-radius:10px;background:#185FA5;color:#fff;font-weight:600;}
+.passage-box,.context-box{background:#f5f7fa;border-left:3px solid #185FA5;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.92rem;color:#333;line-height:1.5;}
+.q-text{font-size:1.08rem;font-weight:600;color:#111;margin-bottom:14px;line-height:1.5;}
+.options{display:flex;flex-direction:column;gap:9px;}
+.opt-btn{background:#e8edf4;color:#111;border:2px solid transparent;border-radius:9px;padding:11px 14px;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.4;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn.revealed{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{margin-top:12px;padding:10px 12px;background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;font-size:0.88rem;color:#333;display:none;}
+.nav-btns{display:flex;justify-content:space-between;margin-top:14px;gap:10px;}
+.prev-btn,.next-btn{padding:9px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer;}
+.prev-btn{background:#e8edf4;color:#333;}
+.next-btn{background:#1D9E75;color:#fff;}
+.results-screen{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;display:none;}
+.results-screen.show{display:block;}
+.results-heading{font-size:1.3rem;font-weight:700;color:#1D9E75;text-align:center;margin-bottom:6px;}
+.results-score{font-size:1rem;text-align:center;color:#555;margin-bottom:14px;}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;margin-bottom:16px;}
+.r-card{border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;font-size:0.82rem;font-weight:600;}
+.r-card.correct{background:#E1F5EE;color:#085041;}
+.r-card.wrong{background:#FCEBEB;color:#501313;}
+.r-card.skipped{background:#f5f7fa;color:#555;}
+.results-btns{display:flex;flex-direction:column;gap:9px;}
+.retry-btn{background:#1D9E75;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.copy-btn{background:#185FA5;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.save-btn{background:#f5a623;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.fresh-btn{background:#e8edf4;color:#111;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:12px;padding:24px 20px;max-width:320px;width:90%;text-align:center;}
+.modal-title{font-size:1.05rem;font-weight:700;margin-bottom:8px;}
+.modal-msg{font-size:0.9rem;color:#555;margin-bottom:18px;}
+.modal-btns{display:flex;gap:10px;justify-content:center;}
+.modal-cancel{background:#e8edf4;color:#333;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;cursor:pointer;}
+.modal-confirm{background:#E24B4A;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;font-weight:600;cursor:pointer;}
+</style>
+</head>
+<body><div class="quiz-title">[Grant] English</div><div class="subtitle" id="att-display">Total Attempts: 0</div><div class="instruction">Read the passage, then answer the questions below.</div>
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="20"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">20:00</span>
+  </div>
+</div>
+<div id="nav-bar"><span id="nav-count">0 / 25</span><div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div><button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button></div><div id="dot-panel"></div>
+<div class="quiz-area" id="quiz-area">
+  <div class="q-header">
+    <span class="q-num" id="q-num"></span>
+    <span class="tag-badge" id="tag-badge" style="display:none;"></span>
+
+  </div>
+  <div class="passage-box" id="passage-box" style="display:none;"></div>
+  <div class="context-box" id="context-box" style="display:none;"></div>
+  <div class="q-text" id="q-text"></div>
+  <div class="options" id="options"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-btns">
+    <button class="prev-btn" onclick="goPrev()">Prev</button>
+    <button class="next-btn" id="next-btn" onclick="goNext()">Next</button>
+  </div>
+</div>
+
+<div class="results-screen" id="results-screen">
+  <div class="results-heading" id="results-heading">Results</div>
+  <div class="results-score" id="results-score"></div>
+  <div class="results-grid" id="results-grid"></div>
+  <div class="results-btns">
+    <button class="retry-btn" onclick="retryWrong()">Retry Wrong Ones</button>
+    <button class="copy-btn" onclick="copyRes()">Copy All Results</button>
+    <button class="save-btn" onclick="saveWrongAnswers()">Save Wrong Answers</button>
+    <button class="fresh-btn" onclick="openFreshModalOriginal()">Start Fresh (Original Order)</button>
+    <button class="fresh-btn" onclick="openFreshModalRandom()">Start Fresh (Random Order)</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <div class="modal-title" id="freshModalTitle">Start Fresh?</div>
+    <div class="modal-msg" id="freshModalText">All progress will be cleared. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+<script>var TITLE = "[Grant] English";var QUIZ_KEY = "quiz_grantenglish_25_20260917_v1";var ATT_KEY = "quiz_grantenglish_25_att_20260917_v1";var RAW_QUESTIONS = [{"stem": "Which of the following would be the best title for this passage?", "opts": ["Jayden's New Bicycle", "Lemonade for a Cause", "A Trip to the Animal Shelter", "The Broken Umbrella"], "ci": 1, "exp": "The title should capture the passage's main idea: raising money for the animal shelter through a lemonade stand.", "tag": "Title Selection", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "Which sentence best states the main idea of the passage?", "opts": ["The coin jar grew heavier and heavier as the morning went on.", "Noa offered to make cookies to sell alongside the lemonade.", "Jayden's sign toppled over when the rain began.", "Jayden and Noa work together to turn a rainy setback into a successful fundraiser for the animal shelter."], "ci": 3, "exp": "The main idea covers the whole passage, not just one small detail like the cookies or the sign.", "tag": "Main Idea", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "Why did the author write this text?", "opts": ["To entertain readers with a story about kindness and determination.", "To warn readers about the dangers of summer storms.", "To persuade readers to donate money to animal shelters.", "To inform readers about how lemonade stands are set up."], "ci": 0, "exp": "This is a narrative story meant to entertain, not a set of instructions, a persuasive essay, or a warning.", "tag": "Author's Purpose", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "Which option is the best summary of the passage?", "opts": ["Jayden wants a new bicycle, so he saves his allowance for many months before finally buying one.", "A rainstorm ruins a neighborhood event, and everyone goes home disappointed.", "Jayden and his sister run a lemonade stand to raise money for an animal shelter, and even a sudden rainstorm cannot stop them from succeeding.", "Noa bakes cookies every Saturday and sells them from a table on Maple Street."], "ci": 2, "exp": "A good summary includes the key events from beginning to end, not just one detail.", "tag": "Summary", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "What is the central theme or lesson of the story?", "opts": ["Rain always ruins outdoor plans.", "Selling lemonade is the best way to earn money.", "Helping others can be even more rewarding than getting something for yourself.", "Sisters should always agree with each other."], "ci": 2, "exp": "Jayden gives up his bicycle savings to help the shelter and ends up feeling that this was more rewarding, which is the story's lesson.", "tag": "Theme", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "What genre is this passage?", "opts": ["Fable with talking animals", "Myth", "Realistic fiction", "Biography"], "ci": 2, "exp": "The story features ordinary characters and events that could happen in real life, which makes it realistic fiction.", "tag": "Genre", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "Where and when does this story mainly take place?", "opts": ["At a lemonade stand on Maple Street, on a Saturday.", "Inside the animal shelter, on a Monday morning.", "At school, during a science class.", "At Jayden's house, late at night."], "ci": 0, "exp": "The lemonade stand is set up on Maple Street on Saturday morning, which is where most of the story happens.", "tag": "Setting / Situation", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "Which detail from the text best supports the idea that the neighbors were kind and supportive?", "opts": ["A few kind neighbors came back out with their own umbrellas to keep buying lemonade in the rain.", "Dark clouds rolled in and a sudden downpour began.", "Jayden had been saving his allowance for months.", "The coin jar grew heavier and heavier during the morning."], "ci": 0, "exp": "Neighbors returning with their own umbrellas to keep supporting the stand directly shows their kindness.", "tag": "Supporting Details (Textual Evidence)", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "According to the passage, what did Noa offer to make and sell alongside the lemonade?", "opts": ["Sandwiches", "Cupcakes", "Cookies", "Muffins"], "ci": 2, "exp": "The passage states that Noa offered to make cookies to sell alongside the lemonade.", "tag": "Supporting Details (Fact Retrieval)", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "What caused Jayden's sign to topple over?", "opts": ["A strong gust of wind before the rain started.", "Jayden accidentally kicking the sign.", "A dog knocking into the table.", "A sudden downpour of rain."], "ci": 3, "exp": "The passage says a sudden downpour sent people running for cover, and the sign toppled over right after.", "tag": "Cause & Effect", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "Which character trait best describes Noa?", "opts": ["Caring and determined", "Lazy and careless", "Selfish and impatient", "Shy and nervous"], "ci": 0, "exp": "Noa agrees right away to help, loves animals, and refuses to give up when it rains, showing she is caring and determined.", "tag": "Character Traits & Motivation", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "What can we infer about how Jayden felt when the shelter manager's eyes widened with gratitude?", "opts": ["He felt nervous about giving away his savings.", "He felt annoyed that the manager was surprised.", "He felt embarrassed that he had raised so little money.", "He felt proud and happy that his effort had made a real difference."], "ci": 3, "exp": "Jayden had worked hard for the shelter, so seeing the manager's grateful reaction would likely make him feel proud and happy.", "tag": "Inference", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "If the story had stopped right after Jayden's sign toppled over in the rain, what would most likely happen next, based on the rest of the story?", "opts": ["Jayden and Noa would forget about the animal shelter completely.", "Jayden and Noa would immediately pack up and never try again.", "Jayden and Noa would find a way to keep selling lemonade despite the rain.", "Jayden and Noa would ask their neighbors to stop buying lemonade."], "ci": 2, "exp": "Based on Noa's determined personality shown later in the story, the pair would keep going instead of giving up.", "tag": "Predict", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "Which word best describes the author's tone in the last paragraph?", "opts": ["Gloomy", "Sarcastic", "Angry", "Heartwarming"], "ci": 3, "exp": "The ending, where the manager reacts with gratitude and Jayden feels proud, creates a heartwarming tone.", "tag": "Tone", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "Is this passage written in first-person, second-person, or third-person point of view?", "opts": ["Second-person", "Third-person", "A mix of first-person and second-person", "First-person"], "ci": 1, "exp": "The narrator refers to the characters as \"he\" and \"she\" rather than \"I\" or \"you,\" which is third-person point of view.", "tag": "Point of View", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "How is the passage mainly structured?", "opts": ["Cause and effect only, with no timeline of events", "Compare and contrast", "Chronological (events are told in the order they happened)", "Problem and solution only, with no characters"], "ci": 2, "exp": "The passage follows events in time order, from Jayden's idea, to the lemonade stand, the rainstorm, and finally the visit to the shelter.", "tag": "Text Structure", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "Read the underlined sentence near the end of the passage (\"Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.\"). Is this sentence a fact or an opinion?", "opts": ["Both fact and opinion", "Opinion", "Neither fact nor opinion", "Fact"], "ci": 1, "exp": "This sentence expresses Jayden's personal feeling about what is more rewarding, which cannot be proven true or false, so it is an opinion.", "tag": "Fact vs. Opinion", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "Based on the passage, what is the meaning of the underlined word 'toppled'?", "opts": ["Flew away", "Became bigger", "Fell over", "Stood up straight"], "ci": 2, "exp": "The sentence describes the sign falling down along with the cups scattering, so 'toppled' means fell over.", "tag": "Vocabulary in Context (Context Clues)", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "Which word is a synonym for 'gratitude' as used in the passage?", "opts": ["Sadness", "Thankfulness", "Confusion", "Anger"], "ci": 1, "exp": "'Gratitude' describes the manager's grateful reaction, which is the same as thankfulness.", "tag": "Synonym", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "Which word is the antonym of 'kind' as used in the story?", "opts": ["Helpful", "Unkind", "Friendly", "Generous"], "ci": 1, "exp": "'Unkind' means the opposite of 'kind,' while the other choices are similar in meaning to 'kind.'", "tag": "Antonym", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "Complete the analogy — Rain : Umbrella :: Sun : ________.", "opts": ["Cloud", "Sunscreen", "Snow", "Moon"], "ci": 1, "exp": "An umbrella protects you from rain, just as sunscreen protects you from the sun, so the relationship is one of protection.", "tag": "Analogy", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "What type of figurative language is used in \"the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened\"?", "opts": ["Metaphor", "Personification", "Hyperbole", "Simile"], "ci": 3, "exp": "This sentence compares the coin jar to a treasure chest using the word 'like,' which makes it a simile.", "tag": "Figurative Language", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "Fill in the blank with the correct preposition: \"Jayden had been saving his allowance _____ months.\"", "opts": ["for", "since", "on", "at"], "ci": 0, "exp": "\"For\" is used with a length of time, such as \"for months,\" while \"since\" is used with a starting point in time.", "tag": "Preposition Usage", "tagcolor": "#185FA5", "passage": "Jayden had been saving his allowance for months, hoping to buy a new bicycle, but when he saw a flyer about the town&rsquo;s animal shelter running low on food for its rescued dogs and cats, he decided his savings could wait. He told his older sister, Noa, about his idea: a lemonade stand right on the corner of Maple Street, with every cent going to the shelter. Noa loved animals even more than Jayden did, so she agreed at once and offered to make cookies to sell alongside the lemonade.<br><br>On Saturday morning, they set up a wooden table, a hand-painted sign, and two pitchers of lemonade. Business was slow at first, but by noon, neighbors were lining up, and the coin jar grew heavier and heavier, like a small treasure chest waiting to be opened. Just as they started counting their earnings, dark clouds rolled in, and a sudden downpour sent people running for cover. Jayden&rsquo;s sign <u>toppled</u> over, and the lemonade cups scattered across the sidewalk.<br><br>&ldquo;We can&rsquo;t just give up now,&rdquo; Noa said, grabbing an umbrella from the garage. She held it over the table while Jayden quickly wiped down the cups. A few kind neighbors even came back out with their own umbrellas to keep buying lemonade in the rain. By the time the sun came out again, the jar was almost full.<br><br>That evening, Jayden and Noa walked into the animal shelter and handed the manager an envelope stuffed with coins and bills. The manager&rsquo;s eyes widened with surprise and gratitude. <u>Jayden realized that helping others could be even more rewarding than any bicycle he had imagined.</u>"}, {"stem": "Based on Passage A and Passage B, what is one similarity between Caleb's and Sophie's fundraising efforts?", "opts": ["Both events took place inside a school classroom.", "Both students organized an event on their own initiative to raise resources to help their community.", "Both events raised the exact same amount of money.", "Both students were disappointed with how their events turned out."], "ci": 1, "exp": "Caleb organized a can drive and Sophie organized a bake sale, and both did so on their own to help their community, even though the outcomes differed.", "tag": "Paired Passage — Synthesis (Similarities)", "tagcolor": "#185FA5", "passage": "<strong>Passage A</strong><br>Caleb decided to organize a can drive at his school to help the local food bank, which had said it was running low on supplies before winter. He made colorful posters and asked his teacher if he could speak to the whole class during morning announcements. Within two weeks, students had brought in more than three hundred canned goods, filling every box Caleb had set up in the hallway. When he delivered the donations to the food bank, the volunteers thanked him with big smiles. Caleb felt proud knowing that families in his own town would have enough food to get through the cold months ahead.<br><br><strong>Passage B</strong><br>Sophie wanted to raise money for a new slide at the park playground, so she set up a bake sale table outside the community center on a busy Saturday morning. She had baked dozens of cookies and cupcakes the night before, expecting a big crowd. Unfortunately, only a handful of people stopped by, and most of her treats went unsold. Sophie felt disappointed as she packed up her table that afternoon, wondering if anyone even cared about the playground. Still, she decided not to give up; she planned to try again next month with a bigger sign and better location."}, {"stem": "How does the outcome of Caleb's fundraiser differ from the outcome of Sophie's fundraiser?", "opts": ["Caleb's can drive was very successful and made him feel proud, while Sophie's bake sale was poorly attended and left her feeling disappointed.", "Both events were equally successful and both students felt proud.", "Caleb's event failed completely, while Sophie's event was a huge success.", "Caleb's event raised money for a playground, while Sophie's raised money for a food bank."], "ci": 0, "exp": "Passage A shows Caleb's can drive succeeding with over 300 items donated, while Passage B shows Sophie's bake sale drawing only a handful of customers.", "tag": "Paired Passage — Contrast (Differences)", "tagcolor": "#185FA5", "passage": "<strong>Passage A</strong><br>Caleb decided to organize a can drive at his school to help the local food bank, which had said it was running low on supplies before winter. He made colorful posters and asked his teacher if he could speak to the whole class during morning announcements. Within two weeks, students had brought in more than three hundred canned goods, filling every box Caleb had set up in the hallway. When he delivered the donations to the food bank, the volunteers thanked him with big smiles. Caleb felt proud knowing that families in his own town would have enough food to get through the cold months ahead.<br><br><strong>Passage B</strong><br>Sophie wanted to raise money for a new slide at the park playground, so she set up a bake sale table outside the community center on a busy Saturday morning. She had baked dozens of cookies and cupcakes the night before, expecting a big crowd. Unfortunately, only a handful of people stopped by, and most of her treats went unsold. Sophie felt disappointed as she packed up her table that afternoon, wondering if anyone even cared about the playground. Still, she decided not to give up; she planned to try again next month with a bigger sign and better location."}];var N = RAW_QUESTIONS.length;var ORDER_KEY = QUIZ_KEY + '_order_v1';
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+function shuffleArr(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function identityOrder(){var o=[];for(var i=0;i<N;i++)o.push(i);return o;}
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length===0) return false;
+  for(var i=0;i<arr.length;i++){ if(typeof arr[i] !== 'number' || arr[i]<0 || arr[i]>=N) return false; }
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad');
+    return arr;
+  }catch(e){ try{localStorage.removeItem(ORDER_KEY);}catch(e2){} return null; }
+}
+function saveOrder(o){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(o)); }catch(e){} }
+
+var order = loadOrder() || identityOrder();
+if(!loadOrder()) saveOrder(order);
+var pendingFreshMode = 'original';
+
+function defaultState(){
+  return { cur:0, answers:{}, showResults:false, timerTotalSec:null, timerStartedAt:null };
+}
+function loadState(){
+  try{
+    var raw = localStorage.getItem(QUIZ_KEY);
+    if(!raw) return defaultState();
+    var s = JSON.parse(raw);
+    if(typeof s.cur !== 'number' || s.cur<0 || s.cur>=order.length) s.cur = 0;
+    if(typeof s.answers !== 'object' || s.answers===null) s.answers = {};
+    if(typeof s.showResults !== 'boolean') s.showResults = false;
+    if(typeof s.timerTotalSec === 'undefined') s.timerTotalSec = null;
+    if(typeof s.timerStartedAt === 'undefined') s.timerStartedAt = null;
+    return s;
+  }catch(e){ try{localStorage.removeItem(QUIZ_KEY);}catch(e2){} return defaultState(); }
+}
+function saveState(){ try{ localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); }catch(e){} }
+
+var state = loadState();
+var timerInterval = null;
+
+function getAttempts(){ try{ return parseInt(localStorage.getItem(ATT_KEY)||'0',10); }catch(e){ return 0; } }
+function incAttempts(){ try{ localStorage.setItem(ATT_KEY, String(getAttempts()+1)); }catch(e){} }
+function updateAttDisplay(){
+  var el = document.getElementById('att-display');
+  if(el) el.textContent = 'Total Attempts: ' + getAttempts();
+}
+function reportResult(){
+  try{
+    var correct=0, wrong=0, skipped=0;
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos];
+      if(state.answers[qi]===undefined){ skipped++; continue; }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+    }
+    var total = order.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0
+    };
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
+}
+
+function formatTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function renderTimer(){
+  var setupEl = document.getElementById('timerSetup');
+  var runningEl = document.getElementById('timerRunning');
+  var dispEl = document.getElementById('timerDisplay');
+  if(!setupEl||!runningEl||!dispEl) return;
+  if(!state.timerStartedAt){ setupEl.style.display='flex'; runningEl.style.display='none'; return; }
+  setupEl.style.display='none'; runningEl.style.display='flex';
+  var elapsed = (Date.now()-state.timerStartedAt)/1000;
+  var remaining = state.timerTotalSec - elapsed;
+  dispEl.classList.remove('warn','danger');
+  if(remaining<=0){ dispEl.textContent="Time's Up"; dispEl.classList.add('danger'); stopTimerInterval(); return; }
+  dispEl.textContent = formatTime(remaining);
+  if(remaining <= state.timerTotalSec*0.1) dispEl.classList.add('danger');
+  else if(remaining <= state.timerTotalSec*0.25) dispEl.classList.add('warn');
+}
+function startTimer(){
+  var input = document.getElementById('timerMinutesInput');
+  var minutes = parseFloat(input.value);
+  if(!minutes || minutes<=0) minutes=20;
+  state.timerTotalSec = Math.round(minutes*60);
+  state.timerStartedAt = Date.now();
+  saveState(); renderTimer(); startTimerInterval();
+}
+function startTimerInterval(){ stopTimerInterval(); timerInterval=setInterval(renderTimer,1000); }
+function stopTimerInterval(){ if(timerInterval){clearInterval(timerInterval); timerInterval=null;} }
+function resetTimer(){
+  state.timerTotalSec = null; state.timerStartedAt = null;
+  stopTimerInterval(); saveState(); renderTimer();
+}
+
+function render(){
+  updateAttDisplay();
+  var qa = document.getElementById('quiz-area');
+  var rs = document.getElementById('results-screen');
+  if(state.showResults){
+    qa.style.display='none';
+    rs.classList.add('show');
+    renderResults();
+    return;
+  }
+  qa.style.display='block';
+  rs.classList.remove('show');
+
+  var qi = order[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  document.getElementById('q-num').textContent = 'Q' + (state.cur+1) + ' / ' + order.length;
+
+  var badge = document.getElementById('tag-badge');
+  if(q.tag){
+    badge.style.display='inline-block';
+    badge.textContent = q.tag;
+    badge.style.background = q.tagcolor || '#185FA5';
+  } else { badge.style.display='none'; }
+
+  var pbox = document.getElementById('passage-box');
+  if(q.passage){ pbox.style.display='block'; pbox.innerHTML = q.passage; } else { pbox.style.display='none'; }
+  var cbox = document.getElementById('context-box');
+  if(q.context){ cbox.style.display='block'; cbox.innerHTML = q.context; } else { cbox.style.display='none'; }
+
+  document.getElementById('q-text').innerHTML = q.stem;
+
+  var answered = state.answers[qi];
+  var optDiv = document.getElementById('options');
+  optDiv.innerHTML='';
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML = optText;
+    btn.disabled = answered !== undefined;
+    if(answered !== undefined){
+      if(idx === q.ci) btn.classList.add(answered===idx ? 'correct' : 'revealed');
+      else if(answered === idx) btn.classList.add('wrong');
+    }
+    btn.onclick = function(){ chooseAnswer(idx); };
+    optDiv.appendChild(btn);
+  });
+
+  var expDiv = document.getElementById('exp-box');
+  if(answered !== undefined && answered !== q.ci){
+    expDiv.style.display='block';
+    expDiv.innerHTML = q.exp;
+  } else {
+    expDiv.style.display='none';
+  }
+
+  var nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = (state.cur >= order.length-1) ? 'Show Results \u2192' : 'Next \u2192';
+
+  updateNav();
+}
+
+function updateNav(){
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  document.getElementById('nav-count').textContent = answered + ' / ' + order.length;
+  document.getElementById('prog-fill').style.width = (answered/order.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel = document.getElementById('dot-panel');
+  if(panel.style.display==='none') return;
+  var html='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var bg = state.answers[qi]===undefined ? '#d7dde6' : (state.answers[qi]===RAW_QUESTIONS[qi].ci ? '#185FA5' : '#E24B4A');
+    html += '<button class="dot" style="background:'+bg+';" onclick="goToQ('+pos+')">'+(pos+1)+'</button>';
+  }
+  var answered=0;
+  for(var k=0;k<order.length;k++){ if(state.answers[order[k]]!==undefined) answered++; }
+  if(answered===order.length){
+    html += '<br><button class="results-pill" onclick="showResultsNow()">Results</button>';
+  }
+  panel.innerHTML = html;
+}
+function toggleJump(){
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display==='none' || panel.style.display===''){
+    panel.style.display='block'; btn.innerHTML='Hide &#9652;'; renderDots();
+  } else {
+    panel.style.display='none'; btn.innerHTML='Jump &#9662;';
+  }
+}
+function goToQ(pos){
+  state.cur = pos; state.showResults=false; saveState(); render();
+}
+function showResultsNow(){
+  state.showResults = true; incAttempts(); saveState(); render(); reportResult();
+}
+function chooseAnswer(idx){
+  var qi = order[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState(); render();
+}
+function goPrev(){
+  if(state.cur>0){ state.cur--; saveState(); render(); }
+}
+function goNext(){
+  if(state.cur < order.length-1){ state.cur++; saveState(); render(); }
+  else { state.showResults=true; incAttempts(); saveState(); render(); reportResult(); }
+}
+function renderResults(){
+  var correct=0, wrong=0, skipped=0;
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]===undefined){ skipped++; continue; }
+    if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+  }
+  document.getElementById('results-score').textContent = correct+' correct, '+wrong+' wrong, '+skipped+' skipped - out of '+order.length;
+  var grid = document.getElementById('results-grid');
+  grid.innerHTML='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var card = document.createElement('div');
+    if(state.answers[qi]===undefined){
+      card.className='r-card skipped';
+      card.textContent='Q'+(pos+1)+' Skip';
+    } else {
+      var ok = state.answers[qi]===RAW_QUESTIONS[qi].ci;
+      card.className='r-card '+(ok?'correct':'wrong');
+      card.textContent='Q'+(pos+1)+' '+(ok?'OK':'X');
+    }
+    (function(p){ card.onclick=function(){ state.showResults=false; state.cur=p; saveState(); render(); }; })(pos);
+    grid.appendChild(card);
+  }
+}
+function retryWrong(){
+  var wrong=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      wrong.push(qi);
+    }
+  }
+  if(wrong.length===0) return;
+  wrong.forEach(function(qi){ delete state.answers[qi]; });
+  order = wrong;
+  saveOrder(order);
+  state.cur=0; state.showResults=false;
+  saveState(); render(); renderTimer();
+}
+function copyRes(){
+  var lines=[TITLE+' Results'];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    var s='Q'+(pos+1)+': ';
+    if(a===undefined) s+='Skipped';
+    else s += (a===RAW_QUESTIONS[qi].ci ? 'Correct' : 'Wrong');
+    lines.push(s);
+  }
+  var text = lines.join('\n');
+  try{
+    if(navigator.clipboard){ navigator.clipboard.writeText(text).catch(function(){}); }
+    else { var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+  }catch(e){}
+}
+function saveWrongAnswers(){
+  var wrongItems=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    if(a!==undefined && a!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongItems.push({ question: q.stem, yourAnswer: q.opts[a], correctAnswer: q.opts[q.ci], explanation: q.exp });
+    }
+  }
+  var blob = new Blob([JSON.stringify({title:TITLE, wrongAnswers:wrongItems}, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a2 = document.createElement('a');
+  a2.href = url; a2.download = QUIZ_KEY + '_wrong.json';
+  document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+  URL.revokeObjectURL(url);
+}
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var t = document.getElementById('freshModalTitle');
+  var m = document.getElementById('freshModalText');
+  if(mode==='random'){
+    t.textContent='Start Fresh (Random Order)?';
+    m.textContent='Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    t.textContent='Start Fresh (Original Order)?';
+    m.textContent='Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  order = (pendingFreshMode==='random') ? shuffleArr(identityOrder()) : identityOrder();
+  saveOrder(order);
+  state = defaultState();
+  saveState();
+  resetTimer();
+  closeFreshModal();
+  render();
+  renderTimer();
+}
+
+window.startTimer=startTimer;
+window.toggleJump=toggleJump;
+window.goToQ=goToQ;
+window.showResultsNow=showResultsNow;
+window.chooseAnswer=chooseAnswer;
+window.goPrev=goPrev;
+window.goNext=goNext;
+window.retryWrong=retryWrong;
+window.copyRes=copyRes;
+window.saveWrongAnswers=saveWrongAnswers;
+window.openFreshModalOriginal=openFreshModalOriginal;
+window.openFreshModalRandom=openFreshModalRandom;
+window.closeFreshModal=closeFreshModal;
+window.confirmFresh=confirmFresh;
+
+render();
+renderTimer();
+if(state.timerStartedAt) startTimerInterval();
+</script>
+</body>
+</html>
