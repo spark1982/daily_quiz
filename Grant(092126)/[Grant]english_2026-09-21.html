@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] English</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f4f6fa; margin:0; padding: 20px 12px 60px; color:#1a1a2e; }
+  .quiz-wrap { max-width: 680px; margin: 0 auto; }
+  .quiz-title { font-size: 1.4rem; font-weight: 800; text-align:center; margin: 8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom: 14px; min-height: 0; }
+  .nav-bar { background:#fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .nav-summary { display:flex; align-items:center; gap:10px; }
+  #nav-count { font-weight:700; font-size:0.85rem; color:#333; white-space:nowrap; }
+  .progress-track { flex:1; height:6px; background:#d7dde6; border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; width:0%; background:#185FA5; border-radius:3px; transition: width .2s; }
+  .jump-btn { background:#eef2f7; border:none; border-radius:8px; padding:6px 12px; font-size:0.8rem; font-weight:700; color:#185FA5; cursor:pointer; white-space:nowrap; }
+  .dots-panel { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .dot { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; cursor:pointer; background:#d7dde6; color:#555; border:none; }
+  .dot.answered-correct { background:#185FA5; color:#fff; }
+  .dot.answered-wrong { background:#E24B4A; color:#fff; }
+  .results-pill { display:inline-block; margin: 0 auto 14px; padding: 8px 20px; background:#1D9E75; color:#fff; border-radius:20px; font-weight:700; text-align:center; cursor:pointer; width:fit-content; }
+  .results-pill-wrap { text-align:center; }
+  .quiz-card, .results-card { background:#fff; border-radius: 14px; padding: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 16px; }
+  .passage-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:0.92rem; line-height:1.6; color:#222; }
+  .context-label { font-size:0.92rem; font-weight:600; color:#333; margin-bottom:8px; line-height:1.4; }
+  .context-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; }
+  .tag-badge { display:inline-block; font-size:0.72rem; font-weight:700; color:#fff; padding:3px 10px; border-radius:12px; margin-bottom:10px; }
+  .q-text { font-size:1.05rem; font-weight:600; margin-bottom:16px; line-height:1.5; }
+  #options { display:flex; flex-direction:column; gap:10px; }
+  .opt-btn { text-align:left; padding:12px 14px; border-radius:10px; border:1.5px solid #d7dde6; background:#fafbfc; font-size:0.95rem; cursor:pointer; line-height:1.4; }
+  .opt-btn:hover { border-color:#185FA5; }
+  .opt-btn.selected-correct { background:#e6f4ec; border-color:#1D9E75; color:#0d6b3f; font-weight:700; }
+  .opt-btn.selected-wrong { background:#fbeaea; border-color:#E24B4A; color:#a52a2a; font-weight:700; }
+  .opt-btn.reveal-correct { background:#e6f4ec; border-color:#1D9E75; }
+  .opt-btn:disabled { cursor:default; }
+  .exp-box { margin-top:14px; background:#eef7f2; border-left:4px solid #1D9E75; border-radius:8px; padding:12px 14px; font-size:0.88rem; color:#2d4d3f; line-height:1.5; display:none; }
+  .hint-btn { background:#fff8e1;color:#a5720a;border:1.5px solid #f5a623;border-radius:8px;padding:7px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-top:12px;margin-bottom:12px;display:inline-block; }
+  .hint-box { background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.88rem;color:#6b5215;line-height:1.5;display:none; }
+  .hint-box.show { display:block; }
+  .tts-btn { background:#eef2f7; border:none; border-radius:50%; width:34px; height:34px; font-size:1rem; cursor:pointer; margin-left:8px; vertical-align:middle; }
+  .nav-btns { display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .nav-btns button { flex:1; padding:11px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; background:#185FA5; color:#fff; }
+  .nav-btns button:disabled { background:#c9d2dc; cursor:default; }
+  .results-card h2 { text-align:center; margin-top:0; }
+  .score-big { text-align:center; font-size:2.2rem; font-weight:800; color:#185FA5; margin: 6px 0 16px; }
+  .action-row { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .action-row button { padding:12px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; }
+  .btn-retry { background:#f5a623; color:#fff; }
+  .btn-save { background:#7b61ff; color:#fff; }
+  .btn-fresh { background:#E24B4A; color:#fff; }
+  .fresh-btn-bottom { display:block; margin: 6px auto 0; background:none; border:1.5px solid #d7dde6; color:#888; padding:8px 16px; border-radius:20px; font-size:0.8rem; cursor:pointer; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:14px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { font-size:0.95rem; margin-bottom:18px; }
+  .modal-box button { padding:10px 16px; border-radius:8px; border:none; font-weight:700; margin:0 6px; cursor:pointer; }
+  .modal-yes { background:#E24B4A; color:#fff; }
+  .modal-no { background:#eef2f7; color:#333; }
+  
+</style>
+</head>
+<body>
+<div class="quiz-wrap">
+  <div class="quiz-title">[Grant] English</div>
+  <div class="instruction" id="instruction"></div>
+
+  <div class="nav-bar">
+    <div class="nav-summary">
+      <span id="nav-count">0/0</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <button class="jump-btn" id="jump-btn" onclick="toggleJump()">Jump&#9662;</button>
+    </div>
+    <div class="dots-panel" id="dots-panel" style="display:none;"></div>
+  </div>
+
+  <div class="results-pill-wrap"><span class="results-pill" id="results-pill" style="display:none;" onclick="showResultsNow()">Results</span></div>
+
+  <div class="quiz-card" id="quiz-card">
+    <div class="passage-box" id="passage-box" style="display:none;"></div>
+    <div class="context-label" id="context-label" style="display:none;"></div>
+    <div class="context-box" id="context-box" style="display:none;"></div>
+    <div class="tag-badge" id="tag-badge" style="display:none;"></div>
+    <div class="q-text" id="q-text"></div>
+    <div id="options"></div>
+    <button class="hint-btn" id="hint-btn" onclick="toggleHint()" style="display:none;">Show Hint</button>
+    <div class="hint-box" id="hint-box"></div>
+    <div class="exp-box" id="exp-box"></div>
+    <div class="nav-btns">
+      <button id="prev-btn" onclick="prevQ()">Prev</button>
+      <button id="next-btn" onclick="goNext()">Next</button>
+    </div>
+  </div>
+
+  <div class="results-card" id="results-card" style="display:none;">
+    <h2>Results</h2>
+    <div class="score-big" id="score-big"></div>
+    <div id="score-detail" style="text-align:center;color:#555;font-size:0.9rem;"></div>
+    <div class="action-row">
+      <button class="btn-retry" onclick="startRetry()">Retry Wrong Ones</button>
+      <button class="btn-save" onclick="saveWrong()">Save Wrong Answers</button>
+      <button class="btn-fresh" onclick="openFreshModal()">Start Fresh</button>
+    </div>
+  </div>
+
+  <button class="fresh-btn-bottom" onclick="openFreshModal()">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="fresh-modal" style="display:none;">
+  <div class="modal-box">
+    <p>Reset all progress and start over?</p>
+    <button class="modal-yes" onclick="confirmFresh()">Yes, Start Fresh</button>
+    <button class="modal-no" onclick="closeFreshModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Grant] English";
+var QUIZ_KEY = "grantenglish";
+var INSTRUCTION = "Read the passage and choose the best answer for each question.";
+var TODAY_STR = "20260921";
+var RAW_QUESTIONS = [{"stem": "Which title best fits this passage?", "opts": ["The Biggest Tomato in Town", "Grown Together After the Storm", "Willa's Favorite Vegetable", "A Guide to Growing Radishes"], "ci": 1, "exp": "The story centers on the garden club repairing storm damage as a team, which matches the sign they made at the end: \"Grown Together After the Storm.\" The other choices describe things that are not the focus of the passage.", "tag": "Title Selection", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "Which sentence best states the main idea of the passage?", "opts": ["Theo's grandmother teaches him how to grow tomatoes in her backyard.", "A storm causes expensive damage to Riverbend Middle School's building.", "After a storm damages their garden, a group of students works together to repair it in time for the town's harvest fair.", "Willa is chosen to be the new leader of the garden club."], "ci": 2, "exp": "The passage focuses on the storm damaging the garden and the club fixing it before the fair. The grandmother's backyard, damage to the school building, and Willa becoming a leader are not part of the story.", "tag": "Main Idea", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "What is the author's main purpose in writing this passage?", "opts": ["To entertain readers with a story about a group of students overcoming a setback.", "To persuade readers to join a gardening club.", "To inform readers about the science of growing tomatoes.", "To warn readers about the dangers of severe storms."], "ci": 0, "exp": "This is a narrative with characters, a setting, and a plot, written mainly to entertain rather than to persuade, inform with facts, or warn about danger.", "tag": "Author's Purpose", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "Which of the following best summarizes the passage?", "opts": ["A storm wrecks the school garden just before a big fair. Theo and his classmates work together to repair what they can, and the garden is ready in time, even though it looks different than before.", "Theo grows a giant tomato and wins first prize at the harvest fair.", "Willa takes over the garden club and plants only radishes.", "Theo's grandmother visits the school to fix the storm damage herself."], "ci": 0, "exp": "This summary captures the storm, the repair effort, and the outcome at the fair. The other options include events that never happen in the passage.", "tag": "Summary", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "What is the underlying theme, or lesson, of the passage?", "opts": ["It is always better to work alone than to ask for help.", "Storms are too destructive for anyone to overcome.", "Winning a competition matters more than teamwork.", "Working together can help people recover from unexpected setbacks."], "ci": 3, "exp": "The club members combine their efforts to fix the garden after the storm, showing that teamwork helps people bounce back from problems. The other options contradict what happens in the story.", "tag": "Theme", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "What genre does this passage belong to?", "opts": ["Myth", "Autobiography", "Realistic fiction", "Science textbook article"], "ci": 2, "exp": "The passage tells an invented but true-to-life story about students and a garden club, which makes it realistic fiction rather than a myth, a true personal account, or a factual science text.", "tag": "Genre", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "Where and when does most of this story take place?", "opts": ["At Riverbend Middle School's garden club, in the days leading up to the town's harvest fair.", "In Theo's grandmother's backyard many years ago.", "At a science museum during a school field trip.", "On a farm far outside of town during the summer harvest season."], "ci": 0, "exp": "The events happen at the school garden club in the days before the harvest fair. The grandmother's backyard is only mentioned, not the setting of the main events, and the museum and farm never appear.", "tag": "Setting / Situation", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "Which detail from the passage best supports the claim that the storm caused real damage to the garden?", "opts": ["Theo checked on it every morning before school.", "Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.", "The fair was only five days away.", "Willa knelt beside him and picked up a bent stake."], "ci": 1, "exp": "This detail directly describes the damage: broken stakes, snapped plants, and mud. The other details describe Theo's routine, the timing of the fair, or the beginning of the repair, not the damage itself.", "tag": "Supporting Details (Textual Evidence)", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "According to the passage, on what night did the storm happen?", "opts": ["Tuesday night", "Friday night", "Saturday night", "Sunday night"], "ci": 0, "exp": "The passage directly states, \"Then, on Tuesday night, a strong storm rolled through town.\"", "tag": "Supporting Details (Fact Retrieval)", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "Why did the garden club plant radishes in the empty spots?", "opts": ["Because radishes grow quickly, so the club could still have something growing before the fair.", "Because Theo's grandmother suggested it.", "Because radishes were the only seeds left in the shed.", "Because the tomato plants were allergic to the mud."], "ci": 0, "exp": "The passage describes the radishes as \"quick-growing,\" which explains why the club chose them to fill the empty spots before the fair. None of the other reasons are mentioned in the passage.", "tag": "Cause & Effect", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "What does Willa's suggestion to start fixing the garden show about her character?", "opts": ["She is practical and encouraging, helping the group focus on what they can still accomplish.", "She is bossy and wants to take control of the club.", "She is careless and does not think before acting.", "She is shy and prefers to work alone."], "ci": 0, "exp": "Willa calmly points out there is still enough time to fix most of the damage and gets right to work with others, which shows she is practical and encouraging rather than bossy, careless, or shy.", "tag": "Character Traits & Motivation", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "What can readers infer about how Theo feels about his grandmother?", "opts": ["He looks up to her and wants to make her proud.", "He feels embarrassed by her interest in gardening.", "He barely knows her and rarely spends time with her.", "He thinks gardening is a waste of time."], "ci": 0, "exp": "Theo wants to show his grandmother, who used to grow vegetables herself, how much he has learned, which suggests he admires her and wants to make her proud.", "tag": "Inference", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "Based on the story, what will Theo most likely do the next time something unexpected damages the garden?", "opts": ["He will likely ask his club members for help instead of trying to fix everything alone.", "He will most likely quit the garden club completely.", "He will most likely refuse to grow tomatoes ever again.", "He will most likely wait for his grandmother to fix it for him."], "ci": 0, "exp": "After seeing how much the club accomplished by working together after the storm, Theo would most likely turn to his club members again rather than give up or wait for someone else to fix things.", "tag": "Predict", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "What is the overall tone of the passage?", "opts": ["Hopeful and encouraging", "Sarcastic and bitter", "Frightening and gloomy", "Angry and resentful"], "ci": 0, "exp": "Even though the storm causes damage, the passage focuses on the students working together and succeeding, which creates a hopeful, encouraging feeling rather than a bitter, frightening, or angry one.", "tag": "Tone", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "From what point of view is this passage told?", "opts": ["Third person", "First person", "Second person", "First person plural"], "ci": 0, "exp": "The narrator refers to the characters using names and pronouns like \"he\" and \"she\" rather than \"I\" or \"you,\" which means the passage is told from the third-person point of view.", "tag": "Point of View", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "Which text structure best describes how this passage is organized?", "opts": ["Problem-solution: a problem occurs, and then the characters work to solve it.", "Compare-contrast: two different gardens are compared.", "Chronological only, with no central problem described.", "Cause-effect, describing only what caused the storm to happen."], "ci": 0, "exp": "The passage presents a clear problem, the storm damaging the garden, and then shows the characters working to solve it before the fair, which is the problem-solution structure. There is no comparison of two gardens and no explanation of what caused the storm.", "tag": "Text Structure", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "Which sentence from the passage is an opinion rather than a fact?", "opts": ["Theo realized the garden told a better story than a perfect one ever could.", "The storm happened on a Tuesday night.", "Willa picked up a bent garden stake.", "The club planted radishes in the empty spots."], "ci": 0, "exp": "Whether an imperfect garden tells a \"better story\" is a personal judgment, making it an opinion. The other sentences describe events that happened in the story, which are facts within the passage.", "tag": "Fact vs. Opinion", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "In the sentence \"They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes,\" what does the word \"propped\" mean?", "opts": ["Cut something down completely", "Supported or held something up so it would not fall", "Watered something carefully", "Painted something a new color"], "ci": 1, "exp": "In this sentence, \"propped up\" describes the club members supporting the fallen plants so they could stand again, not cutting, watering, or painting them.", "tag": "Vocabulary in Context", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "Which word means the same as \"ruined,\" as it is used in the sentence \"pulled out the ruined ones\"?", "opts": ["Damaged", "Improved", "Planted", "Colorful"], "ci": 0, "exp": "\"Ruined\" means damaged beyond use, which is why the club had to pull those plants out. \"Improved,\" \"planted,\" and \"colorful\" all have different meanings.", "tag": "Synonym", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "Which word means the opposite of \"empty,\" as it is used in the sentence \"planted quick-growing radishes in the empty spots\"?", "opts": ["Hollow", "Bare", "Full", "Vacant"], "ci": 2, "exp": "\"Full\" is the opposite of \"empty.\" \"Hollow,\" \"bare,\" and \"vacant\" are all words that mean something close to \"empty,\" not its opposite.", "tag": "Antonym", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "Complete the analogy: Root : Tree :: Foundation : ____", "opts": ["Building", "Wall", "Roof", "Window"], "ci": 0, "exp": "A root supports and holds up a tree, just as a foundation supports and holds up a building. A wall, roof, and window are all parts of a building, but they are not the base that supports the whole structure.", "tag": "Analogy", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "Which type of figurative language is used in the sentence \"The wind howled through the broken garden gate\"?", "opts": ["Personification, because the wind is given a human or animal-like action", "Simile, because two things are compared using \"like\" or \"as\"", "Hyperbole, because the sentence uses an extreme exaggeration", "Metaphor, because two unlike things are directly called the same thing"], "ci": 0, "exp": "Giving the wind the action of \"howling,\" something usually done by animals or people, is personification. The sentence does not use \"like\" or \"as,\" does not exaggerate, and does not call the wind something else entirely, so it is not a simile, hyperbole, or metaphor.", "tag": "Figurative Language", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "Choose the correct preposition to complete the sentence: \"Willa placed the bent stake ____ the wheelbarrow.\"", "opts": ["in", "at", "by", "from"], "ci": 0, "exp": "\"In\" correctly shows that the stake was placed inside the wheelbarrow. \"At,\" \"by,\" and \"from\" do not correctly describe placing something inside a container.", "tag": "Preposition Usage", "tagcolor": "#185FA5", "passage": "Theo had planted his first tomato seedling only three weeks ago, and already it was taller than his hand. He checked on it every morning before school, along with the rest of the plants in the Riverbend Middle School garden club. The club had worked all spring to grow vegetables for the town's harvest fair, and the fair was only five days away.<br><br>Then, on Tuesday night, a strong storm rolled through town. Thunder shook the windows, and rain poured for hours. When Theo arrived at school the next morning, he found the garden in ruins. Stakes had fallen over, three tomato plants were snapped in half, and mud covered the little rows of lettuce.<br><br>Theo felt his stomach drop. He had wanted to show his grandmother, who used to grow vegetables in her own backyard, how much he had learned. Now the fair felt impossible.<br><br>His classmate Willa knelt beside him and picked up a bent stake. \"We still have five days,\" she said. \"That's enough time to fix most of this.\" Slowly, other club members arrived and began working too. They propped up the fallen plants, pulled out the ruined ones, and planted quick-growing radishes in the empty spots.<br><br>By Friday afternoon, the garden looked different but alive. Some rows were shorter, and a few new seedlings stood where tomatoes once grew. When Theo's grandmother visited the fair that weekend, she smiled at the neat rows and the small sign the club had made: \"Grown Together After the Storm.\" Theo realized the garden told a better story than a perfect one ever could."}, {"stem": "What do Ivy and Omar have in common in how they experience rainy weekends?", "opts": ["Both of their weekend plans are directly affected by whether or not it rains.", "Both of them play soccer every weekend.", "Both of them dislike staying indoors.", "Both of them enjoy playing board games the most."], "ci": 0, "exp": "Rain changes what each of them expects to do that weekend, whether it means a cozy day inside for Ivy or a canceled soccer practice for Omar, even though their feelings about it are opposite. Only Omar plays soccer, Ivy does not dislike staying indoors, and board games are not shown to be either character's favorite activity.", "tag": "Paired Passage — Synthesis (Similarities)", "tagcolor": "#185FA5", "passage": "<strong>Passage A</strong><br>Ivy always smiled when she heard rain tapping on her window. To her, a rainy Saturday meant hot cocoa, a blanket fort in the living room, and hours of reading her favorite comic books without anyone asking her to go outside. She loved the sound of thunder rolling in the distance, safe and far away. Her little brother would often join her fort, and together they would invent silly stories about dragons hiding in the clouds. When the rain finally stopped, Ivy almost felt disappointed, already looking forward to the next storm.<br><br><strong>Passage B</strong><br>For Omar, rain meant one thing: his soccer practice would be canceled. He stood by the window, watching gray clouds roll in, and felt his shoulders slump. Rainy weekends stretched out long and boring in his mind, without the games he loved best. He tried reading a book, but he kept glancing outside, hoping the clouds might break apart. His mother suggested board games, and although he enjoyed beating his sister at checkers, it never quite replaced running across a muddy field with his teammates. By evening, Omar was already checking the weather for tomorrow."}, {"stem": "How does Omar's attitude toward rainy weekends differ from Ivy's?", "opts": ["Omar feels bored and disappointed when it rains, while Ivy feels cozy and excited.", "Omar loves rainy weekends just as much as Ivy does.", "Ivy dislikes rain because it cancels her soccer practice.", "Omar and Ivy both prefer sunny weekends over rainy ones."], "ci": 0, "exp": "Passage A shows Ivy looking forward to rain for cocoa and reading, while Passage B shows Omar feeling bored because rain cancels his soccer practice, so their attitudes toward rain are opposite. Omar does not love rain like Ivy, soccer is Omar's issue not Ivy's, and Ivy is never shown preferring sunny weekends.", "tag": "Paired Passage — Contrast (Differences)", "tagcolor": "#185FA5", "passage": "<strong>Passage A</strong><br>Ivy always smiled when she heard rain tapping on her window. To her, a rainy Saturday meant hot cocoa, a blanket fort in the living room, and hours of reading her favorite comic books without anyone asking her to go outside. She loved the sound of thunder rolling in the distance, safe and far away. Her little brother would often join her fort, and together they would invent silly stories about dragons hiding in the clouds. When the rain finally stopped, Ivy almost felt disappointed, already looking forward to the next storm.<br><br><strong>Passage B</strong><br>For Omar, rain meant one thing: his soccer practice would be canceled. He stood by the window, watching gray clouds roll in, and felt his shoulders slump. Rainy weekends stretched out long and boring in his mind, without the games he loved best. He tried reading a book, but he kept glancing outside, hoping the clouds might break apart. His mother suggested board games, and although he enjoyed beating his sister at checkers, it never quite replaced running across a muddy field with his teammates. By evening, Omar was already checking the weather for tomorrow."}];
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+function reportResult(){
+  try{
+    var correct=0, wrong=0, skipped=0;
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos];
+      if(state.answers[qi]===undefined){ skipped++; continue; }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+    }
+    var total = order.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0
+    };
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
+}
+
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var ORDER_KEY = STORAGE_KEY + '_order';
+var ATTEMPTS_KEY = STORAGE_KEY + '_attempts';
+
+var order = [];
+var activeSet = null; // when in retry mode, holds subset of original indices
+var state = { answers:{}, cur:0, showResults:false };
+var hintShown = false;
+
+function loadState(){
+  var raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try{ state = JSON.parse(raw); }catch(e){ state = {answers:{},cur:0,showResults:false}; } }
+  var rawOrder = localStorage.getItem(ORDER_KEY);
+  if(rawOrder){ try{ order = JSON.parse(rawOrder); }catch(e){ order=null; } }
+  if(!order || !order.length){
+    order = RAW_QUESTIONS.map(function(_,i){return i;});
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function getAttempts(){
+  var a = localStorage.getItem(ATTEMPTS_KEY);
+  return a ? parseInt(a,10) : 1;
+}
+function incAttempts(){
+  var a = getAttempts() + 1;
+  localStorage.setItem(ATTEMPTS_KEY, String(a));
+}
+
+function activeOrder(){ return activeSet || order; }
+
+function render(){
+  document.getElementById('instruction').textContent = INSTRUCTION;
+  var ord = activeOrder();
+  if(state.showResults){
+    document.getElementById('quiz-card').style.display='none';
+    document.getElementById('results-card').style.display='block';
+    renderResults();
+  } else {
+    document.getElementById('quiz-card').style.display='block';
+    document.getElementById('results-card').style.display='none';
+    renderQuestion();
+  }
+  updateNav();
+}
+
+function renderQuestion(){
+  hintShown = false;
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  var q = RAW_QUESTIONS[qi];
+
+  var pb = document.getElementById('passage-box');
+  if(q.passage){ pb.style.display='block'; pb.innerHTML = q.passage; } else { pb.style.display='none'; pb.innerHTML=''; }
+
+  var cl = document.getElementById('context-label');
+  if(q.contextLabel){ cl.style.display='block'; cl.textContent = q.contextLabel; } else { cl.style.display='none'; cl.textContent=''; }
+
+  var cb = document.getElementById('context-box');
+  if(q.context){ cb.style.display='block'; cb.innerHTML = q.context; } else { cb.style.display='none'; cb.innerHTML=''; }
+
+  var tb = document.getElementById('tag-badge');
+  if(q.tag){ tb.style.display='inline-block'; tb.textContent = q.tag; tb.style.background = q.tagcolor || '#185FA5'; } else { tb.style.display='none'; }
+
+  var qt = document.getElementById('q-text');
+  qt.innerHTML = q.stem + (q.tts ? ' <button class="tts-btn" onclick="speak(' + qi + ')" title="Listen">&#128266;</button>' : '');
+
+  var opts = document.getElementById('options');
+  opts.innerHTML = '';
+  var answered = state.answers[qi] !== undefined;
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = optText;
+    if(answered){
+      btn.disabled = true;
+      if(idx === q.ci) btn.className += ' reveal-correct';
+      if(idx === state.answers[qi] && idx !== q.ci) btn.className += ' selected-wrong';
+      if(idx === state.answers[qi] && idx === q.ci) btn.className += ' selected-correct';
+    } else {
+      btn.onclick = function(){ pick(idx); };
+    }
+    opts.appendChild(btn);
+  });
+
+  var hb = document.getElementById('hint-btn');
+  var hx = document.getElementById('hint-box');
+  if(q.hint){
+    hb.style.display='inline-block'; hb.textContent='Show Hint';
+    hx.innerHTML = q.hint; hx.classList.remove('show');
+  } else {
+    hb.style.display='none'; hx.classList.remove('show');
+  }
+
+  var eb = document.getElementById('exp-box');
+  if(answered){
+    eb.style.display='block';
+    eb.innerHTML = '<strong>Explanation:</strong> ' + q.exp;
+  } else {
+    eb.style.display='none'; eb.innerHTML='';
+  }
+
+  document.getElementById('prev-btn').disabled = (state.cur === 0);
+  var ord2 = activeOrder();
+  var isLast = (state.cur === ord2.length - 1);
+  document.getElementById('next-btn').textContent = isLast ? 'Finish' : 'Next';
+}
+
+function toggleHint(){
+  hintShown = !hintShown;
+  var b=document.getElementById('hint-btn'), x=document.getElementById('hint-box');
+  if(hintShown){ x.classList.add('show'); b.textContent='Hide Hint'; }
+  else { x.classList.remove('show'); b.textContent='Show Hint'; }
+}
+window.toggleHint = toggleHint;
+
+function pick(idx){
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState();
+  render();
+}
+window.pick = pick;
+
+function prevQ(){
+  if(state.cur > 0){ state.cur--; saveState(); render(); }
+}
+window.prevQ = prevQ;
+window.go = prevQ;
+
+function goNext(){
+  var ord = activeOrder();
+  if(state.cur < ord.length - 1){
+    state.cur++;
+    saveState();
+    render();
+  } else {
+    state.showResults = true;
+    incAttempts();
+    saveState();
+    render();
+    reportResult();
+  }
+}
+window.goNext = goNext;
+
+function showResultsNow(){
+  state.showResults = true;
+  saveState();
+  render();
+  reportResult();
+}
+window.showResultsNow = showResultsNow;
+
+function goToQ(pos){
+  state.cur = pos;
+  state.showResults = false;
+  saveState();
+  render();
+}
+window.goToQ = goToQ;
+
+function renderResults(){
+  var ord = activeOrder();
+  var correct=0, wrong=0, skipped=0;
+  ord.forEach(function(qi){
+    if(state.answers[qi]===undefined) skipped++;
+    else if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++;
+    else wrong++;
+  });
+  var total = ord.length;
+  document.getElementById('score-big').textContent = correct + ' / ' + total;
+  document.getElementById('score-detail').textContent = 'Correct: ' + correct + '  Wrong: ' + wrong + '  Skipped: ' + skipped;
+}
+
+function updateNav(){
+  var ord = activeOrder();
+  var answeredCount = 0;
+  ord.forEach(function(qi){ if(state.answers[qi]!==undefined) answeredCount++; });
+  document.getElementById('nav-count').textContent = answeredCount + '/' + ord.length;
+  var pct = ord.length ? Math.round(answeredCount/ord.length*100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('results-pill').style.display = (answeredCount === ord.length && ord.length>0) ? 'inline-block' : 'none';
+  renderDots();
+}
+
+function renderDots(){
+  var panel = document.getElementById('dots-panel');
+  if(panel.style.display === 'none') { buildDots(); return; }
+  buildDots();
+}
+function buildDots(){
+  var panel = document.getElementById('dots-panel');
+  var ord = activeOrder();
+  panel.innerHTML = '';
+  ord.forEach(function(qi, pos){
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.textContent = (pos+1);
+    if(state.answers[qi]!==undefined){
+      d.className += (state.answers[qi]===RAW_QUESTIONS[qi].ci) ? ' answered-correct' : ' answered-wrong';
+    }
+    d.onclick = function(){ goToQ(pos); };
+    panel.appendChild(d);
+  });
+}
+
+function toggleJump(){
+  var panel = document.getElementById('dots-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display === 'none'){
+    panel.style.display = 'flex';
+    btn.innerHTML = 'Hide&#9652;';
+    buildDots();
+  } else {
+    panel.style.display = 'none';
+    btn.innerHTML = 'Jump&#9662;';
+  }
+}
+window.toggleJump = toggleJump;
+
+function startRetry(){
+  var ord = activeOrder();
+  var wrongIdx = ord.filter(function(qi){ return state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci; });
+  if(!wrongIdx.length) return;
+  activeSet = wrongIdx;
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  render();
+}
+window.startRetry = startRetry;
+
+function saveWrong(){
+  var ord = activeOrder();
+  var wrongAnswers = [];
+  ord.forEach(function(qi){
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongAnswers.push({
+        question: q.stem.replace(/<[^>]+>/g,''),
+        yourAnswer: q.opts[state.answers[qi]].replace(/<[^>]+>/g,''),
+        correctAnswer: q.opts[q.ci].replace(/<[^>]+>/g,''),
+        explanation: q.exp.replace(/<[^>]+>/g,'')
+      });
+    }
+  });
+  var payload = { title: TITLE, wrongAnswers: wrongAnswers };
+  var blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var d = new Date();
+  var ds = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  a.href = url;
+  a.download = 'quiz_' + QUIZ_KEY + '_wrong_' + ds + '_v1.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+window.copyRes = saveWrong;
+window.saveWrong = saveWrong;
+
+function openFreshModal(){ document.getElementById('fresh-modal').style.display='flex'; }
+window.openFreshModal = openFreshModal;
+function closeFreshModal(){ document.getElementById('fresh-modal').style.display='none'; }
+window.closeFreshModal = closeFreshModal;
+function confirmFresh(){
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(ORDER_KEY);
+  activeSet = null;
+  order = RAW_QUESTIONS.map(function(_,i){return i;});
+  localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  document.getElementById('fresh-modal').style.display='none';
+  render();
+}
+window.confirmFresh = confirmFresh;
+
+
+
+loadState();
+render();
+</script>
+</body>
+</html>

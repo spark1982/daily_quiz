@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT Grammar</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f4f6fa; margin:0; padding: 20px 12px 60px; color:#1a1a2e; }
+  .quiz-wrap { max-width: 680px; margin: 0 auto; }
+  .quiz-title { font-size: 1.4rem; font-weight: 800; text-align:center; margin: 8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom: 14px; min-height: 0; }
+  .nav-bar { background:#fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .nav-summary { display:flex; align-items:center; gap:10px; }
+  #nav-count { font-weight:700; font-size:0.85rem; color:#333; white-space:nowrap; }
+  .progress-track { flex:1; height:6px; background:#d7dde6; border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; width:0%; background:#185FA5; border-radius:3px; transition: width .2s; }
+  .jump-btn { background:#eef2f7; border:none; border-radius:8px; padding:6px 12px; font-size:0.8rem; font-weight:700; color:#185FA5; cursor:pointer; white-space:nowrap; }
+  .dots-panel { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .dot { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; cursor:pointer; background:#d7dde6; color:#555; border:none; }
+  .dot.answered-correct { background:#185FA5; color:#fff; }
+  .dot.answered-wrong { background:#E24B4A; color:#fff; }
+  .results-pill { display:inline-block; margin: 0 auto 14px; padding: 8px 20px; background:#1D9E75; color:#fff; border-radius:20px; font-weight:700; text-align:center; cursor:pointer; width:fit-content; }
+  .results-pill-wrap { text-align:center; }
+  .quiz-card, .results-card { background:#fff; border-radius: 14px; padding: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 16px; }
+  .passage-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:0.92rem; line-height:1.6; color:#222; }
+  .context-label { font-size:0.92rem; font-weight:600; color:#333; margin-bottom:8px; line-height:1.4; }
+  .context-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; }
+  .tag-badge { display:inline-block; font-size:0.72rem; font-weight:700; color:#fff; padding:3px 10px; border-radius:12px; margin-bottom:10px; }
+  .q-text { font-size:1.05rem; font-weight:600; margin-bottom:16px; line-height:1.5; }
+  #options { display:flex; flex-direction:column; gap:10px; }
+  .opt-btn { text-align:left; padding:12px 14px; border-radius:10px; border:1.5px solid #d7dde6; background:#fafbfc; font-size:0.95rem; cursor:pointer; line-height:1.4; }
+  .opt-btn:hover { border-color:#185FA5; }
+  .opt-btn.selected-correct { background:#e6f4ec; border-color:#1D9E75; color:#0d6b3f; font-weight:700; }
+  .opt-btn.selected-wrong { background:#fbeaea; border-color:#E24B4A; color:#a52a2a; font-weight:700; }
+  .opt-btn.reveal-correct { background:#e6f4ec; border-color:#1D9E75; }
+  .opt-btn:disabled { cursor:default; }
+  .exp-box { margin-top:14px; background:#eef7f2; border-left:4px solid #1D9E75; border-radius:8px; padding:12px 14px; font-size:0.88rem; color:#2d4d3f; line-height:1.5; display:none; }
+  .hint-btn { background:#fff8e1;color:#a5720a;border:1.5px solid #f5a623;border-radius:8px;padding:7px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-top:12px;margin-bottom:12px;display:inline-block; }
+  .hint-box { background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.88rem;color:#6b5215;line-height:1.5;display:none; }
+  .hint-box.show { display:block; }
+  .tts-btn { background:#eef2f7; border:none; border-radius:50%; width:34px; height:34px; font-size:1rem; cursor:pointer; margin-left:8px; vertical-align:middle; }
+  .nav-btns { display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .nav-btns button { flex:1; padding:11px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; background:#185FA5; color:#fff; }
+  .nav-btns button:disabled { background:#c9d2dc; cursor:default; }
+  .results-card h2 { text-align:center; margin-top:0; }
+  .score-big { text-align:center; font-size:2.2rem; font-weight:800; color:#185FA5; margin: 6px 0 16px; }
+  .action-row { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .action-row button { padding:12px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; }
+  .btn-retry { background:#f5a623; color:#fff; }
+  .btn-save { background:#7b61ff; color:#fff; }
+  .btn-fresh { background:#E24B4A; color:#fff; }
+  .fresh-btn-bottom { display:block; margin: 6px auto 0; background:none; border:1.5px solid #d7dde6; color:#888; padding:8px 16px; border-radius:20px; font-size:0.8rem; cursor:pointer; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:14px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { font-size:0.95rem; margin-bottom:18px; }
+  .modal-box button { padding:10px 16px; border-radius:8px; border:none; font-weight:700; margin:0 6px; cursor:pointer; }
+  .modal-yes { background:#E24B4A; color:#fff; }
+  .modal-no { background:#eef2f7; color:#333; }
+
+</style>
+</head>
+<body>
+<div class="quiz-wrap">
+  <div class="quiz-title">[Sion] SAT Grammar</div>
+  <div class="instruction" id="instruction"></div>
+
+  <div class="nav-bar">
+    <div class="nav-summary">
+      <span id="nav-count">0/0</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <button class="jump-btn" id="jump-btn" onclick="toggleJump()">Jump&#9662;</button>
+    </div>
+    <div class="dots-panel" id="dots-panel" style="display:none;"></div>
+  </div>
+
+  <div class="results-pill-wrap"><span class="results-pill" id="results-pill" style="display:none;" onclick="showResultsNow()">Results</span></div>
+
+  <div class="quiz-card" id="quiz-card">
+    <div class="passage-box" id="passage-box" style="display:none;"></div>
+    <div class="context-label" id="context-label" style="display:none;"></div>
+    <div class="context-box" id="context-box" style="display:none;"></div>
+    <div class="tag-badge" id="tag-badge" style="display:none;"></div>
+    <div class="q-text" id="q-text"></div>
+    <div id="options"></div>
+    <button class="hint-btn" id="hint-btn" onclick="toggleHint()" style="display:none;">Show Hint</button>
+    <div class="hint-box" id="hint-box"></div>
+    <div class="exp-box" id="exp-box"></div>
+    <div class="nav-btns">
+      <button id="prev-btn" onclick="prevQ()">Prev</button>
+      <button id="next-btn" onclick="goNext()">Next</button>
+    </div>
+  </div>
+
+  <div class="results-card" id="results-card" style="display:none;">
+    <h2>Results</h2>
+    <div class="score-big" id="score-big"></div>
+    <div id="score-detail" style="text-align:center;color:#555;font-size:0.9rem;"></div>
+    <div class="action-row">
+      <button class="btn-retry" onclick="startRetry()">Retry Wrong Ones</button>
+      <button class="btn-save" onclick="saveWrong()">Save Wrong Answers</button>
+      <button class="btn-fresh" onclick="openFreshModal()">Start Fresh</button>
+    </div>
+  </div>
+
+  <button class="fresh-btn-bottom" onclick="openFreshModal()">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="fresh-modal" style="display:none;">
+  <div class="modal-box">
+    <p>Reset all progress and start over?</p>
+    <button class="modal-yes" onclick="confirmFresh()">Yes, Start Fresh</button>
+    <button class="modal-no" onclick="closeFreshModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Sion] SAT Grammar";
+var QUIZ_KEY = "satgrammar";
+var INSTRUCTION = "Choose the best revision for the underlined portion, or 'NO CHANGE' if the original is correct.";
+var TODAY_STR = "20260921";
+var RAW_QUESTIONS = [{"tag": "Comma Usage", "tagcolor": "#185FA5", "passage": "Urban beekeeping has become increasingly popular in cities across the country. Rooftop hives, once considered a fringe hobby<u> require permits</u> in many municipalities today. Beekeepers must register their colonies and follow strict guidelines to protect public safety.", "contextLabel": "Which choice correctly punctuates the underlined portion?", "stem": "Which choice correctly completes the sentence?", "opts": ["NO CHANGE", "once considered a fringe hobby, require permits", "once considered, a fringe hobby require permits", "once considered a fringe hobby; require permits"], "ci": 1, "exp": "The phrase “once considered a fringe hobby” is a nonrestrictive interrupter describing “rooftop hives,” so it needs a comma on both sides; a comma is already present before the phrase, so one must also follow it, immediately before “require.”"}, {"tag": "Subject-Verb Agreement", "tagcolor": "#185FA5", "passage": "Marine biologists studying the coral reefs off the coast of Belize have documented alarming changes in recent years. The collection of bleached, lifeless coral colonies <u>continue to grow</u> each summer as ocean temperatures rise. Researchers hope that new conservation funding will slow the damage.", "contextLabel": "Which choice fixes an error in subject-verb agreement?", "stem": "Which choice best revises the underlined portion?", "opts": ["continue to grow", "continues to grow", "have continued growing", "are continuing to grow"], "ci": 1, "exp": "The subject of the verb is the singular noun “collection,” not the plural “coral colonies” inside the prepositional phrase, so the verb must be singular: “continues.”"}, {"tag": "Parallel Structure", "tagcolor": "#185FA5", "passage": "The high school robotics team spent months preparing for the regional competition. Members were responsible for designing the chassis, writing the control software, and <u>they tested the sensors</u> before the final build was assembled. Their persistence paid off when they advanced to the state finals.", "contextLabel": "Which choice best maintains parallel structure in the sentence?", "stem": "Which choice best revises the underlined portion?", "opts": ["they tested the sensors", "testing the sensors", "the sensors were tested by them", "to test the sensors"], "ci": 1, "exp": "The sentence lists three parallel duties in gerund form (“designing,” “writing”), so the third item should match that pattern: “testing the sensors.”"}, {"tag": "Modifier Placement", "tagcolor": "#185FA5", "passage": "Engineers at a wind farm in rural Iowa spent the fall inspecting turbine blades for microscopic cracks. <u>Using a specialized drone equipped with infrared cameras, the cracks were located</u> quickly and marked for repair before winter storms arrived. The inspection ultimately saved the company thousands of dollars in emergency repairs.", "contextLabel": "Which choice corrects the misplaced modifier?", "stem": "Which choice best revises the underlined portion?", "opts": ["Using a specialized drone equipped with infrared cameras, the cracks were located", "The cracks, using a specialized drone equipped with infrared cameras, were located", "Using a specialized drone equipped with infrared cameras, the engineers located the cracks", "Having used a specialized drone equipped with infrared cameras, the cracks were located by them"], "ci": 2, "exp": "The opening phrase “Using a specialized drone…” must modify the people performing the action; only the engineers, not the cracks, could be doing the “using,” so the noun immediately following the comma should be “the engineers.”"}, {"tag": "Pronoun-Antecedent Agreement", "tagcolor": "#185FA5", "passage": "The city council voted last week to expand the downtown bicycle-lane network by another two miles. Every business owner along the proposed route received a letter explaining how <u>they could submit</u> feedback before the final design was approved. Public hearings are scheduled for later this month.", "contextLabel": "Which choice corrects the pronoun-antecedent error?", "stem": "Which choice best revises the underlined portion?", "opts": ["they could submit", "he or she could submit", "you could submit", "it could submit"], "ci": 1, "exp": "The antecedent “every business owner” is singular, so the pronoun referring to it must also be singular; “he or she” agrees in number, while “they” does not agree with this formal singular antecedent."}, {"tag": "Transitions", "tagcolor": "#185FA5", "passage": "The small-town bakery had relied on foot traffic from a single busy street corner for over a decade. When a highway bypass diverted much of that traffic away from downtown, weekly sales dropped by nearly a third. <u>Similarly</u>, the owners began offering online ordering and local delivery to reach customers who no longer walked past the shop.", "contextLabel": "Which choice provides the most logical transition?", "stem": "Which choice best revises the underlined transition word?", "opts": ["Similarly", "In response", "Nevertheless", "For example"], "ci": 1, "exp": "The second sentence describes an action taken because of the sales drop described earlier, so a transition signaling cause-and-effect reaction, like “In response,” is needed rather than one signaling similarity, contrast, or an example."}, {"tag": "Conciseness", "tagcolor": "#185FA5", "passage": "Every spring, thousands of migratory songbirds pass through the wetland preserve on their way north. Volunteers gather at dawn to count and record the various different species they observe, <u>each and every one of which</u> gets logged in a shared database used by ornithologists nationwide. The data help track population trends over time.", "contextLabel": "Which choice most effectively eliminates the redundancy in the underlined portion?", "stem": "Which choice best revises the underlined portion?", "opts": ["each and every one of which", "each one of which, individually,", "each of which", "which, one by one,"], "ci": 2, "exp": "“Each and every one of which” needlessly repeats the same idea three times; “each of which” conveys the same meaning concisely."}, {"tag": "Verb Tense Consistency", "tagcolor": "#185FA5", "passage": "Volunteer firefighters in many rural towns respond to a wide range of emergencies beyond blazes, including car accidents and medical calls. Last year, one department in Montana <u>answers</u> more than four hundred calls despite having only twelve active members. Their dedication highlights a growing reliance on volunteers in underfunded rural districts.", "contextLabel": "Which choice maintains consistent verb tense with the rest of the passage?", "stem": "Which choice best revises the underlined portion?", "opts": ["answers", "answered", "has answered", "is answering"], "ci": 1, "exp": "The sentence begins with the past-time marker “Last year,” so the verb must be in the simple past tense, “answered,” to remain consistent with that time frame."}, {"tag": "Apostrophe Usage", "tagcolor": "#185FA5", "passage": "Before Isaac Singer patented an improved design in 1851, several inventors had already experimented with mechanized stitching. Singer's version was not the first sewing machine, but it was the first to combine reliability with a price ordinary <u>families budget</u> could afford. Within a decade, the machine transformed home garment-making across the country.", "contextLabel": "Which choice correctly shows possession?", "stem": "Which choice best revises the underlined portion?", "opts": ["families budget", "family's budget", "families budgets", "families' budgets"], "ci": 3, "exp": "The sentence refers to the budgets belonging to multiple ordinary families, so the plural possessive form “families' budgets” is required, with the apostrophe placed after the plural “families.”"}, {"tag": "Sentence Combining", "tagcolor": "#185FA5", "passage": "A group of neighbors in a formerly vacant lot decided to start a community garden. <u>They cleared debris and tested the soil for contaminants. They then applied for a small grant from the city to buy raised garden beds.</u>", "contextLabel": "Which choice most effectively combines the underlined sentences?", "stem": "Which choice best combines the two underlined sentences?", "opts": ["They cleared debris and tested the soil for contaminants. They then applied for a small grant from the city to buy raised garden beds.", "After clearing debris and testing the soil for contaminants, they applied for a small grant from the city to buy raised garden beds.", "They cleared debris, tested the soil for contaminants, and a small grant from the city was applied for to buy raised garden beds.", "Clearing debris and testing the soil for contaminants, a small grant from the city was applied for by them to buy raised garden beds."], "ci": 1, "exp": "Combining the two ideas into a single sentence with an introductory participial phrase (“After clearing debris and testing the soil…”) is the most concise, logical way to show the sequence of actions without an awkward shift to passive voice."}, {"tag": "Word Choice", "tagcolor": "#185FA5", "passage": "NASA's newest Mars rover carries an array of instruments designed to search for signs of ancient microbial life. Scientists must carefully <u>illicit</u> data from rock samples using a laser spectrometer before the rover moves on to its next site. Every measurement is transmitted back to Earth for analysis.", "contextLabel": "Which choice uses the most precise word?", "stem": "Which choice best revises the underlined word?", "opts": ["illicit", "elicit", "elicits", "illicits"], "ci": 1, "exp": "The intended word is “elicit,” meaning to draw out or extract information; “illicit” is an unrelated adjective meaning illegal, and the verb must remain in its base form after “must carefully.”"}, {"tag": "Semicolon Usage", "tagcolor": "#185FA5", "passage": "Jazz emerged in New Orleans in the early twentieth century, blending African rhythms, blues, and brass-band traditions. The genre spread quickly along the Mississippi River<u>, it eventually reached Chicago and New York</u>, where it evolved into new regional styles. Musicians in each city added their own local influences.", "contextLabel": "Which choice correctly joins the two independent clauses?", "stem": "Which choice best revises the underlined portion?", "opts": [", it eventually reached Chicago and New York", "; it eventually reached Chicago and New York", ", and it eventually reaching Chicago and New York", ". Eventually reaching Chicago and New York"], "ci": 1, "exp": "Both “The genre spread quickly along the Mississippi River” and “it eventually reached Chicago and New York” are independent clauses; joining them with only a comma creates a comma splice, so a semicolon is needed."}, {"tag": "Colon Usage", "tagcolor": "#185FA5", "passage": "Facing a prolonged drought, town officials in a small desert community introduced a strict water-conservation plan. The plan targeted three major sources of waste<u>, leaky irrigation systems, unmetered municipal fountains, and outdated household fixtures</u>. Within a year, overall water use had dropped by nearly twenty percent.", "contextLabel": "Which choice correctly introduces the list that follows?", "stem": "Which choice best revises the underlined portion?", "opts": [", leaky irrigation systems, unmetered municipal fountains, and outdated household fixtures", ": leaky irrigation systems, unmetered municipal fountains, and outdated household fixtures", "; leaky irrigation systems, unmetered municipal fountains, and outdated household fixtures", "- leaky irrigation systems, unmetered municipal fountains, and outdated household fixtures"], "ci": 1, "exp": "A colon is the correct punctuation to introduce a list following a complete independent clause; here, “The plan targeted three major sources of waste” is a complete sentence, so a colon should precede the list."}, {"tag": "Comma Splice", "tagcolor": "#185FA5", "passage": "The youth chess tournament drew nearly two hundred participants from across the region this year. Several matches lasted more than three hours, <u>the organizers had to extend the venue's rental agreement</u> to accommodate the final rounds. Parents and coaches praised the tournament for its improved scheduling compared to previous years.", "contextLabel": "Which choice corrects the comma splice?", "stem": "Which choice best revises the underlined portion?", "opts": ["the organizers had to extend the venue's rental agreement", "so the organizers had to extend the venue's rental agreement", "the organizers, however, had to extend the venue's rental agreement", "extending the venue's rental agreement was necessary for organizers"], "ci": 1, "exp": "Two independent clauses cannot be joined by a comma alone; adding the coordinating conjunction “so” correctly links the clauses and clarifies that the long matches caused the need to extend the rental."}, {"tag": "Faulty Comparison", "tagcolor": "#185FA5", "passage": "Alexander Graham Bell is often credited as the sole inventor of the telephone, but historians note that several researchers were pursuing similar ideas simultaneously. Elisha Gray's design, submitted to the patent office on the very same day as Bell's, was arguably <u>more innovative than Bell</u>. Only a narrow legal technicality determined who received the patent.", "contextLabel": "Which choice corrects the faulty comparison?", "stem": "Which choice best revises the underlined portion?", "opts": ["more innovative than Bell", "more innovative than Bell's", "more innovative than Bell's design", "as innovative as Bell"], "ci": 2, "exp": "The sentence compares Elisha Gray's design to Alexander Graham Bell's design, not to Bell himself, so the comparison must be completed with “Bell's design” to keep the comparison logical and parallel."}, {"tag": "Dangling Modifier", "tagcolor": "#185FA5", "passage": "City planners in a mid-sized coastal town began redesigning several major intersections to prioritize cyclists and pedestrians. <u>Hoping to reduce traffic fatalities, new protected bike lanes were installed</u> along the busiest corridors. Early data suggest that collisions in those areas have already declined significantly.", "contextLabel": "Which choice corrects the dangling modifier?", "stem": "Which choice best revises the underlined portion?", "opts": ["Hoping to reduce traffic fatalities, new protected bike lanes were installed", "Hoping to reduce traffic fatalities, the planners installed new protected bike lanes", "New protected bike lanes, hoping to reduce traffic fatalities, were installed", "To hope to reduce traffic fatalities, new protected bike lanes were installed"], "ci": 1, "exp": "The introductory phrase “Hoping to reduce traffic fatalities” describes the planners, who did the hoping, not the bike lanes; the noun immediately after the comma must therefore be “the planners.”"}, {"tag": "Voice and Concision", "tagcolor": "#185FA5", "passage": "A biotech startup in Boston announced a breakthrough in vaccine storage technology this week. The new formulation removes the need for ultra-cold refrigeration, and <u>a shelf-stable version was developed by the company's research team</u> in under eighteen months. Health officials say the innovation could dramatically expand vaccine access in remote regions.", "contextLabel": "Which choice most effectively revises the underlined portion to match the sentence's direct, active style?", "stem": "Which choice best revises the underlined portion?", "opts": ["a shelf-stable version was developed by the company's research team", "a shelf-stable version, developed by the company's research team,", "the company's research team developed a shelf-stable version", "development of a shelf-stable version was achieved by the company's research team"], "ci": 2, "exp": "Switching from the wordy passive construction to the active voice, “the company's research team developed a shelf-stable version,” matches the direct style used in the surrounding sentences and eliminates unnecessary words."}, {"tag": "Idiom / Preposition", "tagcolor": "#185FA5", "passage": "The National Park Service was established in 1916 to protect scenic and historic sites for future generations. Rangers today are responsible <u>of</u> educating visitors about wildlife safety and Leave No Trace principles. Their work helps preserve fragile ecosystems that might otherwise suffer from heavy tourism.", "contextLabel": "Which choice uses the correct idiomatic preposition?", "stem": "Which choice best revises the underlined word?", "opts": ["of", "for", "with", "about"], "ci": 1, "exp": "The standard idiom is “responsible for,” not “responsible of”; “for” correctly pairs with “responsible” to introduce the duty being described."}, {"tag": "Sentence Fragment", "tagcolor": "#185FA5", "passage": "A local newspaper in a mid-sized city offered a summer internship to three high school students this year. <u>Each intern assigned to cover a different beat, including local government, sports, and arts.</u> By the end of the program, all three had bylines in the printed edition.", "contextLabel": "Which choice corrects the sentence fragment?", "stem": "Which choice best revises the underlined portion?", "opts": ["Each intern assigned to cover a different beat, including local government, sports, and arts.", "Each intern was assigned to cover a different beat, including local government, sports, and arts.", "Each intern, assigned to cover a different beat, including local government, sports, and arts.", "Assigning each intern to cover a different beat, including local government, sports, and arts."], "ci": 1, "exp": "The underlined sentence lacks a finite verb for its subject “Each intern”; adding “was” before “assigned” creates a complete verb phrase and turns the fragment into a full sentence."}, {"tag": "Logical Sequencing", "tagcolor": "#185FA5", "passage": "Roman engineers built an extensive network of aqueducts to supply cities with fresh water from distant mountain springs. Some channels ran underground to protect the water from contamination, while elevated sections used precisely calculated slopes to keep water flowing by gravity alone. <u>Rome's aqueducts were largely abandoned after the empire's fall, and many fell into disrepair.</u> Modern engineers still study these structures for insights into gravity-fed water systems.", "contextLabel": "Which choice best maintains the passage's focus at this point?", "stem": "Which choice best revises the underlined sentence so the paragraph stays focused on the engineering achievement being described?", "opts": ["Rome's aqueducts were largely abandoned after the empire's fall, and many fell into disrepair.", "This careful engineering allowed some aqueducts to remain functional for centuries after they were built.", "Aqueducts were also built by other ancient civilizations, including the Persians and the Maya.", "Roman roads used similarly advanced engineering to connect distant provinces."], "ci": 1, "exp": "The paragraph focuses on the engineering achievements of the aqueducts, and the surrounding sentences describe design details; a sentence about the durability resulting from that careful engineering stays on topic, while the original sentence introduces an unrelated point about the aqueducts' later abandonment."}];
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+function reportResult(){
+  try{
+    var correct=0, wrong=0, skipped=0;
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos];
+      if(state.answers[qi]===undefined){ skipped++; continue; }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+    }
+    var total = order.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0
+    };
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
+}
+
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var ORDER_KEY = STORAGE_KEY + '_order';
+var ATTEMPTS_KEY = STORAGE_KEY + '_attempts';
+
+var order = [];
+var activeSet = null; // when in retry mode, holds subset of original indices
+var state = { answers:{}, cur:0, showResults:false };
+var hintShown = false;
+
+function loadState(){
+  var raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try{ state = JSON.parse(raw); }catch(e){ state = {answers:{},cur:0,showResults:false}; } }
+  var rawOrder = localStorage.getItem(ORDER_KEY);
+  if(rawOrder){ try{ order = JSON.parse(rawOrder); }catch(e){ order=null; } }
+  if(!order || !order.length){
+    order = RAW_QUESTIONS.map(function(_,i){return i;});
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function getAttempts(){
+  var a = localStorage.getItem(ATTEMPTS_KEY);
+  return a ? parseInt(a,10) : 1;
+}
+function incAttempts(){
+  var a = getAttempts() + 1;
+  localStorage.setItem(ATTEMPTS_KEY, String(a));
+}
+
+function activeOrder(){ return activeSet || order; }
+
+function render(){
+  document.getElementById('instruction').textContent = INSTRUCTION;
+  var ord = activeOrder();
+  if(state.showResults){
+    document.getElementById('quiz-card').style.display='none';
+    document.getElementById('results-card').style.display='block';
+    renderResults();
+  } else {
+    document.getElementById('quiz-card').style.display='block';
+    document.getElementById('results-card').style.display='none';
+    renderQuestion();
+  }
+  updateNav();
+}
+
+function renderQuestion(){
+  hintShown = false;
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  var q = RAW_QUESTIONS[qi];
+
+  var pb = document.getElementById('passage-box');
+  if(q.passage){ pb.style.display='block'; pb.innerHTML = q.passage; } else { pb.style.display='none'; pb.innerHTML=''; }
+
+  var cl = document.getElementById('context-label');
+  if(q.contextLabel){ cl.style.display='block'; cl.textContent = q.contextLabel; } else { cl.style.display='none'; cl.textContent=''; }
+
+  var cb = document.getElementById('context-box');
+  if(q.context){ cb.style.display='block'; cb.innerHTML = q.context; } else { cb.style.display='none'; cb.innerHTML=''; }
+
+  var tb = document.getElementById('tag-badge');
+  if(q.tag){ tb.style.display='inline-block'; tb.textContent = q.tag; tb.style.background = q.tagcolor || '#185FA5'; } else { tb.style.display='none'; }
+
+  var qt = document.getElementById('q-text');
+  qt.innerHTML = q.stem + (q.tts ? ' <button class="tts-btn" onclick="speak(' + qi + ')" title="Listen">&#128266;</button>' : '');
+
+  var opts = document.getElementById('options');
+  opts.innerHTML = '';
+  var answered = state.answers[qi] !== undefined;
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = optText;
+    if(answered){
+      btn.disabled = true;
+      if(idx === q.ci) btn.className += ' reveal-correct';
+      if(idx === state.answers[qi] && idx !== q.ci) btn.className += ' selected-wrong';
+      if(idx === state.answers[qi] && idx === q.ci) btn.className += ' selected-correct';
+    } else {
+      btn.onclick = function(){ pick(idx); };
+    }
+    opts.appendChild(btn);
+  });
+
+  var hb = document.getElementById('hint-btn');
+  var hx = document.getElementById('hint-box');
+  if(q.hint){
+    hb.style.display='inline-block'; hb.textContent='Show Hint';
+    hx.innerHTML = q.hint; hx.classList.remove('show');
+  } else {
+    hb.style.display='none'; hx.classList.remove('show');
+  }
+
+  var eb = document.getElementById('exp-box');
+  if(answered){
+    eb.style.display='block';
+    eb.innerHTML = '<strong>Explanation:</strong> ' + q.exp;
+  } else {
+    eb.style.display='none'; eb.innerHTML='';
+  }
+
+  document.getElementById('prev-btn').disabled = (state.cur === 0);
+  var ord2 = activeOrder();
+  var isLast = (state.cur === ord2.length - 1);
+  document.getElementById('next-btn').textContent = isLast ? 'Finish' : 'Next';
+}
+
+function toggleHint(){
+  hintShown = !hintShown;
+  var b=document.getElementById('hint-btn'), x=document.getElementById('hint-box');
+  if(hintShown){ x.classList.add('show'); b.textContent='Hide Hint'; }
+  else { x.classList.remove('show'); b.textContent='Show Hint'; }
+}
+window.toggleHint = toggleHint;
+
+function pick(idx){
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState();
+  render();
+}
+window.pick = pick;
+
+function prevQ(){
+  if(state.cur > 0){ state.cur--; saveState(); render(); }
+}
+window.prevQ = prevQ;
+window.go = prevQ;
+
+function goNext(){
+  var ord = activeOrder();
+  if(state.cur < ord.length - 1){
+    state.cur++;
+    saveState();
+    render();
+  } else {
+    state.showResults = true;
+    incAttempts();
+    saveState();
+    render();
+    reportResult();
+  }
+}
+window.goNext = goNext;
+
+function showResultsNow(){
+  state.showResults = true;
+  saveState();
+  render();
+  reportResult();
+}
+window.showResultsNow = showResultsNow;
+
+function goToQ(pos){
+  state.cur = pos;
+  state.showResults = false;
+  saveState();
+  render();
+}
+window.goToQ = goToQ;
+
+function renderResults(){
+  var ord = activeOrder();
+  var correct=0, wrong=0, skipped=0;
+  ord.forEach(function(qi){
+    if(state.answers[qi]===undefined) skipped++;
+    else if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++;
+    else wrong++;
+  });
+  var total = ord.length;
+  document.getElementById('score-big').textContent = correct + ' / ' + total;
+  document.getElementById('score-detail').textContent = 'Correct: ' + correct + '  Wrong: ' + wrong + '  Skipped: ' + skipped;
+}
+
+function updateNav(){
+  var ord = activeOrder();
+  var answeredCount = 0;
+  ord.forEach(function(qi){ if(state.answers[qi]!==undefined) answeredCount++; });
+  document.getElementById('nav-count').textContent = answeredCount + '/' + ord.length;
+  var pct = ord.length ? Math.round(answeredCount/ord.length*100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('results-pill').style.display = (answeredCount === ord.length && ord.length>0) ? 'inline-block' : 'none';
+  renderDots();
+}
+
+function renderDots(){
+  var panel = document.getElementById('dots-panel');
+  if(panel.style.display === 'none') { buildDots(); return; }
+  buildDots();
+}
+function buildDots(){
+  var panel = document.getElementById('dots-panel');
+  var ord = activeOrder();
+  panel.innerHTML = '';
+  ord.forEach(function(qi, pos){
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.textContent = (pos+1);
+    if(state.answers[qi]!==undefined){
+      d.className += (state.answers[qi]===RAW_QUESTIONS[qi].ci) ? ' answered-correct' : ' answered-wrong';
+    }
+    d.onclick = function(){ goToQ(pos); };
+    panel.appendChild(d);
+  });
+}
+
+function toggleJump(){
+  var panel = document.getElementById('dots-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display === 'none'){
+    panel.style.display = 'flex';
+    btn.innerHTML = 'Hide&#9652;';
+    buildDots();
+  } else {
+    panel.style.display = 'none';
+    btn.innerHTML = 'Jump&#9662;';
+  }
+}
+window.toggleJump = toggleJump;
+
+function startRetry(){
+  var ord = activeOrder();
+  var wrongIdx = ord.filter(function(qi){ return state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci; });
+  if(!wrongIdx.length) return;
+  activeSet = wrongIdx;
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  render();
+}
+window.startRetry = startRetry;
+
+function saveWrong(){
+  var ord = activeOrder();
+  var wrongAnswers = [];
+  ord.forEach(function(qi){
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongAnswers.push({
+        question: q.stem.replace(/<[^>]+>/g,''),
+        yourAnswer: q.opts[state.answers[qi]].replace(/<[^>]+>/g,''),
+        correctAnswer: q.opts[q.ci].replace(/<[^>]+>/g,''),
+        explanation: q.exp.replace(/<[^>]+>/g,'')
+      });
+    }
+  });
+  var payload = { title: TITLE, wrongAnswers: wrongAnswers };
+  var blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var d = new Date();
+  var ds = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  a.href = url;
+  a.download = 'quiz_' + QUIZ_KEY + '_wrong_' + ds + '_v1.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+window.copyRes = saveWrong;
+window.saveWrong = saveWrong;
+
+function openFreshModal(){ document.getElementById('fresh-modal').style.display='flex'; }
+window.openFreshModal = openFreshModal;
+function closeFreshModal(){ document.getElementById('fresh-modal').style.display='none'; }
+window.closeFreshModal = closeFreshModal;
+function confirmFresh(){
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(ORDER_KEY);
+  activeSet = null;
+  order = RAW_QUESTIONS.map(function(_,i){return i;});
+  localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  document.getElementById('fresh-modal').style.display='none';
+  render();
+}
+window.confirmFresh = confirmFresh;
+
+
+
+loadState();
+render();
+</script>
+</body>
+</html>

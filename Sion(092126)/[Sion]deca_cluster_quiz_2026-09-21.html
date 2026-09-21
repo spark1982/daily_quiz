@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Deca Cluster Quiz</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f4f6fa; margin:0; padding: 20px 12px 60px; color:#1a1a2e; }
+  .quiz-wrap { max-width: 680px; margin: 0 auto; }
+  .quiz-title { font-size: 1.4rem; font-weight: 800; text-align:center; margin: 8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom: 14px; min-height: 0; }
+  .nav-bar { background:#fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .nav-summary { display:flex; align-items:center; gap:10px; }
+  #nav-count { font-weight:700; font-size:0.85rem; color:#333; white-space:nowrap; }
+  .progress-track { flex:1; height:6px; background:#d7dde6; border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; width:0%; background:#185FA5; border-radius:3px; transition: width .2s; }
+  .jump-btn { background:#eef2f7; border:none; border-radius:8px; padding:6px 12px; font-size:0.8rem; font-weight:700; color:#185FA5; cursor:pointer; white-space:nowrap; }
+  .dots-panel { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .dot { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; cursor:pointer; background:#d7dde6; color:#555; border:none; }
+  .dot.answered-correct { background:#185FA5; color:#fff; }
+  .dot.answered-wrong { background:#E24B4A; color:#fff; }
+  .results-pill { display:inline-block; margin: 0 auto 14px; padding: 8px 20px; background:#1D9E75; color:#fff; border-radius:20px; font-weight:700; text-align:center; cursor:pointer; width:fit-content; }
+  .results-pill-wrap { text-align:center; }
+  .quiz-card, .results-card { background:#fff; border-radius: 14px; padding: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 16px; }
+  .passage-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:0.92rem; line-height:1.6; color:#222; }
+  .context-label { font-size:0.92rem; font-weight:600; color:#333; margin-bottom:8px; line-height:1.4; }
+  .context-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; }
+  .tag-badge { display:inline-block; font-size:0.72rem; font-weight:700; color:#fff; padding:3px 10px; border-radius:12px; margin-bottom:10px; }
+  .q-text { font-size:1.05rem; font-weight:600; margin-bottom:16px; line-height:1.5; }
+  #options { display:flex; flex-direction:column; gap:10px; }
+  .opt-btn { text-align:left; padding:12px 14px; border-radius:10px; border:1.5px solid #d7dde6; background:#fafbfc; font-size:0.95rem; cursor:pointer; line-height:1.4; }
+  .opt-btn:hover { border-color:#185FA5; }
+  .opt-btn.selected-correct { background:#e6f4ec; border-color:#1D9E75; color:#0d6b3f; font-weight:700; }
+  .opt-btn.selected-wrong { background:#fbeaea; border-color:#E24B4A; color:#a52a2a; font-weight:700; }
+  .opt-btn.reveal-correct { background:#e6f4ec; border-color:#1D9E75; }
+  .opt-btn:disabled { cursor:default; }
+  .exp-box { margin-top:14px; background:#eef7f2; border-left:4px solid #1D9E75; border-radius:8px; padding:12px 14px; font-size:0.88rem; color:#2d4d3f; line-height:1.5; display:none; }
+  .hint-btn { background:#fff8e1;color:#a5720a;border:1.5px solid #f5a623;border-radius:8px;padding:7px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-top:12px;margin-bottom:12px;display:inline-block; }
+  .hint-box { background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.88rem;color:#6b5215;line-height:1.5;display:none; }
+  .hint-box.show { display:block; }
+  .tts-btn { background:#eef2f7; border:none; border-radius:50%; width:34px; height:34px; font-size:1rem; cursor:pointer; margin-left:8px; vertical-align:middle; }
+  .nav-btns { display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .nav-btns button { flex:1; padding:11px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; background:#185FA5; color:#fff; }
+  .nav-btns button:disabled { background:#c9d2dc; cursor:default; }
+  .results-card h2 { text-align:center; margin-top:0; }
+  .score-big { text-align:center; font-size:2.2rem; font-weight:800; color:#185FA5; margin: 6px 0 16px; }
+  .action-row { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .action-row button { padding:12px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; }
+  .btn-retry { background:#f5a623; color:#fff; }
+  .btn-save { background:#7b61ff; color:#fff; }
+  .btn-fresh { background:#E24B4A; color:#fff; }
+  .fresh-btn-bottom { display:block; margin: 6px auto 0; background:none; border:1.5px solid #d7dde6; color:#888; padding:8px 16px; border-radius:20px; font-size:0.8rem; cursor:pointer; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:14px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { font-size:0.95rem; margin-bottom:18px; }
+  .modal-box button { padding:10px 16px; border-radius:8px; border:none; font-weight:700; margin:0 6px; cursor:pointer; }
+  .modal-yes { background:#E24B4A; color:#fff; }
+  .modal-no { background:#eef2f7; color:#333; }
+
+</style>
+</head>
+<body>
+<div class="quiz-wrap">
+  <div class="quiz-title">[Sion] Deca Cluster Quiz</div>
+  <div class="instruction" id="instruction"></div>
+
+  <div class="nav-bar">
+    <div class="nav-summary">
+      <span id="nav-count">0/0</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <button class="jump-btn" id="jump-btn" onclick="toggleJump()">Jump&#9662;</button>
+    </div>
+    <div class="dots-panel" id="dots-panel" style="display:none;"></div>
+  </div>
+
+  <div class="results-pill-wrap"><span class="results-pill" id="results-pill" style="display:none;" onclick="showResultsNow()">Results</span></div>
+
+  <div class="quiz-card" id="quiz-card">
+    <div class="passage-box" id="passage-box" style="display:none;"></div>
+    <div class="context-label" id="context-label" style="display:none;"></div>
+    <div class="context-box" id="context-box" style="display:none;"></div>
+    <div class="tag-badge" id="tag-badge" style="display:none;"></div>
+    <div class="q-text" id="q-text"></div>
+    <div id="options"></div>
+    <button class="hint-btn" id="hint-btn" onclick="toggleHint()" style="display:none;">Show Hint</button>
+    <div class="hint-box" id="hint-box"></div>
+    <div class="exp-box" id="exp-box"></div>
+    <div class="nav-btns">
+      <button id="prev-btn" onclick="prevQ()">Prev</button>
+      <button id="next-btn" onclick="goNext()">Next</button>
+    </div>
+  </div>
+
+  <div class="results-card" id="results-card" style="display:none;">
+    <h2>Results</h2>
+    <div class="score-big" id="score-big"></div>
+    <div id="score-detail" style="text-align:center;color:#555;font-size:0.9rem;"></div>
+    <div class="action-row">
+      <button class="btn-retry" onclick="startRetry()">Retry Wrong Ones</button>
+      <button class="btn-save" onclick="saveWrong()">Save Wrong Answers</button>
+      <button class="btn-fresh" onclick="openFreshModal()">Start Fresh</button>
+    </div>
+  </div>
+
+  <button class="fresh-btn-bottom" onclick="openFreshModal()">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="fresh-modal" style="display:none;">
+  <div class="modal-box">
+    <p>Reset all progress and start over?</p>
+    <button class="modal-yes" onclick="confirmFresh()">Yes, Start Fresh</button>
+    <button class="modal-no" onclick="closeFreshModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Sion] Deca Cluster Quiz";
+var QUIZ_KEY = "siondecacluster";
+var INSTRUCTION = "Choose the best answer for each question.";
+var TODAY_STR = "20260921";
+var RAW_QUESTIONS = [{"stem": "Maple Valley Credit Union is preparing to launch a new peer-to-peer lending platform that will let members lend small amounts of money directly to other members across several states. Before the product goes live, which legal consideration should the compliance team prioritize?", "opts": ["Confirming the platform complies with truth-in-lending disclosure and consumer lending regulations in every state where members reside", "Registering a trademark for the platform's name before any other launch task", "Relying on the platform's user agreement disclaimers to eliminate all regulatory obligations", "Waiting until after launch to consult legal counsel, since fintech regulation changes so often anyway"], "ci": 0, "exp": "Because lending regulations vary by state and carry significant liability, the compliance team must verify the platform meets applicable disclosure and consumer-lending laws in every state it operates in before launch, rather than treating legal review as optional or a formality that a disclaimer alone can satisfy."}, {"stem": "While preparing for a regulatory audit, compliance analyst Mara Lin at Bright Horizon Bank discovers that 12% of customer records in the core banking system contain outdated addresses, incomplete ZIP codes, and duplicate customer IDs. What is the greatest compliance risk this data quality problem creates?", "opts": ["It may cause the bank to miss red flags needed for accurate anti-money-laundering monitoring and reporting", "It will only slow down the marketing department's email newsletter campaigns", "It means the IT department must purchase additional server hardware immediately", "It will mainly result in customers noticing typos on their printed statements"], "ci": 0, "exp": "Inaccurate or duplicate customer records can prevent monitoring systems from correctly linking transactions to a single customer profile, which undermines the bank's ability to detect suspicious activity and file accurate regulatory reports -- a far more serious risk than marketing inconvenience or cosmetic errors."}, {"stem": "Delridge Manufacturing's new operations manager needs to notify all plant staff by email that the second shift's start time is moving from 3:00 p.m. to 2:00 p.m. next Monday. Which approach best reflects effective written business communication?", "opts": ["A long email describing every detail discussed in the scheduling meeting, written in a conversational, wandering style", "A short, clearly organized message stating the change, effective date, and reason, with the key facts easy to find", "A message written in technical HR policy language so it matches the formality of the employee handbook", "An email that only says 'schedule changes are coming soon' to avoid overwhelming employees with details"], "ci": 1, "exp": "Effective business writing is clear, concise, and organized around what the audience most needs to know; stating the change, the effective date, and the reason up front lets every plant employee act on the message quickly, unlike a rambling, jargon-heavy, or vague alternative."}, {"stem": "An intern at Harborview Retail Group is assembling the company's quarterly performance report for the board of directors, which will also include full data tables and a detailed methodology section. What is the executive summary's role within this report?", "opts": ["It should reproduce every data table from the full report so the board has all the raw numbers in one place", "It should give a concise overview of the report's key findings and recommendations for readers who may not read the full document", "It should be roughly the same length as the full report to demonstrate thoroughness", "It should describe the research methodology in full technical detail before presenting any conclusions"], "ci": 1, "exp": "An executive summary exists to let busy readers, such as board members, quickly grasp the report's most important findings and recommendations without reading every page; it is intentionally brief and highlights conclusions rather than duplicating raw data or methodology."}, {"stem": "Golden Crust Bakery has built its brand around the promise of fresh-baked bread every day. Which practice best demonstrates the company actually delivering on that brand promise, rather than just advertising it?", "opts": ["Baking bread fresh each morning and removing any unsold loaves from shelves at closing rather than reselling them the next day", "Advertising 'freshly baked daily' in all marketing materials regardless of how bread is actually produced", "Discounting yesterday's unsold loaves and relabeling them as 'freshly baked' to reduce waste", "Competing mainly on having the lowest bread prices in the neighborhood"], "ci": 0, "exp": "A brand promise is only meaningful if daily operations actually deliver on it; consistently baking fresh bread and removing unsold loaves keeps the promise credible, while advertising freshness without matching practice, or relabeling old bread as fresh, undermines the very promise being marketed."}, {"stem": "The sales team at Vantage Office Supplies uses a shared CRM system to track customer accounts. Which use of the CRM reflects best practice for managing customer relationships?", "opts": ["Each sales rep keeps their own private notes on customers instead of entering them into the shared CRM", "Logging every substantive customer interaction and preference in the CRM so any rep has full context before the next contact", "Using the CRM's contact list to send unsolicited mass marketing blasts to customers who never opted in", "Updating the CRM once a year during the annual sales review"], "ci": 1, "exp": "CRM systems are most valuable when interactions and preferences are logged consistently and promptly, giving any team member the context needed to serve a customer well; keeping notes private, updating rarely, or misusing contact data for unsolicited blasts defeats the purpose of shared, relationship-focused CRM use."}, {"stem": "Cascade Coffee Roasters can only obtain a limited supply of premium single-origin beans this month and must decide how much to allocate to its espresso blend versus its drip coffee line. Which basic economic concept best explains why this decision is necessary?", "opts": ["Scarcity, because limited resources force businesses to make choices about how to allocate them", "Branding, because the decision is really about which product name sounds more premium", "Logistics, because the issue is purely about how beans are physically transported", "Personal taste, because the decision depends only on what the roaster's staff prefers to drink"], "ci": 0, "exp": "Because the supply of premium beans is limited relative to potential uses, Cascade Coffee Roasters faces the fundamental economic problem of scarcity, which requires choosing how to allocate a limited resource among competing uses rather than a question of branding, logistics, or personal preference alone."}, {"stem": "A housing boom in a small town has significantly increased the number of construction projects, but the town has only one lumber supplier. Over the past year, lumber prices have risen sharply as builders compete for the limited available supply. Which type of inflation does this scenario best illustrate?", "opts": ["Demand-pull inflation, because rising demand for lumber is outpacing the available supply", "Cost-push inflation caused primarily by a sudden increase in lumber workers' wages", "Inflation caused by the town's currency losing value against foreign currencies", "Inflation caused by new government price controls on building materials"], "ci": 0, "exp": "When demand for a good rises faster than its supply can keep up, as with builders competing for lumber from a single supplier, the resulting price increases are an example of demand-pull inflation, not cost-push inflation, currency devaluation, or price controls, none of which are described in the scenario."}, {"stem": "Renee, a department head at a mid-sized firm, wants senior executives to approve funding for new project-management software. Which approach is most likely to persuade the executives effectively?", "opts": ["Presenting data on expected time savings and cost reduction, tailored to the specific priorities and concerns of each executive", "Repeating the request in every meeting without providing new evidence or addressing objections", "Appealing mainly to her own seniority and years of experience at the company", "Setting an artificial deadline and pressuring executives to decide before they can review the proposal"], "ci": 0, "exp": "Effective persuasion relies on presenting relevant evidence that speaks to the audience's actual priorities and concerns; simply repeating a request, leaning on authority, or using pressure tactics tends to be less convincing and can damage trust with decision-makers."}, {"stem": "Ridgeline Furniture Co. is negotiating a fabric supply contract. The supplier wants a higher price per yard, while Ridgeline wants to keep costs down. Which approach best reflects an effective negotiation strategy built on compromise?", "opts": ["Ridgeline refuses to move at all from its original price offer throughout the negotiation", "Ridgeline identifies both sides' priorities and offers a longer-term contract in exchange for a lower per-yard price", "Ridgeline agrees to the supplier's full asking price immediately just to close the deal quickly", "Ridgeline ends the negotiation as soon as the supplier rejects its first offer"], "ci": 1, "exp": "Effective negotiation often involves identifying what each side values most and trading concessions accordingly; offering contract length in exchange for a better price lets both sides gain something important, unlike refusing to move, conceding everything, or walking away after one rejected offer."}, {"stem": "A small business owner wants to set a strong financial goal for the upcoming fiscal year. Which of the following is the best example of an effective financial goal?", "opts": ["Increase quarterly net profit margin from 8% to 12% by the end of the fiscal year through specific cost and pricing actions", "Try to make more money than last year, however that ends up happening", "Grow total revenue as much as possible, with no defined timeframe or target", "Focus only on increasing total sales, regardless of the effect on profit margin"], "ci": 0, "exp": "A strong financial goal is specific, measurable, and time-bound; targeting a defined increase in net profit margin by a set date gives the business a clear benchmark to plan and measure progress against, unlike vague or revenue-only goals that ignore profitability and timing."}, {"stem": "A bookkeeper at Clearwater Landscaping is classifying items for the company's balance sheet: an outstanding bank loan the company still owes, cash in the checking account, mowing equipment the company owns, and money owed to Clearwater by clients. Which item should be classified as a liability?", "opts": ["The cash in the company's checking account", "The outstanding bank loan the company still owes", "The mowing equipment the company owns", "The money owed to Clearwater by its clients"], "ci": 1, "exp": "A liability is an amount a business owes to an outside party, so the outstanding bank loan belongs on the liabilities side of the balance sheet; cash, equipment, and money owed to the company by clients are all assets, not liabilities."}, {"stem": "A young professional is deciding whether it is worth setting aside part of each paycheck to save and invest, even though current income already covers monthly expenses. What is the best explanation of why saving and investing still matter in this situation?", "opts": ["Saving and investing only matter when someone wants to buy luxury items they can't otherwise afford", "Saving and investing let money grow over time and provide a financial cushion for emergencies and future needs", "Investing guarantees profits with no risk, so it is always better than keeping money in savings", "Saving is unnecessary as long as current income covers all current monthly expenses"], "ci": 1, "exp": "Even when income currently covers expenses, saving and investing help money grow over time through interest and returns while building a cushion for emergencies, future goals, or income disruptions -- a need that exists regardless of whether every current bill is already covered."}, {"stem": "Lakeside Print Shop is deciding whether to accept one additional large print order this week. The shop's owner is trying to apply marginal analysis to the decision. Which comparison should the owner make?", "opts": ["Compare the additional revenue the order would bring against the additional cost of producing it", "Compare the order's price against the average cost of all print jobs completed so far this year", "Base the decision only on the shop's total revenue for the month so far", "Accept the order automatically as long as it keeps the printing machines busy, regardless of cost"], "ci": 0, "exp": "Marginal analysis evaluates a decision by comparing the additional (marginal) revenue an action would generate against its additional (marginal) cost, rather than relying on average costs, total revenue for an unrelated period, or simply keeping equipment busy without regard to profitability."}, {"stem": "Trailhead Outfitters wants to understand how its sales change throughout the year using three years of monthly sales records. Which approach would best help the company identify a meaningful trend?", "opts": ["Compare sales by month and season across all three years to identify recurring seasonal patterns and overall growth", "Look only at a single day's revenue figure from last month", "Rely on one employee's general impression of whether business feels busy or slow", "Compare Trailhead's sales figures to an unrelated company in a different industry"], "ci": 0, "exp": "Identifying a real trend requires looking at data over a meaningful period and comparable categories, such as comparing the same months and seasons across multiple years, rather than relying on a single day's figure, a subjective impression, or unrelated outside data."}, {"stem": "The analytics team at Prime Analytics is about to mine a large set of customer purchase data to find patterns that could guide marketing decisions. Which sequence best reflects a sound data-mining process?", "opts": ["Define the business objective, collect and clean the data, analyze it, then interpret and apply the results", "Begin modeling immediately using the raw, unclean data to save time before any objective is defined", "Collect as much data as possible and stop there, without further analysis or interpretation", "Analyze the data first, and only afterward decide what business question the analysis should answer"], "ci": 0, "exp": "A sound data-mining process starts by defining a clear objective, then collects and cleans the relevant data before analyzing it and interpreting the results for practical use; skipping data cleaning, analyzing without a defined objective, or stopping after collection undermines the value of the findings."}, {"stem": "Summit Logistics is hiring for a position and has strong candidates located in several different states. The hiring manager wants to interview them thoroughly without requiring excessive travel. Which interview method best fits this situation?", "opts": ["Conducting videoconference interviews so candidates can be assessed face-to-face without travel", "Evaluating candidates using only their submitted resumes, with no live interview at all", "Requiring all candidates to interview in person only, which would exclude strong out-of-state applicants", "Conducting the entire interview through a text-messaging app with no live conversation"], "ci": 0, "exp": "Videoconferencing allows a hiring manager to conduct a real-time, face-to-face style interview with candidates regardless of location, making it well suited to this situation, unlike skipping a live interview, requiring costly in-person-only interviews, or using a text-only format that limits genuine interaction."}, {"stem": "At Bluebird Grocers, a store employee stocks shelves and handles perishable inventory. Which of the following best reflects the employee's role in controlling store operating expenses?", "opts": ["Assuming expense control is entirely management's responsibility and not something employees can affect", "Reducing product waste, following ordering guidelines, and reporting inefficiencies that increase costs", "Over-ordering popular items in bulk without checking actual need, in order to save time later", "Ignoring spoiled produce since inventory losses are not tracked at the individual employee level"], "ci": 1, "exp": "Every employee contributes to expense control through everyday actions like reducing waste, following inventory guidelines, and flagging inefficiencies; treating cost control as solely management's job, over-ordering without need, or ignoring spoilage all increase costs the business ultimately has to absorb."}, {"stem": "Jordan has an upcoming job interview at Meridian Consulting and wants to prepare effectively. Which approach reflects the best interview preparation?", "opts": ["Researching the company, preparing specific examples that demonstrate relevant skills, and preparing thoughtful questions to ask", "Focusing interview preparation almost entirely on negotiating starting salary before being offered the job", "Memorizing scripted answers word-for-word without understanding how they apply to the role", "Arriving without any research on the company, assuming personality alone will carry the interview"], "ci": 0, "exp": "Strong interview preparation includes researching the company, preparing concrete examples that show relevant skills, and having thoughtful questions ready, which demonstrates genuine interest and readiness -- unlike prioritizing salary talk prematurely, reciting memorized answers, or skipping preparation altogether."}, {"stem": "Anchor Freight is rolling out an enterprise risk management (ERM) program across the whole company instead of letting each department handle risk on its own. Which statement best describes the nature of this ERM approach?", "opts": ["ERM applies only to the finance and insurance departments and has little to do with other parts of the company", "ERM takes a company-wide, coordinated approach to identifying and managing risks across all departments", "Each department should continue managing its own risks independently, with no need for cross-department coordination", "ERM is relevant only when a company is already facing a major lawsuit or litigation"], "ci": 1, "exp": "Enterprise risk management is defined by its company-wide, coordinated approach to identifying, assessing, and managing risk across every department, rather than being limited to finance and insurance, left to isolated departmental efforts, or triggered only by active litigation."}];
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+function reportResult(){
+  try{
+    var correct=0, wrong=0, skipped=0;
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos];
+      if(state.answers[qi]===undefined){ skipped++; continue; }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+    }
+    var total = order.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0
+    };
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
+}
+
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var ORDER_KEY = STORAGE_KEY + '_order';
+var ATTEMPTS_KEY = STORAGE_KEY + '_attempts';
+
+var order = [];
+var activeSet = null; // when in retry mode, holds subset of original indices
+var state = { answers:{}, cur:0, showResults:false };
+var hintShown = false;
+
+function loadState(){
+  var raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try{ state = JSON.parse(raw); }catch(e){ state = {answers:{},cur:0,showResults:false}; } }
+  var rawOrder = localStorage.getItem(ORDER_KEY);
+  if(rawOrder){ try{ order = JSON.parse(rawOrder); }catch(e){ order=null; } }
+  if(!order || !order.length){
+    order = RAW_QUESTIONS.map(function(_,i){return i;});
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function getAttempts(){
+  var a = localStorage.getItem(ATTEMPTS_KEY);
+  return a ? parseInt(a,10) : 1;
+}
+function incAttempts(){
+  var a = getAttempts() + 1;
+  localStorage.setItem(ATTEMPTS_KEY, String(a));
+}
+
+function activeOrder(){ return activeSet || order; }
+
+function render(){
+  document.getElementById('instruction').textContent = INSTRUCTION;
+  var ord = activeOrder();
+  if(state.showResults){
+    document.getElementById('quiz-card').style.display='none';
+    document.getElementById('results-card').style.display='block';
+    renderResults();
+  } else {
+    document.getElementById('quiz-card').style.display='block';
+    document.getElementById('results-card').style.display='none';
+    renderQuestion();
+  }
+  updateNav();
+}
+
+function renderQuestion(){
+  hintShown = false;
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  var q = RAW_QUESTIONS[qi];
+
+  var pb = document.getElementById('passage-box');
+  if(q.passage){ pb.style.display='block'; pb.innerHTML = q.passage; } else { pb.style.display='none'; pb.innerHTML=''; }
+
+  var cl = document.getElementById('context-label');
+  if(q.contextLabel){ cl.style.display='block'; cl.textContent = q.contextLabel; } else { cl.style.display='none'; cl.textContent=''; }
+
+  var cb = document.getElementById('context-box');
+  if(q.context){ cb.style.display='block'; cb.innerHTML = q.context; } else { cb.style.display='none'; cb.innerHTML=''; }
+
+  var tb = document.getElementById('tag-badge');
+  if(q.tag){ tb.style.display='inline-block'; tb.textContent = q.tag; tb.style.background = q.tagcolor || '#185FA5'; } else { tb.style.display='none'; }
+
+  var qt = document.getElementById('q-text');
+  qt.innerHTML = q.stem + (q.tts ? ' <button class="tts-btn" onclick="speak(' + qi + ')" title="Listen">&#128266;</button>' : '');
+
+  var opts = document.getElementById('options');
+  opts.innerHTML = '';
+  var answered = state.answers[qi] !== undefined;
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = optText;
+    if(answered){
+      btn.disabled = true;
+      if(idx === q.ci) btn.className += ' reveal-correct';
+      if(idx === state.answers[qi] && idx !== q.ci) btn.className += ' selected-wrong';
+      if(idx === state.answers[qi] && idx === q.ci) btn.className += ' selected-correct';
+    } else {
+      btn.onclick = function(){ pick(idx); };
+    }
+    opts.appendChild(btn);
+  });
+
+  var hb = document.getElementById('hint-btn');
+  var hx = document.getElementById('hint-box');
+  if(q.hint){
+    hb.style.display='inline-block'; hb.textContent='Show Hint';
+    hx.innerHTML = q.hint; hx.classList.remove('show');
+  } else {
+    hb.style.display='none'; hx.classList.remove('show');
+  }
+
+  var eb = document.getElementById('exp-box');
+  if(answered){
+    eb.style.display='block';
+    eb.innerHTML = '<strong>Explanation:</strong> ' + q.exp;
+  } else {
+    eb.style.display='none'; eb.innerHTML='';
+  }
+
+  document.getElementById('prev-btn').disabled = (state.cur === 0);
+  var ord2 = activeOrder();
+  var isLast = (state.cur === ord2.length - 1);
+  document.getElementById('next-btn').textContent = isLast ? 'Finish' : 'Next';
+}
+
+function toggleHint(){
+  hintShown = !hintShown;
+  var b=document.getElementById('hint-btn'), x=document.getElementById('hint-box');
+  if(hintShown){ x.classList.add('show'); b.textContent='Hide Hint'; }
+  else { x.classList.remove('show'); b.textContent='Show Hint'; }
+}
+window.toggleHint = toggleHint;
+
+function pick(idx){
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState();
+  render();
+}
+window.pick = pick;
+
+function prevQ(){
+  if(state.cur > 0){ state.cur--; saveState(); render(); }
+}
+window.prevQ = prevQ;
+window.go = prevQ;
+
+function goNext(){
+  var ord = activeOrder();
+  if(state.cur < ord.length - 1){
+    state.cur++;
+    saveState();
+    render();
+  } else {
+    state.showResults = true;
+    incAttempts();
+    saveState();
+    render();
+    reportResult();
+  }
+}
+window.goNext = goNext;
+
+function showResultsNow(){
+  state.showResults = true;
+  saveState();
+  render();
+  reportResult();
+}
+window.showResultsNow = showResultsNow;
+
+function goToQ(pos){
+  state.cur = pos;
+  state.showResults = false;
+  saveState();
+  render();
+}
+window.goToQ = goToQ;
+
+function renderResults(){
+  var ord = activeOrder();
+  var correct=0, wrong=0, skipped=0;
+  ord.forEach(function(qi){
+    if(state.answers[qi]===undefined) skipped++;
+    else if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++;
+    else wrong++;
+  });
+  var total = ord.length;
+  document.getElementById('score-big').textContent = correct + ' / ' + total;
+  document.getElementById('score-detail').textContent = 'Correct: ' + correct + '  Wrong: ' + wrong + '  Skipped: ' + skipped;
+}
+
+function updateNav(){
+  var ord = activeOrder();
+  var answeredCount = 0;
+  ord.forEach(function(qi){ if(state.answers[qi]!==undefined) answeredCount++; });
+  document.getElementById('nav-count').textContent = answeredCount + '/' + ord.length;
+  var pct = ord.length ? Math.round(answeredCount/ord.length*100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('results-pill').style.display = (answeredCount === ord.length && ord.length>0) ? 'inline-block' : 'none';
+  renderDots();
+}
+
+function renderDots(){
+  var panel = document.getElementById('dots-panel');
+  if(panel.style.display === 'none') { buildDots(); return; }
+  buildDots();
+}
+function buildDots(){
+  var panel = document.getElementById('dots-panel');
+  var ord = activeOrder();
+  panel.innerHTML = '';
+  ord.forEach(function(qi, pos){
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.textContent = (pos+1);
+    if(state.answers[qi]!==undefined){
+      d.className += (state.answers[qi]===RAW_QUESTIONS[qi].ci) ? ' answered-correct' : ' answered-wrong';
+    }
+    d.onclick = function(){ goToQ(pos); };
+    panel.appendChild(d);
+  });
+}
+
+function toggleJump(){
+  var panel = document.getElementById('dots-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display === 'none'){
+    panel.style.display = 'flex';
+    btn.innerHTML = 'Hide&#9652;';
+    buildDots();
+  } else {
+    panel.style.display = 'none';
+    btn.innerHTML = 'Jump&#9662;';
+  }
+}
+window.toggleJump = toggleJump;
+
+function startRetry(){
+  var ord = activeOrder();
+  var wrongIdx = ord.filter(function(qi){ return state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci; });
+  if(!wrongIdx.length) return;
+  activeSet = wrongIdx;
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  render();
+}
+window.startRetry = startRetry;
+
+function saveWrong(){
+  var ord = activeOrder();
+  var wrongAnswers = [];
+  ord.forEach(function(qi){
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongAnswers.push({
+        question: q.stem.replace(/<[^>]+>/g,''),
+        yourAnswer: q.opts[state.answers[qi]].replace(/<[^>]+>/g,''),
+        correctAnswer: q.opts[q.ci].replace(/<[^>]+>/g,''),
+        explanation: q.exp.replace(/<[^>]+>/g,'')
+      });
+    }
+  });
+  var payload = { title: TITLE, wrongAnswers: wrongAnswers };
+  var blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var d = new Date();
+  var ds = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  a.href = url;
+  a.download = 'quiz_' + QUIZ_KEY + '_wrong_' + ds + '_v1.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+window.copyRes = saveWrong;
+window.saveWrong = saveWrong;
+
+function openFreshModal(){ document.getElementById('fresh-modal').style.display='flex'; }
+window.openFreshModal = openFreshModal;
+function closeFreshModal(){ document.getElementById('fresh-modal').style.display='none'; }
+window.closeFreshModal = closeFreshModal;
+function confirmFresh(){
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(ORDER_KEY);
+  activeSet = null;
+  order = RAW_QUESTIONS.map(function(_,i){return i;});
+  localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  document.getElementById('fresh-modal').style.display='none';
+  render();
+}
+window.confirmFresh = confirmFresh;
+
+
+
+loadState();
+render();
+</script>
+</body>
+</html>
