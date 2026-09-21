@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Math Competition</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f4f6fa; margin:0; padding: 20px 12px 60px; color:#1a1a2e; }
+  .quiz-wrap { max-width: 680px; margin: 0 auto; }
+  .quiz-title { font-size: 1.4rem; font-weight: 800; text-align:center; margin: 8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom: 14px; min-height: 0; }
+  .nav-bar { background:#fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .nav-summary { display:flex; align-items:center; gap:10px; }
+  #nav-count { font-weight:700; font-size:0.85rem; color:#333; white-space:nowrap; }
+  .progress-track { flex:1; height:6px; background:#d7dde6; border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; width:0%; background:#185FA5; border-radius:3px; transition: width .2s; }
+  .jump-btn { background:#eef2f7; border:none; border-radius:8px; padding:6px 12px; font-size:0.8rem; font-weight:700; color:#185FA5; cursor:pointer; white-space:nowrap; }
+  .dots-panel { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .dot { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; cursor:pointer; background:#d7dde6; color:#555; border:none; }
+  .dot.answered-correct { background:#185FA5; color:#fff; }
+  .dot.answered-wrong { background:#E24B4A; color:#fff; }
+  .results-pill { display:inline-block; margin: 0 auto 14px; padding: 8px 20px; background:#1D9E75; color:#fff; border-radius:20px; font-weight:700; text-align:center; cursor:pointer; width:fit-content; }
+  .results-pill-wrap { text-align:center; }
+  .quiz-card, .results-card { background:#fff; border-radius: 14px; padding: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 16px; }
+  .passage-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:0.92rem; line-height:1.6; color:#222; }
+  .context-label { font-size:0.92rem; font-weight:600; color:#333; margin-bottom:8px; line-height:1.4; }
+  .context-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; }
+  .tag-badge { display:inline-block; font-size:0.72rem; font-weight:700; color:#fff; padding:3px 10px; border-radius:12px; margin-bottom:10px; }
+  .q-text { font-size:1.05rem; font-weight:600; margin-bottom:16px; line-height:1.5; }
+  #options { display:flex; flex-direction:column; gap:10px; }
+  .opt-btn { text-align:left; padding:12px 14px; border-radius:10px; border:1.5px solid #d7dde6; background:#fafbfc; font-size:0.95rem; cursor:pointer; line-height:1.4; }
+  .opt-btn:hover { border-color:#185FA5; }
+  .opt-btn.selected-correct { background:#e6f4ec; border-color:#1D9E75; color:#0d6b3f; font-weight:700; }
+  .opt-btn.selected-wrong { background:#fbeaea; border-color:#E24B4A; color:#a52a2a; font-weight:700; }
+  .opt-btn.reveal-correct { background:#e6f4ec; border-color:#1D9E75; }
+  .opt-btn:disabled { cursor:default; }
+  .exp-box { margin-top:14px; background:#eef7f2; border-left:4px solid #1D9E75; border-radius:8px; padding:12px 14px; font-size:0.88rem; color:#2d4d3f; line-height:1.5; display:none; }
+  .hint-btn { background:#fff8e1;color:#a5720a;border:1.5px solid #f5a623;border-radius:8px;padding:7px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-top:12px;margin-bottom:12px;display:inline-block; }
+  .hint-box { background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.88rem;color:#6b5215;line-height:1.5;display:none; }
+  .hint-box.show { display:block; }
+  .tts-btn { background:#eef2f7; border:none; border-radius:50%; width:34px; height:34px; font-size:1rem; cursor:pointer; margin-left:8px; vertical-align:middle; }
+  .nav-btns { display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .nav-btns button { flex:1; padding:11px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; background:#185FA5; color:#fff; }
+  .nav-btns button:disabled { background:#c9d2dc; cursor:default; }
+  .results-card h2 { text-align:center; margin-top:0; }
+  .score-big { text-align:center; font-size:2.2rem; font-weight:800; color:#185FA5; margin: 6px 0 16px; }
+  .action-row { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .action-row button { padding:12px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; }
+  .btn-retry { background:#f5a623; color:#fff; }
+  .btn-save { background:#7b61ff; color:#fff; }
+  .btn-fresh { background:#E24B4A; color:#fff; }
+  .fresh-btn-bottom { display:block; margin: 6px auto 0; background:none; border:1.5px solid #d7dde6; color:#888; padding:8px 16px; border-radius:20px; font-size:0.8rem; cursor:pointer; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:14px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { font-size:0.95rem; margin-bottom:18px; }
+  .modal-box button { padding:10px 16px; border-radius:8px; border:none; font-weight:700; margin:0 6px; cursor:pointer; }
+  .modal-yes { background:#E24B4A; color:#fff; }
+  .modal-no { background:#eef2f7; color:#333; }
+
+.frac { display: inline-flex; flex-direction: column; align-items: stretch; text-align: center; vertical-align: middle; font-size: 0.9em; line-height: 1.2; margin: 0 2px; }
+.frac .num { border-bottom: 1px solid currentColor; padding: 0 2px; }
+.frac .den { padding: 0 2px; }
+.hexdiagram { text-align: center; margin: 14px 0; }
+.hexdiagram svg { max-width: 460px; width: 100%; }
+
+</style>
+</head>
+<body>
+<div class="quiz-wrap">
+  <div class="quiz-title">[Sion] Math Competition</div>
+  <div class="instruction" id="instruction"></div>
+
+  <div class="nav-bar">
+    <div class="nav-summary">
+      <span id="nav-count">0/0</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <button class="jump-btn" id="jump-btn" onclick="toggleJump()">Jump&#9662;</button>
+    </div>
+    <div class="dots-panel" id="dots-panel" style="display:none;"></div>
+  </div>
+
+  <div class="results-pill-wrap"><span class="results-pill" id="results-pill" style="display:none;" onclick="showResultsNow()">Results</span></div>
+
+  <div class="quiz-card" id="quiz-card">
+    <div class="passage-box" id="passage-box" style="display:none;"></div>
+    <div class="context-label" id="context-label" style="display:none;"></div>
+    <div class="context-box" id="context-box" style="display:none;"></div>
+    <div class="tag-badge" id="tag-badge" style="display:none;"></div>
+    <div class="q-text" id="q-text"></div>
+    <div id="options"></div>
+    <button class="hint-btn" id="hint-btn" onclick="toggleHint()" style="display:none;">Show Hint</button>
+    <div class="hint-box" id="hint-box"></div>
+    <div class="exp-box" id="exp-box"></div>
+    <div class="nav-btns">
+      <button id="prev-btn" onclick="prevQ()">Prev</button>
+      <button id="next-btn" onclick="goNext()">Next</button>
+    </div>
+  </div>
+
+  <div class="results-card" id="results-card" style="display:none;">
+    <h2>Results</h2>
+    <div class="score-big" id="score-big"></div>
+    <div id="score-detail" style="text-align:center;color:#555;font-size:0.9rem;"></div>
+    <div class="action-row">
+      <button class="btn-retry" onclick="startRetry()">Retry Wrong Ones</button>
+      <button class="btn-save" onclick="saveWrong()">Save Wrong Answers</button>
+      <button class="btn-fresh" onclick="openFreshModal()">Start Fresh</button>
+    </div>
+  </div>
+
+  <button class="fresh-btn-bottom" onclick="openFreshModal()">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="fresh-modal" style="display:none;">
+  <div class="modal-box">
+    <p>Reset all progress and start over?</p>
+    <button class="modal-yes" onclick="confirmFresh()">Yes, Start Fresh</button>
+    <button class="modal-no" onclick="closeFreshModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Sion] Math Competition";
+var QUIZ_KEY = "sionmathcomp";
+var INSTRUCTION = "Choose the correct answer for each problem. Two problems are drawn from each of five chapters.";
+var TODAY_STR = "20260921";
+var RAW_QUESTIONS = [{"stem": "A computer system considers a string of decimal digits a valid codeword if it contains an even number of 0s. Find a closed form for a<sub>n</sub>, the number of valid n-digit codewords.", "opts": ["<span class=\"frac\"><span class=\"num\">1</span><span class=\"den\">2</span></span>(10<sup>n</sup> &minus; 8<sup>n</sup>)", "8<sup>n</sup> + 10<sup>n</sup>", "<span class=\"frac\"><span class=\"num\">1</span><span class=\"den\">2</span></span>(8<sup>n</sup> + 10<sup>n</sup>)", "<span class=\"frac\"><span class=\"num\">1</span><span class=\"den\">2</span></span>(9<sup>n</sup> + 10<sup>n</sup>)"], "ci": 2, "exp": "Let a<sub>n</sub> count n-digit strings (digits 0&ndash;9) with an even number of 0s, and let b<sub>n</sub> count those with an odd number of 0s, so a<sub>n</sub>+b<sub>n</sub>=10<sup>n</sup>. Each string either starts with a nonzero digit (9 choices, keeping the parity of 0s the same as an (n&minus;1)-digit string) or a 0 (flipping the parity). This gives a<sub>n</sub>&minus;b<sub>n</sub> = 8<sup>n</sup> (this can be seen by tracking the difference d<sub>n</sub>=a<sub>n</sub>&minus;b<sub>n</sub>, which satisfies d<sub>n</sub>=8&middot;d<sub>n&minus;1</sub> since 8 of the 10 digit choices preserve the sign of the difference and the other 2 choices for digit 0 cancel, starting from d<sub>0</sub>=1, so d<sub>n</sub>=8<sup>n</sup>). Solving a<sub>n</sub>+b<sub>n</sub>=10<sup>n</sup> and a<sub>n</sub>&minus;b<sub>n</sub>=8<sup>n</sup> together gives a<sub>n</sub> = (1/2)(8<sup>n</sup>+10<sup>n</sup>).", "tag": "Chapter 5", "tagcolor": "#E24B4A"}, {"stem": "The roots of x<sup>4</sup> &minus; x<sup>3</sup> &minus; x<sup>2</sup> &minus; 1 = 0 are a, b, c, and d. Find<br><br>p(a) + p(b) + p(c) + p(d),<br><br>where p(x) = x<sup>6</sup> &minus; x<sup>5</sup> &minus; x<sup>3</sup> &minus; x<sup>2</sup> &minus; x. (AIME)", "opts": ["3", "6", "4", "10"], "ci": 1, "exp": "Dividing p(x) by x<sup>4</sup>&minus;x<sup>3</sup>&minus;x<sup>2</sup>&minus;1 gives quotient x<sup>2</sup>+1 and remainder x<sup>2</sup>&minus;x+1. Since each root satisfies the quartic, p(root)=root<sup>2</sup>&minus;root+1. By Vieta's formulas, the sum of the roots is 1 and the sum of pairwise products is &minus;1, so the sum of the squares of the roots is 1<sup>2</sup>&minus;2(&minus;1)=3. The total is therefore 3&minus;1+4=6.", "tag": "Chapter 4", "tagcolor": "#7b61ff"}, {"stem": "Find the remainder when x<sup>81</sup> + x<sup>49</sup> + x<sup>25</sup> + x<sup>9</sup> + x is divided by x<sup>3</sup> &minus; x.", "opts": ["x", "5", "-5x", "5x"], "ci": 3, "exp": "Since x<sup>3</sup>&minus;x=x(x&minus;1)(x+1) has roots 0, 1, &minus;1, the remainder ax<sup>2</sup>+bx+c must agree with the given expression at these points. At x=0, the expression is 0, so c=0. At x=1, it is 5, so a+b=5. At x=&minus;1, it is &minus;1&minus;1&minus;1&minus;1&minus;1=&minus;5, so a&minus;b=&minus;5. Solving gives a=0, b=5, so the remainder is 5x.", "tag": "Chapter 4", "tagcolor": "#7b61ff"}, {"stem": "Jon and Steve ride their bicycles on a path that parallels two side-by-side train tracks running in the east/west direction. Jon rides east at 20 miles per hour, and Steve rides west at 20 miles per hour. Two trains of equal length traveling in opposite directions at constant but different speeds, each passes the two riders. Each train takes exactly 1 minute to go past Jon. The westbound train takes 10 times as long as the eastbound train to go past Steve. What is the length of each train? (AIME)", "opts": ["<span class=\"frac\"><span class=\"num\">24</span><span class=\"den\">27</span></span> miles", "<span class=\"frac\"><span class=\"num\">20</span><span class=\"den\">27</span></span> miles", "<span class=\"frac\"><span class=\"num\">18</span><span class=\"den\">27</span></span> miles", "<span class=\"frac\"><span class=\"num\">22</span><span class=\"den\">27</span></span> miles"], "ci": 3, "exp": "The answer is <span class=\"frac\"><span class=\"num\">22</span><span class=\"den\">27</span></span> miles.", "tag": "Chapter 3", "tagcolor": "#f5a623"}, {"stem": "Is it true that every polyhedron has at least two faces with the same number of edges? (Engel)", "opts": ["true", "false"], "ci": 0, "exp": "Suppose all faces have distinct numbers of edges. The minimum face has at least 3 edges. If F is the number of faces, the minimum total edge-face incidences is 3+4+&hellip;+(F+2). By Euler&rsquo;s formula and edge-counting, a contradiction arises, so at least two faces must share the same edge count.", "tag": "Chapter 1", "tagcolor": "#185FA5"}, {"stem": "The numbers in the sequence 1, 6, 15, 28, 45, &hellip; are called the hexagonal numbers.<div class=\"hexdiagram\"><svg viewBox=\"0 0 480 170\"><circle cx=\"60\" cy=\"85\" r=\"5\" fill=\"#111\"/><text x=\"60\" y=\"145\" text-anchor=\"middle\" font-size=\"13\" fill=\"#333\">H&#8321; = 1</text><polygon points=\"200,45 234.6,65 234.6,105 200,125 165.4,105 165.4,65\" fill=\"none\" stroke=\"#111\" stroke-width=\"1.5\"/><circle cx=\"200\" cy=\"45\" r=\"4\" fill=\"#111\"/><circle cx=\"234.6\" cy=\"65\" r=\"4\" fill=\"#111\"/><circle cx=\"234.6\" cy=\"105\" r=\"4\" fill=\"#111\"/><circle cx=\"200\" cy=\"125\" r=\"4\" fill=\"#111\"/><circle cx=\"165.4\" cy=\"105\" r=\"4\" fill=\"#111\"/><circle cx=\"165.4\" cy=\"65\" r=\"4\" fill=\"#111\"/><text x=\"200\" y=\"145\" text-anchor=\"middle\" font-size=\"13\" fill=\"#333\">H&#8322; = 6</text><polygon points=\"380,30 427.6,57.5 427.6,112.5 380,140 332.4,112.5 332.4,57.5\" fill=\"none\" stroke=\"#111\" stroke-width=\"1.5\"/><polygon points=\"380,58 403.4,71.5 403.4,98.5 380,112 356.6,98.5 356.6,71.5\" fill=\"none\" stroke=\"#111\" stroke-width=\"1.5\"/><line x1=\"380\" y1=\"85\" x2=\"380\" y2=\"30\" stroke=\"#111\" stroke-width=\"1\"/><line x1=\"380\" y1=\"85\" x2=\"427.6\" y2=\"57.5\" stroke=\"#111\" stroke-width=\"1\"/><line x1=\"380\" y1=\"85\" x2=\"427.6\" y2=\"112.5\" stroke=\"#111\" stroke-width=\"1\"/><line x1=\"380\" y1=\"85\" x2=\"380\" y2=\"140\" stroke=\"#111\" stroke-width=\"1\"/><line x1=\"380\" y1=\"85\" x2=\"332.4\" y2=\"112.5\" stroke=\"#111\" stroke-width=\"1\"/><line x1=\"380\" y1=\"85\" x2=\"332.4\" y2=\"57.5\" stroke=\"#111\" stroke-width=\"1\"/><circle cx=\"380\" cy=\"85\" r=\"4\" fill=\"#111\"/><circle cx=\"380\" cy=\"30\" r=\"4\" fill=\"#111\"/><circle cx=\"427.6\" cy=\"57.5\" r=\"4\" fill=\"#111\"/><circle cx=\"427.6\" cy=\"112.5\" r=\"4\" fill=\"#111\"/><circle cx=\"380\" cy=\"140\" r=\"4\" fill=\"#111\"/><circle cx=\"332.4\" cy=\"112.5\" r=\"4\" fill=\"#111\"/><circle cx=\"332.4\" cy=\"57.5\" r=\"4\" fill=\"#111\"/><circle cx=\"380\" cy=\"58\" r=\"3.5\" fill=\"#111\"/><circle cx=\"403.4\" cy=\"71.5\" r=\"3.5\" fill=\"#111\"/><circle cx=\"403.4\" cy=\"98.5\" r=\"3.5\" fill=\"#111\"/><circle cx=\"380\" cy=\"112\" r=\"3.5\" fill=\"#111\"/><circle cx=\"356.6\" cy=\"98.5\" r=\"3.5\" fill=\"#111\"/><circle cx=\"356.6\" cy=\"71.5\" r=\"3.5\" fill=\"#111\"/><text x=\"380\" y=\"158\" text-anchor=\"middle\" font-size=\"13\" fill=\"#333\">H&#8323; = 15</text></svg></div>What is the 11<sup>th</sup> hexagonal number?", "opts": ["225", "231", "242", "210"], "ci": 1, "exp": "The nth hexagonal number is given by H<sub>n</sub> = n(2n&minus;1). Checking: H<sub>1</sub>=1, H<sub>2</sub>=6, H<sub>3</sub>=15, H<sub>4</sub>=28, H<sub>5</sub>=45, matching the given sequence. So H<sub>11</sub> = 11(2&middot;11&minus;1) = 11&middot;21 = 231.", "tag": "Chapter 5", "tagcolor": "#E24B4A"}, {"stem": "The Chateau family has two cupboards for its wine bottles, a small cupboard and one much larger. Being very fussy, they do not like their wine exposed to the light more than 12 times, including both the time they buy it and the time they drink it and each time they open the cupboard. If they drink one bottle each day, how often does the Chateau family need to buy wine? (Francis Xavier)", "opts": ["72 days", "60 days", "78 days", "84 days"], "ci": 2, "exp": "The answer is 78 days.", "tag": "Chapter 3", "tagcolor": "#f5a623"}, {"stem": "What is the minimum value of 8x<sup>3</sup> + 36x + <span class=\"frac\"><span class=\"num\">54</span><span class=\"den\">x</span></span> + <span class=\"frac\"><span class=\"num\">27</span><span class=\"den\">x<sup>3</sup></span></span> for positive real numbers x? (MathCounts)", "opts": ["96", "24&radic;6", "48", "48&radic;6"], "ci": 3, "exp": "The expression is (2x+3/x)<sup>3</sup>. By AM-GM, 2x+3/x &ge; 2&radic;(2x&middot;3/x)=2&radic;6. So (2x+3/x)<sup>3</sup>&ge;(2&radic;6)<sup>3</sup>=48&radic;6.", "tag": "Chapter 2", "tagcolor": "#1D9E75"}, {"stem": "Six distinct positive integers are randomly chosen between 1 and 2006, inclusive. What is the probability that some pair of these integers has a difference that is a multiple of 5? (AMC 10)", "opts": ["1/2", "3/5", "0", "1"], "ci": 3, "exp": "Any integer has one of 5 residues mod 5. Choosing 6 integers, by Pigeonhole two must share the same residue, so their difference is always a multiple of 5. The probability is 1.", "tag": "Chapter 1", "tagcolor": "#185FA5"}, {"stem": "When (x+2y&minus;z)<sup>8</sup> is expanded, and the like terms are combined, what is the coefficient of the term x<sup>3</sup>y<sup>2</sup>z<sup>3</sup>? (MathCounts)", "opts": ["&minus;2240", "1120", "&minus;1120", "2240"], "ci": 0, "exp": "Treat as ((x+2y)+(&minus;z))<sup>8</sup>. The term with z<sup>3</sup> comes from C(8,3)(x+2y)<sup>5</sup>(&minus;z)<sup>3</sup>. Then from (x+2y)<sup>5</sup>, the x<sup>3</sup>(2y)<sup>2</sup> term is C(5,2)x<sup>3</sup>(4y<sup>2</sup>). Total: C(8,3)(&minus;1)<sup>3</sup>&times;C(5,2)&times;4 = 56&times;(&minus;1)&times;10&times;4 = &minus;2240.", "tag": "Chapter 2", "tagcolor": "#1D9E75"}];
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+function reportResult(){
+  try{
+    var correct=0, wrong=0, skipped=0;
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos];
+      if(state.answers[qi]===undefined){ skipped++; continue; }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+    }
+    var total = order.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0
+    };
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
+}
+
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var ORDER_KEY = STORAGE_KEY + '_order';
+var ATTEMPTS_KEY = STORAGE_KEY + '_attempts';
+
+var order = [];
+var activeSet = null; // when in retry mode, holds subset of original indices
+var state = { answers:{}, cur:0, showResults:false };
+var hintShown = false;
+
+function loadState(){
+  var raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try{ state = JSON.parse(raw); }catch(e){ state = {answers:{},cur:0,showResults:false}; } }
+  var rawOrder = localStorage.getItem(ORDER_KEY);
+  if(rawOrder){ try{ order = JSON.parse(rawOrder); }catch(e){ order=null; } }
+  if(!order || !order.length){
+    order = RAW_QUESTIONS.map(function(_,i){return i;});
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function getAttempts(){
+  var a = localStorage.getItem(ATTEMPTS_KEY);
+  return a ? parseInt(a,10) : 1;
+}
+function incAttempts(){
+  var a = getAttempts() + 1;
+  localStorage.setItem(ATTEMPTS_KEY, String(a));
+}
+
+function activeOrder(){ return activeSet || order; }
+
+function render(){
+  document.getElementById('instruction').textContent = INSTRUCTION;
+  var ord = activeOrder();
+  if(state.showResults){
+    document.getElementById('quiz-card').style.display='none';
+    document.getElementById('results-card').style.display='block';
+    renderResults();
+  } else {
+    document.getElementById('quiz-card').style.display='block';
+    document.getElementById('results-card').style.display='none';
+    renderQuestion();
+  }
+  updateNav();
+}
+
+function renderQuestion(){
+  hintShown = false;
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  var q = RAW_QUESTIONS[qi];
+
+  var pb = document.getElementById('passage-box');
+  if(q.passage){ pb.style.display='block'; pb.innerHTML = q.passage; } else { pb.style.display='none'; pb.innerHTML=''; }
+
+  var cl = document.getElementById('context-label');
+  if(q.contextLabel){ cl.style.display='block'; cl.textContent = q.contextLabel; } else { cl.style.display='none'; cl.textContent=''; }
+
+  var cb = document.getElementById('context-box');
+  if(q.context){ cb.style.display='block'; cb.innerHTML = q.context; } else { cb.style.display='none'; cb.innerHTML=''; }
+
+  var tb = document.getElementById('tag-badge');
+  if(q.tag){ tb.style.display='inline-block'; tb.textContent = q.tag; tb.style.background = q.tagcolor || '#185FA5'; } else { tb.style.display='none'; }
+
+  var qt = document.getElementById('q-text');
+  qt.innerHTML = q.stem + (q.tts ? ' <button class="tts-btn" onclick="speak(' + qi + ')" title="Listen">&#128266;</button>' : '');
+
+  var opts = document.getElementById('options');
+  opts.innerHTML = '';
+  var answered = state.answers[qi] !== undefined;
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = optText;
+    if(answered){
+      btn.disabled = true;
+      if(idx === q.ci) btn.className += ' reveal-correct';
+      if(idx === state.answers[qi] && idx !== q.ci) btn.className += ' selected-wrong';
+      if(idx === state.answers[qi] && idx === q.ci) btn.className += ' selected-correct';
+    } else {
+      btn.onclick = function(){ pick(idx); };
+    }
+    opts.appendChild(btn);
+  });
+
+  var hb = document.getElementById('hint-btn');
+  var hx = document.getElementById('hint-box');
+  if(q.hint){
+    hb.style.display='inline-block'; hb.textContent='Show Hint';
+    hx.innerHTML = q.hint; hx.classList.remove('show');
+  } else {
+    hb.style.display='none'; hx.classList.remove('show');
+  }
+
+  var eb = document.getElementById('exp-box');
+  if(answered){
+    eb.style.display='block';
+    eb.innerHTML = '<strong>Explanation:</strong> ' + q.exp;
+  } else {
+    eb.style.display='none'; eb.innerHTML='';
+  }
+
+  document.getElementById('prev-btn').disabled = (state.cur === 0);
+  var ord2 = activeOrder();
+  var isLast = (state.cur === ord2.length - 1);
+  document.getElementById('next-btn').textContent = isLast ? 'Finish' : 'Next';
+}
+
+function toggleHint(){
+  hintShown = !hintShown;
+  var b=document.getElementById('hint-btn'), x=document.getElementById('hint-box');
+  if(hintShown){ x.classList.add('show'); b.textContent='Hide Hint'; }
+  else { x.classList.remove('show'); b.textContent='Show Hint'; }
+}
+window.toggleHint = toggleHint;
+
+function pick(idx){
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState();
+  render();
+}
+window.pick = pick;
+
+function prevQ(){
+  if(state.cur > 0){ state.cur--; saveState(); render(); }
+}
+window.prevQ = prevQ;
+window.go = prevQ;
+
+function goNext(){
+  var ord = activeOrder();
+  if(state.cur < ord.length - 1){
+    state.cur++;
+    saveState();
+    render();
+  } else {
+    state.showResults = true;
+    incAttempts();
+    saveState();
+    render();
+    reportResult();
+  }
+}
+window.goNext = goNext;
+
+function showResultsNow(){
+  state.showResults = true;
+  saveState();
+  render();
+  reportResult();
+}
+window.showResultsNow = showResultsNow;
+
+function goToQ(pos){
+  state.cur = pos;
+  state.showResults = false;
+  saveState();
+  render();
+}
+window.goToQ = goToQ;
+
+function renderResults(){
+  var ord = activeOrder();
+  var correct=0, wrong=0, skipped=0;
+  ord.forEach(function(qi){
+    if(state.answers[qi]===undefined) skipped++;
+    else if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++;
+    else wrong++;
+  });
+  var total = ord.length;
+  document.getElementById('score-big').textContent = correct + ' / ' + total;
+  document.getElementById('score-detail').textContent = 'Correct: ' + correct + '  Wrong: ' + wrong + '  Skipped: ' + skipped;
+}
+
+function updateNav(){
+  var ord = activeOrder();
+  var answeredCount = 0;
+  ord.forEach(function(qi){ if(state.answers[qi]!==undefined) answeredCount++; });
+  document.getElementById('nav-count').textContent = answeredCount + '/' + ord.length;
+  var pct = ord.length ? Math.round(answeredCount/ord.length*100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('results-pill').style.display = (answeredCount === ord.length && ord.length>0) ? 'inline-block' : 'none';
+  renderDots();
+}
+
+function renderDots(){
+  var panel = document.getElementById('dots-panel');
+  if(panel.style.display === 'none') { buildDots(); return; }
+  buildDots();
+}
+function buildDots(){
+  var panel = document.getElementById('dots-panel');
+  var ord = activeOrder();
+  panel.innerHTML = '';
+  ord.forEach(function(qi, pos){
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.textContent = (pos+1);
+    if(state.answers[qi]!==undefined){
+      d.className += (state.answers[qi]===RAW_QUESTIONS[qi].ci) ? ' answered-correct' : ' answered-wrong';
+    }
+    d.onclick = function(){ goToQ(pos); };
+    panel.appendChild(d);
+  });
+}
+
+function toggleJump(){
+  var panel = document.getElementById('dots-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display === 'none'){
+    panel.style.display = 'flex';
+    btn.innerHTML = 'Hide&#9652;';
+    buildDots();
+  } else {
+    panel.style.display = 'none';
+    btn.innerHTML = 'Jump&#9662;';
+  }
+}
+window.toggleJump = toggleJump;
+
+function startRetry(){
+  var ord = activeOrder();
+  var wrongIdx = ord.filter(function(qi){ return state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci; });
+  if(!wrongIdx.length) return;
+  activeSet = wrongIdx;
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  render();
+}
+window.startRetry = startRetry;
+
+function saveWrong(){
+  var ord = activeOrder();
+  var wrongAnswers = [];
+  ord.forEach(function(qi){
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongAnswers.push({
+        question: q.stem.replace(/<[^>]+>/g,''),
+        yourAnswer: q.opts[state.answers[qi]].replace(/<[^>]+>/g,''),
+        correctAnswer: q.opts[q.ci].replace(/<[^>]+>/g,''),
+        explanation: q.exp.replace(/<[^>]+>/g,'')
+      });
+    }
+  });
+  var payload = { title: TITLE, wrongAnswers: wrongAnswers };
+  var blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var d = new Date();
+  var ds = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  a.href = url;
+  a.download = 'quiz_' + QUIZ_KEY + '_wrong_' + ds + '_v1.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+window.copyRes = saveWrong;
+window.saveWrong = saveWrong;
+
+function openFreshModal(){ document.getElementById('fresh-modal').style.display='flex'; }
+window.openFreshModal = openFreshModal;
+function closeFreshModal(){ document.getElementById('fresh-modal').style.display='none'; }
+window.closeFreshModal = closeFreshModal;
+function confirmFresh(){
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(ORDER_KEY);
+  activeSet = null;
+  order = RAW_QUESTIONS.map(function(_,i){return i;});
+  localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  document.getElementById('fresh-modal').style.display='none';
+  render();
+}
+window.confirmFresh = confirmFresh;
+
+
+
+loadState();
+render();
+</script>
+</body>
+</html>
