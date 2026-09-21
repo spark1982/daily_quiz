@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Math</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f4f6fa; margin:0; padding: 20px 12px 60px; color:#1a1a2e; }
+  .quiz-wrap { max-width: 680px; margin: 0 auto; }
+  .quiz-title { font-size: 1.4rem; font-weight: 800; text-align:center; margin: 8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom: 14px; min-height: 0; }
+  .nav-bar { background:#fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .nav-summary { display:flex; align-items:center; gap:10px; }
+  #nav-count { font-weight:700; font-size:0.85rem; color:#333; white-space:nowrap; }
+  .progress-track { flex:1; height:6px; background:#d7dde6; border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; width:0%; background:#185FA5; border-radius:3px; transition: width .2s; }
+  .jump-btn { background:#eef2f7; border:none; border-radius:8px; padding:6px 12px; font-size:0.8rem; font-weight:700; color:#185FA5; cursor:pointer; white-space:nowrap; }
+  .dots-panel { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .dot { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; cursor:pointer; background:#d7dde6; color:#555; border:none; }
+  .dot.answered-correct { background:#185FA5; color:#fff; }
+  .dot.answered-wrong { background:#E24B4A; color:#fff; }
+  .results-pill { display:inline-block; margin: 0 auto 14px; padding: 8px 20px; background:#1D9E75; color:#fff; border-radius:20px; font-weight:700; text-align:center; cursor:pointer; width:fit-content; }
+  .results-pill-wrap { text-align:center; }
+  .quiz-card, .results-card { background:#fff; border-radius: 14px; padding: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 16px; }
+  .passage-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:0.92rem; line-height:1.6; color:#222; }
+  .context-label { font-size:0.92rem; font-weight:600; color:#333; margin-bottom:8px; line-height:1.4; }
+  .context-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; }
+  .tag-badge { display:inline-block; font-size:0.72rem; font-weight:700; color:#fff; padding:3px 10px; border-radius:12px; margin-bottom:10px; }
+  .q-text { font-size:1.05rem; font-weight:600; margin-bottom:16px; line-height:1.5; }
+  #options { display:flex; flex-direction:column; gap:10px; }
+  .opt-btn { text-align:left; padding:12px 14px; border-radius:10px; border:1.5px solid #d7dde6; background:#fafbfc; font-size:0.95rem; cursor:pointer; line-height:1.4; }
+  .opt-btn:hover { border-color:#185FA5; }
+  .opt-btn.selected-correct { background:#e6f4ec; border-color:#1D9E75; color:#0d6b3f; font-weight:700; }
+  .opt-btn.selected-wrong { background:#fbeaea; border-color:#E24B4A; color:#a52a2a; font-weight:700; }
+  .opt-btn.reveal-correct { background:#e6f4ec; border-color:#1D9E75; }
+  .opt-btn:disabled { cursor:default; }
+  .exp-box { margin-top:14px; background:#eef7f2; border-left:4px solid #1D9E75; border-radius:8px; padding:12px 14px; font-size:0.88rem; color:#2d4d3f; line-height:1.5; display:none; }
+  .hint-btn { background:#fff8e1;color:#a5720a;border:1.5px solid #f5a623;border-radius:8px;padding:7px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-top:12px;margin-bottom:12px;display:inline-block; }
+  .hint-box { background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.88rem;color:#6b5215;line-height:1.5;display:none; }
+  .hint-box.show { display:block; }
+  .tts-btn { background:#eef2f7; border:none; border-radius:50%; width:34px; height:34px; font-size:1rem; cursor:pointer; margin-left:8px; vertical-align:middle; }
+  .nav-btns { display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .nav-btns button { flex:1; padding:11px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; background:#185FA5; color:#fff; }
+  .nav-btns button:disabled { background:#c9d2dc; cursor:default; }
+  .results-card h2 { text-align:center; margin-top:0; }
+  .score-big { text-align:center; font-size:2.2rem; font-weight:800; color:#185FA5; margin: 6px 0 16px; }
+  .action-row { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .action-row button { padding:12px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; }
+  .btn-retry { background:#f5a623; color:#fff; }
+  .btn-save { background:#7b61ff; color:#fff; }
+  .btn-fresh { background:#E24B4A; color:#fff; }
+  .fresh-btn-bottom { display:block; margin: 6px auto 0; background:none; border:1.5px solid #d7dde6; color:#888; padding:8px 16px; border-radius:20px; font-size:0.8rem; cursor:pointer; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:14px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { font-size:0.95rem; margin-bottom:18px; }
+  .modal-box button { padding:10px 16px; border-radius:8px; border:none; font-weight:700; margin:0 6px; cursor:pointer; }
+  .modal-yes { background:#E24B4A; color:#fff; }
+  .modal-no { background:#eef2f7; color:#333; }
+
+</style>
+</head>
+<body>
+<div class="quiz-wrap">
+  <div class="quiz-title">[Grant] Math</div>
+  <div class="instruction" id="instruction"></div>
+
+  <div class="nav-bar">
+    <div class="nav-summary">
+      <span id="nav-count">0/0</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <button class="jump-btn" id="jump-btn" onclick="toggleJump()">Jump&#9662;</button>
+    </div>
+    <div class="dots-panel" id="dots-panel" style="display:none;"></div>
+  </div>
+
+  <div class="results-pill-wrap"><span class="results-pill" id="results-pill" style="display:none;" onclick="showResultsNow()">Results</span></div>
+
+  <div class="quiz-card" id="quiz-card">
+    <div class="passage-box" id="passage-box" style="display:none;"></div>
+    <div class="context-label" id="context-label" style="display:none;"></div>
+    <div class="context-box" id="context-box" style="display:none;"></div>
+    <div class="tag-badge" id="tag-badge" style="display:none;"></div>
+    <div class="q-text" id="q-text"></div>
+    <div id="options"></div>
+    <button class="hint-btn" id="hint-btn" onclick="toggleHint()" style="display:none;">Show Hint</button>
+    <div class="hint-box" id="hint-box"></div>
+    <div class="exp-box" id="exp-box"></div>
+    <div class="nav-btns">
+      <button id="prev-btn" onclick="prevQ()">Prev</button>
+      <button id="next-btn" onclick="goNext()">Next</button>
+    </div>
+  </div>
+
+  <div class="results-card" id="results-card" style="display:none;">
+    <h2>Results</h2>
+    <div class="score-big" id="score-big"></div>
+    <div id="score-detail" style="text-align:center;color:#555;font-size:0.9rem;"></div>
+    <div class="action-row">
+      <button class="btn-retry" onclick="startRetry()">Retry Wrong Ones</button>
+      <button class="btn-save" onclick="saveWrong()">Save Wrong Answers</button>
+      <button class="btn-fresh" onclick="openFreshModal()">Start Fresh</button>
+    </div>
+  </div>
+
+  <button class="fresh-btn-bottom" onclick="openFreshModal()">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="fresh-modal" style="display:none;">
+  <div class="modal-box">
+    <p>Reset all progress and start over?</p>
+    <button class="modal-yes" onclick="confirmFresh()">Yes, Start Fresh</button>
+    <button class="modal-no" onclick="closeFreshModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Grant] Math";
+var QUIZ_KEY = "grantmath";
+var INSTRUCTION = "Solve each problem and choose the correct answer.";
+var TODAY_STR = "20260921";
+var RAW_QUESTIONS = [{"stem": "x<sup>7</sup> &divide; (x<sup>2</sup>)<sup>2</sup> &times; x<sup>3</sup> = ?", "opts": ["x<sup>9</sup>", "x<sup>4</sup>", "x<sup>12</sup>", "x<sup>6</sup>"], "ci": 3, "exp": "Power of a power: (x<sup>2</sup>)<sup>2</sup> = x<sup>4</sup>. Quotient rule: x<sup>7</sup> &divide; x<sup>4</sup> = x<sup>3</sup>. Product rule: x<sup>3</sup> &times; x<sup>3</sup> = x<sup>6</sup>.", "tag": "Exponent Laws", "tagcolor": "#7b61ff"}, {"stem": "(7.4 &minus; 2.15) &times; 0.6 + 1.125 = ?", "opts": ["2.025", "4.775", "4.025", "4.275"], "ci": 3, "exp": "Subtract 7.4 &minus; 2.15 = 5.25. Multiply 5.25 &times; 0.6 = 3.15. Add 1.125: 3.15 + 1.125 = 4.275.", "tag": "Decimals", "tagcolor": "#1D9E75"}, {"stem": "4(x &minus; 2) &minus; x = 19", "opts": ["11", "9", "5", "14"], "ci": 1, "exp": "Distribute: 4x &minus; 8 &minus; x = 19. Combine like terms: 3x &minus; 8 = 19. Add 8: 3x = 27. Divide by 3: x = 9.", "tag": "Linear Equations", "tagcolor": "#0d9488"}, {"stem": "A water bottle holds 1.75 liters. How many milliliters is that?", "opts": ["175 mL", "17500 mL", "1750 mL", "1075 mL"], "ci": 2, "exp": "To convert liters to milliliters, multiply by 1000: 1.75 &times; 1000 = 1750 mL.", "tag": "Unit Conversion", "tagcolor": "#E24B4A"}, {"stem": "x<sup>5</sup> &times; x<sup>3</sup> &divide; (x<sup>2</sup>)<sup>2</sup> = ?", "opts": ["x<sup>6</sup>", "x<sup>3</sup>", "x<sup>4</sup>", "x<sup>9</sup>"], "ci": 2, "exp": "Product rule: x<sup>5</sup> &times; x<sup>3</sup> = x<sup>8</sup>. Power of a power: (x<sup>2</sup>)<sup>2</sup> = x<sup>4</sup>. Quotient rule: x<sup>8</sup> &divide; x<sup>4</sup> = x<sup>4</sup>.", "tag": "Exponent Laws", "tagcolor": "#7b61ff"}, {"stem": "8 &minus; (&minus;5) &times; (&minus;3) + (&minus;12) &divide; 4 = ?", "opts": ["20", "-16", "-7", "-10"], "ci": 3, "exp": "Multiply/divide first: (&minus;5) &times; (&minus;3) = 15 (two negatives make a positive), and (&minus;12) &divide; 4 = &minus;3. Then 8 &minus; 15 + (&minus;3) = -10.", "tag": "Integers", "tagcolor": "#f5a623"}, {"stem": "3(x + 5) + 2x = 40", "opts": ["5", "8", "4", "13"], "ci": 0, "exp": "Distribute: 3x + 15 + 2x = 40. Combine like terms: 5x + 15 = 40. Subtract 15: 5x = 25. Divide by 5: x = 5.", "tag": "Linear Equations", "tagcolor": "#0d9488"}, {"stem": "(&minus;9 + 3) &times; (&minus;4) &minus; 6 &divide; (&minus;2) + (&minus;5) = ?", "opts": ["22", "16", "32", "19"], "ci": 0, "exp": "&minus;9 + 3 = &minus;6, and &minus;6 &times; (&minus;4) = 24. Next 6 &divide; (&minus;2) = &minus;3, and subtracting a negative adds: 24 &minus; (&minus;3) = 27. Finally 27 + (&minus;5) = 22.", "tag": "Integers", "tagcolor": "#f5a623"}, {"stem": "(x<sup>3</sup>)<sup>2</sup> &divide; x<sup>4</sup> &times; x<sup>5</sup> = ?", "opts": ["x<sup>7</sup>", "x<sup>11</sup>", "x<sup>2</sup>", "x<sup>8</sup>"], "ci": 0, "exp": "Power of a power: (x<sup>3</sup>)<sup>2</sup> = x<sup>6</sup>. Quotient rule: x<sup>6</sup> &divide; x<sup>4</sup> = x<sup>2</sup>. Product rule: x<sup>2</sup> &times; x<sup>5</sup> = x<sup>7</sup>.", "tag": "Exponent Laws", "tagcolor": "#7b61ff"}, {"stem": "7x + 3 = 4x + 21", "opts": ["8", "3", "6", "12"], "ci": 2, "exp": "Subtract 4x from both sides: 3x + 3 = 21. Subtract 3: 3x = 18. Divide by 3: x = 6.", "tag": "Linear Equations", "tagcolor": "#0d9488"}, {"stem": "(3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>2</span><span style=\"border-top:1.4px solid #111;\">3</span></span> &minus; <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>9</span><span style=\"border-top:1.4px solid #111;\">4</span></span>) &times; 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">5</span></span> + 2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>7</span><span style=\"border-top:1.4px solid #111;\">8</span></span> = ?", "opts": ["4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>33</span><span style=\"border-top:1.4px solid #111;\">40</span></span>", "4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">5</span></span>", "5&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>3</span><span style=\"border-top:1.4px solid #111;\">40</span></span>", "4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>23</span><span style=\"border-top:1.4px solid #111;\">40</span></span>"], "ci": 3, "exp": "First subtract 3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>2</span><span style=\"border-top:1.4px solid #111;\">3</span></span> &minus; <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>9</span><span style=\"border-top:1.4px solid #111;\">4</span></span> = 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">12</span></span>. Then multiply 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">12</span></span> &times; 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">5</span></span> = 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>7</span><span style=\"border-top:1.4px solid #111;\">10</span></span>. Finally add 2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>7</span><span style=\"border-top:1.4px solid #111;\">8</span></span>: 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>7</span><span style=\"border-top:1.4px solid #111;\">10</span></span> + 2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>7</span><span style=\"border-top:1.4px solid #111;\">8</span></span> = 4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>23</span><span style=\"border-top:1.4px solid #111;\">40</span></span>.", "tag": "Fractions", "tagcolor": "#185FA5"}, {"stem": "(x<sup>2</sup>)<sup>3</sup> &times; x<sup>4</sup> &divide; x<sup>2</sup> = ?", "opts": ["x<sup>9</sup>", "x<sup>8</sup>", "x<sup>6</sup>", "x<sup>11</sup>"], "ci": 1, "exp": "Power of a power: (x<sup>2</sup>)<sup>3</sup> = x<sup>6</sup>. Product rule: x<sup>6</sup> &times; x<sup>4</sup> = x<sup>10</sup>. Quotient rule: x<sup>10</sup> &divide; x<sup>2</sup> = x<sup>8</sup>.", "tag": "Exponent Laws", "tagcolor": "#7b61ff"}, {"stem": "A recipe calls for 2.25 pounds of flour. How many ounces is that?", "opts": ["18 oz", "32 oz", "40 oz", "36 oz"], "ci": 3, "exp": "To convert pounds to ounces, multiply by 16: 2.25 &times; 16 = 36 oz.", "tag": "Unit Conversion", "tagcolor": "#E24B4A"}, {"stem": "(9.05 + 1.6) &divide; 2.5 &minus; 0.75 = ?", "opts": ["3.51", "5.01", "4.51", "2.91"], "ci": 0, "exp": "Add 9.05 + 1.6 = 10.65. Divide 10.65 &divide; 2.5 = 4.26. Subtract 0.75: 4.26 &minus; 0.75 = 3.51.", "tag": "Decimals", "tagcolor": "#1D9E75"}, {"stem": "(&minus;15 &divide; (&minus;3)) + (&minus;4) &times; 6 &minus; 7 = ?", "opts": ["-12", "-26", "-34", "-24"], "ci": 1, "exp": "&minus;15 &divide; (&minus;3) = 5 (a negative divided by a negative is positive). (&minus;4) &times; 6 = &minus;24. 5 + (&minus;24) = &minus;19. &minus;19 &minus; 7 = -26.", "tag": "Integers", "tagcolor": "#f5a623"}, {"stem": "(<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>7</span><span style=\"border-top:1.4px solid #111;\">6</span></span> + 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">3</span></span>) &divide; 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">2</span></span> &minus; <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>11</span><span style=\"border-top:1.4px solid #111;\">9</span></span> = ?", "opts": ["<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>4</span><span style=\"border-top:1.4px solid #111;\">9</span></span>", "2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>8</span><span style=\"border-top:1.4px solid #111;\">9</span></span>", "<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>11</span><span style=\"border-top:1.4px solid #111;\">18</span></span>", "<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">3</span></span>"], "ci": 0, "exp": "First add <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>7</span><span style=\"border-top:1.4px solid #111;\">6</span></span> + 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">3</span></span> = 2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">2</span></span>. Then divide 2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">2</span></span> &divide; 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">2</span></span> = 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>2</span><span style=\"border-top:1.4px solid #111;\">3</span></span>. Finally subtract <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>11</span><span style=\"border-top:1.4px solid #111;\">9</span></span>: 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>2</span><span style=\"border-top:1.4px solid #111;\">3</span></span> &minus; <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>11</span><span style=\"border-top:1.4px solid #111;\">9</span></span> = <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>4</span><span style=\"border-top:1.4px solid #111;\">9</span></span>.", "tag": "Fractions", "tagcolor": "#185FA5"}, {"stem": "A road trip covers 5.5 hours of driving. How many minutes is that?", "opts": ["330 minutes", "300 minutes", "350 minutes", "550 minutes"], "ci": 0, "exp": "To convert hours to minutes, multiply by 60: 5.5 &times; 60 = 330 minutes.", "tag": "Unit Conversion", "tagcolor": "#E24B4A"}, {"stem": "(5.6 + 3.25) &times; 1.2 &minus; 0.4 = ?", "opts": ["11.02", "10.22", "11.22", "9.72"], "ci": 1, "exp": "Add 5.6 + 3.25 = 8.85. Multiply 8.85 &times; 1.2 = 10.62. Subtract 0.4: 10.62 &minus; 0.4 = 10.22.", "tag": "Decimals", "tagcolor": "#1D9E75"}, {"stem": "8x &minus; 5 = 3x + 30", "opts": ["10", "5", "17", "7"], "ci": 3, "exp": "Subtract 3x from both sides: 5x &minus; 5 = 30. Add 5: 5x = 35. Divide by 5: x = 7.", "tag": "Linear Equations", "tagcolor": "#0d9488"}, {"stem": "(12.4 &minus; 5.375) &times; 1.2 + 0.6 = ?", "opts": ["7.83", "9.73", "9.03", "8.7"], "ci": 2, "exp": "Subtract 12.4 &minus; 5.375 = 7.025. Multiply 7.025 &times; 1.2 = 8.43. Add 0.6: 8.43 + 0.6 = 9.03.", "tag": "Decimals", "tagcolor": "#1D9E75"}, {"stem": "(&minus;6 &minus; 7) &times; (&minus;2) + 4 &minus; (&minus;9) = ?", "opts": ["41", "35", "39", "48"], "ci": 2, "exp": "&minus;6 &minus; 7 = &minus;13. &minus;13 &times; (&minus;2) = 26. 26 + 4 = 30. Subtracting a negative adds: 30 &minus; (&minus;9) = 30 + 9 = 39.", "tag": "Integers", "tagcolor": "#f5a623"}, {"stem": "(<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">3</span></span> + 2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">4</span></span>) &times; 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>3</span><span style=\"border-top:1.4px solid #111;\">5</span></span> &minus; 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">6</span></span> = ?", "opts": ["8&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">10</span></span>", "4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>13</span><span style=\"border-top:1.4px solid #111;\">30</span></span>", "3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">3</span></span>", "4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>23</span><span style=\"border-top:1.4px solid #111;\">30</span></span>"], "ci": 1, "exp": "First add <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">3</span></span> + 2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">4</span></span> = 3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>11</span><span style=\"border-top:1.4px solid #111;\">12</span></span>. Then multiply 3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>11</span><span style=\"border-top:1.4px solid #111;\">12</span></span> &times; 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>3</span><span style=\"border-top:1.4px solid #111;\">5</span></span> = 6&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>4</span><span style=\"border-top:1.4px solid #111;\">15</span></span>. Finally subtract 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">6</span></span>: 6&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>4</span><span style=\"border-top:1.4px solid #111;\">15</span></span> &minus; 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>5</span><span style=\"border-top:1.4px solid #111;\">6</span></span> = 4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>13</span><span style=\"border-top:1.4px solid #111;\">30</span></span>.", "tag": "Fractions", "tagcolor": "#185FA5"}, {"stem": "(2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">4</span></span> &times; <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>8</span><span style=\"border-top:1.4px solid #111;\">5</span></span>) + 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>2</span><span style=\"border-top:1.4px solid #111;\">3</span></span> &divide; 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">5</span></span> = ?", "opts": ["2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>19</span><span style=\"border-top:1.4px solid #111;\">90</span></span>", "5&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">10</span></span>", "4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>89</span><span style=\"border-top:1.4px solid #111;\">90</span></span>", "4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>14</span><span style=\"border-top:1.4px solid #111;\">15</span></span>"], "ci": 2, "exp": "First multiply 2&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">4</span></span> &times; <span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>8</span><span style=\"border-top:1.4px solid #111;\">5</span></span> = 3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>3</span><span style=\"border-top:1.4px solid #111;\">5</span></span>. Then divide 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>2</span><span style=\"border-top:1.4px solid #111;\">3</span></span> &divide; 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>1</span><span style=\"border-top:1.4px solid #111;\">5</span></span> = 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>7</span><span style=\"border-top:1.4px solid #111;\">18</span></span>. Finally add them: 3&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>3</span><span style=\"border-top:1.4px solid #111;\">5</span></span> + 1&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>7</span><span style=\"border-top:1.4px solid #111;\">18</span></span> = 4&thinsp;<span style=\"display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.05;margin:0 2px;\"><span>89</span><span style=\"border-top:1.4px solid #111;\">90</span></span>.", "tag": "Fractions", "tagcolor": "#185FA5"}, {"stem": "A garden hose is 7.5 meters long. How many centimeters is that?", "opts": ["75 cm", "750 cm", "7500 cm", "570 cm"], "ci": 1, "exp": "To convert meters to centimeters, multiply by 100: 7.5 &times; 100 = 750 cm.", "tag": "Unit Conversion", "tagcolor": "#E24B4A"}];
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+function reportResult(){
+  try{
+    var correct=0, wrong=0, skipped=0;
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos];
+      if(state.answers[qi]===undefined){ skipped++; continue; }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+    }
+    var total = order.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0
+    };
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
+}
+
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var ORDER_KEY = STORAGE_KEY + '_order';
+var ATTEMPTS_KEY = STORAGE_KEY + '_attempts';
+
+var order = [];
+var activeSet = null; // when in retry mode, holds subset of original indices
+var state = { answers:{}, cur:0, showResults:false };
+var hintShown = false;
+
+function loadState(){
+  var raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try{ state = JSON.parse(raw); }catch(e){ state = {answers:{},cur:0,showResults:false}; } }
+  var rawOrder = localStorage.getItem(ORDER_KEY);
+  if(rawOrder){ try{ order = JSON.parse(rawOrder); }catch(e){ order=null; } }
+  if(!order || !order.length){
+    order = RAW_QUESTIONS.map(function(_,i){return i;});
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function getAttempts(){
+  var a = localStorage.getItem(ATTEMPTS_KEY);
+  return a ? parseInt(a,10) : 1;
+}
+function incAttempts(){
+  var a = getAttempts() + 1;
+  localStorage.setItem(ATTEMPTS_KEY, String(a));
+}
+
+function activeOrder(){ return activeSet || order; }
+
+function render(){
+  document.getElementById('instruction').textContent = INSTRUCTION;
+  var ord = activeOrder();
+  if(state.showResults){
+    document.getElementById('quiz-card').style.display='none';
+    document.getElementById('results-card').style.display='block';
+    renderResults();
+  } else {
+    document.getElementById('quiz-card').style.display='block';
+    document.getElementById('results-card').style.display='none';
+    renderQuestion();
+  }
+  updateNav();
+}
+
+function renderQuestion(){
+  hintShown = false;
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  var q = RAW_QUESTIONS[qi];
+
+  var pb = document.getElementById('passage-box');
+  if(q.passage){ pb.style.display='block'; pb.innerHTML = q.passage; } else { pb.style.display='none'; pb.innerHTML=''; }
+
+  var cl = document.getElementById('context-label');
+  if(q.contextLabel){ cl.style.display='block'; cl.textContent = q.contextLabel; } else { cl.style.display='none'; cl.textContent=''; }
+
+  var cb = document.getElementById('context-box');
+  if(q.context){ cb.style.display='block'; cb.innerHTML = q.context; } else { cb.style.display='none'; cb.innerHTML=''; }
+
+  var tb = document.getElementById('tag-badge');
+  if(q.tag){ tb.style.display='inline-block'; tb.textContent = q.tag; tb.style.background = q.tagcolor || '#185FA5'; } else { tb.style.display='none'; }
+
+  var qt = document.getElementById('q-text');
+  qt.innerHTML = q.stem + (q.tts ? ' <button class="tts-btn" onclick="speak(' + qi + ')" title="Listen">&#128266;</button>' : '');
+
+  var opts = document.getElementById('options');
+  opts.innerHTML = '';
+  var answered = state.answers[qi] !== undefined;
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = optText;
+    if(answered){
+      btn.disabled = true;
+      if(idx === q.ci) btn.className += ' reveal-correct';
+      if(idx === state.answers[qi] && idx !== q.ci) btn.className += ' selected-wrong';
+      if(idx === state.answers[qi] && idx === q.ci) btn.className += ' selected-correct';
+    } else {
+      btn.onclick = function(){ pick(idx); };
+    }
+    opts.appendChild(btn);
+  });
+
+  var hb = document.getElementById('hint-btn');
+  var hx = document.getElementById('hint-box');
+  if(q.hint){
+    hb.style.display='inline-block'; hb.textContent='Show Hint';
+    hx.innerHTML = q.hint; hx.classList.remove('show');
+  } else {
+    hb.style.display='none'; hx.classList.remove('show');
+  }
+
+  var eb = document.getElementById('exp-box');
+  if(answered){
+    eb.style.display='block';
+    eb.innerHTML = '<strong>Explanation:</strong> ' + q.exp;
+  } else {
+    eb.style.display='none'; eb.innerHTML='';
+  }
+
+  document.getElementById('prev-btn').disabled = (state.cur === 0);
+  var ord2 = activeOrder();
+  var isLast = (state.cur === ord2.length - 1);
+  document.getElementById('next-btn').textContent = isLast ? 'Finish' : 'Next';
+}
+
+function toggleHint(){
+  hintShown = !hintShown;
+  var b=document.getElementById('hint-btn'), x=document.getElementById('hint-box');
+  if(hintShown){ x.classList.add('show'); b.textContent='Hide Hint'; }
+  else { x.classList.remove('show'); b.textContent='Show Hint'; }
+}
+window.toggleHint = toggleHint;
+
+function pick(idx){
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState();
+  render();
+}
+window.pick = pick;
+
+function prevQ(){
+  if(state.cur > 0){ state.cur--; saveState(); render(); }
+}
+window.prevQ = prevQ;
+window.go = prevQ;
+
+function goNext(){
+  var ord = activeOrder();
+  if(state.cur < ord.length - 1){
+    state.cur++;
+    saveState();
+    render();
+  } else {
+    state.showResults = true;
+    incAttempts();
+    saveState();
+    render();
+    reportResult();
+  }
+}
+window.goNext = goNext;
+
+function showResultsNow(){
+  state.showResults = true;
+  saveState();
+  render();
+  reportResult();
+}
+window.showResultsNow = showResultsNow;
+
+function goToQ(pos){
+  state.cur = pos;
+  state.showResults = false;
+  saveState();
+  render();
+}
+window.goToQ = goToQ;
+
+function renderResults(){
+  var ord = activeOrder();
+  var correct=0, wrong=0, skipped=0;
+  ord.forEach(function(qi){
+    if(state.answers[qi]===undefined) skipped++;
+    else if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++;
+    else wrong++;
+  });
+  var total = ord.length;
+  document.getElementById('score-big').textContent = correct + ' / ' + total;
+  document.getElementById('score-detail').textContent = 'Correct: ' + correct + '  Wrong: ' + wrong + '  Skipped: ' + skipped;
+}
+
+function updateNav(){
+  var ord = activeOrder();
+  var answeredCount = 0;
+  ord.forEach(function(qi){ if(state.answers[qi]!==undefined) answeredCount++; });
+  document.getElementById('nav-count').textContent = answeredCount + '/' + ord.length;
+  var pct = ord.length ? Math.round(answeredCount/ord.length*100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('results-pill').style.display = (answeredCount === ord.length && ord.length>0) ? 'inline-block' : 'none';
+  renderDots();
+}
+
+function renderDots(){
+  var panel = document.getElementById('dots-panel');
+  if(panel.style.display === 'none') { buildDots(); return; }
+  buildDots();
+}
+function buildDots(){
+  var panel = document.getElementById('dots-panel');
+  var ord = activeOrder();
+  panel.innerHTML = '';
+  ord.forEach(function(qi, pos){
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.textContent = (pos+1);
+    if(state.answers[qi]!==undefined){
+      d.className += (state.answers[qi]===RAW_QUESTIONS[qi].ci) ? ' answered-correct' : ' answered-wrong';
+    }
+    d.onclick = function(){ goToQ(pos); };
+    panel.appendChild(d);
+  });
+}
+
+function toggleJump(){
+  var panel = document.getElementById('dots-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display === 'none'){
+    panel.style.display = 'flex';
+    btn.innerHTML = 'Hide&#9652;';
+    buildDots();
+  } else {
+    panel.style.display = 'none';
+    btn.innerHTML = 'Jump&#9662;';
+  }
+}
+window.toggleJump = toggleJump;
+
+function startRetry(){
+  var ord = activeOrder();
+  var wrongIdx = ord.filter(function(qi){ return state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci; });
+  if(!wrongIdx.length) return;
+  activeSet = wrongIdx;
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  render();
+}
+window.startRetry = startRetry;
+
+function saveWrong(){
+  var ord = activeOrder();
+  var wrongAnswers = [];
+  ord.forEach(function(qi){
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongAnswers.push({
+        question: q.stem.replace(/<[^>]+>/g,''),
+        yourAnswer: q.opts[state.answers[qi]].replace(/<[^>]+>/g,''),
+        correctAnswer: q.opts[q.ci].replace(/<[^>]+>/g,''),
+        explanation: q.exp.replace(/<[^>]+>/g,'')
+      });
+    }
+  });
+  var payload = { title: TITLE, wrongAnswers: wrongAnswers };
+  var blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var d = new Date();
+  var ds = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  a.href = url;
+  a.download = 'quiz_' + QUIZ_KEY + '_wrong_' + ds + '_v1.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+window.copyRes = saveWrong;
+window.saveWrong = saveWrong;
+
+function openFreshModal(){ document.getElementById('fresh-modal').style.display='flex'; }
+window.openFreshModal = openFreshModal;
+function closeFreshModal(){ document.getElementById('fresh-modal').style.display='none'; }
+window.closeFreshModal = closeFreshModal;
+function confirmFresh(){
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(ORDER_KEY);
+  activeSet = null;
+  order = RAW_QUESTIONS.map(function(_,i){return i;});
+  localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  document.getElementById('fresh-modal').style.display='none';
+  render();
+}
+window.confirmFresh = confirmFresh;
+
+
+
+loadState();
+render();
+</script>
+</body>
+</html>
