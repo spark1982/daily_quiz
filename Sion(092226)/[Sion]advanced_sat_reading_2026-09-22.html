@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Advanced SAT Reading</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f4f6fa; margin:0; padding: 20px 12px 60px; color:#1a1a2e; }
+  .quiz-wrap { max-width: 680px; margin: 0 auto; }
+  .quiz-title { font-size: 1.4rem; font-weight: 800; text-align:center; margin: 8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom: 14px; min-height: 0; }
+  .nav-bar { background:#fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .nav-summary { display:flex; align-items:center; gap:10px; }
+  #nav-count { font-weight:700; font-size:0.85rem; color:#333; white-space:nowrap; }
+  .progress-track { flex:1; height:6px; background:#d7dde6; border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; width:0%; background:#185FA5; border-radius:3px; transition: width .2s; }
+  .jump-btn { background:#eef2f7; border:none; border-radius:8px; padding:6px 12px; font-size:0.8rem; font-weight:700; color:#185FA5; cursor:pointer; white-space:nowrap; }
+  .dots-panel { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .dot { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; cursor:pointer; background:#d7dde6; color:#555; border:none; }
+  .dot.answered-correct { background:#185FA5; color:#fff; }
+  .dot.answered-wrong { background:#E24B4A; color:#fff; }
+  .results-pill { display:inline-block; margin: 0 auto 14px; padding: 8px 20px; background:#1D9E75; color:#fff; border-radius:20px; font-weight:700; text-align:center; cursor:pointer; width:fit-content; }
+  .results-pill-wrap { text-align:center; }
+  .quiz-card, .results-card { background:#fff; border-radius: 14px; padding: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 16px; }
+  .passage-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:0.92rem; line-height:1.6; color:#222; }
+  .context-label { font-size:0.92rem; font-weight:600; color:#333; margin-bottom:8px; line-height:1.4; }
+  .context-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; }
+  .tag-badge { display:inline-block; font-size:0.72rem; font-weight:700; color:#fff; padding:3px 10px; border-radius:12px; margin-bottom:10px; }
+  .q-text { font-size:1.05rem; font-weight:600; margin-bottom:16px; line-height:1.5; }
+  #options { display:flex; flex-direction:column; gap:10px; }
+  .opt-btn { text-align:left; padding:12px 14px; border-radius:10px; border:1.5px solid #d7dde6; background:#fafbfc; font-size:0.95rem; cursor:pointer; line-height:1.4; }
+  .opt-btn:hover { border-color:#185FA5; }
+  .opt-btn.selected-correct { background:#e6f4ec; border-color:#1D9E75; color:#0d6b3f; font-weight:700; }
+  .opt-btn.selected-wrong { background:#fbeaea; border-color:#E24B4A; color:#a52a2a; font-weight:700; }
+  .opt-btn.reveal-correct { background:#e6f4ec; border-color:#1D9E75; }
+  .opt-btn:disabled { cursor:default; }
+  .exp-box { margin-top:14px; background:#eef7f2; border-left:4px solid #1D9E75; border-radius:8px; padding:12px 14px; font-size:0.88rem; color:#2d4d3f; line-height:1.5; display:none; }
+  .hint-btn { background:#fff8e1;color:#a5720a;border:1.5px solid #f5a623;border-radius:8px;padding:7px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-top:12px;margin-bottom:12px;display:inline-block; }
+  .hint-box { background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.88rem;color:#6b5215;line-height:1.5;display:none; }
+  .hint-box.show { display:block; }
+  .tts-btn { background:#eef2f7; border:none; border-radius:50%; width:34px; height:34px; font-size:1rem; cursor:pointer; margin-left:8px; vertical-align:middle; }
+  .nav-btns { display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .nav-btns button { flex:1; padding:11px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; background:#185FA5; color:#fff; }
+  .nav-btns button:disabled { background:#c9d2dc; cursor:default; }
+  .results-card h2 { text-align:center; margin-top:0; }
+  .score-big { text-align:center; font-size:2.2rem; font-weight:800; color:#185FA5; margin: 6px 0 16px; }
+  .action-row { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .action-row button { padding:12px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; }
+  .btn-retry { background:#f5a623; color:#fff; }
+  .btn-save { background:#7b61ff; color:#fff; }
+  .btn-fresh { background:#E24B4A; color:#fff; }
+  .fresh-btn-bottom { display:block; margin: 6px auto 0; background:none; border:1.5px solid #d7dde6; color:#888; padding:8px 16px; border-radius:20px; font-size:0.8rem; cursor:pointer; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:14px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { font-size:0.95rem; margin-bottom:18px; }
+  .modal-box button { padding:10px 16px; border-radius:8px; border:none; font-weight:700; margin:0 6px; cursor:pointer; }
+  .modal-yes { background:#E24B4A; color:#fff; }
+  .modal-no { background:#eef2f7; color:#333; }
+
+</style>
+</head>
+<body>
+<div class="quiz-wrap">
+  <div class="quiz-title">[Sion] Advanced SAT Reading</div>
+  <div class="instruction" id="instruction"></div>
+
+  <div class="nav-bar">
+    <div class="nav-summary">
+      <span id="nav-count">0/0</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <button class="jump-btn" id="jump-btn" onclick="toggleJump()">Jump&#9662;</button>
+    </div>
+    <div class="dots-panel" id="dots-panel" style="display:none;"></div>
+  </div>
+
+  <div class="results-pill-wrap"><span class="results-pill" id="results-pill" style="display:none;" onclick="showResultsNow()">Results</span></div>
+
+  <div class="quiz-card" id="quiz-card">
+    <div class="passage-box" id="passage-box" style="display:none;"></div>
+    <div class="context-label" id="context-label" style="display:none;"></div>
+    <div class="context-box" id="context-box" style="display:none;"></div>
+    <div class="tag-badge" id="tag-badge" style="display:none;"></div>
+    <div class="q-text" id="q-text"></div>
+    <div id="options"></div>
+    <button class="hint-btn" id="hint-btn" onclick="toggleHint()" style="display:none;">Show Hint</button>
+    <div class="hint-box" id="hint-box"></div>
+    <div class="exp-box" id="exp-box"></div>
+    <div class="nav-btns">
+      <button id="prev-btn" onclick="prevQ()">Prev</button>
+      <button id="next-btn" onclick="goNext()">Next</button>
+    </div>
+  </div>
+
+  <div class="results-card" id="results-card" style="display:none;">
+    <h2>Results</h2>
+    <div class="score-big" id="score-big"></div>
+    <div id="score-detail" style="text-align:center;color:#555;font-size:0.9rem;"></div>
+    <div class="action-row">
+      <button class="btn-retry" onclick="startRetry()">Retry Wrong Ones</button>
+      <button class="btn-save" onclick="saveWrong()">Save Wrong Answers</button>
+      <button class="btn-fresh" onclick="openFreshModal()">Start Fresh</button>
+    </div>
+  </div>
+
+  <button class="fresh-btn-bottom" onclick="openFreshModal()">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="fresh-modal" style="display:none;">
+  <div class="modal-box">
+    <p>Reset all progress and start over?</p>
+    <button class="modal-yes" onclick="confirmFresh()">Yes, Start Fresh</button>
+    <button class="modal-no" onclick="closeFreshModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Sion] Advanced SAT Reading";
+var QUIZ_KEY = "sionadvreading";
+var INSTRUCTION = "Read each passage carefully and choose the best answer.";
+var TODAY_STR = "20260922";
+var RAW_QUESTIONS = [{"passage": "Octopuses lack the vocal or facial signals many animals use to communicate, yet they are able to alter their skin color, texture, and pattern within a fraction of a second. Researchers once assumed this ability existed solely for camouflage, allowing an octopus to blend seamlessly into coral or sand and evade predators. Recent studies complicate this view: octopuses have been observed changing color even in featureless tanks with no visual backdrop to match, and some patterns appear to correlate with the animal's apparent mood or activity rather than with its surroundings. This has led some researchers to hypothesize that skin-color change may serve a second, largely unstudied function beyond concealment.", "stem": "As used in the passage, \"complicate\" most nearly means", "opts": ["simplify for future research", "make more difficult to observe", "call into question the completeness of", "prove entirely false"], "ci": 2, "exp": "The recent studies do not make the camouflage explanation impossible to observe, nor do they prove it false outright &mdash; they show that camouflage alone does not account for every instance of color change, calling into question whether it is the complete explanation. \"Simplify\" is the opposite of what the studies do.", "tag": "Words in Context", "tagcolor": "#7b61ff"}, {"passage": "Johannes Gutenberg is often credited as the inventor of the printing press, but movable type had already been developed in Korea and China more than a century before Gutenberg's workshop began operating in the 1440s. What Gutenberg contributed was not the concept of movable type itself but a set of practical refinements&mdash;an oil-based ink that adhered well to metal type, a mold that could cast individual letters quickly and uniformly, and a press adapted from wine-making equipment&mdash;that together made large-scale printing commercially viable in Europe for the first time. It is this combination of engineering improvements, rather than a single flash of invention, that explains why his name became attached to the technology.", "stem": "Which choice best describes the overall structure of the passage?", "opts": ["It describes a historical event in strict chronological order from earliest to most recent", "It argues that Gutenberg's contribution to printing has been unfairly overlooked by historians", "It corrects a common misconception and then explains what Gutenberg's actual contribution was", "It presents two competing theories about who invented the printing press without favoring either"], "ci": 2, "exp": "The passage opens by complicating the common credit given to Gutenberg (\"often credited... but movable type had already been developed\"), then pivots to explain what he actually contributed. It does not present competing theories evenhandedly, does not proceed in strict chronological order, and argues the opposite of being overlooked &mdash; it argues his fame is somewhat overstated.", "tag": "Text Structure and Purpose", "tagcolor": "#0d9488"}, {"passage": "Octopuses lack the vocal or facial signals many animals use to communicate, yet they are able to alter their skin color, texture, and pattern within a fraction of a second. Researchers once assumed this ability existed solely for camouflage, allowing an octopus to blend seamlessly into coral or sand and evade predators. Recent studies complicate this view: octopuses have been observed changing color even in featureless tanks with no visual backdrop to match, and some patterns appear to correlate with the animal's apparent mood or activity rather than with its surroundings. This has led some researchers to hypothesize that skin-color change may serve a second, largely unstudied function beyond concealment.", "stem": "Based on the passage, which inference about researchers' current understanding of octopus color change is most reasonable?", "opts": ["Researchers have shown that skin-color change requires visual input", "Researchers have determined that mood has no effect on octopus skin color", "Researchers believe octopuses use color change exclusively to communicate with other octopuses", "Researchers do not yet have a complete explanation for why octopuses change color in all circumstances"], "ci": 3, "exp": "The passage states that a possible second function of color change is \"largely unstudied,\" which implies researchers' current understanding is incomplete. The passage does not rule out mood as a factor (it actually suggests a correlation), never claims the purpose is exclusively communication, and directly contradicts the idea that visual input is required, since color change happens even in featureless tanks.", "tag": "Inferences", "tagcolor": "#f5a623"}, {"passage": "Octopuses lack the vocal or facial signals many animals use to communicate, yet they are able to alter their skin color, texture, and pattern within a fraction of a second. Researchers once assumed this ability existed solely for camouflage, allowing an octopus to blend seamlessly into coral or sand and evade predators. Recent studies complicate this view: octopuses have been observed changing color even in featureless tanks with no visual backdrop to match, and some patterns appear to correlate with the animal's apparent mood or activity rather than with its surroundings. This has led some researchers to hypothesize that skin-color change may serve a second, largely unstudied function beyond concealment.", "stem": "As used in the passage, \"correlate\" most nearly means", "opts": ["be associated with", "replace", "cause directly", "contradict"], "ci": 0, "exp": "The passage says some patterns \"appear to correlate with the animal's apparent mood,\" meaning the patterns and mood seem linked or associated, not that one is proven to directly cause the other, nor that mood contradicts or replaces the patterns.", "tag": "Words in Context", "tagcolor": "#7b61ff"}, {"passage": "The following text is from a short story about a woman who returns to her family's bakery years after it closed.<br><br>Maren had expected the smell to be gone&mdash;flour does not linger the way memory does&mdash;but when she pushed open the door, the scent of scorched sugar rose up as if the ovens had never gone cold. She had come only to collect the last of the equipment before the building sold, a task she had assigned herself precisely because it seemed unsentimental, almost bureaucratic. And yet she found she could not lift the rolling pin from its hook. It was, after all, just wood and steel, worn smooth by hands that were no longer anyone's hands at all. She set it down twice before she managed to carry it to the box.", "stem": "Which choice best describes the function of the detail about the rolling pin being \"worn smooth by hands that were no longer anyone's hands at all\"?", "opts": ["It shows that the equipment is too old and damaged to be sold along with the building", "It connects an ordinary object to the loss of the people who once used it, deepening the emotional weight of the scene", "It suggests that Maren is worried about who will use the rolling pin next", "It implies that Maren does not recognize the rolling pin as belonging to her family"], "ci": 1, "exp": "The phrase turns a plain object into a reminder of the people &mdash; now gone from the bakery &mdash; who wore it smooth over years of use, which is why Maren, despite her businesslike intentions, cannot easily lift it. Nothing in the text suggests the pin is damaged, that Maren fails to recognize it, or that she is thinking ahead to a future owner.", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"passage": "The following text is from a short story about a woman who returns to her family's bakery years after it closed.<br><br>Maren had expected the smell to be gone&mdash;flour does not linger the way memory does&mdash;but when she pushed open the door, the scent of scorched sugar rose up as if the ovens had never gone cold. She had come only to collect the last of the equipment before the building sold, a task she had assigned herself precisely because it seemed unsentimental, almost bureaucratic. And yet she found she could not lift the rolling pin from its hook. It was, after all, just wood and steel, worn smooth by hands that were no longer anyone's hands at all. She set it down twice before she managed to carry it to the box.", "stem": "The phrase \"a task she had assigned herself precisely because it seemed unsentimental, almost bureaucratic\" primarily serves to", "opts": ["suggest that Maren is being forced to sell the building against her wishes", "establish that Maren has no emotional connection to the bakery", "explain why Maren decided to become the one responsible for closing the bakery", "highlight a contrast between how Maren wanted to view the visit and how she actually experiences it"], "ci": 3, "exp": "Maren frames the errand as businesslike to keep it emotionally manageable, but the next sentences show her struggling to lift a simple rolling pin &mdash; the gap between her stated intention and her actual reaction is the point of the phrase. The passage never suggests she lacks feeling for the place; quite the opposite, and there is no mention of being forced to sell or of how she came to be the one handling it.", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"passage": "Marine biologists have long linked coral bleaching to unusually warm ocean temperatures, but a recent survey of reefs off the coast of a Pacific island chain adds a new layer of evidence. Researchers recorded bleaching events at twelve reef sites over three years and found that reefs bleached far more severely in years when average sea surface temperature exceeded historical norms by at least 1.5&deg;C for four consecutive weeks or more. Reefs exposed to similarly high temperatures for shorter stretches showed comparatively minor bleaching, suggesting that sustained heat, not simply peak temperature, may be the more decisive factor.", "stem": "Which finding from the survey most directly supports the claim that duration of heat exposure matters more than peak temperature alone?", "opts": ["Bleaching events were recorded at twelve reef sites over a three-year period", "Coral bleaching has long been linked to unusually warm ocean temperatures", "Reefs exposed to high temperatures for shorter periods showed comparatively minor bleaching even when temperatures were similarly high", "The survey was conducted off the coast of a Pacific island chain"], "ci": 2, "exp": "The passage's key piece of evidence is the comparison between reefs exposed to sustained heat (four or more weeks) versus reefs exposed to similarly high temperatures for a shorter time, with only the sustained-exposure reefs showing severe bleaching. The number of sites and the survey's general location are just background details, and the general link between warm water and bleaching is the prior assumption the study adds nuance to, not the new supporting evidence.", "tag": "Command of Evidence", "tagcolor": "#1D9E75"}, {"passage": "<strong>Text 1</strong><br>Urban agriculture advocate Denise Okoro argues that converting vacant city lots into community gardens is one of the most cost-effective ways to improve a neighborhood's access to fresh produce. Because the land is often already owned by the city and sits unused, start-up costs are limited mainly to soil remediation and basic tools, while the resulting gardens can supply food to dozens of households within a single growing season.<br><br><strong>Text 2</strong><br>Urban planner Felix Bram cautions that the appeal of community gardens can obscure their limits. Vacant lots suitable for gardening are frequently contaminated with lead or other industrial residue, and thorough soil remediation can cost far more than proponents assume. Bram further notes that a garden feeding \"dozens of households\" still reaches only a small fraction of a neighborhood's population compared to investments in grocery infrastructure.", "stem": "Which statement best captures a key difference between the two texts' perspectives on community gardens?", "opts": ["Text 1 and Text 2 both conclude that community gardens are not worth pursuing in any city", "Text 1 argues gardens should replace grocery stores, while Text 2 argues they should supplement them", "Text 1 focuses on soil contamination, while Text 2 focuses on the number of households fed", "Text 1 emphasizes the low cost and quick impact of community gardens, while Text 2 emphasizes hidden costs and limited overall reach"], "ci": 3, "exp": "Text 1 highlights that gardens are inexpensive to start and can feed dozens of households quickly, while Text 2 counters with concerns about contamination costs and the small scale of impact relative to a whole neighborhood. Text 1 does not focus on contamination, and neither text claims gardens should fully replace grocery stores or that gardens are not worth pursuing at all.", "tag": "Cross-Text Connections", "tagcolor": "#d6336c"}, {"passage": "Octopuses lack the vocal or facial signals many animals use to communicate, yet they are able to alter their skin color, texture, and pattern within a fraction of a second. Researchers once assumed this ability existed solely for camouflage, allowing an octopus to blend seamlessly into coral or sand and evade predators. Recent studies complicate this view: octopuses have been observed changing color even in featureless tanks with no visual backdrop to match, and some patterns appear to correlate with the animal's apparent mood or activity rather than with its surroundings. This has led some researchers to hypothesize that skin-color change may serve a second, largely unstudied function beyond concealment.", "stem": "Which choice most logically follows from the observation that octopuses change color even in featureless tanks?", "opts": ["Featureless tanks cause octopuses to become permanently stressed", "Skin-color change in octopuses has now been fully explained by researchers", "Camouflage alone may not fully explain why octopuses change their skin color and pattern", "Octopuses are incapable of true camouflage and only appear to blend into their surroundings"], "ci": 2, "exp": "If color change happens even when there is nothing to blend into, camouflage cannot be the only explanation for the behavior &mdash; which is exactly the inference the passage draws in its final two sentences. The passage never claims octopuses are incapable of camouflage, says nothing about permanent stress, and explicitly says the second function remains \"largely unstudied,\" not fully explained.", "tag": "Inferences", "tagcolor": "#f5a623"}, {"passage": "Marine biologists have long linked coral bleaching to unusually warm ocean temperatures, but a recent survey of reefs off the coast of a Pacific island chain adds a new layer of evidence. Researchers recorded bleaching events at twelve reef sites over three years and found that reefs bleached far more severely in years when average sea surface temperature exceeded historical norms by at least 1.5&deg;C for four consecutive weeks or more. Reefs exposed to similarly high temperatures for shorter stretches showed comparatively minor bleaching, suggesting that sustained heat, not simply peak temperature, may be the more decisive factor.", "stem": "If a thirteenth reef site experienced sea surface temperatures 1.5&deg;C above normal for only ten days, which outcome would be most consistent with the pattern described in the passage?", "opts": ["The reef would likely show the most severe bleaching recorded in the study", "The reef would likely show comparatively minor bleaching", "The reef's temperature pattern could not be compared to the other sites at all", "The reef would be completely unaffected by any bleaching"], "ci": 1, "exp": "The passage indicates that severe bleaching was associated with elevated temperatures lasting four consecutive weeks or more, while shorter periods of similarly high temperatures produced only minor bleaching &mdash; ten days falls well short of that four-week threshold, so minor bleaching is the outcome most consistent with the study's pattern. Severe bleaching and total unaffectedness both contradict the described pattern, and the passage gives no reason the comparison couldn't be made.", "tag": "Command of Evidence", "tagcolor": "#1D9E75"}, {"passage": "<strong>Text 1</strong><br>Urban agriculture advocate Denise Okoro argues that converting vacant city lots into community gardens is one of the most cost-effective ways to improve a neighborhood's access to fresh produce. Because the land is often already owned by the city and sits unused, start-up costs are limited mainly to soil remediation and basic tools, while the resulting gardens can supply food to dozens of households within a single growing season.<br><br><strong>Text 2</strong><br>Urban planner Felix Bram cautions that the appeal of community gardens can obscure their limits. Vacant lots suitable for gardening are frequently contaminated with lead or other industrial residue, and thorough soil remediation can cost far more than proponents assume. Bram further notes that a garden feeding \"dozens of households\" still reaches only a small fraction of a neighborhood's population compared to investments in grocery infrastructure.", "stem": "Based on the texts, how would Felix Bram most likely respond to Denise Okoro's claim that community gardens are cost-effective?", "opts": ["He would argue that community gardens are cost-effective but fail to address hunger at all", "He would question the claim by pointing out that soil remediation costs are often higher than gardening advocates assume", "He would agree completely, since both texts treat vacant lots as free of any hidden costs", "He would dismiss the idea of using vacant lots for any purpose besides new housing"], "ci": 1, "exp": "Bram directly challenges the cost-effectiveness claim by noting that remediation of contaminated soil \"can cost far more than proponents assume,\" which undercuts Okoro's point about limited start-up costs. He does not treat the lots as cost-free, does not claim gardens do nothing for hunger, and never discusses housing as an alternative use.", "tag": "Cross-Text Connections", "tagcolor": "#d6336c"}, {"passage": "Johannes Gutenberg is often credited as the inventor of the printing press, but movable type had already been developed in Korea and China more than a century before Gutenberg's workshop began operating in the 1440s. What Gutenberg contributed was not the concept of movable type itself but a set of practical refinements&mdash;an oil-based ink that adhered well to metal type, a mold that could cast individual letters quickly and uniformly, and a press adapted from wine-making equipment&mdash;that together made large-scale printing commercially viable in Europe for the first time. It is this combination of engineering improvements, rather than a single flash of invention, that explains why his name became attached to the technology.", "stem": "Why does the author mention that Gutenberg's press was \"adapted from wine-making equipment\"?", "opts": ["To illustrate the kind of practical, engineering-based refinement that the author credits Gutenberg with making", "To argue that Gutenberg's press was not truly a new invention at all", "To suggest that Gutenberg originally worked as a winemaker before turning to printing", "To explain why Gutenberg's printing method failed to become commercially successful"], "ci": 0, "exp": "The detail is one of three examples (ink, mold, and press) the author lists to support the claim that Gutenberg's contribution was a set of \"practical refinements\" rather than a single invention. The author does not claim the press wasn't new at all, say anything about Gutenberg's prior occupation, or suggest his method failed commercially &mdash; the passage says the opposite, that it succeeded.", "tag": "Text Structure and Purpose", "tagcolor": "#0d9488"}];
+var REPORT_ENDPOINT = "https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec";
+function reportResult(){
+  try{
+    var correct=0, wrong=0, skipped=0;
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos];
+      if(state.answers[qi]===undefined){ skipped++; continue; }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+    }
+    var total = order.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0
+    };
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
+}
+
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var ORDER_KEY = STORAGE_KEY + '_order';
+var ATTEMPTS_KEY = STORAGE_KEY + '_attempts';
+
+var order = [];
+var activeSet = null; // when in retry mode, holds subset of original indices
+var state = { answers:{}, cur:0, showResults:false };
+var hintShown = false;
+
+function loadState(){
+  var raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try{ state = JSON.parse(raw); }catch(e){ state = {answers:{},cur:0,showResults:false}; } }
+  var rawOrder = localStorage.getItem(ORDER_KEY);
+  if(rawOrder){ try{ order = JSON.parse(rawOrder); }catch(e){ order=null; } }
+  if(!order || !order.length){
+    order = RAW_QUESTIONS.map(function(_,i){return i;});
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function getAttempts(){
+  var a = localStorage.getItem(ATTEMPTS_KEY);
+  return a ? parseInt(a,10) : 1;
+}
+function incAttempts(){
+  var a = getAttempts() + 1;
+  localStorage.setItem(ATTEMPTS_KEY, String(a));
+}
+
+function activeOrder(){ return activeSet || order; }
+
+function render(){
+  document.getElementById('instruction').textContent = INSTRUCTION;
+  var ord = activeOrder();
+  if(state.showResults){
+    document.getElementById('quiz-card').style.display='none';
+    document.getElementById('results-card').style.display='block';
+    renderResults();
+  } else {
+    document.getElementById('quiz-card').style.display='block';
+    document.getElementById('results-card').style.display='none';
+    renderQuestion();
+  }
+  updateNav();
+}
+
+function renderQuestion(){
+  hintShown = false;
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  var q = RAW_QUESTIONS[qi];
+
+  var pb = document.getElementById('passage-box');
+  if(q.passage){ pb.style.display='block'; pb.innerHTML = q.passage; } else { pb.style.display='none'; pb.innerHTML=''; }
+
+  var cl = document.getElementById('context-label');
+  if(q.contextLabel){ cl.style.display='block'; cl.textContent = q.contextLabel; } else { cl.style.display='none'; cl.textContent=''; }
+
+  var cb = document.getElementById('context-box');
+  if(q.context){ cb.style.display='block'; cb.innerHTML = q.context; } else { cb.style.display='none'; cb.innerHTML=''; }
+
+  var tb = document.getElementById('tag-badge');
+  if(q.tag){ tb.style.display='inline-block'; tb.textContent = q.tag; tb.style.background = q.tagcolor || '#185FA5'; } else { tb.style.display='none'; }
+
+  var qt = document.getElementById('q-text');
+  qt.innerHTML = q.stem + (q.tts ? ' <button class="tts-btn" onclick="speak(' + qi + ')" title="Listen">&#128266;</button>' : '');
+
+  var opts = document.getElementById('options');
+  opts.innerHTML = '';
+  var answered = state.answers[qi] !== undefined;
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = optText;
+    if(answered){
+      btn.disabled = true;
+      if(idx === q.ci) btn.className += ' reveal-correct';
+      if(idx === state.answers[qi] && idx !== q.ci) btn.className += ' selected-wrong';
+      if(idx === state.answers[qi] && idx === q.ci) btn.className += ' selected-correct';
+    } else {
+      btn.onclick = function(){ pick(idx); };
+    }
+    opts.appendChild(btn);
+  });
+
+  var hb = document.getElementById('hint-btn');
+  var hx = document.getElementById('hint-box');
+  if(q.hint){
+    hb.style.display='inline-block'; hb.textContent='Show Hint';
+    hx.innerHTML = q.hint; hx.classList.remove('show');
+  } else {
+    hb.style.display='none'; hx.classList.remove('show');
+  }
+
+  var eb = document.getElementById('exp-box');
+  if(answered){
+    eb.style.display='block';
+    eb.innerHTML = '<strong>Explanation:</strong> ' + q.exp;
+  } else {
+    eb.style.display='none'; eb.innerHTML='';
+  }
+
+  document.getElementById('prev-btn').disabled = (state.cur === 0);
+  var ord2 = activeOrder();
+  var isLast = (state.cur === ord2.length - 1);
+  document.getElementById('next-btn').textContent = isLast ? 'Finish' : 'Next';
+}
+
+function toggleHint(){
+  hintShown = !hintShown;
+  var b=document.getElementById('hint-btn'), x=document.getElementById('hint-box');
+  if(hintShown){ x.classList.add('show'); b.textContent='Hide Hint'; }
+  else { x.classList.remove('show'); b.textContent='Show Hint'; }
+}
+window.toggleHint = toggleHint;
+
+function pick(idx){
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState();
+  render();
+}
+window.pick = pick;
+
+function prevQ(){
+  if(state.cur > 0){ state.cur--; saveState(); render(); }
+}
+window.prevQ = prevQ;
+window.go = prevQ;
+
+function goNext(){
+  var ord = activeOrder();
+  if(state.cur < ord.length - 1){
+    state.cur++;
+    saveState();
+    render();
+  } else {
+    state.showResults = true;
+    incAttempts();
+    saveState();
+    render();
+    reportResult();
+  }
+}
+window.goNext = goNext;
+
+function showResultsNow(){
+  state.showResults = true;
+  saveState();
+  render();
+  reportResult();
+}
+window.showResultsNow = showResultsNow;
+
+function goToQ(pos){
+  state.cur = pos;
+  state.showResults = false;
+  saveState();
+  render();
+}
+window.goToQ = goToQ;
+
+function renderResults(){
+  var ord = activeOrder();
+  var correct=0, wrong=0, skipped=0;
+  ord.forEach(function(qi){
+    if(state.answers[qi]===undefined) skipped++;
+    else if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++;
+    else wrong++;
+  });
+  var total = ord.length;
+  document.getElementById('score-big').textContent = correct + ' / ' + total;
+  document.getElementById('score-detail').textContent = 'Correct: ' + correct + '  Wrong: ' + wrong + '  Skipped: ' + skipped;
+}
+
+function updateNav(){
+  var ord = activeOrder();
+  var answeredCount = 0;
+  ord.forEach(function(qi){ if(state.answers[qi]!==undefined) answeredCount++; });
+  document.getElementById('nav-count').textContent = answeredCount + '/' + ord.length;
+  var pct = ord.length ? Math.round(answeredCount/ord.length*100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('results-pill').style.display = (answeredCount === ord.length && ord.length>0) ? 'inline-block' : 'none';
+  renderDots();
+}
+
+function renderDots(){
+  var panel = document.getElementById('dots-panel');
+  if(panel.style.display === 'none') { buildDots(); return; }
+  buildDots();
+}
+function buildDots(){
+  var panel = document.getElementById('dots-panel');
+  var ord = activeOrder();
+  panel.innerHTML = '';
+  ord.forEach(function(qi, pos){
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.textContent = (pos+1);
+    if(state.answers[qi]!==undefined){
+      d.className += (state.answers[qi]===RAW_QUESTIONS[qi].ci) ? ' answered-correct' : ' answered-wrong';
+    }
+    d.onclick = function(){ goToQ(pos); };
+    panel.appendChild(d);
+  });
+}
+
+function toggleJump(){
+  var panel = document.getElementById('dots-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display === 'none'){
+    panel.style.display = 'flex';
+    btn.innerHTML = 'Hide&#9652;';
+    buildDots();
+  } else {
+    panel.style.display = 'none';
+    btn.innerHTML = 'Jump&#9662;';
+  }
+}
+window.toggleJump = toggleJump;
+
+function startRetry(){
+  var ord = activeOrder();
+  var wrongIdx = ord.filter(function(qi){ return state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci; });
+  if(!wrongIdx.length) return;
+  activeSet = wrongIdx;
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  render();
+}
+window.startRetry = startRetry;
+
+function saveWrong(){
+  var ord = activeOrder();
+  var wrongAnswers = [];
+  ord.forEach(function(qi){
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongAnswers.push({
+        question: q.stem.replace(/<[^>]+>/g,''),
+        yourAnswer: q.opts[state.answers[qi]].replace(/<[^>]+>/g,''),
+        correctAnswer: q.opts[q.ci].replace(/<[^>]+>/g,''),
+        explanation: q.exp.replace(/<[^>]+>/g,'')
+      });
+    }
+  });
+  var payload = { title: TITLE, wrongAnswers: wrongAnswers };
+  var blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var d = new Date();
+  var ds = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  a.href = url;
+  a.download = 'quiz_' + QUIZ_KEY + '_wrong_' + ds + '_v1.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+window.copyRes = saveWrong;
+window.saveWrong = saveWrong;
+
+function openFreshModal(){ document.getElementById('fresh-modal').style.display='flex'; }
+window.openFreshModal = openFreshModal;
+function closeFreshModal(){ document.getElementById('fresh-modal').style.display='none'; }
+window.closeFreshModal = closeFreshModal;
+function confirmFresh(){
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(ORDER_KEY);
+  activeSet = null;
+  order = RAW_QUESTIONS.map(function(_,i){return i;});
+  localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  document.getElementById('fresh-modal').style.display='none';
+  render();
+}
+window.confirmFresh = confirmFresh;
+
+
+
+loadState();
+render();
+</script>
+</body>
+</html>

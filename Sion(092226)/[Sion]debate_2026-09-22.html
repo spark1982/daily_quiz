@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Debate</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f4f6fa; margin:0; padding: 20px 12px 60px; color:#1a1a2e; }
+  .quiz-wrap { max-width: 680px; margin: 0 auto; }
+  .quiz-title { font-size: 1.4rem; font-weight: 800; text-align:center; margin: 8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom: 14px; min-height: 0; }
+  .nav-bar { background:#fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .nav-summary { display:flex; align-items:center; gap:10px; }
+  #nav-count { font-weight:700; font-size:0.85rem; color:#333; white-space:nowrap; }
+  .progress-track { flex:1; height:6px; background:#d7dde6; border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; width:0%; background:#185FA5; border-radius:3px; transition: width .2s; }
+  .jump-btn { background:#eef2f7; border:none; border-radius:8px; padding:6px 12px; font-size:0.8rem; font-weight:700; color:#185FA5; cursor:pointer; white-space:nowrap; }
+  .dots-panel { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .dot { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; cursor:pointer; background:#d7dde6; color:#555; border:none; }
+  .dot.answered-correct { background:#185FA5; color:#fff; }
+  .dot.answered-wrong { background:#E24B4A; color:#fff; }
+  .results-pill { display:inline-block; margin: 0 auto 14px; padding: 8px 20px; background:#1D9E75; color:#fff; border-radius:20px; font-weight:700; text-align:center; cursor:pointer; width:fit-content; }
+  .results-pill-wrap { text-align:center; }
+  .quiz-card, .results-card { background:#fff; border-radius: 14px; padding: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 16px; }
+  .passage-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:0.92rem; line-height:1.6; color:#222; }
+  .context-label { font-size:0.92rem; font-weight:600; color:#333; margin-bottom:8px; line-height:1.4; }
+  .context-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; }
+  .tag-badge { display:inline-block; font-size:0.72rem; font-weight:700; color:#fff; padding:3px 10px; border-radius:12px; margin-bottom:10px; }
+  .q-text { font-size:1.05rem; font-weight:600; margin-bottom:16px; line-height:1.5; }
+  #options { display:flex; flex-direction:column; gap:10px; }
+  .opt-btn { text-align:left; padding:12px 14px; border-radius:10px; border:1.5px solid #d7dde6; background:#fafbfc; font-size:0.95rem; cursor:pointer; line-height:1.4; }
+  .opt-btn:hover { border-color:#185FA5; }
+  .opt-btn.selected-correct { background:#e6f4ec; border-color:#1D9E75; color:#0d6b3f; font-weight:700; }
+  .opt-btn.selected-wrong { background:#fbeaea; border-color:#E24B4A; color:#a52a2a; font-weight:700; }
+  .opt-btn.reveal-correct { background:#e6f4ec; border-color:#1D9E75; }
+  .opt-btn:disabled { cursor:default; }
+  .exp-box { margin-top:14px; background:#eef7f2; border-left:4px solid #1D9E75; border-radius:8px; padding:12px 14px; font-size:0.88rem; color:#2d4d3f; line-height:1.5; display:none; }
+  .hint-btn { background:#fff8e1;color:#a5720a;border:1.5px solid #f5a623;border-radius:8px;padding:7px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-top:12px;margin-bottom:12px;display:inline-block; }
+  .hint-box { background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.88rem;color:#6b5215;line-height:1.5;display:none; }
+  .hint-box.show { display:block; }
+  .tts-btn { background:#eef2f7; border:none; border-radius:50%; width:34px; height:34px; font-size:1rem; cursor:pointer; margin-left:8px; vertical-align:middle; }
+  .nav-btns { display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .nav-btns button { flex:1; padding:11px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; background:#185FA5; color:#fff; }
+  .nav-btns button:disabled { background:#c9d2dc; cursor:default; }
+  .results-card h2 { text-align:center; margin-top:0; }
+  .score-big { text-align:center; font-size:2.2rem; font-weight:800; color:#185FA5; margin: 6px 0 16px; }
+  .action-row { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .action-row button { padding:12px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; }
+  .btn-retry { background:#f5a623; color:#fff; }
+  .btn-save { background:#7b61ff; color:#fff; }
+  .btn-fresh { background:#E24B4A; color:#fff; }
+  .fresh-btn-bottom { display:block; margin: 6px auto 0; background:none; border:1.5px solid #d7dde6; color:#888; padding:8px 16px; border-radius:20px; font-size:0.8rem; cursor:pointer; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:14px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { font-size:0.95rem; margin-bottom:18px; }
+  .modal-box button { padding:10px 16px; border-radius:8px; border:none; font-weight:700; margin:0 6px; cursor:pointer; }
+  .modal-yes { background:#E24B4A; color:#fff; }
+  .modal-no { background:#eef2f7; color:#333; }
+
+</style>
+</head>
+<body>
+<div class="quiz-wrap">
+  <div class="quiz-title">[Sion] Debate</div>
+  <div class="instruction" id="instruction"></div>
+
+  <div class="nav-bar">
+    <div class="nav-summary">
+      <span id="nav-count">0/0</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <button class="jump-btn" id="jump-btn" onclick="toggleJump()">Jump&#9662;</button>
+    </div>
+    <div class="dots-panel" id="dots-panel" style="display:none;"></div>
+  </div>
+
+  <div class="results-pill-wrap"><span class="results-pill" id="results-pill" style="display:none;" onclick="showResultsNow()">Results</span></div>
+
+  <div class="quiz-card" id="quiz-card">
+    <div class="passage-box" id="passage-box" style="display:none;"></div>
+    <div class="context-label" id="context-label" style="display:none;"></div>
+    <div class="context-box" id="context-box" style="display:none;"></div>
+    <div class="tag-badge" id="tag-badge" style="display:none;"></div>
+    <div class="q-text" id="q-text"></div>
+    <div id="options"></div>
+    <button class="hint-btn" id="hint-btn" onclick="toggleHint()" style="display:none;">Show Hint</button>
+    <div class="hint-box" id="hint-box"></div>
+    <div class="exp-box" id="exp-box"></div>
+    <div class="nav-btns">
+      <button id="prev-btn" onclick="prevQ()">Prev</button>
+      <button id="next-btn" onclick="goNext()">Next</button>
+    </div>
+  </div>
+
+  <div class="results-card" id="results-card" style="display:none;">
+    <h2>Results</h2>
+    <div class="score-big" id="score-big"></div>
+    <div id="score-detail" style="text-align:center;color:#555;font-size:0.9rem;"></div>
+    <div class="action-row">
+      <button class="btn-retry" onclick="startRetry()">Retry Wrong Ones</button>
+      <button class="btn-save" onclick="saveWrong()">Save Wrong Answers</button>
+      <button class="btn-fresh" onclick="openFreshModal()">Start Fresh</button>
+    </div>
+  </div>
+
+  <button class="fresh-btn-bottom" onclick="openFreshModal()">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="fresh-modal" style="display:none;">
+  <div class="modal-box">
+    <p>Reset all progress and start over?</p>
+    <button class="modal-yes" onclick="confirmFresh()">Yes, Start Fresh</button>
+    <button class="modal-no" onclick="closeFreshModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Sion] Debate";
+var QUIZ_KEY = "siondebate";
+var INSTRUCTION = "";
+var TODAY_STR = "20260922";
+var RAW_QUESTIONS = [{"contextLabel": "During a PTA meeting about phone use among teenagers, a parent argues:", "context": "<span style=\"font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:1rem;color:#1a1a2e;\">&ldquo;Teenagers shouldn't need social media to feel good about themselves, so clearly most teens aren't actually affected by it that much.&rdquo;</span>", "stem": "What logical fallacy does the parent's statement contain?", "opts": ["Appeal to Emotion &mdash; using feelings rather than facts to persuade", "Slippery Slope &mdash; claiming that one small step will inevitably lead to a chain of extreme consequences", "Moralistic Fallacy &mdash; assuming that because something ought to be true or shouldn't happen, it therefore is true or doesn't happen", "Burden of Proof Fallacy &mdash; claiming a position is true simply because no one has disproven it"], "ci": 2, "exp": "The parent argues that because teenagers shouldn't rely on social media for self-esteem, most of them therefore aren't really affected by it &mdash; jumping from how things ought to be to a claim about how things actually are. This is the Moralistic Fallacy. It is not an Appeal to Emotion, since no feelings are being used to persuade here &mdash; instead a moral \"should\" is being confused with reality. No chain of escalating consequences is claimed, ruling out Slippery Slope, and no claim about a lack of disproof is made, ruling out Burden of Proof Fallacy.", "hint": "Notice the parent moves from a statement about how things should be to a claim about how things actually are, without offering any evidence for that jump."}, {"contextLabel": "In a town newsletter article, a local writer claims:", "context": "<span style=\"font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:1rem;color:#1a1a2e;\">&ldquo;Every summer, ice cream sales at the boardwalk go up, and so do the number of people who need lifeguards' help at the beach. Ice cream must be making people more likely to need rescuing.&rdquo;</span>", "stem": "What logical fallacy does the writer's claim contain?", "opts": ["Anecdotal Evidence &mdash; using a single personal story or isolated example in place of solid evidence", "Cum Hoc Ergo Propter Hoc &mdash; assuming that because two things happen together, one must be causing the other", "Post Hoc Ergo Propter Hoc &mdash; assuming that because one event followed another in time, the first event must have caused the second", "Hasty Generalization &mdash; drawing a broad conclusion from too small or unrepresentative a sample"], "ci": 1, "exp": "Ice cream sales and lifeguard rescues both rise together in summer, likely because hot weather draws more people to the beach and more people buy ice cream &mdash; but the writer wrongly assumes one is causing the other simply because they occur together. This is Cum Hoc Ergo Propter Hoc. It differs from Post Hoc Ergo Propter Hoc, which is about one event following another in sequence rather than happening at the same time. No broad claim from a small sample is made, ruling out Hasty Generalization, and no single personal story is used as evidence, ruling out Anecdotal Evidence.", "hint": "Think about what else changes at the beach during summer that could explain both the ice cream sales and the rescues, without one causing the other."}, {"contextLabel": "During a team meeting, the coach tells a player to stop being late to practice, and the player replies:", "context": "<span style=\"font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:1rem;color:#1a1a2e;\">&ldquo;Why are you lecturing me about being late? You showed up twenty minutes late to the game last Friday!&rdquo;</span>", "stem": "What logical fallacy is the player using to respond to the coach?", "opts": ["Tu Quoque &mdash; dismissing criticism by accusing the critic of doing the same thing, instead of addressing the criticism", "Straw Man Fallacy &mdash; misrepresenting someone's argument to make it easier to attack", "Appeal to Emotion &mdash; using feelings rather than facts to persuade", "Red Herring &mdash; introducing an unrelated topic to distract from the original issue"], "ci": 0, "exp": "The player deflects the coach's valid criticism by pointing out the coach's own lateness rather than addressing whether being late to practice is a problem &mdash; this is Tu Quoque, the \"you too\" fallacy. It differs from a Straw Man because the coach's original point was never distorted, and while it does shift attention, Red Herring usually introduces a completely unrelated topic rather than an accusation of hypocrisy. No emotional appeal is used to persuade, ruling out Appeal to Emotion.", "hint": "Notice that the player never explains why being late is actually fine &mdash; he just points at someone else's behavior."}, {"contextLabel": "During a school newspaper interview, a reporter asks the class president:", "context": "<span style=\"font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:1rem;color:#1a1a2e;\">&ldquo;Why did you stop ignoring the students' complaints about the cafeteria food?&rdquo;</span>", "stem": "What is the flaw in how the reporter phrased this question?", "opts": ["Begging the Question &mdash; an argument whose conclusion is simply restated as one of its premises", "False Dilemma &mdash; presenting only two options when more actually exist", "Hasty Generalization &mdash; drawing a broad conclusion from too small or unrepresentative a sample", "Complex Question &mdash; a question that assumes something unproven or unagreed upon, trapping the responder no matter how they answer"], "ci": 3, "exp": "The reporter's question assumes as fact that the class president was \"ignoring\" complaints, an accusation that was never proven &mdash; any direct answer forces the president to accept that assumption. This is a Complex Question. It is not Begging the Question because no full argument with a circular premise is being made, just an unproven assumption buried in a question. It is not a False Dilemma, since no two options are being forced, and it is not a Hasty Generalization, since no broad conclusion from a small sample is drawn.", "hint": "Notice that the question assumes the class president was ignoring complaints in the first place &mdash; something that was never established."}, {"contextLabel": "In a reply to a classmate's op-ed about the school dress code, another student writes:", "context": "<span style=\"font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:1rem;color:#1a1a2e;\">&ldquo;Why would anyone listen to Marcus's opinion on the dress code? He got detention twice last month for breaking it.&rdquo;</span>", "stem": "What logical fallacy does this reply contain?", "opts": ["Tu Quoque &mdash; dismissing criticism by accusing the critic of doing the same thing, instead of addressing the criticism", "Ad Hominem &mdash; attacking the person making an argument instead of addressing the argument itself", "Genetic Fallacy &mdash; judging an idea as true or false based on where it came from rather than its actual merits", "Appeal to Ignorance &mdash; claiming something must be true because it hasn't been proven false, or false because it hasn't been proven true"], "ci": 1, "exp": "Instead of responding to what Marcus actually argued about the dress code, the reply attacks Marcus's personal history of getting detention &mdash; this is an Ad Hominem attack. It differs from Tu Quoque, which specifically responds to criticism by accusing the critic of the same behavior, whereas here Marcus wasn't criticizing anyone's behavior. It's not a Genetic Fallacy, since the argument isn't being dismissed based on its origin but based on the person himself, and no claim about a lack of proof is being made, ruling out Appeal to Ignorance.", "hint": "Notice that the reply focuses entirely on Marcus's personal history with detention rather than on what he actually argued about the dress code."}, {"contextLabel": "During a public hearing about adding bike lanes downtown, one resident argues:", "context": "<span style=\"font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:1rem;color:#1a1a2e;\">&ldquo;My neighbor wants to add bike lanes, which basically means she wants to ban every car from downtown and force everyone to bike to work, even in the middle of winter.&rdquo;</span>", "stem": "What logical fallacy is the resident committing when describing her neighbor's position?", "opts": ["Straw Man Fallacy &mdash; misrepresenting someone's argument in an exaggerated or distorted way to make it easier to attack", "Ad Hominem &mdash; attacking the person making an argument instead of addressing the argument itself", "Slippery Slope &mdash; claiming that one small step will inevitably lead to a chain of extreme consequences", "False Dilemma &mdash; presenting only two options when more actually exist"], "ci": 0, "exp": "The neighbor only proposed adding bike lanes, but the resident exaggerates this into a demand to ban all cars and force everyone to bike in winter &mdash; a distorted version of the original position that is far easier to argue against. This is a Straw Man Fallacy. A Slippery Slope would instead argue that bike lanes will inevitably lead to a chain of future events, rather than misrepresenting the current proposal itself. The resident does not attack her neighbor personally, ruling out Ad Hominem, and no two-option choice is being forced, ruling out False Dilemma.", "hint": "Compare what the neighbor actually proposed (bike lanes) to what the resident says she wants (banning all cars). Are they the same thing?"}, {"contextLabel": "After two players show up late to one practice, the team manager announces:", "context": "<span style=\"font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:1rem;color:#1a1a2e;\">&ldquo;Two guys were late today, so this whole team clearly doesn't care about being on time.&rdquo;</span>", "stem": "What logical fallacy does the manager's statement contain?", "opts": ["Bandwagon Fallacy &mdash; claiming something must be true or good because many people believe or do it", "Middle Ground Fallacy &mdash; assuming that the truth must be a compromise between two opposing positions", "Hasty Generalization &mdash; drawing a broad conclusion about a whole group from too small or unrepresentative a sample", "Ad Hominem &mdash; attacking the person making an argument instead of addressing the argument itself"], "ci": 2, "exp": "Two players being late is used to conclude something about the entire team's attitude, even though this is a small, unrepresentative sample of the team's actual behavior &mdash; this is a Hasty Generalization. It is not a Bandwagon Fallacy, since the manager isn't claiming the lateness is fine because everyone does it; in fact the opposite claim is made. No individual is personally attacked in a way that dismisses their argument, ruling out Ad Hominem, and no compromise between two positions is proposed, ruling out Middle Ground Fallacy.", "hint": "Consider how many players were actually late compared to the size of the whole team, and what conclusion the manager is drawing about everyone."}, {"contextLabel": "In a business newsletter, the owner of Maple Street Bakery writes:", "context": "<span style=\"font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:1rem;color:#1a1a2e;\">&ldquo;We redesigned our logo in March, and our sales went up in April. The new logo is clearly what boosted our sales.&rdquo;</span>", "stem": "What logical fallacy does the bakery owner's reasoning contain?", "opts": ["Cum Hoc Ergo Propter Hoc &mdash; assuming that because two things happen together, one must cause the other", "Hasty Generalization &mdash; drawing a broad conclusion from too small or unrepresentative a sample", "Post Hoc Ergo Propter Hoc &mdash; assuming that because one event followed another, the first event must have caused the second", "Appeal to Authority &mdash; treating a claim as true simply because an authority figure said it"], "ci": 2, "exp": "The owner assumes the logo redesign caused the sales increase purely because the sales increase came afterward, without ruling out other explanations like seasonal demand &mdash; this is Post Hoc Ergo Propter Hoc, a fallacy about sequence in time. Cum Hoc Ergo Propter Hoc is a close cousin but concerns two things happening at the same time rather than one following another. This isn't a Hasty Generalization, since no broad claim from a small sample is being made, and no authority figure's opinion is being cited, ruling out Appeal to Authority.", "hint": "Ask whether the owner has ruled out any other possible reason sales might have gone up in April, such as a seasonal increase in customers."}, {"contextLabel": "During a student council debate about phone use in class, one member argues:", "context": "<span style=\"font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:1rem;color:#1a1a2e;\">&ldquo;Phones should be banned in class because they are a distraction that shouldn't be allowed during lessons.&rdquo;</span>", "stem": "What logical flaw appears in this argument?", "opts": ["Complex Question &mdash; a question that assumes something unproven, trapping the responder no matter how they answer", "False Equivalence &mdash; treating two things as equal or comparable when they are actually very different", "Appeal to Emotion &mdash; using feelings rather than facts to persuade", "Begging the Question &mdash; an argument whose premise simply restates its conclusion rather than offering separate support for it"], "ci": 3, "exp": "The claim \"phones should be banned because they shouldn't be allowed\" simply restates the conclusion (phones shouldn't be in class) as if it were a separate reason &mdash; this circular reasoning is Begging the Question. It is not a Complex Question, since no unproven assumption is hidden inside a question here. No emotional language is used to persuade, ruling out Appeal to Emotion, and no two unrelated things are being compared, ruling out False Equivalence.", "hint": "Look closely at the reason given for banning phones. Does it actually add new evidence, or does it just repeat the conclusion in different words?"}, {"contextLabel": "During a city council meeting, one member argues:", "context": "<span style=\"font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:1rem;color:#1a1a2e;\">&ldquo;That recycling plan came from GreenFuture Corp, a company that used to dump chemicals illegally. We shouldn't trust anything that comes from them, including this plan.&rdquo;</span>", "stem": "What logical fallacy is the council member committing?", "opts": ["Appeal to Authority &mdash; treating a claim as true simply because an authority figure said it", "Ad Hominem &mdash; attacking the person making an argument instead of addressing the argument itself", "Straw Man Fallacy &mdash; misrepresenting someone's argument to make it easier to attack", "Genetic Fallacy &mdash; judging an idea as true or false based on where it came from rather than its actual merits"], "ci": 3, "exp": "The council member rejects the recycling plan not by evaluating its actual details, but because of the company's past behavior &mdash; this is the Genetic Fallacy, judging an idea by its source rather than its merits. Unlike Ad Hominem, the target here is the company's history, not an ongoing argument by a specific opponent. It is not a Straw Man because the plan's substance was never mischaracterized, and no authority figure's endorsement is used to justify the claim, ruling out Appeal to Authority.", "hint": "Think about whether the council member is evaluating the plan's actual content, or dismissing it because of who proposed it."}];
+var REPORT_ENDPOINT = "https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec";
+function reportResult(){
+  try{
+    var correct=0, wrong=0, skipped=0;
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos];
+      if(state.answers[qi]===undefined){ skipped++; continue; }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+    }
+    var total = order.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0
+    };
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
+}
+
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var ORDER_KEY = STORAGE_KEY + '_order';
+var ATTEMPTS_KEY = STORAGE_KEY + '_attempts';
+
+var order = [];
+var activeSet = null; // when in retry mode, holds subset of original indices
+var state = { answers:{}, cur:0, showResults:false };
+var hintShown = false;
+
+function loadState(){
+  var raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try{ state = JSON.parse(raw); }catch(e){ state = {answers:{},cur:0,showResults:false}; } }
+  var rawOrder = localStorage.getItem(ORDER_KEY);
+  if(rawOrder){ try{ order = JSON.parse(rawOrder); }catch(e){ order=null; } }
+  if(!order || !order.length){
+    order = RAW_QUESTIONS.map(function(_,i){return i;});
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function getAttempts(){
+  var a = localStorage.getItem(ATTEMPTS_KEY);
+  return a ? parseInt(a,10) : 1;
+}
+function incAttempts(){
+  var a = getAttempts() + 1;
+  localStorage.setItem(ATTEMPTS_KEY, String(a));
+}
+
+function activeOrder(){ return activeSet || order; }
+
+function render(){
+  document.getElementById('instruction').textContent = INSTRUCTION;
+  var ord = activeOrder();
+  if(state.showResults){
+    document.getElementById('quiz-card').style.display='none';
+    document.getElementById('results-card').style.display='block';
+    renderResults();
+  } else {
+    document.getElementById('quiz-card').style.display='block';
+    document.getElementById('results-card').style.display='none';
+    renderQuestion();
+  }
+  updateNav();
+}
+
+function renderQuestion(){
+  hintShown = false;
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  var q = RAW_QUESTIONS[qi];
+
+  var pb = document.getElementById('passage-box');
+  if(q.passage){ pb.style.display='block'; pb.innerHTML = q.passage; } else { pb.style.display='none'; pb.innerHTML=''; }
+
+  var cl = document.getElementById('context-label');
+  if(q.contextLabel){ cl.style.display='block'; cl.textContent = q.contextLabel; } else { cl.style.display='none'; cl.textContent=''; }
+
+  var cb = document.getElementById('context-box');
+  if(q.context){ cb.style.display='block'; cb.innerHTML = q.context; } else { cb.style.display='none'; cb.innerHTML=''; }
+
+  var tb = document.getElementById('tag-badge');
+  if(q.tag){ tb.style.display='inline-block'; tb.textContent = q.tag; tb.style.background = q.tagcolor || '#185FA5'; } else { tb.style.display='none'; }
+
+  var qt = document.getElementById('q-text');
+  qt.innerHTML = q.stem + (q.tts ? ' <button class="tts-btn" onclick="speak(' + qi + ')" title="Listen">&#128266;</button>' : '');
+
+  var opts = document.getElementById('options');
+  opts.innerHTML = '';
+  var answered = state.answers[qi] !== undefined;
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = optText;
+    if(answered){
+      btn.disabled = true;
+      if(idx === q.ci) btn.className += ' reveal-correct';
+      if(idx === state.answers[qi] && idx !== q.ci) btn.className += ' selected-wrong';
+      if(idx === state.answers[qi] && idx === q.ci) btn.className += ' selected-correct';
+    } else {
+      btn.onclick = function(){ pick(idx); };
+    }
+    opts.appendChild(btn);
+  });
+
+  var hb = document.getElementById('hint-btn');
+  var hx = document.getElementById('hint-box');
+  if(q.hint){
+    hb.style.display='inline-block'; hb.textContent='Show Hint';
+    hx.innerHTML = q.hint; hx.classList.remove('show');
+  } else {
+    hb.style.display='none'; hx.classList.remove('show');
+  }
+
+  var eb = document.getElementById('exp-box');
+  if(answered){
+    eb.style.display='block';
+    eb.innerHTML = '<strong>Explanation:</strong> ' + q.exp;
+  } else {
+    eb.style.display='none'; eb.innerHTML='';
+  }
+
+  document.getElementById('prev-btn').disabled = (state.cur === 0);
+  var ord2 = activeOrder();
+  var isLast = (state.cur === ord2.length - 1);
+  document.getElementById('next-btn').textContent = isLast ? 'Finish' : 'Next';
+}
+
+function toggleHint(){
+  hintShown = !hintShown;
+  var b=document.getElementById('hint-btn'), x=document.getElementById('hint-box');
+  if(hintShown){ x.classList.add('show'); b.textContent='Hide Hint'; }
+  else { x.classList.remove('show'); b.textContent='Show Hint'; }
+}
+window.toggleHint = toggleHint;
+
+function pick(idx){
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState();
+  render();
+}
+window.pick = pick;
+
+function prevQ(){
+  if(state.cur > 0){ state.cur--; saveState(); render(); }
+}
+window.prevQ = prevQ;
+window.go = prevQ;
+
+function goNext(){
+  var ord = activeOrder();
+  if(state.cur < ord.length - 1){
+    state.cur++;
+    saveState();
+    render();
+  } else {
+    state.showResults = true;
+    incAttempts();
+    saveState();
+    render();
+    reportResult();
+  }
+}
+window.goNext = goNext;
+
+function showResultsNow(){
+  state.showResults = true;
+  saveState();
+  render();
+  reportResult();
+}
+window.showResultsNow = showResultsNow;
+
+function goToQ(pos){
+  state.cur = pos;
+  state.showResults = false;
+  saveState();
+  render();
+}
+window.goToQ = goToQ;
+
+function renderResults(){
+  var ord = activeOrder();
+  var correct=0, wrong=0, skipped=0;
+  ord.forEach(function(qi){
+    if(state.answers[qi]===undefined) skipped++;
+    else if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++;
+    else wrong++;
+  });
+  var total = ord.length;
+  document.getElementById('score-big').textContent = correct + ' / ' + total;
+  document.getElementById('score-detail').textContent = 'Correct: ' + correct + '  Wrong: ' + wrong + '  Skipped: ' + skipped;
+}
+
+function updateNav(){
+  var ord = activeOrder();
+  var answeredCount = 0;
+  ord.forEach(function(qi){ if(state.answers[qi]!==undefined) answeredCount++; });
+  document.getElementById('nav-count').textContent = answeredCount + '/' + ord.length;
+  var pct = ord.length ? Math.round(answeredCount/ord.length*100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('results-pill').style.display = (answeredCount === ord.length && ord.length>0) ? 'inline-block' : 'none';
+  renderDots();
+}
+
+function renderDots(){
+  var panel = document.getElementById('dots-panel');
+  if(panel.style.display === 'none') { buildDots(); return; }
+  buildDots();
+}
+function buildDots(){
+  var panel = document.getElementById('dots-panel');
+  var ord = activeOrder();
+  panel.innerHTML = '';
+  ord.forEach(function(qi, pos){
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.textContent = (pos+1);
+    if(state.answers[qi]!==undefined){
+      d.className += (state.answers[qi]===RAW_QUESTIONS[qi].ci) ? ' answered-correct' : ' answered-wrong';
+    }
+    d.onclick = function(){ goToQ(pos); };
+    panel.appendChild(d);
+  });
+}
+
+function toggleJump(){
+  var panel = document.getElementById('dots-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display === 'none'){
+    panel.style.display = 'flex';
+    btn.innerHTML = 'Hide&#9652;';
+    buildDots();
+  } else {
+    panel.style.display = 'none';
+    btn.innerHTML = 'Jump&#9662;';
+  }
+}
+window.toggleJump = toggleJump;
+
+function startRetry(){
+  var ord = activeOrder();
+  var wrongIdx = ord.filter(function(qi){ return state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci; });
+  if(!wrongIdx.length) return;
+  activeSet = wrongIdx;
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  render();
+}
+window.startRetry = startRetry;
+
+function saveWrong(){
+  var ord = activeOrder();
+  var wrongAnswers = [];
+  ord.forEach(function(qi){
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongAnswers.push({
+        question: q.stem.replace(/<[^>]+>/g,''),
+        yourAnswer: q.opts[state.answers[qi]].replace(/<[^>]+>/g,''),
+        correctAnswer: q.opts[q.ci].replace(/<[^>]+>/g,''),
+        explanation: q.exp.replace(/<[^>]+>/g,'')
+      });
+    }
+  });
+  var payload = { title: TITLE, wrongAnswers: wrongAnswers };
+  var blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var d = new Date();
+  var ds = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  a.href = url;
+  a.download = 'quiz_' + QUIZ_KEY + '_wrong_' + ds + '_v1.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+window.copyRes = saveWrong;
+window.saveWrong = saveWrong;
+
+function openFreshModal(){ document.getElementById('fresh-modal').style.display='flex'; }
+window.openFreshModal = openFreshModal;
+function closeFreshModal(){ document.getElementById('fresh-modal').style.display='none'; }
+window.closeFreshModal = closeFreshModal;
+function confirmFresh(){
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(ORDER_KEY);
+  activeSet = null;
+  order = RAW_QUESTIONS.map(function(_,i){return i;});
+  localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  document.getElementById('fresh-modal').style.display='none';
+  render();
+}
+window.confirmFresh = confirmFresh;
+
+
+
+loadState();
+render();
+</script>
+</body>
+</html>

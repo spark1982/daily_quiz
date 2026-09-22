@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] English</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f4f6fa; margin:0; padding: 20px 12px 60px; color:#1a1a2e; }
+  .quiz-wrap { max-width: 680px; margin: 0 auto; }
+  .quiz-title { font-size: 1.4rem; font-weight: 800; text-align:center; margin: 8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom: 14px; min-height: 0; }
+  .nav-bar { background:#fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .nav-summary { display:flex; align-items:center; gap:10px; }
+  #nav-count { font-weight:700; font-size:0.85rem; color:#333; white-space:nowrap; }
+  .progress-track { flex:1; height:6px; background:#d7dde6; border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; width:0%; background:#185FA5; border-radius:3px; transition: width .2s; }
+  .jump-btn { background:#eef2f7; border:none; border-radius:8px; padding:6px 12px; font-size:0.8rem; font-weight:700; color:#185FA5; cursor:pointer; white-space:nowrap; }
+  .dots-panel { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .dot { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; cursor:pointer; background:#d7dde6; color:#555; border:none; }
+  .dot.answered-correct { background:#185FA5; color:#fff; }
+  .dot.answered-wrong { background:#E24B4A; color:#fff; }
+  .results-pill { display:inline-block; margin: 0 auto 14px; padding: 8px 20px; background:#1D9E75; color:#fff; border-radius:20px; font-weight:700; text-align:center; cursor:pointer; width:fit-content; }
+  .results-pill-wrap { text-align:center; }
+  .quiz-card, .results-card { background:#fff; border-radius: 14px; padding: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 16px; }
+  .passage-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:0.92rem; line-height:1.6; color:#222; }
+  .context-label { font-size:0.92rem; font-weight:600; color:#333; margin-bottom:8px; line-height:1.4; }
+  .context-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; }
+  .tag-badge { display:inline-block; font-size:0.72rem; font-weight:700; color:#fff; padding:3px 10px; border-radius:12px; margin-bottom:10px; }
+  .q-text { font-size:1.05rem; font-weight:600; margin-bottom:16px; line-height:1.5; }
+  #options { display:flex; flex-direction:column; gap:10px; }
+  .opt-btn { text-align:left; padding:12px 14px; border-radius:10px; border:1.5px solid #d7dde6; background:#fafbfc; font-size:0.95rem; cursor:pointer; line-height:1.4; }
+  .opt-btn:hover { border-color:#185FA5; }
+  .opt-btn.selected-correct { background:#e6f4ec; border-color:#1D9E75; color:#0d6b3f; font-weight:700; }
+  .opt-btn.selected-wrong { background:#fbeaea; border-color:#E24B4A; color:#a52a2a; font-weight:700; }
+  .opt-btn.reveal-correct { background:#e6f4ec; border-color:#1D9E75; }
+  .opt-btn:disabled { cursor:default; }
+  .exp-box { margin-top:14px; background:#eef7f2; border-left:4px solid #1D9E75; border-radius:8px; padding:12px 14px; font-size:0.88rem; color:#2d4d3f; line-height:1.5; display:none; }
+  .hint-btn { background:#fff8e1;color:#a5720a;border:1.5px solid #f5a623;border-radius:8px;padding:7px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-top:12px;margin-bottom:12px;display:inline-block; }
+  .hint-box { background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.88rem;color:#6b5215;line-height:1.5;display:none; }
+  .hint-box.show { display:block; }
+  .tts-btn { background:#eef2f7; border:none; border-radius:50%; width:34px; height:34px; font-size:1rem; cursor:pointer; margin-left:8px; vertical-align:middle; }
+  .nav-btns { display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .nav-btns button { flex:1; padding:11px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; background:#185FA5; color:#fff; }
+  .nav-btns button:disabled { background:#c9d2dc; cursor:default; }
+  .results-card h2 { text-align:center; margin-top:0; }
+  .score-big { text-align:center; font-size:2.2rem; font-weight:800; color:#185FA5; margin: 6px 0 16px; }
+  .action-row { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .action-row button { padding:12px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; }
+  .btn-retry { background:#f5a623; color:#fff; }
+  .btn-save { background:#7b61ff; color:#fff; }
+  .btn-fresh { background:#E24B4A; color:#fff; }
+  .fresh-btn-bottom { display:block; margin: 6px auto 0; background:none; border:1.5px solid #d7dde6; color:#888; padding:8px 16px; border-radius:20px; font-size:0.8rem; cursor:pointer; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:14px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { font-size:0.95rem; margin-bottom:18px; }
+  .modal-box button { padding:10px 16px; border-radius:8px; border:none; font-weight:700; margin:0 6px; cursor:pointer; }
+  .modal-yes { background:#E24B4A; color:#fff; }
+  .modal-no { background:#eef2f7; color:#333; }
+
+</style>
+</head>
+<body>
+<div class="quiz-wrap">
+  <div class="quiz-title">[Grant] English</div>
+  <div class="instruction" id="instruction"></div>
+
+  <div class="nav-bar">
+    <div class="nav-summary">
+      <span id="nav-count">0/0</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <button class="jump-btn" id="jump-btn" onclick="toggleJump()">Jump&#9662;</button>
+    </div>
+    <div class="dots-panel" id="dots-panel" style="display:none;"></div>
+  </div>
+
+  <div class="results-pill-wrap"><span class="results-pill" id="results-pill" style="display:none;" onclick="showResultsNow()">Results</span></div>
+
+  <div class="quiz-card" id="quiz-card">
+    <div class="passage-box" id="passage-box" style="display:none;"></div>
+    <div class="context-label" id="context-label" style="display:none;"></div>
+    <div class="context-box" id="context-box" style="display:none;"></div>
+    <div class="tag-badge" id="tag-badge" style="display:none;"></div>
+    <div class="q-text" id="q-text"></div>
+    <div id="options"></div>
+    <button class="hint-btn" id="hint-btn" onclick="toggleHint()" style="display:none;">Show Hint</button>
+    <div class="hint-box" id="hint-box"></div>
+    <div class="exp-box" id="exp-box"></div>
+    <div class="nav-btns">
+      <button id="prev-btn" onclick="prevQ()">Prev</button>
+      <button id="next-btn" onclick="goNext()">Next</button>
+    </div>
+  </div>
+
+  <div class="results-card" id="results-card" style="display:none;">
+    <h2>Results</h2>
+    <div class="score-big" id="score-big"></div>
+    <div id="score-detail" style="text-align:center;color:#555;font-size:0.9rem;"></div>
+    <div class="action-row">
+      <button class="btn-retry" onclick="startRetry()">Retry Wrong Ones</button>
+      <button class="btn-save" onclick="saveWrong()">Save Wrong Answers</button>
+      <button class="btn-fresh" onclick="openFreshModal()">Start Fresh</button>
+    </div>
+  </div>
+
+  <button class="fresh-btn-bottom" onclick="openFreshModal()">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="fresh-modal" style="display:none;">
+  <div class="modal-box">
+    <p>Reset all progress and start over?</p>
+    <button class="modal-yes" onclick="confirmFresh()">Yes, Start Fresh</button>
+    <button class="modal-no" onclick="closeFreshModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Grant] English";
+var QUIZ_KEY = "grantenglish";
+var INSTRUCTION = "Read the passage and choose the best answer for each question.";
+var TODAY_STR = "20260922";
+var RAW_QUESTIONS = [{"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Title Selection", "tagcolor": "#185FA5", "stem": "Which of the following would be the best title for this passage?", "opts": ["The Rainiest Friday of the Year", "Grandma Rosa's Attic Treasures", "Nadia Joins the Astronomy Club", "The Telescope in the Attic"], "ci": 3, "exp": "The passage centers on Eli finding, fixing, and eventually using the old telescope from the attic, which this title captures directly. The other options each focus on a minor detail (Grandma Rosa's attic, the rain, or Nadia) rather than the passage as a whole."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Main Idea", "tagcolor": "#185FA5", "stem": "Which sentence best states the main idea of the passage?", "opts": ["Telescopes need to be cleaned and repaired regularly to work well.", "Eli's grandfather was a skilled amateur astronomer who sketched the moon.", "The astronomy club's star party was cancelled due to rain.", "Eli discovers that his curiosity about the night sky matters more than having perfect conditions to observe it."], "ci": 3, "exp": "The passage builds toward Eli's realization in the final sentence that curiosity mattered more than the weather, which is the main idea the whole story supports. The other options are true supporting details, but none capture the passage's overall point."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Author's Purpose", "tagcolor": "#185FA5", "stem": "Why did the author most likely write this text?", "opts": ["To inform readers about how telescopes are built", "To tell an engaging story about a character overcoming an unexpected obstacle", "To persuade readers to buy a telescope", "To warn readers about the dangers of stargazing in the rain"], "ci": 1, "exp": "The passage follows a narrative arc with a character, a problem, and a resolution, which is typical of a story meant to entertain rather than persuade, inform, or warn."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Summary", "tagcolor": "#185FA5", "stem": "Which option is the best summary of the passage?", "opts": ["Eli finds an old telescope in his attic and learns to clean it with his grandmother's help.", "Eli and Nadia decide to cancel the star party because of bad weather.", "Eli's grandfather teaches him how to sketch the craters on the moon.", "Eli fixes an old telescope for his school's star party, but rain forces the club to watch a livestream from an observatory instead, teaching him that curiosity matters more than perfect weather."], "ci": 3, "exp": "The correct summary captures the beginning (finding and fixing the telescope), the problem (rain), and the resolution (the livestream and Eli's realization). The other options leave out key events or misstate what actually happens &mdash; the club never cancels the star party."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Theme", "tagcolor": "#185FA5", "stem": "What is the central theme or lesson of the story?", "opts": ["Family heirlooms are always more valuable than new equipment.", "Good friends always agree with everything you say.", "True curiosity and adaptability matter more than having ideal circumstances.", "Rain always ruins outdoor plans."], "ci": 2, "exp": "Eli's realization in the final sentence &mdash; that curiosity, not perfect weather, was what mattered &mdash; directly states the story's theme. The other options either aren't supported by the text or contradict what actually happens, since the rain does not ruin the club's plans."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Genre", "tagcolor": "#185FA5", "stem": "What genre is this passage?", "opts": ["realistic fiction", "myth", "poetry", "nonfiction news article"], "ci": 0, "exp": "The passage tells an invented story about ordinary characters and everyday events that could plausibly happen in real life, which makes it realistic fiction rather than a myth, poem, or factual news report."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Setting / Situation", "tagcolor": "#185FA5", "stem": "Where and when does most of this story take place?", "opts": ["At the astronomy club's annual banquet", "In Eli's grandmother's attic on a single afternoon", "At a mountain observatory during summer vacation", "At Eli's house and school, over the course of about a week leading up to Friday's star party"], "ci": 3, "exp": "The events span from finding the telescope in the attic to fixing it during the week and finally the star party on Friday, taking place mainly at Eli's home and eventually his school. The mountain observatory is only shown through a video call, not visited in person."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Supporting Details (Textual Evidence)", "tagcolor": "#185FA5", "stem": "Which detail from the text best supports the idea that Eli worked hard to prepare for the star party?", "opts": ["Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather.", "Rain tapped against the classroom windows on Friday evening.", "He checked the weather app every hour, his stomach sinking.", "He cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver."], "ci": 3, "exp": "This detail directly shows Eli doing hands-on work to repair the telescope, which is the clearest evidence of his preparation. The other details describe his worry, background information, or the weather, not his effort."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Supporting Details (Fact Retrieval)", "tagcolor": "#185FA5", "stem": "According to the passage, who used to sketch the moon's craters every clear night?", "opts": ["The astronomer on the video call", "Eli", "Nadia", "Eli's grandfather"], "ci": 3, "exp": "The passage states that Grandma Rosa said the telescope \"had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night.\""}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Cause & Effect", "tagcolor": "#185FA5", "stem": "What was the direct effect of the thick clouds rolling in on Thursday?", "opts": ["Eli worried that the star party would be ruined by rain", "Eli's grandmother took back the telescope", "Eli decided to give away the telescope", "The astronomy club canceled all future meetings"], "ci": 0, "exp": "The passage says Eli's \"stomach sinking as the forecast promised rain,\" directly connecting the clouds to his worry about the star party. None of the other outcomes are described in the passage."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Character Traits & Motivation", "tagcolor": "#185FA5", "stem": "Which character trait best describes Eli based on how he responded to the cloudy forecast?", "opts": ["adaptable", "impatient", "indifferent", "careless"], "ci": 0, "exp": "Even though Eli was worried, he adjusted to the situation by joining the club's backup video call plan instead of giving up entirely, which shows adaptability. He is not careless (he prepared carefully), not impatient (he waited and adjusted), and clearly cared about the outcome, ruling out indifferent."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Inference", "tagcolor": "#185FA5", "stem": "What can be inferred about Eli's feelings when the clouds refused to leave on Thursday?", "opts": ["He was angry at Nadia for suggesting a backup plan", "He was disappointed and worried his effort might be wasted", "He was relieved to have an excuse not to attend", "He no longer cared about the star party at all"], "ci": 1, "exp": "The text says Eli's \"stomach sinking\" and that he \"almost gave up hope,\" which implies disappointment and worry after all his preparation. There is no evidence he wanted to skip the event, was angry at Nadia, or stopped caring."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Predict", "tagcolor": "#185FA5", "stem": "Based on the events up through Thursday afternoon, when the clouds rolled in, what will most likely happen next?", "opts": ["Eli and his friends will find another way to observe space despite the weather", "The star party will be cancelled with no alternative plan", "Eli will lose interest in astronomy entirely", "Grandma Rosa will demand the telescope back immediately"], "ci": 0, "exp": "Because Nadia reminds Eli about the club's backup video-call plan right after the clouds appear, the story sets up an alternative solution rather than a full cancellation, which is exactly what happens next in the passage."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Tone", "tagcolor": "#185FA5", "stem": "Which word best describes the author's tone in the final sentence of the passage?", "opts": ["fearful", "sarcastic", "hopeful", "angry"], "ci": 2, "exp": "The final sentence describes Eli's positive realization that curiosity mattered more than perfect weather, which conveys a hopeful, uplifting tone rather than sarcasm, anger, or fear."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Point of View", "tagcolor": "#185FA5", "stem": "Is this passage written in first-person, second-person, or third-person point of view?", "opts": ["second-person", "third-person", "first-person plural", "first-person"], "ci": 1, "exp": "The narrator refers to the main character as \"he\" and \"Eli\" rather than \"I\" or \"you,\" which is the defining feature of third-person point of view."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Text Structure", "tagcolor": "#185FA5", "stem": "How is the passage structured?", "opts": ["problem and solution stated all at once in the first sentence", "compare and contrast between two characters", "chronological &mdash; events are told in the order they happened over several days", "cause and effect listed as a numbered sequence"], "ci": 2, "exp": "The passage moves from finding the telescope, to fixing it, to the clouds rolling in, to the resolution on Friday &mdash; following the order events actually occurred, which is a chronological structure."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Fact vs. Opinion", "tagcolor": "#185FA5", "stem": "Which sentence from the passage expresses an opinion rather than a verifiable fact?", "opts": ["Thick gray clouds rolled in on Thursday afternoon.", "By Wednesday, the telescope worked perfectly.", "Grandma Rosa said the telescope had belonged to Eli's grandfather.", "Eli realized that curiosity, not perfect weather, was what really mattered."], "ci": 3, "exp": "The claim that curiosity \"was what really mattered\" is Eli's personal judgment or realization, not something that can be objectively measured or verified, making it an opinion. The other sentences describe events or reported statements that are treated as facts within the story."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Vocabulary in Context (Context Clues)", "tagcolor": "#185FA5", "stem": "As used in the passage, what does the word \"wobbled\" mean, referring to the tripod leg?", "opts": ["was broken beyond repair", "was painted a different color", "shook unsteadily and was not firmly balanced", "was missing completely"], "ci": 2, "exp": "The context makes clear the tripod leg still worked but needed tightening with a screwdriver, meaning it was simply unsteady, not broken, discolored, or missing."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Synonym", "tagcolor": "#185FA5", "stem": "Which word is a synonym for \"faintest\" as used in the passage (\"even the faintest stars in his backyard\")?", "opts": ["dimmest", "brightest", "largest", "closest"], "ci": 0, "exp": "\"Faintest\" describes stars that are hardest to see, which is closest in meaning to \"dimmest.\" \"Brightest\" is actually an antonym, and \"largest\" and \"closest\" describe unrelated qualities."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Antonym", "tagcolor": "#185FA5", "stem": "Which word is the antonym of \"sinking\" as used in the passage (\"his stomach sinking\")?", "opts": ["falling", "lifting", "sinking further", "dropping"], "ci": 1, "exp": "\"Sinking\" here describes a feeling of dread going downward, so its opposite is a feeling going upward, such as \"lifting.\" The other choices are synonyms or intensifications of \"sinking,\" not opposites."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Analogy", "tagcolor": "#185FA5", "stem": "Complete the analogy &mdash; Telescope : Stars :: Microscope : ________.", "opts": ["Clouds", "Cells", "Mountains", "Planets"], "ci": 1, "exp": "A telescope is a tool used to view distant stars, just as a microscope is a tool used to view tiny cells. Planets, clouds, and mountains are all things you could see without a microscope."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Figurative Language", "tagcolor": "#185FA5", "stem": "What type of figurative language is used in the phrase \"his stomach sinking\"?", "opts": ["onomatopoeia", "alliteration", "simile", "metaphor"], "ci": 3, "exp": "The phrase describes Eli's feeling of worry as if his stomach were physically sinking, without using \"like\" or \"as,\" which makes it a metaphor rather than a simile (which would use \"like\" or \"as\"), onomatopoeia (a sound word), or alliteration (repeated beginning sounds)."}, {"passage": "Eli had always been curious about the night sky, but he never expected to find an old brass telescope wrapped in a dusty blanket in his grandmother's attic. The lenses were scratched, and one leg of the tripod wobbled, but Eli's eyes lit up the moment he saw it. He carried it downstairs carefully, determined to fix it before the school astronomy club's star party next Friday. Grandma Rosa laughed and said the telescope had belonged to Eli's grandfather, who used to sketch the moon's craters every clear night. That evening, Eli cleaned the lenses with a soft cloth and tightened the wobbly tripod leg with a screwdriver he borrowed from the garage. By Wednesday, the telescope worked perfectly, magnifying even the faintest stars in his backyard. Then, on Thursday afternoon, thick gray clouds rolled in and refused to leave. Eli checked the weather app every hour, his stomach sinking as the forecast promised rain straight through Friday night. He almost gave up hope, but his friend Nadia reminded him that the astronomy club had a backup plan: a video call with an astronomer who could show them live images from a mountain observatory instead. On Friday evening, as rain tapped against the classroom windows, Eli and his classmates watched Saturn's rings glow on the screen, and Eli realized that curiosity, not perfect weather, was what really mattered.", "tag": "Preposition Usage", "tagcolor": "#185FA5", "stem": "Fill in the blank with the correct preposition: \"Eli carried the telescope carefully _____ the stairs.\"", "opts": ["above", "between", "beneath", "down"], "ci": 3, "exp": "\"Carried... down the stairs\" correctly describes moving from a higher floor to a lower one, which matches Eli bringing the telescope down from the attic. \"Between,\" \"above,\" and \"beneath\" do not describe this kind of movement along a staircase."}, {"passage": "<strong>Passage A</strong><br>Marcus spent six weeks building his volcano model for the science fair, testing three different mixtures before choosing the one that erupted highest. He kept a notebook logging every test, adjusting the ratio of baking soda to vinegar each time. Even when his first mixture only fizzled weakly, Marcus stayed patient and simply tried again the next afternoon. When judging day arrived, Marcus explained his testing process confidently, and the judges praised his careful planning. He won second place in his grade and said the biggest lesson wasn't the ribbon he earned, but realizing how much patience good research actually takes.<br><br><strong>Passage B</strong><br>Sofia's science fair project on plant growth failed twice before she understood why. Her first two batches of seedlings wilted because she forgot to track how much sunlight each pot received. Frustrated but determined, Sofia started over, this time recording sunlight, water, and soil type every single day. Her third attempt finally worked, and she presented a graph showing exactly which conditions helped her plants grow tallest. Sofia didn't win a ribbon, but she told her teacher that failing twice taught her more about being a scientist than succeeding on the first try ever could have.", "tag": "Paired Passage — Synthesis (Similarities)", "tagcolor": "#185FA5", "stem": "Based on Passage A and Passage B, what is one similarity between Marcus's and Sofia's experiences with their science fair projects?", "opts": ["Both students learned an important lesson through the process of testing and retesting their projects.", "Both students studied the same topic for their projects.", "Both students finished their projects on their very first attempt.", "Both students won a ribbon at the science fair."], "ci": 0, "exp": "Marcus learned about patience through repeated testing, and Sofia learned about being a scientist through her repeated failures and adjustments &mdash; both gained an important lesson through trial and error. Sofia did not win a ribbon, neither succeeded on a first attempt, and they studied different topics (volcanoes and plant growth)."}, {"passage": "<strong>Passage A</strong><br>Marcus spent six weeks building his volcano model for the science fair, testing three different mixtures before choosing the one that erupted highest. He kept a notebook logging every test, adjusting the ratio of baking soda to vinegar each time. Even when his first mixture only fizzled weakly, Marcus stayed patient and simply tried again the next afternoon. When judging day arrived, Marcus explained his testing process confidently, and the judges praised his careful planning. He won second place in his grade and said the biggest lesson wasn't the ribbon he earned, but realizing how much patience good research actually takes.<br><br><strong>Passage B</strong><br>Sofia's science fair project on plant growth failed twice before she understood why. Her first two batches of seedlings wilted because she forgot to track how much sunlight each pot received. Frustrated but determined, Sofia started over, this time recording sunlight, water, and soil type every single day. Her third attempt finally worked, and she presented a graph showing exactly which conditions helped her plants grow tallest. Sofia didn't win a ribbon, but she told her teacher that failing twice taught her more about being a scientist than succeeding on the first try ever could have.", "tag": "Paired Passage — Contrast (Differences)", "tagcolor": "#185FA5", "stem": "How does Marcus's approach to his project differ from Sofia's, according to the two passages?", "opts": ["Marcus succeeded by carefully testing different mixtures before the fair, while Sofia only found success after her first two attempts failed.", "Marcus's project failed completely, while Sofia's succeeded on the first try.", "Marcus studied plant growth, while Sofia studied volcanoes.", "Marcus worked alone, while Sofia worked with a partner."], "ci": 0, "exp": "Passage A shows Marcus testing and refining his volcano mixture before judging day and winning second place, while Passage B shows Sofia's first two attempts failing before her third attempt succeeded. Marcus's project did not fail, there is no mention of a partner for Sofia, and the topics are reversed in the incorrect option (Marcus studied volcanoes, and Sofia studied plant growth)."}];
+var REPORT_ENDPOINT = "https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec";
+function reportResult(){
+  try{
+    var correct=0, wrong=0, skipped=0;
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos];
+      if(state.answers[qi]===undefined){ skipped++; continue; }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+    }
+    var total = order.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0
+    };
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
+}
+
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var ORDER_KEY = STORAGE_KEY + '_order';
+var ATTEMPTS_KEY = STORAGE_KEY + '_attempts';
+
+var order = [];
+var activeSet = null; // when in retry mode, holds subset of original indices
+var state = { answers:{}, cur:0, showResults:false };
+var hintShown = false;
+
+function loadState(){
+  var raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try{ state = JSON.parse(raw); }catch(e){ state = {answers:{},cur:0,showResults:false}; } }
+  var rawOrder = localStorage.getItem(ORDER_KEY);
+  if(rawOrder){ try{ order = JSON.parse(rawOrder); }catch(e){ order=null; } }
+  if(!order || !order.length){
+    order = RAW_QUESTIONS.map(function(_,i){return i;});
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function getAttempts(){
+  var a = localStorage.getItem(ATTEMPTS_KEY);
+  return a ? parseInt(a,10) : 1;
+}
+function incAttempts(){
+  var a = getAttempts() + 1;
+  localStorage.setItem(ATTEMPTS_KEY, String(a));
+}
+
+function activeOrder(){ return activeSet || order; }
+
+function render(){
+  document.getElementById('instruction').textContent = INSTRUCTION;
+  var ord = activeOrder();
+  if(state.showResults){
+    document.getElementById('quiz-card').style.display='none';
+    document.getElementById('results-card').style.display='block';
+    renderResults();
+  } else {
+    document.getElementById('quiz-card').style.display='block';
+    document.getElementById('results-card').style.display='none';
+    renderQuestion();
+  }
+  updateNav();
+}
+
+function renderQuestion(){
+  hintShown = false;
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  var q = RAW_QUESTIONS[qi];
+
+  var pb = document.getElementById('passage-box');
+  if(q.passage){ pb.style.display='block'; pb.innerHTML = q.passage; } else { pb.style.display='none'; pb.innerHTML=''; }
+
+  var cl = document.getElementById('context-label');
+  if(q.contextLabel){ cl.style.display='block'; cl.textContent = q.contextLabel; } else { cl.style.display='none'; cl.textContent=''; }
+
+  var cb = document.getElementById('context-box');
+  if(q.context){ cb.style.display='block'; cb.innerHTML = q.context; } else { cb.style.display='none'; cb.innerHTML=''; }
+
+  var tb = document.getElementById('tag-badge');
+  if(q.tag){ tb.style.display='inline-block'; tb.textContent = q.tag; tb.style.background = q.tagcolor || '#185FA5'; } else { tb.style.display='none'; }
+
+  var qt = document.getElementById('q-text');
+  qt.innerHTML = q.stem + (q.tts ? ' <button class="tts-btn" onclick="speak(' + qi + ')" title="Listen">&#128266;</button>' : '');
+
+  var opts = document.getElementById('options');
+  opts.innerHTML = '';
+  var answered = state.answers[qi] !== undefined;
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = optText;
+    if(answered){
+      btn.disabled = true;
+      if(idx === q.ci) btn.className += ' reveal-correct';
+      if(idx === state.answers[qi] && idx !== q.ci) btn.className += ' selected-wrong';
+      if(idx === state.answers[qi] && idx === q.ci) btn.className += ' selected-correct';
+    } else {
+      btn.onclick = function(){ pick(idx); };
+    }
+    opts.appendChild(btn);
+  });
+
+  var hb = document.getElementById('hint-btn');
+  var hx = document.getElementById('hint-box');
+  if(q.hint){
+    hb.style.display='inline-block'; hb.textContent='Show Hint';
+    hx.innerHTML = q.hint; hx.classList.remove('show');
+  } else {
+    hb.style.display='none'; hx.classList.remove('show');
+  }
+
+  var eb = document.getElementById('exp-box');
+  if(answered){
+    eb.style.display='block';
+    eb.innerHTML = '<strong>Explanation:</strong> ' + q.exp;
+  } else {
+    eb.style.display='none'; eb.innerHTML='';
+  }
+
+  document.getElementById('prev-btn').disabled = (state.cur === 0);
+  var ord2 = activeOrder();
+  var isLast = (state.cur === ord2.length - 1);
+  document.getElementById('next-btn').textContent = isLast ? 'Finish' : 'Next';
+}
+
+function toggleHint(){
+  hintShown = !hintShown;
+  var b=document.getElementById('hint-btn'), x=document.getElementById('hint-box');
+  if(hintShown){ x.classList.add('show'); b.textContent='Hide Hint'; }
+  else { x.classList.remove('show'); b.textContent='Show Hint'; }
+}
+window.toggleHint = toggleHint;
+
+function pick(idx){
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState();
+  render();
+}
+window.pick = pick;
+
+function prevQ(){
+  if(state.cur > 0){ state.cur--; saveState(); render(); }
+}
+window.prevQ = prevQ;
+window.go = prevQ;
+
+function goNext(){
+  var ord = activeOrder();
+  if(state.cur < ord.length - 1){
+    state.cur++;
+    saveState();
+    render();
+  } else {
+    state.showResults = true;
+    incAttempts();
+    saveState();
+    render();
+    reportResult();
+  }
+}
+window.goNext = goNext;
+
+function showResultsNow(){
+  state.showResults = true;
+  saveState();
+  render();
+  reportResult();
+}
+window.showResultsNow = showResultsNow;
+
+function goToQ(pos){
+  state.cur = pos;
+  state.showResults = false;
+  saveState();
+  render();
+}
+window.goToQ = goToQ;
+
+function renderResults(){
+  var ord = activeOrder();
+  var correct=0, wrong=0, skipped=0;
+  ord.forEach(function(qi){
+    if(state.answers[qi]===undefined) skipped++;
+    else if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++;
+    else wrong++;
+  });
+  var total = ord.length;
+  document.getElementById('score-big').textContent = correct + ' / ' + total;
+  document.getElementById('score-detail').textContent = 'Correct: ' + correct + '  Wrong: ' + wrong + '  Skipped: ' + skipped;
+}
+
+function updateNav(){
+  var ord = activeOrder();
+  var answeredCount = 0;
+  ord.forEach(function(qi){ if(state.answers[qi]!==undefined) answeredCount++; });
+  document.getElementById('nav-count').textContent = answeredCount + '/' + ord.length;
+  var pct = ord.length ? Math.round(answeredCount/ord.length*100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('results-pill').style.display = (answeredCount === ord.length && ord.length>0) ? 'inline-block' : 'none';
+  renderDots();
+}
+
+function renderDots(){
+  var panel = document.getElementById('dots-panel');
+  if(panel.style.display === 'none') { buildDots(); return; }
+  buildDots();
+}
+function buildDots(){
+  var panel = document.getElementById('dots-panel');
+  var ord = activeOrder();
+  panel.innerHTML = '';
+  ord.forEach(function(qi, pos){
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.textContent = (pos+1);
+    if(state.answers[qi]!==undefined){
+      d.className += (state.answers[qi]===RAW_QUESTIONS[qi].ci) ? ' answered-correct' : ' answered-wrong';
+    }
+    d.onclick = function(){ goToQ(pos); };
+    panel.appendChild(d);
+  });
+}
+
+function toggleJump(){
+  var panel = document.getElementById('dots-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display === 'none'){
+    panel.style.display = 'flex';
+    btn.innerHTML = 'Hide&#9652;';
+    buildDots();
+  } else {
+    panel.style.display = 'none';
+    btn.innerHTML = 'Jump&#9662;';
+  }
+}
+window.toggleJump = toggleJump;
+
+function startRetry(){
+  var ord = activeOrder();
+  var wrongIdx = ord.filter(function(qi){ return state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci; });
+  if(!wrongIdx.length) return;
+  activeSet = wrongIdx;
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  render();
+}
+window.startRetry = startRetry;
+
+function saveWrong(){
+  var ord = activeOrder();
+  var wrongAnswers = [];
+  ord.forEach(function(qi){
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongAnswers.push({
+        question: q.stem.replace(/<[^>]+>/g,''),
+        yourAnswer: q.opts[state.answers[qi]].replace(/<[^>]+>/g,''),
+        correctAnswer: q.opts[q.ci].replace(/<[^>]+>/g,''),
+        explanation: q.exp.replace(/<[^>]+>/g,'')
+      });
+    }
+  });
+  var payload = { title: TITLE, wrongAnswers: wrongAnswers };
+  var blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var d = new Date();
+  var ds = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  a.href = url;
+  a.download = 'quiz_' + QUIZ_KEY + '_wrong_' + ds + '_v1.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+window.copyRes = saveWrong;
+window.saveWrong = saveWrong;
+
+function openFreshModal(){ document.getElementById('fresh-modal').style.display='flex'; }
+window.openFreshModal = openFreshModal;
+function closeFreshModal(){ document.getElementById('fresh-modal').style.display='none'; }
+window.closeFreshModal = closeFreshModal;
+function confirmFresh(){
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(ORDER_KEY);
+  activeSet = null;
+  order = RAW_QUESTIONS.map(function(_,i){return i;});
+  localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  document.getElementById('fresh-modal').style.display='none';
+  render();
+}
+window.confirmFresh = confirmFresh;
+
+
+
+loadState();
+render();
+</script>
+</body>
+</html>
