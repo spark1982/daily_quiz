@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] English</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f4f6fa; margin:0; padding: 20px 12px 60px; color:#1a1a2e; }
+  .quiz-wrap { max-width: 680px; margin: 0 auto; }
+  .quiz-title { font-size: 1.4rem; font-weight: 800; text-align:center; margin: 8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom: 14px; min-height: 0; }
+  .nav-bar { background:#fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .nav-summary { display:flex; align-items:center; gap:10px; }
+  #nav-count { font-weight:700; font-size:0.85rem; color:#333; white-space:nowrap; }
+  .progress-track { flex:1; height:6px; background:#d7dde6; border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; width:0%; background:#185FA5; border-radius:3px; transition: width .2s; }
+  .jump-btn { background:#eef2f7; border:none; border-radius:8px; padding:6px 12px; font-size:0.8rem; font-weight:700; color:#185FA5; cursor:pointer; white-space:nowrap; }
+  .dots-panel { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .dot { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; cursor:pointer; background:#d7dde6; color:#555; border:none; }
+  .dot.answered-correct { background:#185FA5; color:#fff; }
+  .dot.answered-wrong { background:#E24B4A; color:#fff; }
+  .results-pill { display:inline-block; margin: 0 auto 14px; padding: 8px 20px; background:#1D9E75; color:#fff; border-radius:20px; font-weight:700; text-align:center; cursor:pointer; width:fit-content; }
+  .results-pill-wrap { text-align:center; }
+  .quiz-card, .results-card { background:#fff; border-radius: 14px; padding: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 16px; }
+  .passage-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:0.92rem; line-height:1.6; color:#222; }
+  .context-label { font-size:0.92rem; font-weight:600; color:#333; margin-bottom:8px; line-height:1.4; }
+  .context-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; }
+  .tag-badge { display:inline-block; font-size:0.72rem; font-weight:700; color:#fff; padding:3px 10px; border-radius:12px; margin-bottom:10px; }
+  .q-text { font-size:1.05rem; font-weight:600; margin-bottom:16px; line-height:1.5; }
+  #options { display:flex; flex-direction:column; gap:10px; }
+  .opt-btn { text-align:left; padding:12px 14px; border-radius:10px; border:1.5px solid #d7dde6; background:#fafbfc; font-size:0.95rem; cursor:pointer; line-height:1.4; }
+  .opt-btn:hover { border-color:#185FA5; }
+  .opt-btn.selected-correct { background:#e6f4ec; border-color:#1D9E75; color:#0d6b3f; font-weight:700; }
+  .opt-btn.selected-wrong { background:#fbeaea; border-color:#E24B4A; color:#a52a2a; font-weight:700; }
+  .opt-btn.reveal-correct { background:#e6f4ec; border-color:#1D9E75; }
+  .opt-btn:disabled { cursor:default; }
+  .exp-box { margin-top:14px; background:#eef7f2; border-left:4px solid #1D9E75; border-radius:8px; padding:12px 14px; font-size:0.88rem; color:#2d4d3f; line-height:1.5; display:none; }
+  .hint-btn { background:#fff8e1;color:#a5720a;border:1.5px solid #f5a623;border-radius:8px;padding:7px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-top:12px;margin-bottom:12px;display:inline-block; }
+  .hint-box { background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.88rem;color:#6b5215;line-height:1.5;display:none; }
+  .hint-box.show { display:block; }
+  .tts-btn { background:#eef2f7; border:none; border-radius:50%; width:34px; height:34px; font-size:1rem; cursor:pointer; margin-left:8px; vertical-align:middle; }
+  .nav-btns { display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .nav-btns button { flex:1; padding:11px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; background:#185FA5; color:#fff; }
+  .nav-btns button:disabled { background:#c9d2dc; cursor:default; }
+  .results-card h2 { text-align:center; margin-top:0; }
+  .score-big { text-align:center; font-size:2.2rem; font-weight:800; color:#185FA5; margin: 6px 0 16px; }
+  .action-row { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .action-row button { padding:12px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; }
+  .btn-retry { background:#f5a623; color:#fff; }
+  .btn-save { background:#7b61ff; color:#fff; }
+  .btn-fresh { background:#E24B4A; color:#fff; }
+  .fresh-btn-bottom { display:block; margin: 6px auto 0; background:none; border:1.5px solid #d7dde6; color:#888; padding:8px 16px; border-radius:20px; font-size:0.8rem; cursor:pointer; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:14px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { font-size:0.95rem; margin-bottom:18px; }
+  .modal-box button { padding:10px 16px; border-radius:8px; border:none; font-weight:700; margin:0 6px; cursor:pointer; }
+  .modal-yes { background:#E24B4A; color:#fff; }
+  .modal-no { background:#eef2f7; color:#333; }
+
+</style>
+</head>
+<body>
+<div class="quiz-wrap">
+  <div class="quiz-title">[Grant] English</div>
+  <div class="instruction" id="instruction"></div>
+
+  <div class="nav-bar">
+    <div class="nav-summary">
+      <span id="nav-count">0/0</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <button class="jump-btn" id="jump-btn" onclick="toggleJump()">Jump&#9662;</button>
+    </div>
+    <div class="dots-panel" id="dots-panel" style="display:none;"></div>
+  </div>
+
+  <div class="results-pill-wrap"><span class="results-pill" id="results-pill" style="display:none;" onclick="showResultsNow()">Results</span></div>
+
+  <div class="quiz-card" id="quiz-card">
+    <div class="passage-box" id="passage-box" style="display:none;"></div>
+    <div class="context-label" id="context-label" style="display:none;"></div>
+    <div class="context-box" id="context-box" style="display:none;"></div>
+    <div class="tag-badge" id="tag-badge" style="display:none;"></div>
+    <div class="q-text" id="q-text"></div>
+    <div id="options"></div>
+    <button class="hint-btn" id="hint-btn" onclick="toggleHint()" style="display:none;">Show Hint</button>
+    <div class="hint-box" id="hint-box"></div>
+    <div class="exp-box" id="exp-box"></div>
+    <div class="nav-btns">
+      <button id="prev-btn" onclick="prevQ()">Prev</button>
+      <button id="next-btn" onclick="goNext()">Next</button>
+    </div>
+  </div>
+
+  <div class="results-card" id="results-card" style="display:none;">
+    <h2>Results</h2>
+    <div class="score-big" id="score-big"></div>
+    <div id="score-detail" style="text-align:center;color:#555;font-size:0.9rem;"></div>
+    <div class="action-row">
+      <button class="btn-retry" onclick="startRetry()">Retry Wrong Ones</button>
+      <button class="btn-save" onclick="saveWrong()">Save Wrong Answers</button>
+      <button class="btn-fresh" onclick="openFreshModal()">Start Fresh</button>
+    </div>
+  </div>
+
+  <button class="fresh-btn-bottom" onclick="openFreshModal()">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="fresh-modal" style="display:none;">
+  <div class="modal-box">
+    <p>Reset all progress and start over?</p>
+    <button class="modal-yes" onclick="confirmFresh()">Yes, Start Fresh</button>
+    <button class="modal-no" onclick="closeFreshModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Grant] English";
+var QUIZ_KEY = "grantenglish";
+var INSTRUCTION = "Read the passage and choose the best answer for each question.";
+var TODAY_STR = "20260923";
+var PASSAGE_MAIN = "On the last Saturday of January, a heavy snowstorm swept through the small mountain town of Pine Hollow. Twelve-year-old Lena Ortiz was shoveling the front steps when she heard a faint whimper coming from under her neighbor's porch. She knelt down and found a shivering brown puppy with no collar, its paws caked with ice. Lena wrapped the puppy in her scarf and carried it inside, where her older brother, Mateo, helped her dry it with a warm towel. \"We can't just keep him,\" Mateo said gently. \"Someone might be looking for him.\" Lena knew he was right, even though the puppy had already fallen asleep in her lap. Since the roads were closed, she decided to make posters. She drew a picture of the puppy, wrote her phone number underneath, and taped a poster to every mailbox on her street. The snow reached her knees, and the wind stung her cheeks like tiny needles. By Sunday evening, no one had called, and Lena secretly hoped the puppy could stay forever. Then, on Monday morning, the phone finally rang. An elderly man named Mr. Hale explained that his puppy, Biscuit, had slipped out of his yard during the storm. When he arrived, Biscuit leaped into his arms and licked his face. Mr. Hale thanked Lena with tears in his eyes and invited her to visit Biscuit anytime. Walking home, Lena felt a little sad, but mostly proud. Doing the right thing, she realized, was more important than getting what she wanted.";
+var PASSAGE_PAIRED = "<strong>Passage A</strong><br>Aiden moved from a small town to Chicago in the middle of fifth grade. On his first day, the hallways felt enormous, and he did not know a single name. He was nervous, but he loved chess, so he signed up for the after-school chess club that same week. By Friday, he had played six games and learned the names of four new friends. Aiden said the busy city school felt less scary once he found people who enjoyed the same thing he did. Within a month, he was helping younger players learn the game.<br><br><strong>Passage B</strong><br>Rosa moved from a big city to a quiet farming town at the start of sixth grade. Her new school had only forty students, and everyone had known each other since kindergarten. For weeks, Rosa ate lunch alone and felt invisible. Then she noticed a classmate, Eliza, struggling with fractions, a subject Rosa was good at. Rosa offered to help, and the two began studying together every afternoon. Slowly, Eliza introduced Rosa to her other friends. Rosa said it took patience, but sharing something she was good at finally made the small town feel like home.";
+var RAW_QUESTIONS = [
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Title Selection",
+  "tagcolor": "#185FA5",
+  "stem": "Which of the following would be the best title for this passage?",
+  "opts": [
+   "How to Make a Poster",
+   "The Puppy in the Snowstorm",
+   "Mateo's Warm Towel",
+   "Shoveling Snow in Pine Hollow"
+  ],
+  "ci": 1,
+  "exp": "The passage follows Lena from finding the lost puppy during the storm to returning it to its owner, which this title captures. The other titles focus on small details, such as shoveling, the towel, or making posters, rather than the whole story."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Main Idea",
+  "tagcolor": "#185FA5",
+  "stem": "Which sentence best states the main idea of the passage?",
+  "opts": [
+   "Mr. Hale is an elderly man who lives near Lena's street.",
+   "Lena's brother Mateo is very good at taking care of animals.",
+   "Lena finds a lost puppy in a snowstorm and chooses to return it to its owner, even though she wants to keep it.",
+   "Snowstorms often close roads in small mountain towns."
+  ],
+  "ci": 2,
+  "exp": "Most of the passage is about Lena finding the puppy, searching for its owner, and returning it despite wanting to keep it. The other choices mention true details but not the central point of the story."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Author's Purpose",
+  "tagcolor": "#185FA5",
+  "stem": "Why did the author most likely write this passage?",
+  "opts": [
+   "To persuade readers to adopt a puppy from a shelter",
+   "To inform readers about how to prepare for a snowstorm",
+   "To entertain readers with a story that shows the value of doing the right thing",
+   "To warn readers about the dangers of mountain roads"
+  ],
+  "ci": 2,
+  "exp": "The passage is a story with characters and events, and it ends with Lena's lesson about doing the right thing. It does not try to convince readers to adopt, explain storm safety, or warn about roads."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Summary",
+  "tagcolor": "#185FA5",
+  "stem": "Which option is the best summary of the passage?",
+  "opts": [
+   "Lena shovels snow and hears a whimper. Her brother Mateo dries a puppy with a towel. The wind is very cold.",
+   "Lena wants a puppy, so she asks her brother to help her find one during a snowstorm in Pine Hollow.",
+   "Mr. Hale loses his puppy during a storm and cries when he finds it. He invites a girl to visit anytime.",
+   "During a snowstorm, Lena rescues a lost puppy and makes posters to find its owner. On Monday, Mr. Hale calls, and Lena returns his puppy, Biscuit. She feels sad but proud that she did the right thing."
+  ],
+  "ci": 3,
+  "exp": "A good summary covers the beginning, middle, and end: Lena rescues the puppy, searches for the owner, and returns Biscuit, feeling proud. The other choices leave out key events or describe events that did not happen."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Theme",
+  "tagcolor": "#185FA5",
+  "stem": "What is the central theme or lesson of the story?",
+  "opts": [
+   "Doing the right thing can matter more than getting what you want.",
+   "Snowstorms are the most dangerous kind of weather.",
+   "Older brothers always know best.",
+   "Pets should never be allowed outside."
+  ],
+  "ci": 0,
+  "exp": "Lena's final realization, that doing the right thing is more important than getting what she wanted, states the lesson of the story. The other choices are not supported by the events."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Genre",
+  "tagcolor": "#185FA5",
+  "stem": "What genre is this passage?",
+  "opts": [
+   "Realistic fiction",
+   "Fable",
+   "Myth",
+   "Poetry"
+  ],
+  "ci": 0,
+  "exp": "The story has made-up characters and events that could really happen in everyday life, which makes it realistic fiction. It has no talking animals or moral tag like a fable, no gods or magic like a myth, and it is written in paragraphs rather than lines of verse."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Setting / Situation",
+  "tagcolor": "#185FA5",
+  "stem": "Where and when does this story take place?",
+  "opts": [
+   "In a busy city during a summer heat wave",
+   "In the small mountain town of Pine Hollow during a snowy weekend in January",
+   "At an animal shelter on a rainy spring morning",
+   "On a farm during a windy autumn afternoon"
+  ],
+  "ci": 1,
+  "exp": "The passage says the snowstorm hit \"the small mountain town of Pine Hollow\" on \"the last Saturday of January,\" and the events continue through Sunday and Monday."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Supporting Details (Textual Evidence)",
+  "tagcolor": "#185FA5",
+  "stem": "Which detail from the text best supports the idea that the weather was harsh?",
+  "opts": [
+   "\"She drew a picture of the puppy.\"",
+   "\"Lena wrapped the puppy in her scarf and carried it inside.\"",
+   "\"The snow reached her knees, and the wind stung her cheeks like tiny needles.\"",
+   "\"Mr. Hale thanked Lena with tears in his eyes.\""
+  ],
+  "ci": 2,
+  "exp": "Knee-deep snow and stinging wind directly show how harsh the weather was. The other details describe Lena's actions or Mr. Hale's feelings, not the weather."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Supporting Details (Fact Retrieval)",
+  "tagcolor": "#185FA5",
+  "stem": "According to the passage, why did Lena decide to make posters?",
+  "opts": [
+   "Because Mr. Hale asked her to",
+   "Because Mateo told her to draw the puppy",
+   "Because her phone was broken",
+   "Because the roads were closed"
+  ],
+  "ci": 3,
+  "exp": "The passage states, \"Since the roads were closed, she decided to make posters.\""
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Cause & Effect",
+  "tagcolor": "#185FA5",
+  "stem": "What caused Biscuit to end up under the neighbor's porch?",
+  "opts": [
+   "He was chasing a cat down the street.",
+   "Mr. Hale left him there on purpose.",
+   "He slipped out of Mr. Hale's yard during the storm.",
+   "Lena's brother let him out of the house."
+  ],
+  "ci": 2,
+  "exp": "Mr. Hale explains that Biscuit \"had slipped out of his yard during the storm,\" which is why the puppy was lost and hiding under the porch."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Character Traits & Motivation",
+  "tagcolor": "#185FA5",
+  "stem": "Which character trait best describes Lena?",
+  "opts": [
+   "Careless",
+   "Lazy",
+   "Selfish",
+   "Responsible"
+  ],
+  "ci": 3,
+  "exp": "Lena rescues the puppy, works hard in the cold to make and hang posters, and returns the puppy even though she wants to keep it. These actions show she is responsible."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Inference",
+  "tagcolor": "#185FA5",
+  "stem": "What can we infer about Lena's feelings when no one had called by Sunday evening?",
+  "opts": [
+   "She was scared of the puppy.",
+   "She was bored and wanted to go back outside.",
+   "She was angry at Mateo for making her hang posters.",
+   "She was partly glad, because she wanted to keep the puppy."
+  ],
+  "ci": 3,
+  "exp": "The passage says Lena \"secretly hoped the puppy could stay forever,\" so the silence gave her a small, hidden hope of keeping him."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Predict",
+  "tagcolor": "#185FA5",
+  "stem": "Based on the story, what will Lena most likely do in the weeks after the storm?",
+  "opts": [
+   "Move away from Pine Hollow",
+   "Visit Biscuit at Mr. Hale's house",
+   "Refuse to speak to Mr. Hale again",
+   "Take down every poster and forget about the puppy"
+  ],
+  "ci": 1,
+  "exp": "Mr. Hale invited Lena to visit Biscuit anytime, and Lena clearly cares about the puppy, so visiting him is the most logical next event."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Tone",
+  "tagcolor": "#185FA5",
+  "stem": "Which word best describes the tone of the ending of the passage?",
+  "opts": [
+   "Silly and joking",
+   "Warm and thoughtful",
+   "Angry and bitter",
+   "Frightened and nervous"
+  ],
+  "ci": 1,
+  "exp": "The ending shows Mr. Hale's grateful tears and Lena's quiet pride and reflection, which creates a warm and thoughtful tone."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Point of View",
+  "tagcolor": "#185FA5",
+  "stem": "From which point of view is this passage written?",
+  "opts": [
+   "First-person",
+   "It changes from first-person to second-person",
+   "Third-person",
+   "Second-person"
+  ],
+  "ci": 2,
+  "exp": "The narrator refers to the characters as \"Lena,\" \"she,\" and \"he\" and is not a character in the story, which is third-person point of view. First-person would use \"I,\" and second-person would use \"you.\""
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Text Structure",
+  "tagcolor": "#185FA5",
+  "stem": "How is the passage mainly structured?",
+  "opts": [
+   "Description only, with no events",
+   "Compare and contrast, showing how two puppies are alike and different",
+   "Problem and solution, listing ways to prevent snowstorms",
+   "Chronological order, telling events in the order they happened"
+  ],
+  "ci": 3,
+  "exp": "The story moves step by step from Saturday to Sunday to Monday, which is chronological order."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Fact vs. Opinion",
+  "tagcolor": "#185FA5",
+  "stem": "Read this sentence from the passage: \"Doing the right thing, she realized, was more important than getting what she wanted.\" Is this sentence a fact or an opinion?",
+  "opts": [
+   "Fact, because it describes the weather that weekend",
+   "Opinion, because it tells the exact day the phone rang",
+   "Opinion, because it expresses a personal belief about what matters most",
+   "Fact, because it can be measured or proven"
+  ],
+  "ci": 2,
+  "exp": "Whether one thing is \"more important\" than another is a personal belief, not something that can be proven, so this sentence is an opinion."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Vocabulary in Context (Context Clues)",
+  "tagcolor": "#185FA5",
+  "stem": "In the sentence \"She knelt down and found a shivering brown puppy with no collar, its paws caked with ice,\" what does the word \"caked\" most likely mean?",
+  "opts": [
+   "Softly warmed",
+   "Brightly painted",
+   "Neatly cleaned",
+   "Thickly covered"
+  ],
+  "ci": 3,
+  "exp": "The puppy had been out in a snowstorm, so its paws were thickly covered with a hard layer of ice. The other meanings do not fit a lost puppy in the snow."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Synonym",
+  "tagcolor": "#185FA5",
+  "stem": "Which word is a synonym for \"shivering\" as used in the passage?",
+  "opts": [
+   "Sleeping",
+   "Barking",
+   "Trembling",
+   "Running"
+  ],
+  "ci": 2,
+  "exp": "\"Shivering\" means shaking from cold, and \"trembling\" means shaking as well, so they have nearly the same meaning."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Antonym",
+  "tagcolor": "#185FA5",
+  "stem": "Which word is the antonym of \"elderly\" as used to describe Mr. Hale?",
+  "opts": [
+   "Wise",
+   "Tall",
+   "Young",
+   "Kind"
+  ],
+  "ci": 2,
+  "exp": "\"Elderly\" means old, so its opposite is \"young.\" \"Wise,\" \"kind,\" and \"tall\" describe other qualities."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Analogy",
+  "tagcolor": "#185FA5",
+  "stem": "Complete the analogy &mdash; Puppy : Dog :: Kitten : ________.",
+  "opts": [
+   "Collar",
+   "Bark",
+   "Mouse",
+   "Cat"
+  ],
+  "ci": 3,
+  "exp": "A puppy is a young dog, so the matching pair is a kitten, which is a young cat."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Figurative Language",
+  "tagcolor": "#185FA5",
+  "stem": "What type of figurative language is used in \"the wind stung her cheeks like tiny needles\"?",
+  "opts": [
+   "Simile",
+   "Metaphor",
+   "Onomatopoeia",
+   "Hyperbole"
+  ],
+  "ci": 0,
+  "exp": "The phrase compares the wind to tiny needles using the word \"like,\" which makes it a simile."
+ },
+ {
+  "passage": PASSAGE_MAIN,
+  "tag": "Preposition Usage",
+  "tagcolor": "#185FA5",
+  "stem": "Fill in the blank with the correct preposition: \"Mr. Hale's puppy had slipped out _____ his yard during the storm.\"",
+  "opts": [
+   "on",
+   "at",
+   "of",
+   "over"
+  ],
+  "ci": 2,
+  "exp": "The phrase \"out of\" shows movement from inside a place to outside it, so \"of\" is correct."
+ },
+ {
+  "passage": PASSAGE_PAIRED,
+  "tag": "Paired Passage — Synthesis (Similarities)",
+  "tagcolor": "#185FA5",
+  "stem": "Based on Passage A and Passage B, what is one similarity between Aiden's and Rosa's experiences?",
+  "opts": [
+   "Both made friends on their very first day.",
+   "Both made friends at their new school by sharing something they were good at or enjoyed.",
+   "Both joined an after-school chess club.",
+   "Both moved from a big city to a small town."
+  ],
+  "ci": 1,
+  "exp": "Aiden made friends through his love of chess, and Rosa made friends by helping Eliza with fractions. In both passages, sharing a skill or interest helped the new student connect."
+ },
+ {
+  "passage": PASSAGE_PAIRED,
+  "tag": "Paired Passage — Contrast (Differences)",
+  "tagcolor": "#185FA5",
+  "stem": "How does Aiden's experience in Passage A differ from Rosa's experience in Passage B?",
+  "opts": [
+   "Aiden felt nervous, while Rosa never felt nervous at all.",
+   "Aiden moved to a farming town, while Rosa moved to Chicago.",
+   "Aiden helped a classmate with fractions, while Rosa joined a chess club.",
+   "Aiden made friends within a week, while Rosa felt lonely for weeks before making a friend."
+  ],
+  "ci": 3,
+  "exp": "Aiden had four new friends by Friday of his first week, but Rosa \"for weeks\" ate lunch alone before she met Eliza. The other choices mix up or contradict details from the passages."
+ }
+];
+var REPORT_ENDPOINT = "https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec";
+function reportResult(){
+  try{
+    var correct=0, wrong=0, skipped=0;
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos];
+      if(state.answers[qi]===undefined){ skipped++; continue; }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+    }
+    var total = order.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0
+    };
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
+}
+
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var ORDER_KEY = STORAGE_KEY + '_order';
+var ATTEMPTS_KEY = STORAGE_KEY + '_attempts';
+
+var order = [];
+var activeSet = null; // when in retry mode, holds subset of original indices
+var state = { answers:{}, cur:0, showResults:false };
+var hintShown = false;
+
+function loadState(){
+  var raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try{ state = JSON.parse(raw); }catch(e){ state = {answers:{},cur:0,showResults:false}; } }
+  var rawOrder = localStorage.getItem(ORDER_KEY);
+  if(rawOrder){ try{ order = JSON.parse(rawOrder); }catch(e){ order=null; } }
+  if(!order || !order.length){
+    order = RAW_QUESTIONS.map(function(_,i){return i;});
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function getAttempts(){
+  var a = localStorage.getItem(ATTEMPTS_KEY);
+  return a ? parseInt(a,10) : 1;
+}
+function incAttempts(){
+  var a = getAttempts() + 1;
+  localStorage.setItem(ATTEMPTS_KEY, String(a));
+}
+
+function activeOrder(){ return activeSet || order; }
+
+function render(){
+  document.getElementById('instruction').textContent = INSTRUCTION;
+  var ord = activeOrder();
+  if(state.showResults){
+    document.getElementById('quiz-card').style.display='none';
+    document.getElementById('results-card').style.display='block';
+    renderResults();
+  } else {
+    document.getElementById('quiz-card').style.display='block';
+    document.getElementById('results-card').style.display='none';
+    renderQuestion();
+  }
+  updateNav();
+}
+
+function renderQuestion(){
+  hintShown = false;
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  var q = RAW_QUESTIONS[qi];
+
+  var pb = document.getElementById('passage-box');
+  if(q.passage){ pb.style.display='block'; pb.innerHTML = q.passage; } else { pb.style.display='none'; pb.innerHTML=''; }
+
+  var cl = document.getElementById('context-label');
+  if(q.contextLabel){ cl.style.display='block'; cl.textContent = q.contextLabel; } else { cl.style.display='none'; cl.textContent=''; }
+
+  var cb = document.getElementById('context-box');
+  if(q.context){ cb.style.display='block'; cb.innerHTML = q.context; } else { cb.style.display='none'; cb.innerHTML=''; }
+
+  var tb = document.getElementById('tag-badge');
+  if(q.tag){ tb.style.display='inline-block'; tb.textContent = q.tag; tb.style.background = q.tagcolor || '#185FA5'; } else { tb.style.display='none'; }
+
+  var qt = document.getElementById('q-text');
+  qt.innerHTML = q.stem + (q.tts ? ' <button class="tts-btn" onclick="speak(' + qi + ')" title="Listen">&#128266;</button>' : '');
+
+  var opts = document.getElementById('options');
+  opts.innerHTML = '';
+  var answered = state.answers[qi] !== undefined;
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = optText;
+    if(answered){
+      btn.disabled = true;
+      if(idx === q.ci) btn.className += ' reveal-correct';
+      if(idx === state.answers[qi] && idx !== q.ci) btn.className += ' selected-wrong';
+      if(idx === state.answers[qi] && idx === q.ci) btn.className += ' selected-correct';
+    } else {
+      btn.onclick = function(){ pick(idx); };
+    }
+    opts.appendChild(btn);
+  });
+
+  var hb = document.getElementById('hint-btn');
+  var hx = document.getElementById('hint-box');
+  if(q.hint){
+    hb.style.display='inline-block'; hb.textContent='Show Hint';
+    hx.innerHTML = q.hint; hx.classList.remove('show');
+  } else {
+    hb.style.display='none'; hx.classList.remove('show');
+  }
+
+  var eb = document.getElementById('exp-box');
+  if(answered){
+    eb.style.display='block';
+    eb.innerHTML = '<strong>Explanation:</strong> ' + q.exp;
+  } else {
+    eb.style.display='none'; eb.innerHTML='';
+  }
+
+  document.getElementById('prev-btn').disabled = (state.cur === 0);
+  var ord2 = activeOrder();
+  var isLast = (state.cur === ord2.length - 1);
+  document.getElementById('next-btn').textContent = isLast ? 'Finish' : 'Next';
+}
+
+function toggleHint(){
+  hintShown = !hintShown;
+  var b=document.getElementById('hint-btn'), x=document.getElementById('hint-box');
+  if(hintShown){ x.classList.add('show'); b.textContent='Hide Hint'; }
+  else { x.classList.remove('show'); b.textContent='Show Hint'; }
+}
+window.toggleHint = toggleHint;
+
+function pick(idx){
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState();
+  render();
+}
+window.pick = pick;
+
+function prevQ(){
+  if(state.cur > 0){ state.cur--; saveState(); render(); }
+}
+window.prevQ = prevQ;
+window.go = prevQ;
+
+function goNext(){
+  var ord = activeOrder();
+  if(state.cur < ord.length - 1){
+    state.cur++;
+    saveState();
+    render();
+  } else {
+    state.showResults = true;
+    incAttempts();
+    saveState();
+    render();
+    reportResult();
+  }
+}
+window.goNext = goNext;
+
+function showResultsNow(){
+  state.showResults = true;
+  saveState();
+  render();
+  reportResult();
+}
+window.showResultsNow = showResultsNow;
+
+function goToQ(pos){
+  state.cur = pos;
+  state.showResults = false;
+  saveState();
+  render();
+}
+window.goToQ = goToQ;
+
+function renderResults(){
+  var ord = activeOrder();
+  var correct=0, wrong=0, skipped=0;
+  ord.forEach(function(qi){
+    if(state.answers[qi]===undefined) skipped++;
+    else if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++;
+    else wrong++;
+  });
+  var total = ord.length;
+  document.getElementById('score-big').textContent = correct + ' / ' + total;
+  document.getElementById('score-detail').textContent = 'Correct: ' + correct + '  Wrong: ' + wrong + '  Skipped: ' + skipped;
+}
+
+function updateNav(){
+  var ord = activeOrder();
+  var answeredCount = 0;
+  ord.forEach(function(qi){ if(state.answers[qi]!==undefined) answeredCount++; });
+  document.getElementById('nav-count').textContent = answeredCount + '/' + ord.length;
+  var pct = ord.length ? Math.round(answeredCount/ord.length*100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('results-pill').style.display = (answeredCount === ord.length && ord.length>0) ? 'inline-block' : 'none';
+  renderDots();
+}
+
+function renderDots(){
+  var panel = document.getElementById('dots-panel');
+  if(panel.style.display === 'none') { buildDots(); return; }
+  buildDots();
+}
+function buildDots(){
+  var panel = document.getElementById('dots-panel');
+  var ord = activeOrder();
+  panel.innerHTML = '';
+  ord.forEach(function(qi, pos){
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.textContent = (pos+1);
+    if(state.answers[qi]!==undefined){
+      d.className += (state.answers[qi]===RAW_QUESTIONS[qi].ci) ? ' answered-correct' : ' answered-wrong';
+    }
+    d.onclick = function(){ goToQ(pos); };
+    panel.appendChild(d);
+  });
+}
+
+function toggleJump(){
+  var panel = document.getElementById('dots-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display === 'none'){
+    panel.style.display = 'flex';
+    btn.innerHTML = 'Hide&#9652;';
+    buildDots();
+  } else {
+    panel.style.display = 'none';
+    btn.innerHTML = 'Jump&#9662;';
+  }
+}
+window.toggleJump = toggleJump;
+
+function startRetry(){
+  var ord = activeOrder();
+  var wrongIdx = ord.filter(function(qi){ return state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci; });
+  if(!wrongIdx.length) return;
+  activeSet = wrongIdx;
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  render();
+}
+window.startRetry = startRetry;
+
+function saveWrong(){
+  var ord = activeOrder();
+  var wrongAnswers = [];
+  ord.forEach(function(qi){
+    if(state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongAnswers.push({
+        question: q.stem.replace(/<[^>]+>/g,''),
+        yourAnswer: q.opts[state.answers[qi]].replace(/<[^>]+>/g,''),
+        correctAnswer: q.opts[q.ci].replace(/<[^>]+>/g,''),
+        explanation: q.exp.replace(/<[^>]+>/g,'')
+      });
+    }
+  });
+  var payload = { title: TITLE, wrongAnswers: wrongAnswers };
+  var blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var d = new Date();
+  var ds = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  a.href = url;
+  a.download = 'quiz_' + QUIZ_KEY + '_wrong_' + ds + '_v1.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+window.copyRes = saveWrong;
+window.saveWrong = saveWrong;
+
+function openFreshModal(){ document.getElementById('fresh-modal').style.display='flex'; }
+window.openFreshModal = openFreshModal;
+function closeFreshModal(){ document.getElementById('fresh-modal').style.display='none'; }
+window.closeFreshModal = closeFreshModal;
+function confirmFresh(){
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(ORDER_KEY);
+  activeSet = null;
+  order = RAW_QUESTIONS.map(function(_,i){return i;});
+  localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  document.getElementById('fresh-modal').style.display='none';
+  render();
+}
+window.confirmFresh = confirmFresh;
+
+function speak(qi){
+  try{
+    var q = RAW_QUESTIONS[qi];
+    var text = q.tts || q.stem.replace(/<[^>]+>/g,'');
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ko-KR';
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+window.speak = speak;
+
+loadState();
+render();
+</script>
+</body>
+</html>
