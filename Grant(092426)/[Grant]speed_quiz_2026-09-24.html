@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Speed Quiz</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh;padding:12px;max-width:720px;margin:0 auto;}
+.quiz-title{font-size:1.35rem;font-weight:700;text-align:center;color:#111;background:#fff;padding:10px 0 2px}
+.subtitle{text-align:center;font-size:0.85rem;color:#555;background:#fff;padding:2px 0 4px}
+.instruction{text-align:center;font-size:0.88rem;color:#555;background:#fff;padding:2px 12px 10px}
+#nav-bar{display:flex;align-items:center;gap:8px;margin:8px 0;background:#fff;padding:8px 12px;border-radius:10px;}
+#nav-count{font-size:13px;white-space:nowrap;color:#555;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#jump-btn{font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;border:none;}
+.results-pill{display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;border:none;}
+.q-timer-bar{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;border-radius:10px;padding:8px 12px;margin-bottom:8px;}
+.q-timer-display{font-size:1.2rem;font-weight:900;color:#185FA5;font-family:'Courier New',monospace;}
+.q-timer-display.warn{color:#f5a623;}
+.q-timer-display.danger{color:#E24B4A;}
+.pause-btn{background:#e8edf4;color:#185FA5;border:none;border-radius:6px;padding:6px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;}
+.quiz-area{position:relative;background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;}
+.q-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.q-num{font-size:0.82rem;color:#888;}
+.tag-badge{font-size:0.75rem;padding:2px 10px;border-radius:10px;background:#185FA5;color:#fff;font-weight:600;}
+.q-text{font-size:1.08rem;font-weight:600;color:#111;margin-bottom:14px;line-height:1.5;}
+.options{display:flex;flex-direction:column;gap:9px;}
+.opt-btn{background:#e8edf4;color:#111;border:2px solid transparent;border-radius:9px;padding:11px 14px;font-size:0.95rem;text-align:left;cursor:pointer;line-height:1.4;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn.revealed{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{margin-top:12px;padding:10px 12px;background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;font-size:0.88rem;color:#333;display:none;}
+.timeout-box{margin-top:12px;padding:10px 12px;background:#FCEBEB;border-left:3px solid #E24B4A;border-radius:6px;font-size:0.88rem;color:#501313;display:none;}
+.nav-btns{display:flex;justify-content:space-between;margin-top:14px;gap:10px;}
+.prev-btn,.next-btn{padding:9px 22px;border-radius:8px;border:none;font-size:0.95rem;font-weight:600;cursor:pointer;}
+.prev-btn{background:#e8edf4;color:#333;}
+.next-btn{background:#1D9E75;color:#fff;}
+.blurred .q-text,.blurred .options,.blurred .exp-box,.blurred .timeout-box{filter:blur(7px);pointer-events:none;user-select:none;}
+.pause-overlay{display:none;position:absolute;inset:0;background:rgba(255,255,255,0.55);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);border-radius:12px;align-items:center;justify-content:center;flex-direction:column;gap:12px;z-index:5;}
+.pause-overlay.show{display:flex;}
+.pause-overlay-text{font-size:1.1rem;font-weight:800;color:#185FA5;letter-spacing:0.02em;}
+.pause-overlay .pause-btn{padding:9px 22px;font-size:0.95rem;}
+.results-screen{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin:8px 0;display:none;}
+.results-screen.show{display:block;}
+.results-heading{font-size:1.3rem;font-weight:700;color:#1D9E75;text-align:center;margin-bottom:6px;}
+.results-score{font-size:1rem;text-align:center;color:#555;margin-bottom:14px;}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;margin-bottom:16px;}
+.r-card{border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;font-size:0.82rem;font-weight:600;}
+.r-card.correct{background:#E1F5EE;color:#085041;}
+.r-card.wrong{background:#FCEBEB;color:#501313;}
+.r-card.skipped{background:#f5f7fa;color:#555;}
+.r-card.timedout{background:#fdecd2;color:#7a4c00;}
+.results-btns{display:flex;flex-direction:column;gap:9px;}
+.retry-btn{background:#1D9E75;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.save-btn{background:#f5a623;color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;}
+.fresh-btn{background:#e8edf4;color:#111;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:12px;padding:24px 20px;max-width:320px;width:90%;text-align:center;}
+.modal-title{font-size:1.05rem;font-weight:700;margin-bottom:8px;}
+.modal-msg{font-size:0.9rem;color:#555;margin-bottom:18px;}
+.modal-btns{display:flex;gap:10px;justify-content:center;}
+.modal-cancel{background:#e8edf4;color:#333;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;cursor:pointer;}
+.modal-confirm{background:#E24B4A;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:0.93rem;font-weight:600;cursor:pointer;}
+  /* textbook typeface (2026-09-23): Charter-family serif, upright numerals, italic variables */
+  body, button, .opt-btn, .q-text, .exp-box, .passage-box { font-family: Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, 'Times New Roman', serif; }
+  .q-text { font-weight: 400; font-size: 1.12rem; }
+  .opt-btn { font-size: 1.02rem; }
+  .q-text i, .opt-btn i, .exp-box i { font-style: italic; }
+</style>
+</head>
+<body>
+<div class="quiz-title">[Grant] Speed Quiz</div>
+<div class="subtitle" id="att-display">Total Attempts: 0</div>
+<div class="instruction">Answer each problem before the 40-second timer runs out. Use Pause if you need a break.</div>
+<div id="nav-bar"><span id="nav-count">0 / 30</span><div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div><button onclick="toggleJump()" id="jump-btn">Jump &#9662;</button></div>
+<div id="dot-panel"></div>
+<div class="q-timer-bar">
+  <span class="q-timer-display" id="qTimerDisplay">0:40</span>
+  <button class="pause-btn" id="pauseBtn" onclick="togglePause()">Pause</button>
+</div>
+<div class="quiz-area" id="quiz-area">
+  <div class="q-header">
+    <span class="q-num" id="q-num"></span>
+    <span class="tag-badge" id="tag-badge"></span>
+  </div>
+  <div class="q-text" id="q-text"></div>
+  <div class="options" id="options"></div>
+  <div class="timeout-box" id="timeout-box">Time's up for this question. Click Next to continue.</div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-btns">
+    <button class="prev-btn" onclick="goPrev()">Prev</button>
+    <button class="next-btn" id="next-btn" onclick="goNext()">Next</button>
+  </div>
+  <div class="pause-overlay" id="pauseOverlay">
+    <div class="pause-overlay-text">Paused</div>
+    <button class="pause-btn" onclick="resumeQuiz()">Resume</button>
+  </div>
+</div>
+
+<div class="results-screen" id="results-screen">
+  <div class="results-heading" id="results-heading">Results</div>
+  <div class="results-score" id="results-score"></div>
+  <div class="results-grid" id="results-grid"></div>
+  <div class="results-btns">
+    <button class="retry-btn" onclick="startRetry()">Retry Wrong &amp; Timed Out</button>
+    <button class="save-btn" onclick="saveWrong()">Save Wrong Answers</button>
+    <button class="fresh-btn" onclick="openFreshModal()">Start Fresh</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <div class="modal-title">Start Fresh?</div>
+    <div class="modal-msg">All progress, answers, and timers will be cleared and the quiz will restart from the beginning. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeFreshModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmFresh()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Grant] Speed Quiz";
+var QUIZ_KEY = "quiz_grantspeedquiz_30_20260924_v1";
+var ATT_KEY = "quiz_grantspeedquiz_30_att_20260924_v1";
+var ORDER_KEY = QUIZ_KEY + "_order_v1";
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+function reportResult(){
+  try{
+    var correct=0, wrong=0, skipped=0, timedout=0;
+    var wrongPositions=[];
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos];
+      var a = state.answers[qi];
+      var t = state.timers[qi];
+      if(a===undefined){
+        if(t && t.timedOut) { timedout++; wrongPositions.push(pos+1); } else skipped++;
+        continue;
+      }
+      if(a===RAW_QUESTIONS[qi].ci) correct++; else { wrong++; wrongPositions.push(pos+1); }
+    }
+    var total = order.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, timedOut: timedout, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0,
+      wrongNumbers: wrongPositions.join(',')
+    };
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
+}
+
+var TAG_COLORS = {"Gauss": "#185FA5", "Intervals": "#1D9E75", "Add & Subtract": "#f5a623", "Multiply": "#8e44ad", "Geometry": "#E24B4A"};
+var RAW_QUESTIONS = [
+ {
+  "stem": "Each side of a football field is planted with 16 flags. There is one flag at each corner. How many flags are planted altogether in the football field?",
+  "opts": [
+   "60",
+   "62",
+   "64",
+   "56"
+  ],
+  "ci": 0,
+  "exp": "4 sides &times; 16 flags = 64, but each of the 4 corner flags was counted twice. 64 &minus; 4 = 60 flags.",
+  "tag": "Intervals",
+  "tagcolor": "#1D9E75"
+ },
+ {
+  "stem": "John saves 5 fifty-cent coins in the first week. He saves 6 fifty-cent coins in the second week. In the third week, he saves 7 fifty-cent coins and so on. How many fifty-cent coins can John save altogether by the end of 10 weeks?",
+  "opts": [
+   "100",
+   "90",
+   "95",
+   "140"
+  ],
+  "ci": 2,
+  "exp": "In week 10 he saves 14 coins. Total = (5 + 14) &times; 10 &divide; 2 = 95 coins.",
+  "tag": "Gauss",
+  "tagcolor": "#185FA5"
+ },
+ {
+  "stem": "From the top vertex of a triangle, 3 line segments (cevians) are drawn to the opposite side, dividing the triangle into 4 smaller regions, as shown below.<br><svg width=\"200\" height=\"150\" viewBox=\"0 0 200 150\" style=\"display:block;margin:10px auto;\"><polygon points=\"100.0,15 25,135 175,135\" fill=\"none\" stroke=\"#333\" stroke-width=\"2\"/><line x1=\"100.0\" y1=\"15\" x2=\"62.5\" y2=\"135\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"100.0\" y1=\"15\" x2=\"100.0\" y2=\"135\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"100.0\" y1=\"15\" x2=\"137.5\" y2=\"135\" stroke=\"#333\" stroke-width=\"1.5\"/></svg><br>How many triangles of any size are there altogether in the figure?",
+  "opts": [
+   "10",
+   "4",
+   "7",
+   "8"
+  ],
+  "ci": 0,
+  "exp": "3 cevians create 4 regions (<i>k</i>=3): the total number of triangles is (<i>k</i>+1)(<i>k</i>+2)&divide;2 = 4&times;5&divide;2 = 10.",
+  "tag": "Geometry",
+  "tagcolor": "#E24B4A"
+ },
+ {
+  "stem": "Compute the following.<br>(f) 33 + 47 =",
+  "opts": [
+   "80",
+   "81",
+   "70",
+   "90"
+  ],
+  "ci": 0,
+  "exp": "3 + 7 = 10, so 33 + 47 = 80.",
+  "tag": "Add & Subtract",
+  "tagcolor": "#f5a623"
+ },
+ {
+  "stem": "Compute the following.<br>(a) 383 + 1,005 =",
+  "opts": [
+   "1,388",
+   "1,488",
+   "1,398",
+   "1,378"
+  ],
+  "ci": 0,
+  "exp": "383 + 1,000 = 1,383, then add 5 more: 1,388.",
+  "tag": "Add & Subtract",
+  "tagcolor": "#f5a623"
+ },
+ {
+  "stem": "Compute the following.<br>d) 70 x 14 + 30 x 14",
+  "opts": [
+   "1,040",
+   "1,300",
+   "1,500",
+   "1,400"
+  ],
+  "ci": 3,
+  "exp": "Both terms share 14: (70 + 30) &times; 14 = 100 &times; 14 = 1,400.",
+  "tag": "Multiply",
+  "tagcolor": "#8e44ad"
+ },
+ {
+  "stem": "A grid made of 3 columns and 3 rows of unit squares is shown below.<br><svg width=\"116\" height=\"116\" viewBox=\"0 0 116 116\" style=\"display:block;margin:10px auto;\"><line x1=\"10\" y1=\"10\" x2=\"106\" y2=\"10\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"42\" x2=\"106\" y2=\"42\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"74\" x2=\"106\" y2=\"74\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"106\" x2=\"106\" y2=\"106\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"10\" x2=\"10\" y2=\"106\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"42\" y1=\"10\" x2=\"42\" y2=\"106\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"74\" y1=\"10\" x2=\"74\" y2=\"106\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"106\" y1=\"10\" x2=\"106\" y2=\"106\" stroke=\"#333\" stroke-width=\"1.5\"/></svg><br>How many rectangles of any size (including squares) are there altogether?",
+  "opts": [
+   "27",
+   "30",
+   "36",
+   "14"
+  ],
+  "ci": 2,
+  "exp": "For an <i>m</i>&times;<i>n</i> grid the number of rectangles is <i>C</i>(<i>m</i>+1,2)&times;<i>C</i>(<i>n</i>+1,2). Here <i>C</i>(4,2)&times;<i>C</i>(4,2) = 6&times;6 = 36.",
+  "tag": "Geometry",
+  "tagcolor": "#E24B4A"
+ },
+ {
+  "stem": "Compute the following.<br>b) 50 x 999",
+  "opts": [
+   "49,500",
+   "49,950",
+   "49,900",
+   "50,050"
+  ],
+  "ci": 1,
+  "exp": "50 &times; 999 = 50 &times; 1,000 &minus; 50 = 50,000 &minus; 50 = 49,950.",
+  "tag": "Multiply",
+  "tagcolor": "#8e44ad"
+ },
+ {
+  "stem": "In the series below,<br>1, 2, 5, 7, 1, 2, 5, 7, 1, 2, 5, 7, &hellip;<br>(a) what is the 28th number?",
+  "opts": [
+   "2",
+   "5",
+   "1",
+   "7"
+  ],
+  "ci": 3,
+  "exp": "The pattern 1, 2, 5, 7 repeats every 4 numbers. 28 &divide; 4 = 7 with no remainder, so the 28th number is the last one in the group: 7.",
+  "tag": "Gauss",
+  "tagcolor": "#185FA5"
+ },
+ {
+  "stem": "From the top vertex of a triangle, 2 line segments (cevians) are drawn to the opposite side, dividing the triangle into 3 smaller regions, as shown below.<br><svg width=\"200\" height=\"150\" viewBox=\"0 0 200 150\" style=\"display:block;margin:10px auto;\"><polygon points=\"100.0,15 25,135 175,135\" fill=\"none\" stroke=\"#333\" stroke-width=\"2\"/><line x1=\"100.0\" y1=\"15\" x2=\"75.0\" y2=\"135\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"100.0\" y1=\"15\" x2=\"125.0\" y2=\"135\" stroke=\"#333\" stroke-width=\"1.5\"/></svg><br>How many triangles of any size are there altogether in the figure?",
+  "opts": [
+   "4",
+   "6",
+   "5",
+   "3"
+  ],
+  "ci": 1,
+  "exp": "2 cevians create 3 regions (<i>k</i>=2): the total number of triangles is (<i>k</i>+1)(<i>k</i>+2)&divide;2 = 3&times;4&divide;2 = 6.",
+  "tag": "Geometry",
+  "tagcolor": "#E24B4A"
+ },
+ {
+  "stem": "Compute the following.<br>b) 46 x 101",
+  "opts": [
+   "4,646",
+   "4,466",
+   "4,746",
+   "4,606"
+  ],
+  "ci": 0,
+  "exp": "46 &times; 101 = 46 &times; 100 + 46 = 4,600 + 46 = 4,646.",
+  "tag": "Multiply",
+  "tagcolor": "#8e44ad"
+ },
+ {
+  "stem": "Compute the following.<br>c) 36 x 25",
+  "opts": [
+   "900",
+   "1,000",
+   "800",
+   "750"
+  ],
+  "ci": 0,
+  "exp": "36 = 9 &times; 4, and 4 &times; 25 = 100. So 36 &times; 25 = 9 &times; 100 = 900.",
+  "tag": "Multiply",
+  "tagcolor": "#8e44ad"
+ },
+ {
+  "stem": "7 points are marked on a straight line, all at different (unequal) distances from one another so that no two segments share the same length, as shown below.<br><svg width=\"226\" height=\"60\" viewBox=\"0 0 226 60\" style=\"display:block;margin:10px auto;\"><line x1=\"20\" y1=\"30\" x2=\"206\" y2=\"30\" stroke=\"#333\" stroke-width=\"2\"/><circle cx=\"20.0\" cy=\"30\" r=\"4\" fill=\"#185FA5\"/><text x=\"20.0\" y=\"20\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">A</text><circle cx=\"34.0\" cy=\"30\" r=\"4\" fill=\"#185FA5\"/><text x=\"34.0\" y=\"20\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">B</text><circle cx=\"70.0\" cy=\"30\" r=\"4\" fill=\"#185FA5\"/><text x=\"70.0\" y=\"20\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">C</text><circle cx=\"92.0\" cy=\"30\" r=\"4\" fill=\"#185FA5\"/><text x=\"92.0\" y=\"20\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">D</text><circle cx=\"140.0\" cy=\"30\" r=\"4\" fill=\"#185FA5\"/><text x=\"140.0\" y=\"20\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">E</text><circle cx=\"158.0\" cy=\"30\" r=\"4\" fill=\"#185FA5\"/><text x=\"158.0\" y=\"20\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">F</text><circle cx=\"206.0\" cy=\"30\" r=\"4\" fill=\"#185FA5\"/><text x=\"206.0\" y=\"20\" font-size=\"13\" text-anchor=\"middle\" fill=\"#333\">G</text></svg><br>How many line segments of different lengths can be formed altogether?",
+  "opts": [
+   "15",
+   "21",
+   "28",
+   "6"
+  ],
+  "ci": 1,
+  "exp": "With 7 points all at unequal distances, the number of distinct segments equals <i>C</i>(7,2) = 7&times;6&divide;2 = 21.",
+  "tag": "Geometry",
+  "tagcolor": "#E24B4A"
+ },
+ {
+  "stem": "Compute the following series.<br>(a) 2 + 3 + 4 + 5 + 6 + 7 + 8",
+  "opts": [
+   "40",
+   "35",
+   "30",
+   "36"
+  ],
+  "ci": 1,
+  "exp": "There are 7 numbers from 2 to 8. Sum = (2 + 8) &times; 7 &divide; 2 = 35.",
+  "tag": "Gauss",
+  "tagcolor": "#185FA5"
+ },
+ {
+  "stem": "Compute the following.<br>(d) 248 + 275 + 752 + 525 =",
+  "opts": [
+   "1,800",
+   "1,700",
+   "1,750",
+   "1,900"
+  ],
+  "ci": 0,
+  "exp": "Pair them: (248 + 752) + (275 + 525) = 1,000 + 800 = 1,800.",
+  "tag": "Add & Subtract",
+  "tagcolor": "#f5a623"
+ },
+ {
+  "stem": "Melvin lives on the 5th floor of an apartment building. Nick lives on the next floor. The staircases leading to Melvin's apartment have 80 steps. How many steps have the staircases leading to Nick's apartment?",
+  "opts": [
+   "96",
+   "100",
+   "16",
+   "120"
+  ],
+  "ci": 1,
+  "exp": "From the 1st floor to the 5th floor there are 4 flights, so each flight has 80 &divide; 4 = 20 steps. Nick is on the 6th floor, 5 flights up: 5 &times; 20 = 100 steps.",
+  "tag": "Intervals",
+  "tagcolor": "#1D9E75"
+ },
+ {
+  "stem": "Joe puts 5 matchsticks on a table. Each matchstick is 10 cm away from another. How far is the fifth matchstick away from the first one?",
+  "opts": [
+   "50 cm",
+   "40 cm",
+   "30 cm",
+   "45 cm"
+  ],
+  "ci": 1,
+  "exp": "5 matchsticks make 4 gaps. 4 &times; 10 cm = 40 cm.",
+  "tag": "Intervals",
+  "tagcolor": "#1D9E75"
+ },
+ {
+  "stem": "Compute the following.<br>b) 64 x 25",
+  "opts": [
+   "1,650",
+   "1,600",
+   "1,500",
+   "1,400"
+  ],
+  "ci": 1,
+  "exp": "64 = 16 &times; 4, and 4 &times; 25 = 100. So 64 &times; 25 = 16 &times; 100 = 1,600.",
+  "tag": "Multiply",
+  "tagcolor": "#8e44ad"
+ },
+ {
+  "stem": "Compute the following series.<br>(a) 17 + 18 + 19 + 20 + 21 + 22 + 23",
+  "opts": [
+   "133",
+   "147",
+   "140",
+   "150"
+  ],
+  "ci": 2,
+  "exp": "The middle number is 20 and there are 7 numbers, so the sum is 20 &times; 7 = 140.",
+  "tag": "Gauss",
+  "tagcolor": "#185FA5"
+ },
+ {
+  "stem": "A 1-row by 7-column strip of unit squares is shown below.<br><svg width=\"216\" height=\"48\" viewBox=\"0 0 216 48\" style=\"display:block;margin:10px auto;\"><line x1=\"10\" y1=\"10\" x2=\"206\" y2=\"10\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"38\" x2=\"206\" y2=\"38\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"10\" x2=\"10\" y2=\"38\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"38\" y1=\"10\" x2=\"38\" y2=\"38\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"66\" y1=\"10\" x2=\"66\" y2=\"38\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"94\" y1=\"10\" x2=\"94\" y2=\"38\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"122\" y1=\"10\" x2=\"122\" y2=\"38\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"150\" y1=\"10\" x2=\"150\" y2=\"38\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"178\" y1=\"10\" x2=\"178\" y2=\"38\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"206\" y1=\"10\" x2=\"206\" y2=\"38\" stroke=\"#333\" stroke-width=\"1.5\"/></svg><br>How many rectangles of any size (including squares) are there altogether?",
+  "opts": [
+   "7",
+   "21",
+   "28",
+   "36"
+  ],
+  "ci": 2,
+  "exp": "For a 1-by-7 strip, the count of rectangles is <i>C</i>(8,2) = 8&times;7&divide;2 = 28.",
+  "tag": "Geometry",
+  "tagcolor": "#E24B4A"
+ },
+ {
+  "stem": "A grid made of 2 columns and 2 rows of unit squares is shown below.<br><svg width=\"84\" height=\"84\" viewBox=\"0 0 84 84\" style=\"display:block;margin:10px auto;\"><line x1=\"10\" y1=\"10\" x2=\"74\" y2=\"10\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"42\" x2=\"74\" y2=\"42\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"74\" x2=\"74\" y2=\"74\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"10\" x2=\"10\" y2=\"74\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"42\" y1=\"10\" x2=\"42\" y2=\"74\" stroke=\"#333\" stroke-width=\"1.5\"/><line x1=\"74\" y1=\"10\" x2=\"74\" y2=\"74\" stroke=\"#333\" stroke-width=\"1.5\"/></svg><br>How many squares of any size are there altogether?",
+  "opts": [
+   "4",
+   "6",
+   "9",
+   "5"
+  ],
+  "ci": 3,
+  "exp": "In a 2&times;2 grid: four 1&times;1 squares plus one 2&times;2 square = 5 squares total.",
+  "tag": "Geometry",
+  "tagcolor": "#E24B4A"
+ },
+ {
+  "stem": "Compute the following.<br>(b) 55 + 33 + 45 + 27 =",
+  "opts": [
+   "160",
+   "150",
+   "170",
+   "158"
+  ],
+  "ci": 0,
+  "exp": "Pair them: (55 + 45) + (33 + 27) = 100 + 60 = 160.",
+  "tag": "Add & Subtract",
+  "tagcolor": "#f5a623"
+ },
+ {
+  "stem": "Find the sum of all multiples of 4 that are smaller than or equal to 40.",
+  "opts": [
+   "240",
+   "220",
+   "200",
+   "180"
+  ],
+  "ci": 1,
+  "exp": "The multiples are 4, 8, &hellip;, 40, which is 10 numbers. Sum = (4 + 40) &times; 10 &divide; 2 = 220.",
+  "tag": "Gauss",
+  "tagcolor": "#185FA5"
+ },
+ {
+  "stem": "Compute the following. (See Example 6.)<br>(c) 673 - (273 + 182) =",
+  "opts": [
+   "218",
+   "228",
+   "208",
+   "318"
+  ],
+  "ci": 0,
+  "exp": "673 &minus; 273 = 400, then 400 &minus; 182 = 218.",
+  "tag": "Add & Subtract",
+  "tagcolor": "#f5a623"
+ },
+ {
+  "stem": "Compute the following series.<br>(c) 996 + 997 + 998 + 999 + 995",
+  "opts": [
+   "4975",
+   "4990",
+   "4995",
+   "4985"
+  ],
+  "ci": 3,
+  "exp": "The numbers 995 to 999 have middle number 997, so the sum is 997 &times; 5 = 4985.",
+  "tag": "Gauss",
+  "tagcolor": "#185FA5"
+ },
+ {
+  "stem": "A road, 500 m long, is to be planted with trees at an interval of 5 m. How many trees can be planted if trees are planted at both ends of the road as well?",
+  "opts": [
+   "101",
+   "105",
+   "100",
+   "99"
+  ],
+  "ci": 0,
+  "exp": "500 &divide; 5 = 100 gaps. With trees at both ends, there is one more tree than gaps: 101 trees.",
+  "tag": "Intervals",
+  "tagcolor": "#1D9E75"
+ },
+ {
+  "stem": "16 lamp posts are placed at regular intervals along a road that is 300 m long. If lamp posts are placed at both ends of the road as well, how far is one lamp post from another?",
+  "opts": [
+   "15 m",
+   "18 m",
+   "20 m",
+   "25 m"
+  ],
+  "ci": 2,
+  "exp": "16 lamp posts make 15 gaps. 300 &divide; 15 = 20 m.",
+  "tag": "Intervals",
+  "tagcolor": "#1D9E75"
+ },
+ {
+  "stem": "25 trees are planted at regular intervals from the beginning of a road to the end of it. The distance between every two trees is 5 m. How long is the road?",
+  "opts": [
+   "125 m",
+   "130 m",
+   "120 m",
+   "100 m"
+  ],
+  "ci": 2,
+  "exp": "25 trees make 24 gaps. 24 &times; 5 m = 120 m.",
+  "tag": "Intervals",
+  "tagcolor": "#1D9E75"
+ },
+ {
+  "stem": "Compute the following.<br>a) 19 x 11",
+  "opts": [
+   "190",
+   "219",
+   "199",
+   "209"
+  ],
+  "ci": 3,
+  "exp": "To multiply by 11, write 1 _ 9 and put 1 + 9 = 10 in the middle, carrying 1: 209.",
+  "tag": "Multiply",
+  "tagcolor": "#8e44ad"
+ },
+ {
+  "stem": "Compute the following.<br>(d) 257 + 243 =",
+  "opts": [
+   "510",
+   "400",
+   "490",
+   "500"
+  ],
+  "ci": 3,
+  "exp": "7 + 3 = 10 and 250 + 240 = 490, so 257 + 243 = 500.",
+  "tag": "Add & Subtract",
+  "tagcolor": "#f5a623"
+ }
+];
+var N = RAW_QUESTIONS.length;
+var Q_TIME = 40;
+
+function shuffleArr(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; }
+  return a;
+}
+function identityOrder(){ var o=[]; for(var i=0;i<N;i++) o.push(i); return o; }
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length===0) return false;
+  for(var i=0;i<arr.length;i++){ if(typeof arr[i]!=='number' || arr[i]<0 || arr[i]>=N) return false; }
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad');
+    return arr;
+  }catch(e){ try{localStorage.removeItem(ORDER_KEY);}catch(e2){} return null; }
+}
+function saveOrder(o){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(o)); }catch(e){} }
+
+var order = loadOrder() || shuffleArr(identityOrder());
+if(!loadOrder()) saveOrder(order);
+var pendingFresh = false;
+
+function defaultTimerState(){ return { remainingAtStart: Q_TIME, startedAt: null, running: false, timedOut: false }; }
+function defaultState(){
+  var timers = {};
+  for(var i=0;i<N;i++) timers[i] = defaultTimerState();
+  return { cur:0, answers:{}, timers: timers, showResults:false };
+}
+function loadState(){
+  try{
+    var raw = localStorage.getItem(QUIZ_KEY);
+    if(!raw) return defaultState();
+    var s = JSON.parse(raw);
+    if(typeof s.cur !== 'number' || s.cur<0 || s.cur>=order.length) s.cur = 0;
+    if(typeof s.answers !== 'object' || s.answers===null) s.answers = {};
+    if(typeof s.timers !== 'object' || s.timers===null) s.timers = {};
+    for(var i=0;i<N;i++){ if(!s.timers[i]) s.timers[i] = defaultTimerState(); }
+    if(typeof s.showResults !== 'boolean') s.showResults = false;
+    return s;
+  }catch(e){ try{localStorage.removeItem(QUIZ_KEY);}catch(e2){} return defaultState(); }
+}
+function saveState(){ try{ localStorage.setItem(QUIZ_KEY, JSON.stringify(state)); }catch(e){} }
+
+var state = loadState();
+var tickInterval = null;
+
+function getAttempts(){ try{ return parseInt(localStorage.getItem(ATT_KEY)||'0',10); }catch(e){ return 0; } }
+function incAttempts(){ try{ localStorage.setItem(ATT_KEY, String(getAttempts()+1)); }catch(e){} }
+function updateAttDisplay(){
+  var el = document.getElementById('att-display');
+  if(el) el.textContent = 'Total Attempts: ' + getAttempts();
+}
+
+function formatTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec/60), s = sec%60;
+  return m + ':' + String(s).padStart(2,'0');
+}
+function getRemaining(qi){
+  var t = state.timers[qi];
+  if(!t) return Q_TIME;
+  if(t.running && t.startedAt){
+    var elapsed = (Date.now()-t.startedAt)/1000;
+    return Math.max(0, t.remainingAtStart - elapsed);
+  }
+  return t.remainingAtStart;
+}
+function freezeTimer(qi){
+  var t = state.timers[qi];
+  if(t && t.running){
+    t.remainingAtStart = getRemaining(qi);
+    t.running = false;
+    t.startedAt = null;
+  }
+}
+function startTimerFor(qi){
+  var t = state.timers[qi];
+  if(!t) { t = defaultTimerState(); state.timers[qi] = t; }
+  if(t.timedOut) return;
+  if(state.answers[qi] !== undefined) return;
+  if(!t.running){
+    t.startedAt = Date.now();
+    t.running = true;
+  }
+}
+function stopTickInterval(){ if(tickInterval){ clearInterval(tickInterval); tickInterval=null; } }
+function startTickInterval(){ stopTickInterval(); tickInterval = setInterval(tickRender, 250); }
+
+function isPausedNow(){
+  var qi = order[state.cur];
+  var t = state.timers[qi];
+  if(!t) return false;
+  return (!t.running) && (!t.timedOut) && (state.answers[qi]===undefined);
+}
+
+function renderPauseUI(){
+  var qi = order[state.cur];
+  var t = state.timers[qi];
+  var qa = document.getElementById('quiz-area');
+  var overlay = document.getElementById('pauseOverlay');
+  var pauseBtn = document.getElementById('pauseBtn');
+  var paused = isPausedNow();
+  if(paused){
+    qa.classList.add('blurred');
+    overlay.classList.add('show');
+  } else {
+    qa.classList.remove('blurred');
+    overlay.classList.remove('show');
+  }
+  if(pauseBtn){
+    pauseBtn.disabled = (t && (t.timedOut)) || (state.answers[qi]!==undefined);
+    pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+  }
+}
+
+function tickRender(){
+  var qi = order[state.cur];
+  var t = state.timers[qi];
+  var disp = document.getElementById('qTimerDisplay');
+  if(!t) return;
+  var remaining = getRemaining(qi);
+  disp.classList.remove('warn','danger');
+  if(remaining <= 0){
+    if(t.running){
+      t.running = false;
+      t.startedAt = null;
+      t.remainingAtStart = 0;
+      t.timedOut = true;
+      saveState();
+      renderOptionsLockState();
+    }
+    disp.textContent = "0:00";
+    disp.classList.add('danger');
+    document.getElementById('timeout-box').style.display = (state.answers[qi]===undefined) ? 'block' : 'none';
+    renderPauseUI();
+    return;
+  }
+  disp.textContent = formatTime(remaining);
+  if(remaining <= Q_TIME*0.1) disp.classList.add('danger');
+  else if(remaining <= Q_TIME*0.25) disp.classList.add('warn');
+  renderPauseUI();
+}
+
+function renderOptionsLockState(){
+  var qi = order[state.cur];
+  var t = state.timers[qi];
+  var answered = state.answers[qi];
+  var btns = document.querySelectorAll('#options .opt-btn');
+  btns.forEach(function(btn){
+    if(answered !== undefined || (t && t.timedOut)) btn.disabled = true;
+  });
+}
+
+function pauseQuiz(){
+  var qi = order[state.cur];
+  var t = state.timers[qi];
+  if(!t || t.timedOut || state.answers[qi]!==undefined) return;
+  if(t.running){ freezeTimer(qi); saveState(); renderPauseUI(); }
+}
+function resumeQuiz(){
+  var qi = order[state.cur];
+  var t = state.timers[qi];
+  if(!t || t.timedOut || state.answers[qi]!==undefined) return;
+  if(!t.running){ startTimerFor(qi); saveState(); renderPauseUI(); }
+}
+function togglePause(){
+  if(isPausedNow()) resumeQuiz(); else pauseQuiz();
+}
+window.pauseQuiz = pauseQuiz;
+window.resumeQuiz = resumeQuiz;
+window.togglePause = togglePause;
+
+function render(){
+  updateAttDisplay();
+  var qa = document.getElementById('quiz-area');
+  var rs = document.getElementById('results-screen');
+  var timerBar = document.querySelector('.q-timer-bar');
+  if(state.showResults){
+    qa.style.display='none';
+    timerBar.style.display='none';
+    rs.classList.add('show');
+    stopTickInterval();
+    renderResults();
+    return;
+  }
+  qa.style.display='block';
+  timerBar.style.display='flex';
+  rs.classList.remove('show');
+
+  var qi = order[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  document.getElementById('q-num').textContent = 'Q' + (state.cur+1) + ' / ' + order.length;
+
+  var badge = document.getElementById('tag-badge');
+  badge.textContent = q.tag;
+  badge.style.background = q.tagcolor || TAG_COLORS[q.tag] || '#185FA5';
+
+  document.getElementById('q-text').innerHTML = q.stem;
+
+  startTimerFor(qi);
+
+  var answered = state.answers[qi];
+  var t = state.timers[qi];
+  var optDiv = document.getElementById('options');
+  optDiv.innerHTML='';
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML = optText;
+    btn.disabled = (answered !== undefined) || (t && t.timedOut);
+    if(answered !== undefined){
+      if(idx === q.ci) btn.classList.add(answered===idx ? 'correct' : 'revealed');
+      else if(answered === idx) btn.classList.add('wrong');
+    }
+    btn.onclick = function(){ pick(idx); };
+    optDiv.appendChild(btn);
+  });
+
+  var expDiv = document.getElementById('exp-box');
+  if(answered !== undefined && answered !== q.ci){
+    expDiv.style.display='block';
+    expDiv.innerHTML = q.exp;
+  } else {
+    expDiv.style.display='none';
+  }
+
+  var timeoutBox = document.getElementById('timeout-box');
+  timeoutBox.style.display = (t && t.timedOut && answered===undefined) ? 'block' : 'none';
+
+  var nextBtn = document.getElementById('next-btn');
+  nextBtn.innerHTML = (state.cur >= order.length-1) ? 'Show Results &rarr;' : 'Next &rarr;';
+
+  updateNav();
+  tickRender();
+  startTickInterval();
+}
+
+function updateNav(){
+  var done=0;
+  for(var k=0;k<order.length;k++){
+    var qi = order[k];
+    if(state.answers[qi]!==undefined || (state.timers[qi] && state.timers[qi].timedOut)) done++;
+  }
+  document.getElementById('nav-count').textContent = done + ' / ' + order.length;
+  document.getElementById('prog-fill').style.width = (done/order.length*100).toFixed(1)+'%';
+  renderDots();
+}
+function renderDots(){
+  var panel = document.getElementById('dot-panel');
+  if(panel.style.display==='none' || panel.style.display==='') return;
+  var html='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var bg;
+    if(state.answers[qi]===undefined){
+      bg = (state.timers[qi] && state.timers[qi].timedOut) ? '#f5a623' : '#d7dde6';
+    } else {
+      bg = state.answers[qi]===RAW_QUESTIONS[qi].ci ? '#185FA5' : '#E24B4A';
+    }
+    html += '<button class="dot" style="background:'+bg+';" onclick="goToQ('+pos+')">'+(pos+1)+'</button>';
+  }
+  var done=0;
+  for(var k=0;k<order.length;k++){
+    var qi2 = order[k];
+    if(state.answers[qi2]!==undefined || (state.timers[qi2] && state.timers[qi2].timedOut)) done++;
+  }
+  if(done===order.length){
+    html += '<br><button class="results-pill" onclick="showResultsNow()">Results</button>';
+  }
+  panel.innerHTML = html;
+}
+function toggleJump(){
+  var panel = document.getElementById('dot-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display==='none' || panel.style.display===''){
+    panel.style.display='block'; btn.innerHTML='Hide &#9652;'; renderDots();
+  } else {
+    panel.style.display='none'; btn.innerHTML='Jump &#9662;';
+  }
+}
+function goToQ(pos){
+  freezeTimer(order[state.cur]);
+  state.cur = pos; state.showResults=false; saveState(); render();
+}
+function showResultsNow(){
+  freezeTimer(order[state.cur]);
+  state.showResults = true; incAttempts(); saveState(); render(); reportResult();
+}
+function pick(idx){
+  var qi = order[state.cur];
+  var t = state.timers[qi];
+  if(state.answers[qi] !== undefined) return;
+  if(t && t.timedOut) return;
+  if(isPausedNow()) return;
+  state.answers[qi] = idx;
+  freezeTimer(qi);
+  saveState(); render();
+}
+function goPrev(){
+  if(state.cur>0){ freezeTimer(order[state.cur]); state.cur--; saveState(); render(); }
+}
+function goNext(){
+  freezeTimer(order[state.cur]);
+  if(state.cur < order.length-1){ state.cur++; saveState(); render(); }
+  else { state.showResults=true; incAttempts(); saveState(); render(); reportResult(); }
+}
+function renderResults(){
+  var correct=0, wrong=0, skipped=0, timedout=0;
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    var t = state.timers[qi];
+    if(a===undefined){
+      if(t && t.timedOut) timedout++; else skipped++;
+      continue;
+    }
+    if(a===RAW_QUESTIONS[qi].ci) correct++; else wrong++;
+  }
+  document.getElementById('results-score').textContent = correct+' correct, '+wrong+' wrong, '+timedout+' timed out, '+skipped+' skipped - out of '+order.length;
+  var grid = document.getElementById('results-grid');
+  grid.innerHTML='';
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    var t = state.timers[qi];
+    var card = document.createElement('div');
+    if(a===undefined){
+      if(t && t.timedOut){ card.className='r-card timedout'; card.textContent='Q'+(pos+1)+' Time'; }
+      else { card.className='r-card skipped'; card.textContent='Q'+(pos+1)+' Skip'; }
+    } else {
+      var ok = a===RAW_QUESTIONS[qi].ci;
+      card.className='r-card '+(ok?'correct':'wrong');
+      card.textContent='Q'+(pos+1)+' '+(ok?'OK':'X');
+    }
+    (function(p){ card.onclick=function(){ state.showResults=false; state.cur=p; saveState(); render(); }; })(pos);
+    grid.appendChild(card);
+  }
+}
+function startRetry(){
+  var wrong=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    var t = state.timers[qi];
+    var isWrong = (a!==undefined && a!==RAW_QUESTIONS[qi].ci);
+    var isTimedOut = (a===undefined && t && t.timedOut);
+    if(isWrong || isTimedOut) wrong.push(qi);
+  }
+  if(wrong.length===0) return;
+  wrong.forEach(function(qi){
+    delete state.answers[qi];
+    state.timers[qi] = defaultTimerState();
+  });
+  order = wrong;
+  saveOrder(order);
+  state.cur=0; state.showResults=false;
+  saveState(); render();
+}
+function saveWrong(){
+  var wrongItems=[];
+  for(var pos=0; pos<order.length; pos++){
+    var qi = order[pos];
+    var a = state.answers[qi];
+    var t = state.timers[qi];
+    if(a!==undefined && a!==RAW_QUESTIONS[qi].ci){
+      var q = RAW_QUESTIONS[qi];
+      wrongItems.push({ question: q.stem, yourAnswer: q.opts[a], correctAnswer: q.opts[q.ci], explanation: q.exp });
+    } else if(a===undefined && t && t.timedOut){
+      var q2 = RAW_QUESTIONS[qi];
+      wrongItems.push({ question: q2.stem, yourAnswer: '(timed out)', correctAnswer: q2.opts[q2.ci], explanation: q2.exp });
+    }
+  }
+  var blob = new Blob([JSON.stringify({title:TITLE, wrongAnswers:wrongItems}, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a2 = document.createElement('a');
+  a2.href = url; a2.download = QUIZ_KEY + '_wrong.json';
+  document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+  URL.revokeObjectURL(url);
+}
+function openFreshModal(){
+  document.getElementById('freshModal').classList.add('show');
+}
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  order = shuffleArr(identityOrder());
+  saveOrder(order);
+  state = defaultState();
+  saveState();
+  closeFreshModal();
+  render();
+}
+
+window.toggleJump=toggleJump;
+window.goToQ=goToQ;
+window.showResultsNow=showResultsNow;
+window.pick=pick;
+window.goPrev=goPrev;
+window.goNext=goNext;
+window.startRetry=startRetry;
+window.saveWrong=saveWrong;
+window.openFreshModal=openFreshModal;
+window.closeFreshModal=closeFreshModal;
+window.confirmFresh=confirmFresh;
+
+render();
+</script>
+</body>
+</html>
