@@ -131,19 +131,27 @@ var QUIZ_KEY = "quiz_grantspeedquiz_30_20260924_v1";
 var ATT_KEY = "quiz_grantspeedquiz_30_att_20260924_v1";
 var ORDER_KEY = QUIZ_KEY + "_order_v1";
 var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+function wrongTxt(s){ s = (s===undefined || s===null) ? '' : String(s); return /^\s*</.test(s) ? s : '<span>' + s + '</span>'; }
+function wrongDetail(qi, yourAnswer){
+  var q = RAW_QUESTIONS[qi];
+  var qtext = (q.passage ? q.passage + '<br><br>' : '') + (q.contextLabel ? q.contextLabel + '<br>' : '') + (q.context ? q.context + '<br>' : '') + q.stem;
+  return { question: wrongTxt(qtext), yourAnswer: wrongTxt(yourAnswer), correctAnswer: wrongTxt(q.opts[q.ci]), explanation: wrongTxt(q.exp) };
+}
+function quizDateStr(){ return (typeof TODAY_STR !== 'undefined') ? TODAY_STR : ((String(QUIZ_KEY).match(/\d{8}/) || [''])[0]); }
 function reportResult(){
   try{
     var correct=0, wrong=0, skipped=0, timedout=0;
     var wrongPositions=[];
+    var wrongDetails=[];
     for(var pos=0; pos<order.length; pos++){
       var qi = order[pos];
       var a = state.answers[qi];
       var t = state.timers[qi];
       if(a===undefined){
-        if(t && t.timedOut) { timedout++; wrongPositions.push(pos+1); } else skipped++;
+        if(t && t.timedOut) { timedout++; wrongPositions.push(pos+1); wrongDetails.push(wrongDetail(qi, '(timed out)')); } else skipped++;
         continue;
       }
-      if(a===RAW_QUESTIONS[qi].ci) correct++; else { wrong++; wrongPositions.push(pos+1); }
+      if(a===RAW_QUESTIONS[qi].ci) correct++; else { wrong++; wrongPositions.push(pos+1); wrongDetails.push(wrongDetail(qi, RAW_QUESTIONS[qi].opts[a])); }
     }
     var total = order.length;
     var childName = 'Unknown';
@@ -158,8 +166,14 @@ function reportResult(){
       attemptNumber: getAttempts(),
       correct: correct, wrong: wrong, skipped: skipped, timedOut: timedout, total: total,
       scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0,
-      wrongNumbers: wrongPositions.join(',')
+      wrongNumbers: wrongPositions.join(','),
+      quizDate: quizDateStr()
     };
+    var firstKey = QUIZ_KEY + '_wrongsent';
+    if(order.length === RAW_QUESTIONS.length && !localStorage.getItem(firstKey)){
+      payload.wrongAnswers = wrongDetails;
+      localStorage.setItem(firstKey, '1');
+    }
     fetch(REPORT_ENDPOINT, {
       method: 'POST',
       mode: 'no-cors',

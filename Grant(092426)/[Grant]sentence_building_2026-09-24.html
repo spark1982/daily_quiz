@@ -231,16 +231,25 @@ var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
 var ORDER_KEY = STORAGE_KEY + '_order';
 var ACTIVE_KEY = STORAGE_KEY + '_active';
 var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+function wrongTxt(s){ s = (s===undefined || s===null) ? '' : String(s); return /^\s*</.test(s) ? s : '<span>' + s + '</span>'; }
+function wrongDetail(qi, yourAnswer){
+  var q = RAW_QUESTIONS[qi];
+  var qtext = (q.passage ? q.passage + '<br><br>' : '') + (q.contextLabel ? q.contextLabel + '<br>' : '') + (q.context ? q.context + '<br>' : '') + q.stem;
+  return { question: wrongTxt(qtext), yourAnswer: wrongTxt(yourAnswer), correctAnswer: wrongTxt(q.opts[q.ci]), explanation: wrongTxt(q.exp) };
+}
+function quizDateStr(){ return (typeof TODAY_STR !== 'undefined') ? TODAY_STR : ((String(QUIZ_KEY).match(/\d{8}/) || [''])[0]); }
 function reportResult(){
   try{
+    var ao = activeOrder();
     var correct=0, wrong=0, skipped=0;
     var wrongPositions=[];
-    for(var pos=0; pos<order.length; pos++){
-      var qi = order[pos];
+    var wrongDetails=[];
+    for(var pos=0; pos<ao.length; pos++){
+      var qi = ao[pos];
       if(state.answers[qi]===undefined){ skipped++; continue; }
-      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else { wrong++; wrongPositions.push(pos+1); }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else { wrong++; wrongPositions.push(pos+1); wrongDetails.push(wrongDetail(qi, RAW_QUESTIONS[qi].opts[state.answers[qi]])); }
     }
-    var total = order.length;
+    var total = ao.length;
     var childName = 'Unknown';
     if(TITLE.indexOf('[Sion]')===0) childName='Sion';
     else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
@@ -253,8 +262,14 @@ function reportResult(){
       attemptNumber: getAttempts(),
       correct: correct, wrong: wrong, skipped: skipped, total: total,
       scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0,
-      wrongNumbers: wrongPositions.join(',')
+      wrongNumbers: wrongPositions.join(','),
+      quizDate: quizDateStr()
     };
+    var firstKey = STORAGE_KEY + '_wrongsent';
+    if(!(activeSet && activeSet.length) && !localStorage.getItem(firstKey)){
+      payload.wrongAnswers = wrongDetails;
+      localStorage.setItem(firstKey, '1');
+    }
     fetch(REPORT_ENDPOINT, {
       method: 'POST',
       mode: 'no-cors',
@@ -288,7 +303,7 @@ function incAttempts(){
   localStorage.setItem(ATTEMPTS_KEY, String(a));
 }
 
-function activeOrder(){ return activeSet || order; }
+function activeOrder(){ return (activeSet && activeSet.length) ? activeSet : order; }
 
 function render(){
   document.getElementById('instruction').textContent = INSTRUCTION;
