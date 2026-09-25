@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT Grammar</title>
+<style>
+.q-position{font-size:0.85rem;font-weight:700;color:#185FA5;margin-bottom:8px;}
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f4f6fa; margin:0; padding: 20px 12px 60px; color:#1a1a2e; }
+  .quiz-wrap { max-width: 680px; margin: 0 auto; }
+  .quiz-title { font-size: 1.4rem; font-weight: 800; text-align:center; margin: 8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom: 14px; min-height: 0; }
+  .nav-bar { background:#fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .nav-summary { display:flex; align-items:center; gap:10px; }
+  #nav-count { font-weight:700; font-size:0.85rem; color:#333; white-space:nowrap; }
+  .progress-track { flex:1; height:6px; background:#d7dde6; border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; width:0%; background:#185FA5; border-radius:3px; transition: width .2s; }
+  .jump-btn { background:#eef2f7; border:none; border-radius:8px; padding:6px 12px; font-size:0.8rem; font-weight:700; color:#185FA5; cursor:pointer; white-space:nowrap; }
+  .dots-panel { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .dot { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; cursor:pointer; background:#d7dde6; color:#555; border:none; }
+  .dot.answered-correct { background:#185FA5; color:#fff; }
+  .dot.answered-wrong { background:#E24B4A; color:#fff; }
+  .results-pill { display:inline-block; margin: 0 auto 14px; padding: 8px 20px; background:#1D9E75; color:#fff; border-radius:20px; font-weight:700; text-align:center; cursor:pointer; width:fit-content; }
+  .results-pill-wrap { text-align:center; }
+  .quiz-card, .results-card { background:#fff; border-radius: 14px; padding: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 16px; }
+  .passage-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:0.92rem; line-height:1.6; color:#222; }
+  .context-label { font-size:0.92rem; font-weight:600; color:#333; margin-bottom:8px; line-height:1.4; }
+  .context-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; }
+  .tag-badge { display:inline-block; font-size:0.72rem; font-weight:700; color:#fff; padding:3px 10px; border-radius:12px; margin-bottom:10px; }
+  .q-text { font-size:1.05rem; font-weight:600; margin-bottom:16px; line-height:1.5; }
+  #options { display:flex; flex-direction:column; gap:10px; }
+  .opt-btn { text-align:left; padding:12px 14px; border-radius:10px; border:1.5px solid #d7dde6; background:#fafbfc; font-size:0.95rem; cursor:pointer; line-height:1.4; }
+  .opt-btn:hover { border-color:#185FA5; }
+  .opt-btn.selected-correct { background:#e6f4ec; border-color:#1D9E75; color:#0d6b3f; font-weight:700; }
+  .opt-btn.selected-wrong { background:#fbeaea; border-color:#E24B4A; color:#a52a2a; font-weight:700; }
+  .opt-btn.reveal-correct { background:#e6f4ec; border-color:#1D9E75; }
+  .opt-btn:disabled { cursor:default; }
+  .exp-box { margin-top:14px; background:#eef7f2; border-left:4px solid #1D9E75; border-radius:8px; padding:12px 14px; font-size:0.88rem; color:#2d4d3f; line-height:1.5; display:none; }
+  .hint-btn { background:#fff8e1;color:#a5720a;border:1.5px solid #f5a623;border-radius:8px;padding:7px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-top:12px;margin-bottom:12px;display:inline-block; }
+  .hint-box { background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.88rem;color:#6b5215;line-height:1.5;display:none; }
+  .hint-box.show { display:block; }
+  .tts-btn { background:#eef2f7; border:none; border-radius:50%; width:34px; height:34px; font-size:1rem; cursor:pointer; margin-left:8px; vertical-align:middle; }
+  .nav-btns { display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .nav-btns button { flex:1; padding:11px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; background:#185FA5; color:#fff; }
+  .nav-btns button:disabled { background:#c9d2dc; cursor:default; }
+  .results-card h2 { text-align:center; margin-top:0; }
+  .score-big { text-align:center; font-size:2.2rem; font-weight:800; color:#185FA5; margin: 6px 0 16px; }
+  .action-row { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .action-row button { padding:12px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; }
+  .btn-retry { background:#f5a623; color:#fff; }
+  .btn-save { background:#7b61ff; color:#fff; }
+  .btn-fresh { background:#E24B4A; color:#fff; }
+  .fresh-btn-bottom { display:block; margin: 6px auto 0; background:none; border:1.5px solid #d7dde6; color:#888; padding:8px 16px; border-radius:20px; font-size:0.8rem; cursor:pointer; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:14px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { font-size:0.95rem; margin-bottom:18px; }
+  .modal-box button { padding:10px 16px; border-radius:8px; border:none; font-weight:700; margin:0 6px; cursor:pointer; }
+  .modal-yes { background:#E24B4A; color:#fff; }
+  .modal-no { background:#eef2f7; color:#333; }
+
+</style>
+</head>
+<body>
+<div class="quiz-wrap">
+  <div class="quiz-title">[Sion] SAT Grammar</div>
+  <div class="instruction" id="instruction"></div>
+
+  <div class="nav-bar">
+    <div class="nav-summary">
+      <span id="nav-count">0/0</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <button class="jump-btn" id="jump-btn" onclick="toggleJump()">Jump&#9662;</button>
+    </div>
+    <div class="dots-panel" id="dots-panel" style="display:none;"></div>
+  </div>
+
+  <div class="results-pill-wrap"><span class="results-pill" id="results-pill" style="display:none;" onclick="showResultsNow()">Results</span></div>
+
+  <div class="quiz-card" id="quiz-card">
+    <div class="q-position" id="q-position"></div>
+    <div class="passage-box" id="passage-box" style="display:none;"></div>
+    <div class="context-label" id="context-label" style="display:none;"></div>
+    <div class="context-box" id="context-box" style="display:none;"></div>
+    <div class="tag-badge" id="tag-badge" style="display:none;"></div>
+    <div class="q-text" id="q-text"></div>
+    <div id="options"></div>
+    <button class="hint-btn" id="hint-btn" onclick="toggleHint()" style="display:none;">Show Hint</button>
+    <div class="hint-box" id="hint-box"></div>
+    <div class="exp-box" id="exp-box"></div>
+    <div class="nav-btns">
+      <button id="prev-btn" onclick="prevQ()">Prev</button>
+      <button id="next-btn" onclick="goNext()">Next</button>
+    </div>
+  </div>
+
+  <div class="results-card" id="results-card" style="display:none;">
+    <h2>Results</h2>
+    <div class="score-big" id="score-big"></div>
+    <div id="score-detail" style="text-align:center;color:#555;font-size:0.9rem;"></div>
+    <div class="action-row">
+      <button class="btn-retry" onclick="startRetry()">Retry Wrong Ones</button>
+      <button class="btn-fresh" onclick="openFreshModal()">Start Fresh</button>
+    </div>
+  </div>
+
+  <button class="fresh-btn-bottom" onclick="openFreshModal()">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="fresh-modal" style="display:none;">
+  <div class="modal-box">
+    <p>Reset all progress and start over?</p>
+    <button class="modal-yes" onclick="confirmFresh()">Yes, Start Fresh</button>
+    <button class="modal-no" onclick="closeFreshModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Sion] SAT Grammar";
+var QUIZ_KEY = "satgrammar_20";
+var INSTRUCTION = "Read each text and choose the answer that best completes or revises it.";
+var TODAY_STR = "20260925";
+var RAW_QUESTIONS = [
+{"context": "When the museum acquired the two Maya codices, curators immediately placed ______ in a humidity-controlled vault to protect the fragile bark paper.", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["it", "them", "that one", "this"], "ci": 1, "exp": "The pronoun refers to \"the two Maya codices,\" a plural noun, so the plural pronoun \"them\" is correct. \"It,\" \"this,\" and \"that one\" are singular.", "tag": "Form, Structure, and Sense", "tagcolor": "#1D9E75"},
+{"context": "While researching a topic, a student has taken the following notes:<br>&bull; The Great Barrier Reef is located off the coast of Australia.<br>&bull; It is about 2,300 kilometers long.<br>&bull; The Belize Barrier Reef is located off the coast of Central America.<br>&bull; It is about 300 kilometers long.<br><br>The student wants to emphasize the difference in length between the two reefs.", "stem": "Which choice most effectively uses relevant information from the notes to accomplish this goal?", "opts": ["The Great Barrier Reef is off the coast of Australia, while the Belize Barrier Reef is off the coast of Central America.", "Both the Great Barrier Reef and the Belize Barrier Reef are located off the coasts of their regions.", "At about 2,300 kilometers, the Great Barrier Reef is more than seven times longer than the roughly 300-kilometer Belize Barrier Reef.", "The Belize Barrier Reef, which is about 300 kilometers long, is located off the coast of Central America."], "ci": 2, "exp": "Only the correct choice gives both lengths and directly compares them (\"more than seven times longer\"). The other choices focus on location or describe only one reef's length.", "tag": "Rhetorical Synthesis", "tagcolor": "#7b61ff"},
+{"context": "By the time the Wright brothers achieved powered flight in 1903, Samuel Langley ______ years attempting the same feat with government funding.", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["will have spent", "had spent", "spends", "has spent"], "ci": 1, "exp": "Langley's attempts happened before another past event (the 1903 flight), so the past perfect \"had spent\" is needed. The present, present perfect, and future perfect tenses do not fit a sequence of past events.", "tag": "Form, Structure, and Sense", "tagcolor": "#1D9E75"},
+{"context": "While researching a topic, a student has taken the following notes:<br>&bull; Economist Esther Duflo co-founded the Abdul Latif Jameel Poverty Action Lab (J-PAL) in 2003.<br>&bull; J-PAL uses randomized controlled trials to test whether antipoverty programs work.<br>&bull; In a randomized controlled trial, participants are randomly assigned to receive a program or not.<br>&bull; In 2019, Duflo shared the Nobel Prize in Economics.<br><br>The student wants to explain J-PAL's research method to an audience unfamiliar with it.", "stem": "Which choice most effectively uses relevant information from the notes to accomplish this goal?", "opts": ["J-PAL, which was co-founded in 2003, is named the Abdul Latif Jameel Poverty Action Lab.", "In 2019, Esther Duflo, a co-founder of J-PAL, shared the Nobel Prize in Economics.", "Esther Duflo co-founded J-PAL in 2003 and later won a Nobel Prize.", "J-PAL tests antipoverty programs with randomized controlled trials, in which participants are randomly assigned either to receive a program or not."], "ci": 3, "exp": "The goal is to explain J-PAL's method to readers who do not know it. Only the correct choice names the method (randomized controlled trials) and explains what it involves. The other choices focus on dates, the Nobel Prize, or the lab's name.", "tag": "Rhetorical Synthesis", "tagcolor": "#7b61ff"},
+{"context": "Before the first frost arrived, the orchard workers had ______ every ripe apple from the trees and stored the harvest in the cellar.", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["shaken", "shaked", "shaking", "shook"], "ci": 0, "exp": "After \"had,\" the past participle is required. The past participle of \"shake\" is \"shaken.\" \"Shook\" is the simple past, \"shaked\" is not a word, and \"shaking\" is a present participle.", "tag": "Form, Structure, and Sense", "tagcolor": "#1D9E75"},
+{"context": "Neither the lead engineer nor her two assistants ______ able to explain why the prototype overheated during the final test.", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["were", "was", "is", "has been"], "ci": 0, "exp": "With \"neither...nor,\" the verb agrees with the nearer subject, \"assistants,\" which is plural. The past-tense plural \"were\" also matches \"overheated.\" The other choices are singular.", "tag": "Form, Structure, and Sense", "tagcolor": "#1D9E75"},
+{"context": "As the river entered the wide, flat valley, its current slowed dramatically. ______ the sand and silt it carried began to settle to the bottom, gradually forming fertile floodplains.", "stem": "Which choice completes the text with the most logical transition?", "opts": ["As a result,", "In contrast,", "Nevertheless,", "Previously,"], "ci": 0, "exp": "The slower current causes the sediment to settle, so a cause-and-effect transition, \"As a result,\" is logical. The other transitions signal contrast or an earlier time, which do not fit.", "tag": "Transitions", "tagcolor": "#f5a623"},
+{"context": "In her 1962 book ______ Rachel Carson documented the harmful effects of pesticides such as DDT on birds, fish, and other wildlife.", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["<i>Silent Spring</i>,", "<i>Silent Spring</i>:", "<i>Silent Spring</i>&mdash;", "<i>Silent Spring</i>;"], "ci": 0, "exp": "A comma correctly separates the introductory phrase from the main clause that begins \"Rachel Carson documented.\" A semicolon or colon must follow an independent clause, and a single dash here would create an unpaired interruption.", "tag": "Boundaries", "tagcolor": "#185FA5"},
+{"context": "Having analyzed decades of rainfall data from weather stations across the Southwest, ______", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["it was concluded by the hydrologist that droughts in the region were becoming longer.", "the hydrologist concluded that droughts in the region were becoming longer.", "the conclusion of the hydrologist was that droughts in the region were becoming longer.", "droughts in the region, the hydrologist concluded, were becoming longer."], "ci": 1, "exp": "The introductory phrase \"Having analyzed decades of rainfall data\" must be followed immediately by the person who did the analyzing: \"the hydrologist.\" The other choices place \"droughts,\" \"the conclusion,\" or \"it\" right after the phrase, creating dangling modifiers.", "tag": "Form, Structure, and Sense", "tagcolor": "#1D9E75"},
+{"context": "Unlike the wings of a bat, ______", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["a bird is covered in feathers on its wings.", "feathers cover the wings of a bird.", "the wings of a bird are covered in feathers.", "birds have wings that are covered in feathers."], "ci": 2, "exp": "The sentence must compare like things: the wings of a bat with the wings of a bird. The other choices illogically compare a bat's wings to \"a bird,\" \"birds,\" or \"feathers.\"", "tag": "Form, Structure, and Sense", "tagcolor": "#1D9E75"},
+{"context": "Each summer, the city's botanical garden displays ______ rarest orchids in a climate-controlled greenhouse near the main entrance.", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["its", "their", "it's", "its'"], "ci": 0, "exp": "The singular possessive pronoun \"its\" refers to the garden. \"It's\" means \"it is,\" \"its'\" is never correct, and the plural \"their\" does not agree with the singular \"garden.\"", "tag": "Form, Structure, and Sense", "tagcolor": "#1D9E75"},
+{"context": "During her summer internship, Priya learned how to design surveys, ______ and how to present findings clearly to a review panel.", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["to interpret statistical results was also taught,", "the interpretation of statistical results,", "how to interpret statistical results,", "interpreting statistical results,"], "ci": 2, "exp": "The items in the series must be parallel: \"how to design...,\" \"how to interpret...,\" and \"how to present....\" The other choices break the parallel \"how to\" structure.", "tag": "Form, Structure, and Sense", "tagcolor": "#1D9E75"},
+{"context": "According to the historian, the expedition's success depended on three ______ reliable weather, accurate maps, and a steady supply of fresh water.", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["factors that", "factors;", "factors, such as:", "factors:"], "ci": 3, "exp": "A colon correctly introduces a list after a complete independent clause. A semicolon must join two independent clauses, \"such as:\" wrongly places a colon after \"such as,\" and \"that\" leaves the sentence without a complete structure.", "tag": "Boundaries", "tagcolor": "#185FA5"},
+{"context": "The collection of letters written by the nineteenth-century astronomer Maria Mitchell ______ insight into how she balanced teaching at Vassar College with her own research.", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["offer", "have offered", "offers", "are offering"], "ci": 2, "exp": "The subject is the singular noun \"collection,\" not \"letters,\" so the singular verb \"offers\" is required. The other choices are plural verbs.", "tag": "Form, Structure, and Sense", "tagcolor": "#1D9E75"},
+{"context": "The two ______ research grants were renewed after the committee reviewed their progress reports and laboratory results.", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["chemists", "chemist's", "chemists'", "chemists's"], "ci": 2, "exp": "The grants belong to two chemists, so the plural possessive \"chemists'\" (apostrophe after the plural -s) is correct. \"Chemist's\" is singular possessive, \"chemists\" is not possessive, and \"chemists's\" is never correct.", "tag": "Form, Structure, and Sense", "tagcolor": "#1D9E75"},
+{"context": "Honeybees share the location of food with their hive through a movement called the &ldquo;waggle dance.&rdquo; The angle of the dance indicates the direction of the food relative to the sun. ______ the length of the waggle portion signals how far away the food is.", "stem": "Which choice completes the text with the most logical transition?", "opts": ["Instead,", "Regardless,", "Additionally,", "Consequently,"], "ci": 2, "exp": "The final sentence adds a second piece of information that the dance communicates, so \"Additionally\" is the most logical transition. \"Instead\" suggests a replacement, \"Consequently\" a result, and \"Regardless\" a dismissal.", "tag": "Transitions", "tagcolor": "#f5a623"},
+{"context": "Early art critics dismissed Impressionist paintings as rough, unfinished sketches. ______ within a few decades, works by Claude Monet and Pierre-Auguste Renoir were selling for record prices.", "stem": "Which choice completes the text with the most logical transition?", "opts": ["Similarly,", "For example,", "Therefore,", "Yet"], "ci": 3, "exp": "The second sentence contrasts with the first: the paintings were dismissed, but later they sold for record prices. \"Yet\" signals this contrast. \"Therefore\" signals a result, \"Similarly\" signals likeness, and \"For example\" introduces an illustration.", "tag": "Transitions", "tagcolor": "#f5a623"},
+{"context": "The ancient trade routes connecting Central Asia to the Mediterranean ______ not only silk and spices but also religious and scientific ideas.", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["carried", "carried,", "carried:", "carried&mdash;"], "ci": 0, "exp": "No punctuation belongs between the verb \"carried\" and its object (\"not only silk and spices but also...\"). A comma, colon, or dash would wrongly separate the verb from what it acts on.", "tag": "Boundaries", "tagcolor": "#185FA5"},
+{"context": "The novelist Octavia Butler&mdash;whose fiction blended science fiction with sharp social ______ received a MacArthur Fellowship in 1995, becoming the first science fiction writer to earn the award.", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["commentary&mdash;", "commentary;", "commentary,", "commentary"], "ci": 0, "exp": "The nonessential clause begins with a dash after \"Butler,\" so it must end with a matching dash. A comma or semicolon would mix punctuation marks, and no punctuation would fail to close the interruption.", "tag": "Boundaries", "tagcolor": "#185FA5"},
+{"context": "The coral reef had survived three major bleaching events in a single ______ marine biologists nonetheless warned that a fourth event could prove fatal to it.", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["decade", "decade,", "decade;", "decade, which"], "ci": 2, "exp": "Both \"The coral reef had survived three major bleaching events in a single decade\" and \"marine biologists nonetheless warned...\" are independent clauses, so a semicolon correctly joins them. A comma alone creates a comma splice, no punctuation creates a run-on, and \"which\" produces an ungrammatical clause.", "tag": "Boundaries", "tagcolor": "#185FA5"}
+];
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var ORDER_KEY = STORAGE_KEY + '_order';
+var ACTIVE_KEY = STORAGE_KEY + '_active';
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+function wrongTxt(s){ s = (s===undefined || s===null) ? '' : String(s); return /^\s*</.test(s) ? s : '<span>' + s + '</span>'; }
+function wrongDetail(qi, yourAnswer){
+  var q = RAW_QUESTIONS[qi];
+  var qtext = (q.passage ? q.passage + '<br><br>' : '') + (q.contextLabel ? q.contextLabel + '<br>' : '') + (q.context ? q.context + '<br>' : '') + q.stem;
+  return { question: wrongTxt(qtext), yourAnswer: wrongTxt(yourAnswer), correctAnswer: wrongTxt(q.opts[q.ci]), explanation: wrongTxt(q.exp) };
+}
+function quizDateStr(){ return (typeof TODAY_STR !== 'undefined') ? TODAY_STR : ((String(QUIZ_KEY).match(/\d{8}/) || [''])[0]); }
+function reportResult(){
+  try{
+    var ao = activeOrder();
+    var correct=0, wrong=0, skipped=0;
+    var wrongPositions=[];
+    var wrongDetails=[];
+    for(var pos=0; pos<ao.length; pos++){
+      var qi = ao[pos];
+      if(state.answers[qi]===undefined){ skipped++; continue; }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else { wrong++; wrongPositions.push(pos+1); wrongDetails.push(wrongDetail(qi, RAW_QUESTIONS[qi].opts[state.answers[qi]])); }
+    }
+    var total = ao.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0,
+      wrongNumbers: wrongPositions.join(','),
+      quizDate: quizDateStr()
+    };
+    var firstKey = STORAGE_KEY + '_wrongsent';
+    if(!(activeSet && activeSet.length) && !localStorage.getItem(firstKey)){
+      payload.wrongAnswers = wrongDetails;
+      localStorage.setItem(firstKey, '1');
+    }
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
+}
+
+var ATTEMPTS_KEY = STORAGE_KEY + '_attempts';
+
+var order = [];
+var activeSet = null; // when in retry mode, holds subset of original indices
+var state = { answers:{}, cur:0, showResults:false };
+var hintShown = false;
+
+function loadState(){
+  var raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try{ state = JSON.parse(raw); }catch(e){ state = {answers:{},cur:0,showResults:false}; } }
+  var rawOrder = localStorage.getItem(ORDER_KEY);
+  if(rawOrder){ try{ order = JSON.parse(rawOrder); }catch(e){ order=null; } }
+  if(!order || !order.length){
+    order = RAW_QUESTIONS.map(function(_,i){return i;});
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  }
+  var rawActive = localStorage.getItem(ACTIVE_KEY);
+  if(rawActive){ try{ activeSet = JSON.parse(rawActive); }catch(e){ activeSet = null; } }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function getAttempts(){
+  var a = localStorage.getItem(ATTEMPTS_KEY);
+  return a ? parseInt(a,10) : 1;
+}
+function incAttempts(){
+  var a = getAttempts() + 1;
+  localStorage.setItem(ATTEMPTS_KEY, String(a));
+}
+
+function activeOrder(){ return (activeSet && activeSet.length) ? activeSet : order; }
+
+function render(){
+  document.getElementById('instruction').textContent = INSTRUCTION;
+  var ord = activeOrder();
+  if(state.showResults){
+    document.getElementById('quiz-card').style.display='none';
+    document.getElementById('results-card').style.display='block';
+    renderResults();
+  } else {
+    document.getElementById('quiz-card').style.display='block';
+    document.getElementById('results-card').style.display='none';
+    renderQuestion();
+  }
+  updateNav();
+}
+
+function renderQuestion(){
+  hintShown = false;
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  var qpEl = document.getElementById('q-position');
+  if(qpEl) qpEl.textContent = 'Q' + (state.cur + 1) + ' / ' + ord.length;
+
+  var pb = document.getElementById('passage-box');
+  if(q.passage){ pb.style.display='block'; pb.innerHTML = q.passage; } else { pb.style.display='none'; pb.innerHTML=''; }
+
+  var cl = document.getElementById('context-label');
+  if(q.contextLabel){ cl.style.display='block'; cl.textContent = q.contextLabel; } else { cl.style.display='none'; cl.textContent=''; }
+
+  var cb = document.getElementById('context-box');
+  if(q.context){ cb.style.display='block'; cb.innerHTML = q.context; } else { cb.style.display='none'; cb.innerHTML=''; }
+
+  var tb = document.getElementById('tag-badge');
+  if(q.tag){ tb.style.display='inline-block'; tb.textContent = q.tag; tb.style.background = q.tagcolor || '#185FA5'; } else { tb.style.display='none'; }
+
+  var qt = document.getElementById('q-text');
+  qt.innerHTML = q.stem + (q.tts ? ' <button class="tts-btn" onclick="speak(' + qi + ')" title="Listen">&#128266;</button>' : '');
+
+  var opts = document.getElementById('options');
+  opts.innerHTML = '';
+  var answered = state.answers[qi] !== undefined;
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = optText;
+    if(answered){
+      btn.disabled = true;
+      if(idx === q.ci) btn.className += ' reveal-correct';
+      if(idx === state.answers[qi] && idx !== q.ci) btn.className += ' selected-wrong';
+      if(idx === state.answers[qi] && idx === q.ci) btn.className += ' selected-correct';
+    } else {
+      btn.onclick = function(){ pick(idx); };
+    }
+    opts.appendChild(btn);
+  });
+
+  var hb = document.getElementById('hint-btn');
+  var hx = document.getElementById('hint-box');
+  if(q.hint){
+    hb.style.display='inline-block'; hb.textContent='Show Hint';
+    hx.innerHTML = q.hint; hx.classList.remove('show');
+  } else {
+    hb.style.display='none'; hx.classList.remove('show');
+  }
+
+  var eb = document.getElementById('exp-box');
+  if(answered){
+    eb.style.display='block';
+    eb.innerHTML = '<strong>Explanation:</strong> ' + q.exp;
+  } else {
+    eb.style.display='none'; eb.innerHTML='';
+  }
+
+  document.getElementById('prev-btn').disabled = (state.cur === 0);
+  var ord2 = activeOrder();
+  var isLast = (state.cur === ord2.length - 1);
+  document.getElementById('next-btn').textContent = isLast ? 'Finish' : 'Next';
+}
+
+function toggleHint(){
+  hintShown = !hintShown;
+  var b=document.getElementById('hint-btn'), x=document.getElementById('hint-box');
+  if(hintShown){ x.classList.add('show'); b.textContent='Hide Hint'; }
+  else { x.classList.remove('show'); b.textContent='Show Hint'; }
+}
+window.toggleHint = toggleHint;
+
+function pick(idx){
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState();
+  render();
+}
+window.pick = pick;
+
+function prevQ(){
+  if(state.cur > 0){ state.cur--; saveState(); render(); }
+}
+window.prevQ = prevQ;
+window.go = prevQ;
+
+function goNext(){
+  var ord = activeOrder();
+  if(state.cur < ord.length - 1){
+    state.cur++;
+    saveState();
+    render();
+  } else {
+    state.showResults = true;
+    incAttempts();
+    saveState();
+    render();
+    reportResult();
+  }
+}
+window.goNext = goNext;
+
+function showResultsNow(){
+  state.showResults = true;
+  saveState();
+  render();
+  reportResult();
+}
+window.showResultsNow = showResultsNow;
+
+function goToQ(pos){
+  state.cur = pos;
+  state.showResults = false;
+  saveState();
+  render();
+}
+window.goToQ = goToQ;
+
+function renderResults(){
+  var ord = activeOrder();
+  var correct=0, wrong=0, skipped=0;
+  ord.forEach(function(qi){
+    if(state.answers[qi]===undefined) skipped++;
+    else if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++;
+    else wrong++;
+  });
+  var total = ord.length;
+  document.getElementById('score-big').textContent = correct + ' / ' + total;
+  document.getElementById('score-detail').textContent = 'Correct: ' + correct + '  Wrong: ' + wrong + '  Skipped: ' + skipped;
+}
+
+function updateNav(){
+  var ord = activeOrder();
+  var answeredCount = 0;
+  ord.forEach(function(qi){ if(state.answers[qi]!==undefined) answeredCount++; });
+  document.getElementById('nav-count').textContent = answeredCount + '/' + ord.length;
+  var pct = ord.length ? Math.round(answeredCount/ord.length*100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('results-pill').style.display = (answeredCount === ord.length && ord.length>0) ? 'inline-block' : 'none';
+  renderDots();
+}
+
+function renderDots(){
+  var panel = document.getElementById('dots-panel');
+  if(panel.style.display === 'none') { buildDots(); return; }
+  buildDots();
+}
+function buildDots(){
+  var panel = document.getElementById('dots-panel');
+  var ord = activeOrder();
+  panel.innerHTML = '';
+  ord.forEach(function(qi, pos){
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.textContent = (pos+1);
+    if(state.answers[qi]!==undefined){
+      d.className += (state.answers[qi]===RAW_QUESTIONS[qi].ci) ? ' answered-correct' : ' answered-wrong';
+    }
+    d.onclick = function(){ goToQ(pos); };
+    panel.appendChild(d);
+  });
+}
+
+function toggleJump(){
+  var panel = document.getElementById('dots-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display === 'none'){
+    panel.style.display = 'flex';
+    btn.innerHTML = 'Hide&#9652;';
+    buildDots();
+  } else {
+    panel.style.display = 'none';
+    btn.innerHTML = 'Jump&#9662;';
+  }
+}
+window.toggleJump = toggleJump;
+
+function startRetry(){
+  var ord = activeOrder();
+  var wrongIdx = ord.filter(function(qi){ return state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci; });
+  if(!wrongIdx.length) return;
+  activeSet = wrongIdx;
+  localStorage.setItem(ACTIVE_KEY, JSON.stringify(activeSet));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  render();
+}
+window.startRetry = startRetry;
+
+
+
+function openFreshModal(){ document.getElementById('fresh-modal').style.display='flex'; }
+window.openFreshModal = openFreshModal;
+function closeFreshModal(){ document.getElementById('fresh-modal').style.display='none'; }
+window.closeFreshModal = closeFreshModal;
+function confirmFresh(){
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(ORDER_KEY);
+  localStorage.removeItem(ACTIVE_KEY);
+  activeSet = null;
+  order = RAW_QUESTIONS.map(function(_,i){return i;});
+  localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  document.getElementById('fresh-modal').style.display='none';
+  render();
+}
+window.confirmFresh = confirmFresh;
+
+function speak(qi){
+  try{
+    var q = RAW_QUESTIONS[qi];
+    var text = q.tts || q.stem.replace(/<[^>]+>/g,'');
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ko-KR';
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+window.speak = speak;
+
+loadState();
+render();
+</script>
+</body>
+</html>
