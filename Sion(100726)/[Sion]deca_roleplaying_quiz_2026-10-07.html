@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Deca Role playing quiz</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background:#f4f6fa; margin:0; padding:20px 12px 60px; color:#1a1a2e; }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  .quiz-title { font-size:1.4rem; font-weight:800; text-align:center; margin:8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom:14px; }
+  .card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 1px 6px rgba(0,0,0,0.08); margin-bottom:16px; }
+  .blk { margin-bottom:14px; }
+  .blk:last-child { margin-bottom:0; }
+  .blk-label { font-size:0.75rem; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#185FA5; margin-bottom:6px; }
+  .blk-body { font-size:0.97rem; line-height:1.6; color:#222; }
+  .blk-body ol, .blk-body ul { margin:4px 0 0 0; padding-left:22px; }
+  .quote { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; font-family:Georgia,'Times New Roman',serif; font-style:italic; font-size:1rem; line-height:1.65; color:#1a1a2e; }
+  .task { font-size:1rem; font-weight:600; line-height:1.55; margin-bottom:12px; }
+  textarea { width:100%; height:300px; resize:vertical; border:1.5px solid #d7dde6; border-radius:10px; padding:12px 14px; font-size:1rem; line-height:1.6; font-family:inherit; }
+  textarea:focus { outline:none; border-color:#185FA5; }
+  textarea[readonly] { background:#f5f7fa; color:#444; }
+  .counter-row { display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:0.88rem; }
+  #wc { font-weight:700; }
+  .wc-low { color:#E24B4A; } .wc-ok { color:#1D9E75; } .wc-high { color:#f5a623; }
+  #limit-note { color:#777; }
+  .bar { height:6px; background:#d7dde6; border-radius:3px; overflow:hidden; margin-top:6px; }
+  #bar-fill { height:100%; width:0%; background:#185FA5; transition:width .15s; }
+  #msg { min-height:20px; margin-top:8px; font-size:0.86rem; color:#a52a2a; }
+  .btn { display:block; width:100%; padding:13px; border:none; border-radius:10px; font-weight:700; font-size:0.97rem; cursor:pointer; margin-top:10px; }
+  .btn-primary { background:#185FA5; color:#fff; }
+  .btn-primary:disabled { background:#c9d2dc; cursor:default; }
+  .btn-secondary { background:#eef2f7; color:#185FA5; }
+  .done { background:#eef7f2; border-left:4px solid #1D9E75; }
+  .done h3 { margin:0 0 6px; color:#0d6b3f; font-size:1.05rem; }
+  .done p { margin:4px 0; font-size:0.92rem; color:#2d4d3f; line-height:1.5; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:14px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { font-size:0.95rem; margin-bottom:18px; }
+  .modal-box button { padding:10px 16px; border-radius:8px; border:none; font-weight:700; margin:0 6px; cursor:pointer; }
+  .modal-yes { background:#185FA5; color:#fff; } .modal-no { background:#eef2f7; color:#333; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="quiz-title" id="quiz-title"></div>
+  <div class="instruction" id="instruction"></div>
+  <div class="card" id="prompt-card"></div>
+  <div class="card">
+    <div class="task" id="task"></div>
+    <textarea id="essay" autocomplete="off" autocapitalize="sentences" spellcheck="true" placeholder="Write your answer here..."></textarea>
+    <div class="counter-row"><span id="wc">0 words</span><span id="limit-note"></span></div>
+    <div class="bar"><div id="bar-fill"></div></div>
+    <div id="msg"></div>
+    <button class="btn btn-primary" id="submit-btn" onclick="openSubmitModal()" disabled>Submit</button>
+  </div>
+  <div class="card done" id="done-card" style="display:none;">
+    <h3>Submitted!</h3>
+    <p id="done-text"></p>
+    <p>Your feedback will be posted with tomorrow's quizzes.</p>
+    <button class="btn btn-secondary" onclick="editAgain()">Edit &amp; Resubmit</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="submit-modal" style="display:none;">
+  <div class="modal-box">
+    <p id="modal-text">Submit your answer?</p>
+    <button class="modal-yes" onclick="confirmSubmit()">Submit</button>
+    <button class="modal-no" onclick="closeSubmitModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Sion] Deca Role playing quiz";
+var QUIZ_KEY = "siondecaroleplay_essay";
+var TODAY_STR = "20261007";
+var INSTRUCTION = "Read the role-play, then write what you would say to the judge.";
+var MIN_WORDS = 100;
+var MAX_WORDS = 0; // 0 = no maximum
+var TARGET_TEXT = "Aim for 150–250 words";
+var PROMPT = {"blocks": [{"label": "Career Cluster & Instructional Area", "html": "Marketing &middot; Customer Relations"}, {"label": "21st Century Skills", "html": "<ul><li>Critical Thinking – Reason effectively and use systems thinking.</li><li>Communication – Communicate clearly.</li><li>Creativity and Innovation – Show evidence of creativity.</li></ul>"}, {"label": "Performance Indicators", "html": "<ol><li>Explain the nature of positive customer relations.</li><li>Handle difficult customers.</li><li>Resolve conflicts with/for customers.</li><li>Reinforce service orientation through communication.</li></ol>"}, {"label": "Event Situation", "html": "<p>You are to assume the role of customer service manager at <b>Stride Lab</b>, an online company in Portland, Oregon, that sells custom-designed basketball shoes. Customers choose their own colors and add names or numbers, and each pair costs $140. Most orders ship in 3 weeks.</p><p>Five weeks ago, the head coach of the Lincoln High School girls&rsquo; basketball team ordered 14 custom pairs in the team&rsquo;s colors, blue and gold, for a total of $1,960. The coach told Stride Lab the shoes were needed for the season opener this Friday. Yesterday the box finally arrived, but all 14 pairs are red and gold, and six players&rsquo; numbers are misspelled or wrong. The coach has posted an angry review online and called the company demanding a full refund. Your production team says correct shoes can be made in 6 business days, or in 3 business days with $400 of rush shipping and overtime.</p><p>The coach (judge) will begin the role-play by telling you, on a video call, exactly how upset the team is.</p>"}, {"label": "Judge's Question", "html": "&ldquo;Why should I ever trust Stride Lab again, and what are you going to do so my players aren&rsquo;t embarrassed on Friday?&rdquo;"}], "task": "In 150–250 words, write what you would say to the judge. Address all four performance indicators and answer the judge's question."};
+
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var DRAFT_KEY = STORAGE_KEY + '_draft';
+var SUBMITTED_KEY = STORAGE_KEY + '_submitted';
+var COUNT_KEY = STORAGE_KEY + '_submitcount';
+
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+
+function countWords(t){ var m = String(t).match(/\S+/g); return m ? m.length : 0; }
+function truncateWords(t, max){
+  var re = /\S+/g, m, n = 0, end = t.length;
+  while((m = re.exec(t))){ n++; if(n === max){ end = m.index + m[0].length; break; } }
+  return t.slice(0, end);
+}
+function childName(){
+  if(TITLE.indexOf('[Sion]')===0) return 'Sion';
+  if(TITLE.indexOf('[Grant]')===0) return 'Grant';
+  return 'Unknown';
+}
+function plain(html){ var d = document.createElement('div'); d.innerHTML = html; return (d.textContent || '').replace(/\s+/g,' ').trim(); }
+
+function renderPrompt(){
+  document.getElementById('quiz-title').textContent = TITLE;
+  document.getElementById('instruction').textContent = INSTRUCTION;
+  var pc = document.getElementById('prompt-card');
+  pc.innerHTML = '';
+  PROMPT.blocks.forEach(function(b){
+    var blk = document.createElement('div'); blk.className = 'blk';
+    var lab = document.createElement('div'); lab.className = 'blk-label'; lab.textContent = b.label;
+    var body = document.createElement('div'); body.className = 'blk-body' + (b.quote ? ' quote' : '');
+    body.innerHTML = b.html;
+    blk.appendChild(lab); blk.appendChild(body); pc.appendChild(blk);
+  });
+  document.getElementById('task').innerHTML = PROMPT.task;
+  var note = TARGET_TEXT + ' · minimum ' + MIN_WORDS + (MAX_WORDS ? ' · maximum ' + MAX_WORDS : '');
+  document.getElementById('limit-note').textContent = note;
+}
+
+function updateCount(){
+  var ta = document.getElementById('essay');
+  var msg = document.getElementById('msg');
+  msg.textContent = '';
+  if(MAX_WORDS && countWords(ta.value) > MAX_WORDS){
+    ta.value = truncateWords(ta.value, MAX_WORDS);
+    msg.textContent = 'You reached the ' + MAX_WORDS + '-word limit.';
+  }
+  var n = countWords(ta.value);
+  var wc = document.getElementById('wc');
+  wc.textContent = n + (n === 1 ? ' word' : ' words');
+  wc.className = n < MIN_WORDS ? 'wc-low' : ((MAX_WORDS && n >= MAX_WORDS) ? 'wc-high' : 'wc-ok');
+  var cap = MAX_WORDS || Math.max(MIN_WORDS * 3, 300);
+  document.getElementById('bar-fill').style.width = Math.min(100, Math.round(n / cap * 100)) + '%';
+  var btn = document.getElementById('submit-btn');
+  btn.disabled = ta.readOnly || n < MIN_WORDS;
+  if(!ta.readOnly && n > 0 && n < MIN_WORDS && !msg.textContent) msg.textContent = 'Write at least ' + MIN_WORDS + ' words to submit (' + (MIN_WORDS - n) + ' more).';
+  if(!ta.readOnly) lsSet(DRAFT_KEY, ta.value);
+}
+
+function showSubmitted(){
+  var ta = document.getElementById('essay');
+  ta.readOnly = true;
+  document.getElementById('submit-btn').style.display = 'none';
+  var info = lsGet(SUBMITTED_KEY) || '';
+  document.getElementById('done-text').textContent = 'You submitted ' + countWords(ta.value) + ' words' + (info ? ' at ' + info : '') + '.';
+  document.getElementById('done-card').style.display = 'block';
+  updateCount();
+}
+
+function openSubmitModal(){
+  var n = countWords(document.getElementById('essay').value);
+  if(n < MIN_WORDS) return;
+  document.getElementById('modal-text').textContent = 'Submit your ' + n + '-word answer?';
+  document.getElementById('submit-modal').style.display = 'flex';
+}
+function closeSubmitModal(){ document.getElementById('submit-modal').style.display = 'none'; }
+
+function confirmSubmit(){
+  closeSubmitModal();
+  var ta = document.getElementById('essay');
+  var n = countWords(ta.value);
+  if(n < MIN_WORDS) return;
+  var count = parseInt(lsGet(COUNT_KEY) || '0', 10) + 1;
+  lsSet(COUNT_KEY, String(count));
+  var payload = {
+    type: 'essay',
+    child: childName(),
+    quizTitle: TITLE,
+    quizKey: QUIZ_KEY,
+    quizDate: TODAY_STR,
+    submissionNumber: count,
+    prompt: PROMPT.blocks.map(function(b){ return b.label + ': ' + plain(b.html); }).join('\n') + '\nTask: ' + plain(PROMPT.task),
+    essay: ta.value,
+    wordCount: n
+  };
+  try{
+    fetch(REPORT_ENDPOINT, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) }).catch(function(){});
+  }catch(e){}
+  var d = new Date();
+  lsSet(SUBMITTED_KEY, d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}));
+  lsSet(DRAFT_KEY, ta.value);
+  showSubmitted();
+}
+
+function editAgain(){
+  var ta = document.getElementById('essay');
+  ta.readOnly = false;
+  lsDel(SUBMITTED_KEY);
+  document.getElementById('done-card').style.display = 'none';
+  var btn = document.getElementById('submit-btn');
+  btn.style.display = 'block';
+  btn.textContent = 'Resubmit';
+  updateCount();
+  ta.focus();
+}
+
+window.openSubmitModal = openSubmitModal;
+window.closeSubmitModal = closeSubmitModal;
+window.confirmSubmit = confirmSubmit;
+window.editAgain = editAgain;
+
+renderPrompt();
+var ta0 = document.getElementById('essay');
+ta0.value = lsGet(DRAFT_KEY) || '';
+ta0.addEventListener('input', updateCount);
+if(lsGet(SUBMITTED_KEY)) showSubmitted(); else updateCount();
+</script>
+</body>
+</html>
