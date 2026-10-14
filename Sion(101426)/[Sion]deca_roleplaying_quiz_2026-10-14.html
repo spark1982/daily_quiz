@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Deca Role playing quiz</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background:#f4f6fa; margin:0; padding:20px 12px 60px; color:#1a1a2e; }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  .quiz-title { font-size:1.4rem; font-weight:800; text-align:center; margin:8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom:14px; }
+  .card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 1px 6px rgba(0,0,0,0.08); margin-bottom:16px; }
+  .blk { margin-bottom:14px; }
+  .blk:last-child { margin-bottom:0; }
+  .blk-label { font-size:0.75rem; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#185FA5; margin-bottom:6px; }
+  .blk-body { font-size:0.97rem; line-height:1.6; color:#222; }
+  .blk-body ol, .blk-body ul { margin:4px 0 0 0; padding-left:22px; }
+  .quote { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; font-family:Georgia,'Times New Roman',serif; font-style:italic; font-size:1rem; line-height:1.65; color:#1a1a2e; }
+  .task { font-size:1rem; font-weight:600; line-height:1.55; margin-bottom:12px; }
+  textarea { width:100%; height:300px; resize:vertical; border:1.5px solid #d7dde6; border-radius:10px; padding:12px 14px; font-size:1rem; line-height:1.6; font-family:inherit; }
+  textarea:focus { outline:none; border-color:#185FA5; }
+  textarea[readonly] { background:#f5f7fa; color:#444; }
+  .counter-row { display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:0.88rem; }
+  #wc { font-weight:700; }
+  .wc-low { color:#E24B4A; } .wc-ok { color:#1D9E75; } .wc-high { color:#f5a623; }
+  #limit-note { color:#777; }
+  .bar { height:6px; background:#d7dde6; border-radius:3px; overflow:hidden; margin-top:6px; }
+  #bar-fill { height:100%; width:0%; background:#185FA5; transition:width .15s; }
+  #msg { min-height:20px; margin-top:8px; font-size:0.86rem; color:#a52a2a; }
+  .btn { display:block; width:100%; padding:13px; border:none; border-radius:10px; font-weight:700; font-size:0.97rem; cursor:pointer; margin-top:10px; }
+  .btn-primary { background:#185FA5; color:#fff; }
+  .btn-primary:disabled { background:#c9d2dc; cursor:default; }
+  .btn-secondary { background:#eef2f7; color:#185FA5; }
+  .done { background:#eef7f2; border-left:4px solid #1D9E75; }
+  .done h3 { margin:0 0 6px; color:#0d6b3f; font-size:1.05rem; }
+  .done p { margin:4px 0; font-size:0.92rem; color:#2d4d3f; line-height:1.5; }
+  .prep-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  #prep-time { font-size:1.6rem; font-weight:800; color:#185FA5; font-variant-numeric:tabular-nums; min-width:80px; }
+  #prep-notes { height:140px; margin-top:10px; }
+  .prep-hint { font-size:0.85rem; color:#555; margin:0 0 8px; line-height:1.45; }
+  .judge-card { border-left:4px solid #f5a623; }
+  .judge-q { font-family:Georgia,'Times New Roman',serif; font-style:italic; font-size:1.02rem; line-height:1.6; background:#fff8e1; border-radius:8px; padding:12px 14px; margin-bottom:10px; }
+  #judge-ans { height:150px; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:14px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { font-size:0.95rem; margin-bottom:18px; }
+  .modal-box button { padding:10px 16px; border-radius:8px; border:none; font-weight:700; margin:0 6px; cursor:pointer; }
+  .modal-yes { background:#185FA5; color:#fff; } .modal-no { background:#eef2f7; color:#333; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="quiz-title" id="quiz-title"></div>
+  <div class="instruction" id="instruction"></div>
+  <div class="card" id="prompt-card"></div>
+  <div class="card" id="prep-card">
+    <div class="blk-label">Prep time (10 minutes)</div>
+    <p class="prep-hint">In a real Principles role-play you get 10 minutes to plan with notes, then present to the judge. Start the timer, jot down a plan for each performance indicator, then write what you would say.</p>
+    <div class="prep-row"><span id="prep-time">10:00</span><button class="btn btn-secondary" style="width:auto;margin:0;padding:9px 16px" id="prep-btn" onclick="togglePrep()">Start prep timer</button></div>
+    <textarea id="prep-notes" placeholder="Prep notes: one line for each performance indicator..." autocomplete="off" spellcheck="true"></textarea>
+  </div>
+  <div class="card">
+    <div class="task" id="task"></div>
+    <textarea id="essay" autocomplete="off" autocapitalize="sentences" spellcheck="true" placeholder="Write your answer here..."></textarea>
+    <div class="counter-row"><span id="wc">0 words</span><span id="limit-note"></span></div>
+    <div class="bar"><div id="bar-fill"></div></div>
+    <div id="msg"></div>
+    <button class="btn btn-primary" id="submit-btn" onclick="finishPresentation()" disabled>I&rsquo;m done presenting</button>
+  </div>
+  <div class="card judge-card" id="judge-card" style="display:none;">
+    <div class="blk-label">The judge asks you a follow-up question</div>
+    <div class="judge-q" id="judge-q"></div>
+    <div class="task">Answer the judge the way you would out loud: clear, confident, and tied to the situation.</div>
+    <textarea id="judge-ans" autocomplete="off" autocapitalize="sentences" spellcheck="true" placeholder="Your answer to the judge..."></textarea>
+    <div class="counter-row"><span id="jwc">0 words</span><span id="jlimit">minimum 20</span></div>
+    <div id="jmsg"></div>
+    <button class="btn btn-primary" id="final-btn" onclick="openSubmitModal()" disabled>Submit</button>
+  </div>
+  <div class="card done" id="done-card" style="display:none;">
+    <h3>Submitted!</h3>
+    <p id="done-text"></p>
+    <p>Your feedback will be posted with tomorrow's quizzes.</p>
+    <button class="btn btn-secondary" onclick="editAgain()">Edit &amp; Resubmit</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="submit-modal" style="display:none;">
+  <div class="modal-box">
+    <p id="modal-text">Submit your answer?</p>
+    <button class="modal-yes" onclick="confirmSubmit()">Submit</button>
+    <button class="modal-no" onclick="closeSubmitModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Sion] Deca Role playing quiz";
+var QUIZ_KEY = "siondecaroleplay_essay";
+var TODAY_STR = "20261014";
+var INSTRUCTION = "Read the role-play, then write what you would say to the judge.";
+var MIN_WORDS = 100;
+var MAX_WORDS = 1000; // 0 = no maximum
+var TARGET_TEXT = "Aim for 200–600 words";
+var PROMPT = {"blocks": [{"label": "Career Cluster & Instructional Area", "html": "Finance &middot; Marketing"}, {"label": "21st Century Skills", "html": "<ul><li>Critical Thinking – Reason effectively and use systems thinking.</li><li>Communication – Communicate clearly.</li><li>Creativity and Innovation – Show evidence of creativity.</li></ul>"}, {"label": "Performance Indicators", "html": "<ol><li>Explain the nature of target marketing.</li><li>Explain the concept of market segmentation.</li><li>Explain types of advertising media.</li><li>Explain the importance of coordinating elements in the promotion mix.</li></ol>"}, {"label": "Event Situation", "html": "<p>You are to assume the role of marketing coordinator at <b>Cedar Valley Credit Union</b>, a member-owned financial institution with six branches in and around Des Moines, Iowa.</p><p>Next spring the credit union will launch <b>First Paycheck</b>, a checking-and-savings package for members ages 16&ndash;19 who are starting their first part-time jobs. It includes a debit card, no monthly fee, automatic transfers into savings, and a budgeting feature in the mobile app. The marketing budget for the launch is $18,000. Last year, a similar youth account was advertised mostly with newspaper ads and brochures in the branch lobbies, and only 140 teens opened accounts &mdash; far below the goal of 500. A survey of local high school students found that most of them rarely read newspapers, visit a branch less than once a year, and get information about money from short videos, friends, and family.</p><p>The vice president of marketing (judge) has asked you to explain who the target market for First Paycheck is, recommend which advertising media the credit union should use to reach that market, and explain how the different promotional activities should work together during the launch.</p><p>The vice president of marketing (judge) will begin the role-play by greeting you and asking to hear your ideas. After you have presented your plan and answered the vice president&rsquo;s question, the vice president will conclude the role-play by thanking you for your work.</p>"}], "judge_question": "If our budget were cut in half and you could keep only one of the media you recommended, which one would you keep, and why?", "task": "In 200–600 words, write what you would say to the judge. Address all four performance indicators. The judge will ask you one follow-up question when you finish."};
+
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var DRAFT_KEY = STORAGE_KEY + '_draft';
+var SUBMITTED_KEY = STORAGE_KEY + '_submitted';
+var COUNT_KEY = STORAGE_KEY + '_submitcount';
+var JUDGE_KEY = STORAGE_KEY + '_judgeshown';
+var JDRAFT_KEY = STORAGE_KEY + '_judgedraft';
+var NOTES_KEY = STORAGE_KEY + '_prepnotes';
+var PREP_KEY = STORAGE_KEY + '_prepend';
+var JUDGE_MIN = 20;
+var prepTimer = null;
+
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+
+function countWords(t){ var m = String(t).match(/\S+/g); return m ? m.length : 0; }
+function truncateWords(t, max){
+  var re = /\S+/g, m, n = 0, end = t.length;
+  while((m = re.exec(t))){ n++; if(n === max){ end = m.index + m[0].length; break; } }
+  return t.slice(0, end);
+}
+function childName(){
+  if(TITLE.indexOf('[Sion]')===0) return 'Sion';
+  if(TITLE.indexOf('[Grant]')===0) return 'Grant';
+  if(TITLE.indexOf('[Debate]')===0) return 'Sion'; // 2026-10-13: [Debate] quizzes are Sion's
+  if(TITLE.indexOf('[DECA]')===0) return 'Sion';
+  return 'Unknown';
+}
+function plain(html){ var d = document.createElement('div'); d.innerHTML = html; return (d.textContent || '').replace(/\s+/g,' ').trim(); }
+
+function renderPrompt(){
+  document.getElementById('quiz-title').textContent = TITLE;
+  document.getElementById('instruction').textContent = INSTRUCTION;
+  var pc = document.getElementById('prompt-card');
+  pc.innerHTML = '';
+  PROMPT.blocks.forEach(function(b){
+    var blk = document.createElement('div'); blk.className = 'blk';
+    var lab = document.createElement('div'); lab.className = 'blk-label'; lab.textContent = b.label;
+    var body = document.createElement('div'); body.className = 'blk-body' + (b.quote ? ' quote' : '');
+    body.innerHTML = b.html;
+    blk.appendChild(lab); blk.appendChild(body); pc.appendChild(blk);
+  });
+  document.getElementById('task').innerHTML = PROMPT.task;
+  var note = TARGET_TEXT + ' · minimum ' + MIN_WORDS + (MAX_WORDS ? ' · maximum ' + MAX_WORDS : '');
+  document.getElementById('limit-note').textContent = note;
+}
+
+function updateCount(){
+  var ta = document.getElementById('essay');
+  var msg = document.getElementById('msg');
+  msg.textContent = '';
+  if(MAX_WORDS && countWords(ta.value) > MAX_WORDS){
+    ta.value = truncateWords(ta.value, MAX_WORDS);
+    msg.textContent = 'You reached the ' + MAX_WORDS + '-word limit.';
+  }
+  var n = countWords(ta.value);
+  var wc = document.getElementById('wc');
+  wc.textContent = n + (n === 1 ? ' word' : ' words');
+  wc.className = n < MIN_WORDS ? 'wc-low' : ((MAX_WORDS && n >= MAX_WORDS) ? 'wc-high' : 'wc-ok');
+  var cap = MAX_WORDS || Math.max(MIN_WORDS * 3, 300);
+  document.getElementById('bar-fill').style.width = Math.min(100, Math.round(n / cap * 100)) + '%';
+  var btn = document.getElementById('submit-btn');
+  btn.disabled = ta.readOnly || n < MIN_WORDS;
+  if(lsGet(JUDGE_KEY) && !lsGet(SUBMITTED_KEY)) btn.style.display = 'none';
+  if(!ta.readOnly && n > 0 && n < MIN_WORDS && !msg.textContent) msg.textContent = 'Write at least ' + MIN_WORDS + ' words to submit (' + (MIN_WORDS - n) + ' more).';
+  if(!ta.readOnly) lsSet(DRAFT_KEY, ta.value);
+}
+
+function fmt(sec){ sec = Math.max(0, Math.round(sec)); return Math.floor(sec/60) + ':' + ('0' + (sec%60)).slice(-2); }
+function tickPrep(){
+  var end = parseInt(lsGet(PREP_KEY) || '0', 10);
+  var el = document.getElementById('prep-time'), b = document.getElementById('prep-btn');
+  if(!end){ el.textContent = '10:00'; b.textContent = 'Start prep timer'; return; }
+  var left = (end - Date.now()) / 1000;
+  if(left <= 0){ el.textContent = '0:00'; b.textContent = 'Restart prep timer'; if(prepTimer){ clearInterval(prepTimer); prepTimer = null; }
+    document.getElementById('msg').textContent = document.getElementById('msg').textContent || 'Prep time is over. Time to present!'; return; }
+  el.textContent = fmt(left); b.textContent = 'Restart prep timer';
+}
+function togglePrep(){
+  lsSet(PREP_KEY, String(Date.now() + 600000));
+  if(prepTimer) clearInterval(prepTimer);
+  prepTimer = setInterval(tickPrep, 500); tickPrep();
+}
+function updateJudge(){
+  var ja = document.getElementById('judge-ans');
+  var n = countWords(ja.value);
+  document.getElementById('jwc').textContent = n + (n === 1 ? ' word' : ' words');
+  document.getElementById('jwc').className = n < JUDGE_MIN ? 'wc-low' : 'wc-ok';
+  document.getElementById('final-btn').disabled = ja.readOnly || n < JUDGE_MIN;
+  document.getElementById('jmsg').textContent = (!ja.readOnly && n > 0 && n < JUDGE_MIN) ? ('Write at least ' + JUDGE_MIN + ' words (' + (JUDGE_MIN - n) + ' more).') : '';
+  if(!ja.readOnly) lsSet(JDRAFT_KEY, ja.value);
+}
+function showJudge(){
+  document.getElementById('judge-q').textContent = '\u201C' + PROMPT.judge_question + '\u201D';
+  document.getElementById('judge-card').style.display = 'block';
+  var ta = document.getElementById('essay'); if(!parseInt(lsGet(COUNT_KEY) || '0', 10)) ta.readOnly = true;
+  document.getElementById('submit-btn').style.display = 'none';
+  updateJudge();
+}
+function finishPresentation(){
+  var n = countWords(document.getElementById('essay').value);
+  if(n < MIN_WORDS) return;
+  lsSet(JUDGE_KEY, '1');
+  showJudge();
+  try{ document.getElementById('judge-ans').focus(); }catch(e){}
+}
+function showSubmitted(){
+  var ta = document.getElementById('essay');
+  ta.readOnly = true;
+  document.getElementById('submit-btn').style.display = 'none';
+  var info = lsGet(SUBMITTED_KEY) || '';
+  document.getElementById('done-text').textContent = 'You submitted ' + countWords(ta.value) + ' words' + (info ? ' at ' + info : '') + '.';
+  document.getElementById('done-card').style.display = 'block';
+  var ja = document.getElementById('judge-ans'); ja.readOnly = true;
+  document.getElementById('judge-card').style.display = 'block';
+  document.getElementById('judge-q').textContent = '\u201C' + PROMPT.judge_question + '\u201D';
+  document.getElementById('final-btn').style.display = 'none';
+  updateCount(); updateJudge();
+}
+
+function openSubmitModal(){
+  var n = countWords(document.getElementById('essay').value);
+  if(n < MIN_WORDS || countWords(document.getElementById('judge-ans').value) < JUDGE_MIN) return;
+  document.getElementById('modal-text').textContent = 'Submit your ' + n + '-word presentation and your answer to the judge?';
+  document.getElementById('submit-modal').style.display = 'flex';
+}
+function closeSubmitModal(){ document.getElementById('submit-modal').style.display = 'none'; }
+
+function confirmSubmit(){
+  closeSubmitModal();
+  var ta = document.getElementById('essay');
+  var n = countWords(ta.value);
+  var ja = document.getElementById('judge-ans');
+  var jn = countWords(ja.value);
+  if(n < MIN_WORDS || jn < JUDGE_MIN) return;
+  var count = parseInt(lsGet(COUNT_KEY) || '0', 10) + 1;
+  lsSet(COUNT_KEY, String(count));
+  var payload = {
+    type: 'essay',
+    child: childName(),
+    quizTitle: TITLE,
+    quizKey: QUIZ_KEY,
+    quizDate: TODAY_STR,
+    submissionNumber: count,
+    prompt: PROMPT.blocks.map(function(b){ return b.label + ': ' + plain(b.html); }).join('\n') + '\nTask: ' + plain(PROMPT.task) + "\nJudge's follow-up question (shown after the presentation): " + PROMPT.judge_question,
+    essay: ta.value + "\n\n[Judge's follow-up question] " + PROMPT.judge_question + '\n[My answer] ' + ja.value,
+    wordCount: n,
+    judgeAnswerWords: jn
+  };
+  try{
+    fetch(REPORT_ENDPOINT, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) }).catch(function(){});
+  }catch(e){}
+  var d = new Date();
+  lsSet(SUBMITTED_KEY, d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}));
+  lsSet(DRAFT_KEY, ta.value);
+  showSubmitted();
+}
+
+function editAgain(){
+  var ta = document.getElementById('essay');
+  ta.readOnly = false;
+  var ja = document.getElementById('judge-ans'); ja.readOnly = false;
+  lsDel(SUBMITTED_KEY);
+  document.getElementById('final-btn').style.display = 'block';
+  document.getElementById('final-btn').textContent = 'Resubmit';
+  document.getElementById('done-card').style.display = 'none';
+  var btn = document.getElementById('submit-btn');
+  btn.style.display = 'none';
+  updateCount(); updateJudge();
+  ta.focus();
+}
+
+window.openSubmitModal = openSubmitModal;
+window.closeSubmitModal = closeSubmitModal;
+window.confirmSubmit = confirmSubmit;
+window.editAgain = editAgain;
+window.finishPresentation = finishPresentation;
+window.togglePrep = togglePrep;
+
+renderPrompt();
+var ta0 = document.getElementById('essay');
+ta0.value = lsGet(DRAFT_KEY) || '';
+ta0.addEventListener('input', updateCount);
+var ja0 = document.getElementById('judge-ans');
+ja0.value = lsGet(JDRAFT_KEY) || '';
+ja0.addEventListener('input', updateJudge);
+var pn = document.getElementById('prep-notes');
+pn.value = lsGet(NOTES_KEY) || '';
+pn.addEventListener('input', function(){ lsSet(NOTES_KEY, pn.value); });
+if(lsGet(PREP_KEY)){ prepTimer = setInterval(tickPrep, 500); }
+tickPrep();
+if(lsGet(SUBMITTED_KEY)) showSubmitted(); else { updateCount(); if(lsGet(JUDGE_KEY)) showJudge(); }
+</script>
+</body>
+</html>
