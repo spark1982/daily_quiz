@@ -19,6 +19,19 @@
   .para .s { cursor:pointer; }
   .para .s.done { color:#64748b; }
   .para .s.current { color:#dc2626; font-weight:600; }
+  /* (2026-10-14) side-by-side: Grant's original (left) vs polished (right) */
+  .compare { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
+  .compare .col { background:#f8fafc; border-radius:8px; padding:12px 12px; min-width:0; }
+  .compare .col.orig { border-left:4px solid #dc2626; }
+  .compare .col.pol { border-left:4px solid #16a34a; }
+  .col-label { font-size:0.78rem; font-weight:800; letter-spacing:.02em; text-transform:uppercase; margin-bottom:6px; }
+  .col.orig .col-label { color:#b91c1c; }
+  .col.pol .col-label { color:#15803d; }
+  .compare .para { font-size:0.9rem; line-height:1.65; word-break:break-word; }
+  .para .s.cur-orig { color:#dc2626; font-weight:700; background:#fef2f2; border-radius:3px; }
+  .para .s.cur-pol { color:#16a34a; font-weight:700; background:#f0fdf4; border-radius:3px; }
+  .type-banner { background:#f0fdf4; border:2px solid #16a34a; color:#15803d; font-weight:800; font-size:1rem; border-radius:8px; padding:9px 12px; margin-bottom:12px; text-align:center; }
+  @media (max-width:520px){ body{ padding:10px; } .container{ padding:16px; } .compare{ gap:8px; } .compare .col{ padding:9px 8px; } .compare .para{ font-size:0.82rem; } }
 
   .char-grid { display:flex; flex-wrap:wrap; gap:6px 3px; margin-bottom:22px; align-items:center; }
   .word-group { display:inline-flex; gap:2px; margin-right:10px; margin-bottom:6px; }
@@ -64,7 +77,12 @@
   <div class="instruction" id="instruction"></div>
 
   <div id="quizArea">
-    <div class="prompt-box"><p class="para" id="para"></p></div>
+    <div class="prompt-box" id="singleBox"><p class="para" id="para"></p></div>
+    <div class="compare" id="compareBox" style="display:none;">
+      <div class="col orig"><div class="col-label">What you wrote</div><p class="para" id="paraOrig"></p></div>
+      <div class="col pol"><div class="col-label">Polished</div><p class="para" id="paraPol"></p></div>
+    </div>
+    <div class="type-banner" id="typeBanner" style="display:none;">Type the green sentence.</div>
     <div class="char-grid" id="charGrid"></div>
     <div class="btn-group">
       <button class="btn-nav" id="btnPrev" onclick="prevQuestion()">Previous</button>
@@ -98,9 +116,11 @@
 var TITLE = "[Grant] Typing";
 var QUIZ_KEY = "granttypingcopy";
 var TODAY_STR = "20261014";
-var INSTRUCTION = "Type your polished paragraph, one sentence at a time. The red sentence is the one to type. Capital letters and punctuation count!";
-var PROMPT = {"sentences": ["Building a car out of LEGO is easy if you follow a few simple steps.", "First, you need the pieces: wheels, bricks for the shape, a door, windows, and axles, which are the pieces that connect the wheels to the base.", "Next, you put the wheels on the axles.", "Then, make the base and put the axles on it.", "Finally, build the walls with the bricks, put on the door, and finish it up with the windows.", "Press every brick down carefully, or the car will look crooked.", "If you do it correctly, it will be sturdy.", "Then you can play with it like a toy car and make it go up ramps."]}; // {sentences:[...]} plain text, straight quotes
+var INSTRUCTION = "Compare what you wrote (left) with the polished version (right). Type the green sentence. Capital letters and punctuation count!";
+var PROMPT = {"sentences": ["Building a car out of LEGO is easy if you follow a few simple steps.", "First, you need the pieces: wheels, bricks for the shape, a door, windows, and axles, which are the pieces that connect the wheels to the base.", "Next, you put the wheels on the axles.", "Then, make the base and put the axles on it.", "Finally, build the walls with the bricks, put on the door, and finish it up with the windows.", "Press every brick down carefully, or the car will look crooked.", "If you do it correctly, it will be sturdy.", "Then you can play with it like a toy car and make it go up ramps."], "original": ["Building a car out of LEGO is easy if you follow a few simple steps.", "First, you need the pieces.", "The pieces are wheels, bricks for the shape, a door, pieces that connect wheels to the base, and windows.", "Next, you put the wheels in the piece that connects the wheels into the base.", "Then, make the base and put the connector on it.", "Finally, put the walls and the door and finish it up with the windows.", "You must be careful or it will look bad.", "If you do it correctly, it will be strong and sturdy.", "Then you can act it like it is a toy car and make it go up ramps."], "map": [[0], [1, 2], [3], [4], [5], [6], [7], [8]]}; // {sentences:[...]} plain text, straight quotes
 var quizData = PROMPT.sentences;
+// (2026-10-14) optional: PROMPT.original = Grant's own sentences, PROMPT.map[i] = indices of original sentences behind polished sentence i
+var ORIG = (PROMPT.original && PROMPT.map && PROMPT.map.length === quizData.length) ? PROMPT.original : null;
 
 var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
 var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
@@ -131,6 +151,7 @@ function norm(ch){ return String(ch || '').replace(/[‘’ʼ]/g, "'").replace(/
 function charMatch(target, user){ return norm(target) === norm(user); } // case-sensitive: capitals count
 
 function renderPara(){
+  if(ORIG){ renderCompare(); return; }
   var p = document.getElementById('para'); p.innerHTML = '';
   quizData.forEach(function(s, i){
     var sp = document.createElement('span');
@@ -139,6 +160,30 @@ function renderPara(){
     sp.onclick = function(){ goTo(i); };
     p.appendChild(sp);
     if(i < quizData.length - 1) p.appendChild(document.createTextNode(' '));
+  });
+}
+
+function renderCompare(){
+  document.getElementById('singleBox').style.display = 'none';
+  document.getElementById('compareBox').style.display = 'grid';
+  document.getElementById('typeBanner').style.display = finished ? 'none' : 'block';
+  var cur = finished ? [] : (PROMPT.map[currentIndex] || []);
+  var po = document.getElementById('paraOrig'); po.innerHTML = '';
+  ORIG.forEach(function(s, j){
+    var sp = document.createElement('span');
+    sp.className = 's' + (cur.indexOf(j) >= 0 ? ' cur-orig' : '');
+    sp.textContent = s;
+    po.appendChild(sp);
+    if(j < ORIG.length - 1) po.appendChild(document.createTextNode(' '));
+  });
+  var pp = document.getElementById('paraPol'); pp.innerHTML = '';
+  quizData.forEach(function(s, i){
+    var sp = document.createElement('span');
+    sp.className = 's' + (i === currentIndex && !finished ? ' cur-pol' : '') + (userChecked[i] && isPerfect(i) && i !== currentIndex ? ' done' : '');
+    sp.textContent = s;
+    sp.onclick = function(){ goTo(i); };
+    pp.appendChild(sp);
+    if(i < quizData.length - 1) pp.appendChild(document.createTextNode(' '));
   });
 }
 
