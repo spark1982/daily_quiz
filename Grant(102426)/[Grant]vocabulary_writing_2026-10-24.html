@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Vocabulary Writing</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background:#f4f6fa; margin:0; padding:20px 12px 60px; color:#1a1a2e; }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  .quiz-title { font-size:1.4rem; font-weight:800; text-align:center; margin:8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom:14px; }
+  .card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 1px 6px rgba(0,0,0,0.08); margin-bottom:16px; }
+  .task { font-size:1rem; font-weight:600; line-height:1.55; margin-bottom:6px; }
+  .note { font-size:0.86rem; color:#666; margin-bottom:4px; }
+  .item { border-top:1px solid #eef1f5; padding-top:14px; margin-top:14px; }
+  .item:first-of-type { border-top:none; margin-top:6px; padding-top:6px; }
+  .word { font-size:1.25rem; font-weight:800; color:#185FA5; }
+  .pos { font-size:0.85rem; color:#777; font-style:italic; margin-left:6px; }
+  textarea { width:100%; height:78px; resize:vertical; border:1.5px solid #d7dde6; border-radius:10px; padding:10px 12px; font-size:1rem; line-height:1.5; font-family:inherit; margin-top:8px; }
+  textarea:focus { outline:none; border-color:#185FA5; }
+  textarea[readonly] { background:#f5f7fa; color:#444; }
+  .wc { font-size:0.8rem; color:#999; text-align:right; margin-top:2px; }
+  .wc.low { color:#E24B4A; } .wc.ok { color:#1D9E75; }
+  #msg { min-height:20px; margin-top:8px; font-size:0.86rem; color:#a52a2a; }
+  .btn { display:block; width:100%; padding:13px; border:none; border-radius:10px; font-weight:700; font-size:0.97rem; cursor:pointer; margin-top:10px; }
+  .btn-primary { background:#185FA5; color:#fff; }
+  .btn-primary:disabled { background:#c9d2dc; cursor:default; }
+  .btn-secondary { background:#eef2f7; color:#185FA5; }
+  .done { background:#eef7f2; border-left:4px solid #1D9E75; }
+  .done h3 { margin:0 0 6px; color:#0d6b3f; font-size:1.05rem; }
+  .done p { margin:4px 0; font-size:0.92rem; color:#2d4d3f; line-height:1.5; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:14px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { font-size:0.95rem; margin-bottom:18px; }
+  .modal-box button { padding:10px 16px; border-radius:8px; border:none; font-weight:700; margin:0 6px; cursor:pointer; }
+  .modal-yes { background:#185FA5; color:#fff; } .modal-no { background:#eef2f7; color:#333; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="quiz-title" id="quiz-title"></div>
+  <div class="instruction" id="instruction"></div>
+  <div class="card">
+    <div class="task" id="task"></div>
+    <div class="note" id="limit-note"></div>
+    <div id="items"></div>
+    <div id="msg"></div>
+    <button class="btn btn-primary" id="submit-btn" onclick="openSubmitModal()" disabled>Submit</button>
+  </div>
+  <div class="card done" id="done-card" style="display:none;">
+    <h3>Submitted!</h3>
+    <p id="done-text"></p>
+    <p>Your feedback will be posted with tomorrow's quizzes.</p>
+    <button class="btn btn-secondary" onclick="editAgain()">Edit &amp; Resubmit</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="submit-modal" style="display:none;">
+  <div class="modal-box">
+    <p id="modal-text">Submit your answers?</p>
+    <button class="modal-yes" onclick="confirmSubmit()">Submit</button>
+    <button class="modal-no" onclick="closeSubmitModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Grant] Vocabulary Writing";
+var QUIZ_KEY = "grantvocabwrite_essay";
+var TODAY_STR = "20261024";
+var INSTRUCTION = "Show what you remember! Write the meaning of each word.";
+var MIN_WORDS = 2; // minimum words for EACH answer
+var MAX_WORDS = 0; // unused (0)
+var TARGET_TEXT = "A short phrase or one sentence for each word";
+var PROMPT = {"words": [{"word": "generous", "pos": "adjective"}, {"word": "hostile", "pos": "adjective"}, {"word": "isolate", "pos": "verb"}, {"word": "exhaust", "pos": "verb"}, {"word": "policy", "pos": "noun"}], "task": "Write what each word means in your own words. You can also add a short example sentence."}; // {words:[{word,pos}], task}
+
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var DRAFT_KEY = STORAGE_KEY + '_draft';
+var SUBMITTED_KEY = STORAGE_KEY + '_submitted';
+var COUNT_KEY = STORAGE_KEY + '_submitcount';
+
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+function countWords(t){ var m = String(t).match(/\S+/g); return m ? m.length : 0; }
+function childName(){
+  if(TITLE.indexOf('[Sion]')===0) return 'Sion';
+  if(TITLE.indexOf('[Grant]')===0) return 'Grant';
+  return 'Unknown';
+}
+function boxes(){ return Array.prototype.slice.call(document.querySelectorAll('textarea.ans')); }
+function answers(){ return boxes().map(function(t){ return t.value.trim(); }); }
+
+function render(){
+  document.getElementById('quiz-title').textContent = TITLE;
+  document.getElementById('instruction').textContent = INSTRUCTION;
+  document.getElementById('task').innerHTML = PROMPT.task;
+  document.getElementById('limit-note').textContent = TARGET_TEXT + ' · at least ' + MIN_WORDS + ' words for each word';
+  var box = document.getElementById('items'); box.innerHTML = '';
+  var saved = []; try{ saved = JSON.parse(lsGet(DRAFT_KEY) || '[]'); }catch(e){ saved = []; }
+  PROMPT.words.forEach(function(w, i){
+    var it = document.createElement('div'); it.className = 'item';
+    var h = document.createElement('div');
+    var s1 = document.createElement('span'); s1.className = 'word'; s1.textContent = (i+1) + '. ' + w.word;
+    var s2 = document.createElement('span'); s2.className = 'pos'; s2.textContent = w.pos ? '(' + w.pos + ')' : '';
+    h.appendChild(s1); h.appendChild(s2);
+    var ta = document.createElement('textarea'); ta.className = 'ans'; ta.id = 'ans-' + i;
+    ta.setAttribute('autocomplete','off'); ta.setAttribute('spellcheck','true');
+    ta.placeholder = 'What does "' + w.word + '" mean? Write it in your own words.';
+    ta.value = saved[i] || '';
+    ta.addEventListener('input', update);
+    var wc = document.createElement('div'); wc.className = 'wc'; wc.id = 'wc-' + i;
+    it.appendChild(h); it.appendChild(ta); it.appendChild(wc); box.appendChild(it);
+  });
+}
+
+function update(){
+  var ok = true, missing = 0;
+  boxes().forEach(function(ta, i){
+    var n = countWords(ta.value);
+    var wc = document.getElementById('wc-' + i);
+    wc.textContent = n + (n === 1 ? ' word' : ' words');
+    wc.className = 'wc ' + (n < MIN_WORDS ? 'low' : 'ok');
+    if(n < MIN_WORDS){ ok = false; missing++; }
+  });
+  var ro = boxes().length && boxes()[0].readOnly;
+  var btn = document.getElementById('submit-btn');
+  btn.disabled = ro || !ok;
+  var msg = document.getElementById('msg');
+  msg.textContent = (!ro && !ok && answers().join('').length) ? ('Answer every word with at least ' + MIN_WORDS + ' words (' + missing + ' left). If you don’t know, write your best guess.') : '';
+  if(!ro) lsSet(DRAFT_KEY, JSON.stringify(boxes().map(function(t){ return t.value; })));
+}
+
+function setReadOnly(v){ boxes().forEach(function(t){ t.readOnly = v; }); }
+
+function showSubmitted(){
+  setReadOnly(true);
+  document.getElementById('submit-btn').style.display = 'none';
+  var info = lsGet(SUBMITTED_KEY) || '';
+  document.getElementById('done-text').textContent = 'You submitted ' + PROMPT.words.length + ' answers' + (info ? ' at ' + info : '') + '.';
+  document.getElementById('done-card').style.display = 'block';
+  update();
+}
+
+function openSubmitModal(){
+  if(document.getElementById('submit-btn').disabled) return;
+  document.getElementById('modal-text').textContent = 'Submit your ' + PROMPT.words.length + ' answers?';
+  document.getElementById('submit-modal').style.display = 'flex';
+}
+function closeSubmitModal(){ document.getElementById('submit-modal').style.display = 'none'; }
+
+function confirmSubmit(){
+  closeSubmitModal();
+  var a = answers();
+  for(var i=0;i<a.length;i++){ if(countWords(a[i]) < MIN_WORDS) return; }
+  var count = parseInt(lsGet(COUNT_KEY) || '0', 10) + 1;
+  lsSet(COUNT_KEY, String(count));
+  var essay = PROMPT.words.map(function(w, i){ return (i+1) + '. ' + w.word + ': ' + a[i]; }).join('\n');
+  var payload = {
+    type: 'essay',
+    child: childName(),
+    quizTitle: TITLE,
+    quizKey: QUIZ_KEY,
+    quizDate: TODAY_STR,
+    submissionNumber: count,
+    prompt: 'Write the meaning of each word: ' + PROMPT.words.map(function(w){ return w.word + (w.pos ? ' (' + w.pos + ')' : ''); }).join(', '),
+    essay: essay,
+    wordCount: countWords(a.join(' '))
+  };
+  try{
+    fetch(REPORT_ENDPOINT, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) }).catch(function(){});
+  }catch(e){}
+  var d = new Date();
+  lsSet(SUBMITTED_KEY, d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}));
+  showSubmitted();
+}
+
+function editAgain(){
+  setReadOnly(false);
+  lsDel(SUBMITTED_KEY);
+  document.getElementById('done-card').style.display = 'none';
+  var btn = document.getElementById('submit-btn');
+  btn.style.display = 'block';
+  btn.textContent = 'Resubmit';
+  update();
+}
+
+window.openSubmitModal = openSubmitModal;
+window.closeSubmitModal = closeSubmitModal;
+window.confirmSubmit = confirmSubmit;
+window.editAgain = editAgain;
+
+render();
+if(lsGet(SUBMITTED_KEY)) showSubmitted(); else update();
+</script>
+</body>
+</html>
