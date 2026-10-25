@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Typing</title>
+<style>
+  * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  body { background-color:#f4f6f8; margin:0; padding:20px; display:flex; justify-content:center; align-items:flex-start; min-height:100vh; }
+  .container { background:#ffffff; max-width:750px; width:100%; border-radius:12px; padding:26px; box-shadow:0 4px 20px rgba(0,0,0,0.08); }
+  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .title { font-size:1.2rem; font-weight:bold; color:#333; }
+  .progress-text { font-size:0.95rem; color:#666; font-weight:600; }
+  .progress-bar-container { width:100%; background-color:#e2e8f0; height:8px; border-radius:4px; overflow:hidden; margin-bottom:14px; }
+  .progress-bar { height:100%; width:0%; background-color:#4f46e5; transition:width 0.3s ease; }
+  .instruction { font-size:0.9rem; color:#555; margin-bottom:14px; line-height:1.45; }
+  .prompt-box { background:#f8fafc; border-left:4px solid #4f46e5; padding:14px 16px; border-radius:4px; margin-bottom:20px; }
+  .para { font-size:0.98rem; color:#1e293b; line-height:1.75; margin:0; }
+  .para .s { cursor:pointer; }
+  .para .s.done { color:#64748b; }
+  .para .s.current { color:#dc2626; font-weight:600; }
+  /* (2026-10-14) side-by-side: Grant's original (left) vs polished (right) */
+  .compare { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
+  .compare .col { background:#f8fafc; border-radius:8px; padding:12px 12px; min-width:0; }
+  .compare .col.orig { border-left:4px solid #dc2626; }
+  .compare .col.pol { border-left:4px solid #16a34a; }
+  .col-label { font-size:0.78rem; font-weight:800; letter-spacing:.02em; text-transform:uppercase; margin-bottom:6px; }
+  .col.orig .col-label { color:#b91c1c; }
+  .col.pol .col-label { color:#15803d; }
+  .compare .para { font-size:0.9rem; line-height:1.65; word-break:break-word; }
+  .para .s.cur-orig { color:#dc2626; font-weight:700; background:#fef2f2; border-radius:3px; }
+  .para .s.del { color:#94a3b8; text-decoration:line-through; }
+  .para .s.cur-pol { color:#16a34a; font-weight:700; background:#f0fdf4; border-radius:3px; }
+  .type-banner { background:#f0fdf4; border:2px solid #16a34a; color:#15803d; font-weight:800; font-size:1rem; border-radius:8px; padding:9px 12px; margin-bottom:12px; text-align:center; }
+  @media (max-width:520px){ body{ padding:10px; } .container{ padding:16px; } .compare{ gap:8px; } .compare .col{ padding:9px 8px; } .compare .para{ font-size:0.82rem; } }
+
+  .char-grid { display:flex; flex-wrap:wrap; gap:6px 3px; margin-bottom:22px; align-items:center; }
+  .word-group { display:inline-flex; gap:2px; margin-right:10px; margin-bottom:6px; }
+  .char-input { width:22px; height:32px; text-align:center; font-size:1rem; font-weight:600; border:none; border-bottom:2px solid #64748b; background:transparent; outline:none; color:#0f172a; transition:border-color .2s, background .2s; padding:0; border-radius:0; }
+  .char-input:focus { border-bottom-color:#4f46e5; background:#eef2ff; }
+  .char-punct { width:22px; height:32px; text-align:center; font-size:1rem; font-weight:700; border:2px solid #cbd5e1; border-radius:6px; background:#f1f5f9; outline:none; color:#475569; transition:border-color .2s, background .2s; padding:0; }
+  .char-punct:focus { border-color:#4f46e5; background:#eef2ff; }
+
+  .btn-group { display:flex; gap:10px; margin-bottom:20px; }
+  button { padding:12px; border:none; border-radius:8px; font-size:1rem; font-weight:bold; cursor:pointer; transition:background .2s, opacity .2s; }
+  .btn-nav { flex:1; background:#e2e8f0; color:#475569; }
+  .btn-nav:hover:not(:disabled) { background:#cbd5e1; }
+  .btn-nav:disabled { opacity:0.5; cursor:not-allowed; }
+  .btn-submit { flex:2; background:#4f46e5; color:white; }
+  .btn-submit:hover { background:#4338ca; }
+  .btn-retry { flex:1.5; background:#f59e0b; color:white; }
+  .btn-retry:hover { background:#d97706; }
+
+  .result-box { display:none; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px; margin-bottom:20px; }
+  .result-title { font-size:0.9rem; color:#64748b; font-weight:bold; margin-bottom:8px; }
+  .result-text-container { font-size:1.05rem; font-weight:600; line-height:1.6; word-break:break-word; }
+  .correct-char { color:#0f172a; }
+  .wrong-char { color:#dc2626; font-weight:700; text-decoration:underline; }
+  .perfect { color:#1D9E75; font-weight:700; margin-top:8px; font-size:0.95rem; }
+
+  .score-board { text-align:center; padding:40px 10px; }
+  .score-title { font-size:1.6rem; color:#1e293b; margin-bottom:15px; }
+  .score-detail { font-size:1.1rem; color:#475569; margin-bottom:25px; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:12px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { margin:0 0 18px; }
+  .modal-box button { margin:0 6px; padding:10px 16px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="title" id="quizTitle"></div>
+    <div class="progress-text" id="progressText"></div>
+  </div>
+  <div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="instruction" id="instruction"></div>
+
+  <div id="quizArea">
+    <div class="prompt-box" id="singleBox"><p class="para" id="para"></p></div>
+    <div class="compare" id="compareBox" style="display:none;">
+      <div class="col orig"><div class="col-label">What you wrote</div><p class="para" id="paraOrig"></p></div>
+      <div class="col pol"><div class="col-label">Polished</div><p class="para" id="paraPol"></p></div>
+    </div>
+    <div class="type-banner" id="typeBanner" style="display:none;">Type the green sentence.</div>
+    <div class="char-grid" id="charGrid"></div>
+    <div class="btn-group">
+      <button class="btn-nav" id="btnPrev" onclick="prevQuestion()">Previous</button>
+      <button class="btn-submit" id="btnSubmit" onclick="checkAnswer()">Check</button>
+      <button class="btn-retry" id="btnRetry" onclick="retryQuestion()">Try Again</button>
+      <button class="btn-nav" id="btnNext" onclick="nextQuestion()">Next</button>
+    </div>
+    <div class="result-box" id="resultBox">
+      <div class="result-title">The sentence (mistakes are in red)</div>
+      <div class="result-text-container" id="resultTarget"></div>
+      <div class="perfect" id="perfectMsg" style="display:none;">Perfect! Press Enter or Next for the next sentence.</div>
+    </div>
+  </div>
+
+  <div class="score-board" id="scoreArea" style="display:none;">
+    <div class="score-title">You finished typing your paragraph!</div>
+    <div class="score-detail" id="finalScore"></div>
+    <button class="btn-submit" onclick="openFreshModal()" style="max-width:220px; margin:0 auto;">Start Over</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="fresh-modal" style="display:none;">
+  <div class="modal-box">
+    <p>Start over from the first sentence?</p>
+    <button class="btn-submit" onclick="confirmFresh()">Yes, Start Over</button>
+    <button class="btn-nav" onclick="closeFreshModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Grant] Typing";
+var QUIZ_KEY = "granttypingcopy";
+var TODAY_STR = "20261025";
+var INSTRUCTION = "Compare what you wrote (left) with the polished version (right). Type the green sentence. Capital letters and punctuation count!";
+var PROMPT = {"sentences": ["I will never forget the day when I had my tenth birthday party with my friends at Main Event.", "It was one of the greatest days of my life.", "First, we had an unlimited game pass, so we played arcade games and laser tag.", "Next, we went bowling, and it was a blast.", "When it was my turn, I felt nervous because all my friends were watching.", "Suddenly, my ball crashed into the pins and knocked them all down, and I felt so proud when my friends cheered.", "After that, we ate pizza and birthday cake until we were full.", "Finally, my friends went home, and I went to bed smiling because it was the best birthday I ever had."], "original": ["I will never forget the day when I had my tenth birthday party.", "The party with my friends was at Main Event, and it was one of the greatest moments of my life.", "First, we had infinite time, so we played games and played a safe fake gun game.", "Next, we went bowling and it was very fun.", "After that, we ate pizza and lots of food.", "Then, my friends went home and I went back home feeling so good after the party."], "map": [[0, 1], [1], [2], [3], [], [], [4], [5]]}; // {sentences:[...]} plain text, straight quotes
+var quizData = PROMPT.sentences;
+// (2026-10-14) optional: PROMPT.original = Grant's own sentences, PROMPT.map[i] = indices of original sentences behind polished sentence i
+var ORIG = (PROMPT.original && PROMPT.map && PROMPT.map.length === quizData.length) ? PROMPT.original : null;
+
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var ATT_KEY = STORAGE_KEY + '_attempts';
+
+var currentIndex = 0;
+var savedUserInputs = quizData.map(function(){ return null; });
+var userChecked = quizData.map(function(){ return false; });
+var firstTry = quizData.map(function(){ return null; }); // true/false result of the FIRST check of each sentence
+var finished = false;
+
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+function saveState(){ lsSet(STORAGE_KEY, JSON.stringify({currentIndex:currentIndex, savedUserInputs:savedUserInputs, userChecked:userChecked, firstTry:firstTry, finished:finished})); }
+function loadState(){
+  try{
+    var s = JSON.parse(lsGet(STORAGE_KEY) || 'null');
+    if(s && s.savedUserInputs && s.savedUserInputs.length === quizData.length){
+      currentIndex = s.currentIndex || 0; savedUserInputs = s.savedUserInputs; userChecked = s.userChecked; firstTry = s.firstTry; finished = !!s.finished;
+    }
+  }catch(e){}
+}
+
+function isAlphaNum(ch){ return /[a-zA-Z0-9]/.test(ch); }
+// Treat curly quotes/apostrophes (iPad/Mac smart punctuation) the same as straight ones.
+function norm(ch){ return String(ch || '').replace(/[‘’ʼ]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, '-'); }
+function charMatch(target, user){ return norm(target) === norm(user); } // case-sensitive: capitals count
+
+function renderPara(){
+  if(ORIG){ renderCompare(); return; }
+  var p = document.getElementById('para'); p.innerHTML = '';
+  quizData.forEach(function(s, i){
+    var sp = document.createElement('span');
+    sp.className = 's' + (i === currentIndex && !finished ? ' current' : '') + (userChecked[i] && isPerfect(i) && i !== currentIndex ? ' done' : '');
+    sp.textContent = s;
+    sp.onclick = function(){ goTo(i); };
+    p.appendChild(sp);
+    if(i < quizData.length - 1) p.appendChild(document.createTextNode(' '));
+  });
+}
+
+function renderCompare(){
+  document.getElementById('singleBox').style.display = 'none';
+  document.getElementById('compareBox').style.display = 'grid';
+  document.getElementById('typeBanner').style.display = finished ? 'none' : 'block';
+  var cur = finished ? [] : (PROMPT.map[currentIndex] || []);
+  var po = document.getElementById('paraOrig'); po.innerHTML = '';
+  ORIG.forEach(function(s, j){
+    var sp = document.createElement('span');
+    sp.className = 's' + (cur.indexOf(j) >= 0 ? ' cur-orig' : '') + ((PROMPT.deleted || []).indexOf(j) >= 0 ? ' del' : '');
+    if((PROMPT.deleted || []).indexOf(j) >= 0) sp.title = 'Removed in the polished version';
+    sp.textContent = s;
+    po.appendChild(sp);
+    if(j < ORIG.length - 1) po.appendChild(document.createTextNode(' '));
+  });
+  var pp = document.getElementById('paraPol'); pp.innerHTML = '';
+  quizData.forEach(function(s, i){
+    var sp = document.createElement('span');
+    sp.className = 's' + (i === currentIndex && !finished ? ' cur-pol' : '') + (userChecked[i] && isPerfect(i) && i !== currentIndex ? ' done' : '');
+    sp.textContent = s;
+    sp.onclick = function(){ goTo(i); };
+    pp.appendChild(sp);
+    if(i < quizData.length - 1) pp.appendChild(document.createTextNode(' '));
+  });
+}
+
+function loadQuestion(){
+  var data = quizData[currentIndex];
+  document.getElementById('progressText').textContent = 'Sentence ' + (currentIndex + 1) + ' / ' + quizData.length;
+  document.getElementById('progressBar').style.width = ((currentIndex + 1) / quizData.length * 100) + '%';
+  document.getElementById('btnPrev').disabled = currentIndex === 0;
+  renderPara();
+
+  var grid = document.getElementById('charGrid'); grid.innerHTML = '';
+  var words = data.split(' ');
+  var g = 0;
+  var currentSaved = savedUserInputs[currentIndex] || [];
+  words.forEach(function(word){
+    if(!word) return;
+    var wg = document.createElement('div'); wg.className = 'word-group';
+    for(var i = 0; i < word.length; i++){
+      var ch = word[i];
+      var input = document.createElement('input');
+      input.type = 'text'; input.maxLength = 1;
+      input.setAttribute('autocomplete','off'); input.setAttribute('autocorrect','off'); input.setAttribute('autocapitalize','off'); input.setAttribute('spellcheck','false');
+      input.dataset.globalIdx = g; input.dataset.isWordEnd = (i === word.length - 1) ? 'true' : 'false';
+      input.className = isAlphaNum(ch) ? 'char-input' : 'char-punct';
+      if(currentSaved[g] !== undefined && currentSaved[g] !== null) input.value = currentSaved[g];
+      input.addEventListener('input', function(e){
+        if(e.target.value.length >= 1){ e.target.value = e.target.value.slice(-1); if(e.target.dataset.isWordEnd !== 'true') focusNextInput(e.target); }
+        userChecked[currentIndex] = false; // changed after checking -> next Enter checks again
+        document.getElementById('perfectMsg').style.display = 'none';
+        saveCurrentInputs();
+      });
+      input.addEventListener('keydown', function(e){
+        if(e.key === ' '){ e.preventDefault(); focusNextInput(e.target); }
+        else if(e.key === 'Enter'){
+          e.preventDefault();
+          if(userChecked[currentIndex] && isPerfect(currentIndex)) nextQuestion(); else checkAnswer();
+        }
+        else if(e.key === 'Backspace' && e.target.value === ''){ focusPrevInput(e.target); }
+        else if(e.key === 'ArrowRight'){ focusNextInput(e.target); }
+        else if(e.key === 'ArrowLeft'){ focusPrevInput(e.target); }
+      });
+      wg.appendChild(input); g++;
+    }
+    grid.appendChild(wg);
+  });
+
+  if(userChecked[currentIndex]) showDiffResult(); else { document.getElementById('resultBox').style.display = 'none'; }
+  var first = grid.querySelector('input'); if(first) first.focus();
+  saveState();
+}
+
+function inputs(){ return Array.prototype.slice.call(document.querySelectorAll('#charGrid input')); }
+function focusNextInput(cur){ var a = inputs(), i = parseInt(cur.dataset.globalIdx, 10); if(i + 1 < a.length) a[i + 1].focus(); }
+function focusPrevInput(cur){ var a = inputs(), i = parseInt(cur.dataset.globalIdx, 10); if(i - 1 >= 0) a[i - 1].focus(); }
+function saveCurrentInputs(){ savedUserInputs[currentIndex] = inputs().map(function(x){ return x.value; }); saveState(); }
+
+function isPerfect(idx){
+  var target = quizData[idx], saved = savedUserInputs[idx] || [], k = 0;
+  for(var i = 0; i < target.length; i++){
+    if(target[i] === ' ') continue;
+    if(!charMatch(target[i], saved[k] || '')) return false;
+    k++;
+  }
+  return true;
+}
+
+function checkAnswer(){
+  saveCurrentInputs();
+  userChecked[currentIndex] = true;
+  if(firstTry[currentIndex] === null) firstTry[currentIndex] = isPerfect(currentIndex);
+  saveState();
+  showDiffResult();
+  renderPara();
+}
+
+function retryQuestion(){
+  savedUserInputs[currentIndex] = null; userChecked[currentIndex] = false;
+  document.getElementById('resultBox').style.display = 'none';
+  inputs().forEach(function(x){ x.value = ''; });
+  saveState(); renderPara();
+  var first = document.querySelector('#charGrid input'); if(first) first.focus();
+}
+
+function showDiffResult(){
+  var target = quizData[currentIndex], saved = savedUserInputs[currentIndex] || [];
+  var box = document.getElementById('resultTarget'); box.innerHTML = '';
+  var k = 0;
+  for(var i = 0; i < target.length; i++){
+    var ch = target[i];
+    if(ch === ' '){ box.appendChild(document.createTextNode(' ')); continue; }
+    var sp = document.createElement('span');
+    sp.className = charMatch(ch, saved[k] || '') ? 'correct-char' : 'wrong-char';
+    sp.textContent = ch; box.appendChild(sp); k++;
+  }
+  document.getElementById('perfectMsg').style.display = isPerfect(currentIndex) ? 'block' : 'none';
+  document.getElementById('resultBox').style.display = 'block';
+}
+
+function goTo(i){ if(finished) return; saveCurrentInputs(); currentIndex = i; loadQuestion(); }
+function prevQuestion(){ if(currentIndex > 0){ saveCurrentInputs(); currentIndex--; loadQuestion(); } }
+function nextQuestion(){
+  saveCurrentInputs();
+  if(currentIndex < quizData.length - 1){ currentIndex++; loadQuestion(); }
+  else showScore(true);
+}
+
+function getAttempts(){ return parseInt(lsGet(ATT_KEY) || '0', 10); }
+function showScore(fresh){
+  document.getElementById('quizArea').style.display = 'none';
+  document.getElementById('scoreArea').style.display = 'block';
+  document.getElementById('progressText').textContent = 'Done';
+  document.getElementById('progressBar').style.width = '100%';
+  var perfect = 0, firstOk = 0;
+  quizData.forEach(function(_, i){ if(isPerfect(i)) perfect++; if(firstTry[i] === true) firstOk++; });
+  document.getElementById('finalScore').textContent = perfect + ' of ' + quizData.length + ' sentences typed perfectly (' + firstOk + ' on the first try).';
+  if(fresh && !finished){
+    finished = true; lsSet(ATT_KEY, String(getAttempts() + 1)); saveState();
+    reportResult(perfect, firstOk);
+  }
+}
+
+function reportResult(perfect, firstOk){
+  try{
+    var wrongPos = [];
+    quizData.forEach(function(_, i){ if(firstTry[i] !== true) wrongPos.push(i + 1); });
+    var total = quizData.length;
+    var payload = {
+      child: TITLE.indexOf('[Grant]') === 0 ? 'Grant' : (TITLE.indexOf('[Sion]') === 0 ? 'Sion' : 'Unknown'),
+      quizTitle: TITLE, quizKey: QUIZ_KEY, attemptNumber: getAttempts(),
+      correct: firstOk, wrong: total - firstOk, skipped: 0, total: total,
+      scorePercent: total > 0 ? Math.round(firstOk / total * 1000) / 10 : 0,
+      wrongNumbers: wrongPos.join(','), quizDate: TODAY_STR
+    };
+    fetch(REPORT_ENDPOINT, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) }).catch(function(){});
+  }catch(e){}
+}
+
+function openFreshModal(){ document.getElementById('fresh-modal').style.display = 'flex'; }
+function closeFreshModal(){ document.getElementById('fresh-modal').style.display = 'none'; }
+function confirmFresh(){
+  currentIndex = 0; finished = false;
+  savedUserInputs = quizData.map(function(){ return null; });
+  userChecked = quizData.map(function(){ return false; });
+  firstTry = quizData.map(function(){ return null; });
+  saveState(); closeFreshModal();
+  document.getElementById('scoreArea').style.display = 'none';
+  document.getElementById('quizArea').style.display = 'block';
+  loadQuestion();
+}
+
+window.prevQuestion = prevQuestion; window.nextQuestion = nextQuestion; window.checkAnswer = checkAnswer;
+window.retryQuestion = retryQuestion; window.openFreshModal = openFreshModal; window.closeFreshModal = closeFreshModal;
+window.confirmFresh = confirmFresh; window.goTo = goTo;
+
+document.getElementById('quizTitle').textContent = TITLE;
+document.getElementById('instruction').textContent = INSTRUCTION;
+loadState();
+if(finished){ loadQuestion(); showScore(false); } else loadQuestion();
+</script>
+</body>
+</html>
