@@ -177,6 +177,35 @@ function reportResult(){
     }).catch(function(){});
   }catch(e){}
 }
+/* progress-report 2026-10-27 */
+var _lastProgressSig = '';
+function reportProgress(){
+  try{
+    if(state.showResults) return;
+    if(!(!(activeSet && activeSet.length) && !localStorage.getItem(STORAGE_KEY + '_wrongsent'))) return;
+    var answered=0, correct=0, wd=[];
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos]; var a = state.answers[qi];
+      if(a===undefined){ wd.push(wrongDetail(qi, '(not answered)')); continue; }
+      answered++;
+      if(a===RAW_QUESTIONS[qi].ci) correct++; else wd.push(wrongDetail(qi, RAW_QUESTIONS[qi].opts[a]));
+    }
+    if(answered===0) return;
+    var sig = answered + '/' + correct; if(sig===_lastProgressSig) return; _lastProgressSig = sig;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var body = JSON.stringify({ type:'progress', child: childName, quizTitle: TITLE, quizKey: QUIZ_KEY, quizDate: quizDateStr(),
+      answered: answered, total: order.length, correct: correct, wrongAnswers: wd });
+    fetch(REPORT_ENDPOINT, { method:'POST', mode:'no-cors', keepalive: body.length < 60000,
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, body: body }).catch(function(){});
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='hidden') reportProgress(); });
+window.addEventListener('pagehide', reportProgress);
+
 
 var ATTEMPTS_KEY = STORAGE_KEY + '_attempts';
 
