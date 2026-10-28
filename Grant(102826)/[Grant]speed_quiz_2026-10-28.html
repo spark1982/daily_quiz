@@ -507,7 +507,8 @@ function goToQ(pos){
 function showResultsNow(){
   if(state.showResults) return; // 2026-10-14: ignore double taps / Results tap on the results screen (prevented duplicate result emails)
     freezeTimer(order[state.cur]);
-  state.showResults = true; incAttempts(); saveState(); render(); reportResult();
+  if(state.reported){ state.showResults=true; saveState(); render(); return; } /* no-resend-after-review 2026-10-28 */
+  state.showResults = true; incAttempts(); saveState(); render(); reportResult(); state.reported = true; saveState();
 }
 function pick(idx){
   var qi = order[state.cur];
@@ -526,7 +527,7 @@ function goNext(){
   if(state.showResults) return; // 2026-10-14: ignore double taps / Results tap on the results screen (prevented duplicate result emails)
     freezeTimer(order[state.cur]);
   if(state.cur < order.length-1){ state.cur++; saveState(); render(); }
-  else { state.showResults=true; incAttempts(); saveState(); render(); reportResult(); }
+  else { if(state.reported){ state.showResults=true; saveState(); render(); return; } /* no-resend-after-review 2026-10-28 */ state.showResults=true; incAttempts(); saveState(); render(); reportResult(); state.reported = true; saveState(); }
 }
 function renderResults(){
   var correct=0, wrong=0, skipped=0, timedout=0;
@@ -577,7 +578,7 @@ function startRetry(){
   });
   order = wrong;
   saveOrder(order);
-  state.cur=0; state.showResults=false;
+  state.cur=0; state.showResults=false; state.reported=false;
   saveState(); render();
 }
 function openFreshModal(){
