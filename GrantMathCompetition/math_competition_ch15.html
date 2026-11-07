@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grant Math Competition - Chapter 15</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;max-width:700px;margin:0 auto;}
+.title-hd{text-align:center;font-size:1.5rem;font-weight:800;color:#1D9E75;padding:10px 0 2px;}
+.instruction{text-align:center;font-size:0.88rem;color:#555;padding:6px 12px 10px;background:#fff;}
+#qzAttemptsBar{text-align:center;font-size:0.8rem;color:#888;margin-bottom:6px;}
+#qzAttemptsBar span{font-weight:700;color:#185FA5;margin-left:4px;}
+
+.timer-bar{background:#fff;border-bottom:1px solid #d0dce8;padding:8px 12px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+.timer-setup{display:flex;align-items:center;gap:8px;font-size:0.85rem;color:#444;}
+.timer-setup label{font-weight:700;}
+.timer-setup input[type="number"]{width:56px;padding:5px 6px;border:1.5px solid #d0dce8;border-radius:6px;font-size:0.9rem;text-align:center;}
+.timer-start-btn{background:#185FA5;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;}
+.timer-start-btn:active{opacity:0.8;}
+.timer-running{display:flex;align-items:center;gap:8px;}
+.timer-label{font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.02em;}
+.timer-display{font-size:1.1rem;font-weight:900;color:#185FA5;font-family:'Courier New',monospace;letter-spacing:0.02em;}
+.timer-display.warn{color:#f5a623;}
+.timer-display.danger{color:#E24B4A;}
+.timer-pause-btn{background:#e8edf4;color:#185FA5;border:1.5px solid #185FA5;border-radius:6px;padding:5px 12px;font-size:0.8rem;font-weight:700;cursor:pointer;}
+
+.q-tag{display:inline-block;background:#1D9E75;color:#fff;border-radius:14px;padding:3px 12px;font-size:0.78rem;margin-bottom:8px;}
+.q-num{font-size:0.82rem;color:#888;margin-bottom:4px;}
+.passage-box{background:#f0f4ff;border-left:4px solid #185FA5;border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:0.92rem;color:#222;line-height:1.65;}
+.context-box{background:#f0f4ff;border-left:4px solid #185FA5;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.92rem;color:#222;line-height:1.6;}
+.q-text{font-size:1.05rem;font-weight:700;color:#111;margin-bottom:14px;line-height:1.5;}
+.opt-btn{display:block;width:100%;padding:12px 14px;margin:6px 0;border:2px solid transparent;border-radius:10px;background:#e8edf4;color:#111;font-size:0.95rem;text-align:left;cursor:pointer;}
+.opt-btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+.opt-btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#501313;}
+.opt-btn:disabled{cursor:default;}
+.exp-box{background:#fff8e1;border-left:4px solid #f5a623;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:0.88rem;color:#444;display:none;white-space:pre-line;}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.nav-btn{padding:10px 22px;border-radius:20px;border:none;cursor:pointer;font-size:0.93rem;font-weight:600;}
+.prev-btn{background:#e8edf4;color:#1D9E75;}
+.next-btn{background:#1D9E75;color:#fff;}
+.prog-track{background:#d7dde6;border-radius:3px;height:6px;flex:1;margin:0 10px;}
+.prog-fill{background:#185FA5;border-radius:3px;height:6px;width:0%;transition:width 0.2s;}
+#dot-panel{display:none;max-height:170px;overflow-y:auto;padding:8px;background:#f5f7fa;border-radius:8px;margin-bottom:8px;}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;cursor:pointer;margin:2px;color:#fff;}
+.results-card{background:#f5f7fa;border-radius:10px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;padding:24px;border-radius:16px;max-width:340px;margin:20px;text-align:center;}
+
+.fr{display:inline-block;vertical-align:middle;text-align:center;font-style:italic;}
+.fr .fn,.fr .fd{display:block;font-size:0.78em;line-height:1.25;padding:0 3px;}
+.fr .fb{display:block;border-top:1.5px solid currentColor;min-width:14px;}
+.mblock{text-align:center;margin:10px 0;font-size:1.05em;font-style:italic;line-height:2;}
+.radical{display:inline-flex;align-items:center;vertical-align:middle;}
+.radical-index{font-size:0.65em;align-self:flex-start;margin-right:1px;line-height:1;}
+.radical-symbol{display:inline-flex;align-items:stretch;}
+.radical-symbol::before{content:"\221A";font-size:1.15em;line-height:1;position:relative;top:2px;}
+.radical-content{border-top:2.5px solid currentColor;padding:1px 4px 1px 2px;display:inline-block;line-height:1.3;}
+.matrix-table{display:inline-table;vertical-align:middle;border-left:2.5px solid #111;border-right:2.5px solid #111;padding:2px 4px;margin:0 4px;border-collapse:collapse;}
+.matrix-table td{padding:3px 10px;text-align:center;font-style:italic;font-size:1.02em;}
+.matrix-label{font-style:italic;font-weight:700;}
+  /* textbook typeface (2026-09-23): Charter-family serif, upright numerals, italic variables */
+  body, button, .opt-btn, .q-text, .exp-box, .passage-box { font-family: Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, 'Times New Roman', serif; }
+  .q-text { font-weight: 400; font-size: 1.12rem; }
+  .opt-btn { font-size: 1.02rem; }
+  .q-text i, .opt-btn i, .exp-box i { font-style: italic; }
+</style>
+</head>
+<body>
+
+<div class="title-hd">Grant Math Competition - Chapter 15</div>
+<div class="instruction">Choose the correct answer for each problem.</div>
+<div id="qzAttemptsBar">Total Attempts:<span id="qzAttemptsCount">0</span></div>
+
+<div class="timer-bar" id="timerBar">
+  <div class="timer-setup" id="timerSetup">
+    <label for="timerMinutesInput">Set Time Limit:</label>
+    <input type="number" id="timerMinutesInput" min="1" max="180" value="20"> min
+    <button class="timer-start-btn" onclick="startTimer()">Start</button>
+  </div>
+  <div class="timer-running" id="timerRunning" style="display:none;">
+    <span class="timer-label">Time Left</span>
+    <span class="timer-display" id="timerDisplay">20:00</span>
+  </div>
+</div>
+
+<div id="nav-bar" style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+  <span id="nav-count" style="font-size:13px;white-space:nowrap;color:#555;">0 / N</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <button onclick="toggleJump()" id="jump-btn" style="font-size:12px;padding:4px 10px;border:1px solid #185FA5;border-radius:14px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;">Jump &#9662;</button>
+</div>
+<div id="dot-panel"></div>
+
+<div id="quizArea" style="display:none;">
+  <div><span class="q-tag" id="q-tag-label"></span></div>
+  <div class="q-num" id="q-num"></div>
+  <div class="passage-box" id="passage-box" style="display:none;"></div>
+  <div class="context-box" id="context-box" style="display:none;"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="opts-area"></div>
+  <div class="exp-box" id="exp-box"></div>
+  <div class="nav-row">
+    <button class="nav-btn prev-btn" onclick="go(-1)">Prev</button>
+    <button class="nav-btn next-btn" id="next-btn" onclick="go(1)">Next</button>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none;">
+  <h2 style="text-align:center;color:#1D9E75;margin:16px 0 8px;">Results</h2>
+  <div id="results-summary" style="text-align:center;font-size:1.1rem;margin-bottom:14px;"></div>
+  <div id="results-cards"></div>
+  <button onclick="retryWrong()" style="display:block;width:100%;padding:13px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Retry Wrong Ones</button>
+  <button onclick="copyRes()" style="display:block;width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Copy All Results</button>
+  <button onclick="openFreshModalOriginal()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:12px;">Start Fresh (Original Order)</button>
+  <button onclick="openFreshModalRandom()" style="display:block;width:100%;padding:13px;background:#e8edf4;color:#111;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Start Fresh (Random Order)</button>
+</div>
+
+<div class="modal-overlay" id="freshModal">
+  <div class="modal-box">
+    <h3 id="freshModalTitle" style="margin:0 0 10px;color:#185FA5;font-size:1.05rem;">Start Fresh?</h3>
+    <p id="freshModalText" style="font-size:0.95rem;color:#444;margin:0 0 16px;">All progress will be lost.</p>
+    <button onclick="confirmFresh()" style="background:#E24B4A;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;margin-right:8px;">Yes, Start Fresh</button>
+    <button onclick="closeFreshModal()" style="background:#e8edf4;color:#111;border:none;padding:11px 22px;border-radius:8px;font-size:0.95rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+
+var QUIZ_KEY = 'quiz_grantmathcomp_ch15_20_20261107_v1';
+var ATT_KEY  = 'quiz_grantmathcomp_ch15_20_att_20261107_v1';
+var ORDER_KEY = 'quiz_grantmathcomp_ch15_20_20261107_v1_order_v1';
+var QUIZ_LABEL = 'Grant Math Competition - Chapter 15 - Results';
+
+function fr(n, d) {
+  return '<span class="fr"><span class="fn">'+n+'</span><span class="fb"></span><span class="fd">'+d+'</span></span>';
+}
+function mx(w, n, d) {
+  return w+'&thinsp;'+fr(n,d);
+}
+function R(idx, inner) {
+  var i = idx ? '<span class="radical-index">'+idx+'</span>' : '';
+  return '<span class="radical">'+i+
+         '<span class="radical-symbol">'+
+           '<span class="radical-content">'+inner+'</span>'+
+         '</span></span>';
+}
+function mat(rows) {
+  var html = '<table class="matrix-table"><tbody>';
+  for (var r=0;r<rows.length;r++){
+    html += '<tr>';
+    for (var c=0;c<rows[r].length;c++){ html += '<td>'+rows[r][c]+'</td>'; }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  return html;
+}
+
+var RAW_QUESTIONS = [{"q": "Given a set, {17, 33, 5, 25}, find the median.", "opts": ["21", "29", "25", "20"], "ci": 0, "exp": "Put the numbers in order: 5, 17, 25, 33. There are 4 numbers, so the median is the mean of the two middle numbers: (17 + 25) &divide; 2 = 42 &divide; 2 = 21. 29 is the median of the set left unsorted (33 and 25 in the middle). 25 picks only one middle number, and 20 is the mean of all four numbers (80 &divide; 4)."}, {"q": "Given a set, {22, 28, 29, 22, 34}, find the mean.", "opts": ["27", "28", "22", "135"], "ci": 0, "exp": "Add all five numbers: 22 + 28 + 29 + 22 + 34 = 135. Divide by how many numbers there are: 135 &divide; 5 = 27. 28 is the median, 22 is the mode, and 135 is the sum before dividing."}, {"q": "Given a set, {31, 22, 58, 99, 79, 124}, find the range.", "opts": ["102", "93", "68.5", "146"], "ci": 0, "exp": "Range = largest value &minus; smallest value = 124 &minus; 22 = 102. 93 uses the first number (31) instead of the smallest, 68.5 is the median, and 146 adds the two values instead of subtracting."}, {"q": "Given a set, {17, 44, 81, 44, 99, 17, 17, 81, 99, 81}, find the mode.", "opts": ["17 and 81", "17", "81", "44 and 99"], "ci": 0, "exp": "Count each number: 17 appears 3 times, 44 appears 2 times, 81 appears 3 times, and 99 appears 2 times. Two numbers tie for the most, so the set has two modes: 17 and 81. Choosing only 17 or only 81 misses the tie, and 44 and 99 appear the fewest times."}, {"q": "Given a set, {12, 16, 14, 14, 19, 18, 13, 14}, find the mean, median, mode and range.", "opts": ["mean 15, median 14, mode 14, range 7", "mean 14, median 15, mode 14, range 7", "mean 15, median 14, mode 14, range 6", "mean 15, median 16, mode 14, range 7"], "ci": 0, "exp": "Sum: 12 + 16 + 14 + 14 + 19 + 18 + 13 + 14 = 120, and 120 &divide; 8 = 15 (mean). In order: 12, 13, 14, 14, 14, 16, 18, 19; the two middle numbers are 14 and 14, so the median is 14. 14 appears three times, so the mode is 14. Range = 19 &minus; 12 = 7. Range 6 forgets to use the true smallest number (12), and median 16 comes from not sorting first."}, {"q": "What is the average angle of a triangle with angles: 108, 44, and 28 degrees?", "opts": ["60 degrees", "90 degrees", "180 degrees", "44 degrees"], "ci": 0, "exp": "Average = (108 + 44 + 28) &divide; 3 = 180 &divide; 3 = 60 degrees. In fact, every triangle's angles add up to 180°, so the average angle of any triangle is always 60°. 180 is the sum before dividing, and 44 is the middle angle (the median)."}, {"q": "A marathon runner ran distances: 25 miles, 13 miles, 17 miles, 12 miles and 18 miles. What was the average distance that the runner ran?", "opts": ["17 miles", "25 miles", "85 miles", "13 miles"], "ci": 0, "exp": "Average (mean) = (25 + 13 + 17 + 12 + 18) &divide; 5 = 85 &divide; 5 = 17 miles. 85 is the total before dividing, 13 is the range (25 &minus; 12), and 25 is the longest single run."}, {"q": "Over the course of 5 vacation days, Jake drove 23 miles, 43 miles, 37 miles, 14 miles and 13 miles. What is the median distance that he drove?", "opts": ["23 miles", "37 miles", "26 miles", "30 miles"], "ci": 0, "exp": "Put the distances in order: 13, 14, 23, 37, 43. With 5 values, the median is the 3rd one: 23 miles. 37 is the middle number of the list before sorting, 26 is the mean (130 &divide; 5), and 30 is the range (43 &minus; 13)."}, {"q": "Lucy works at her lemonade stand. This past week, she sold $40, $33, $18, $33, $12, $18 and $18 of lemonades. What is the positive difference between the range and mode of her daily sales?", "opts": ["$10", "$22", "$28", "$5"], "ci": 0, "exp": "Mode: $18 appears 3 times, more than any other amount. Range: $40 &minus; $12 = $28. Positive difference: $28 &minus; $18 = $10. $28 is just the range, $22 subtracts the mode from the largest sale ($40) instead of from the range, and $5 treats $33 as the mode even though it appears only twice ($33 − $28)."}, {"q": "What is the average angle of a hexagon with angles: 120, 125, 120, 95, 136, and 124 degrees?", "opts": ["120 degrees", "122 degrees", "720 degrees", "41 degrees"], "ci": 0, "exp": "Sum: 120 + 125 + 120 + 95 + 136 + 124 = 720. Average: 720 &divide; 6 = 120 degrees. (Every hexagon's angles add up to 720°, so the average is always 120°.) 720 is the sum before dividing, 122 is the median, and 41 is the range (136 &minus; 95)."}, {"q": "Given a set, {1, 11, 111, 1111, 11111, 111111}, find the positive difference between the median and the range.", "opts": ["110,499", "110,500", "111,000", "111,721"], "ci": 0, "exp": "Median: there are 6 numbers, so take the mean of the 3rd and 4th: (111 + 1,111) &divide; 2 = 1,222 &divide; 2 = 611. Range: 111,111 &minus; 1 = 111,110. Difference: 111,110 &minus; 611 = 110,499. 110,500 forgets to subtract the 1 when finding the range, 111,000 uses 111 as the median, and 111,721 adds the two values instead of subtracting."}, {"q": "Five movies have feature-lengths of 144 minutes, 126 minutes, 125 minutes, 131 minutes and 154 minutes. What is the sum of the mean and the range of the movies' feature-lengths?", "opts": ["165", "136", "107", "160"], "ci": 0, "exp": "Mean: (144 + 126 + 125 + 131 + 154) &divide; 5 = 680 &divide; 5 = 136. Range: 154 &minus; 125 = 29. Sum: 136 + 29 = 165. 136 is the mean alone, 107 is the difference (136 &minus; 29) instead of the sum, and 160 uses the median (131) instead of the mean (131 + 29)."}, {"q": "Given a set, {34, 56, 71, 44, 27, 14}, find the positive difference between the mean and the range.", "opts": ["16", "98", "18", "57"], "ci": 0, "exp": "Mean: (34 + 56 + 71 + 44 + 27 + 14) &divide; 6 = 246 &divide; 6 = 41. Range: 71 &minus; 14 = 57. Difference: 57 &minus; 41 = 16. 98 adds them instead of subtracting, 18 uses the median (39) instead of the mean (57 &minus; 39), and 57 is the range alone."}, {"q": "At the toy store, 8 different toys ranged in prices of $19, $45, $104, $99, $9, $12, $13 and $19. Let A be the mean, B be the mode and C be the median. Find the median of the set: {A, B, C}.", "opts": ["19", "40", "32", "26"], "ci": 0, "exp": "A (mean): $19 + $45 + $104 + $99 + $9 + $12 + $13 + $19 = $320, and 320 &divide; 8 = 40. B (mode): 19 appears twice, so B = 19. C (median): in order 9, 12, 13, 19, 19, 45, 99, 104, the middle two are 19 and 19, so C = 19. The set {40, 19, 19} in order is 19, 19, 40, so its median is 19. 40 is A, 26 is the mean of {A, B, C}, and 32 comes from using 45 as the median."}, {"q": "Given a set, {11, A}, the mean is 8. Find the value of A.", "opts": ["5", "8", "−3", "16"], "ci": 0, "exp": "If the mean of 2 numbers is 8, their sum is 2 &times; 8 = 16. So 11 + A = 16, and A = 16 &minus; 11 = 5. 16 is the sum, not A; 8 assumes A equals the mean; −3 comes from 8 &minus; 11."}, {"q": "Given a set, {33, 54, 20, 12, 19, 96}, let A be the mean, B be the smallest value and C be the largest value. Find the mean of set: {A, B, C}", "opts": ["49", "54", "39", "35"], "ci": 0, "exp": "A (mean): 33 + 54 + 20 + 12 + 19 + 96 = 234, and 234 &divide; 6 = 39. B = 12 and C = 96. Mean of {39, 12, 96}: (39 + 12 + 96) &divide; 3 = 147 &divide; 3 = 49. 54 is the mean of only B and C, 39 is A by itself, and 35 uses 54 as the largest value instead of 96 — always find the smallest and largest after sorting.", "tag": "Challenge", "tagColor": "#f5a623"}, {"q": "Given a set, {A, B, 13, 15}, the mean is 12. Find the sum of A and B.", "opts": ["20", "24", "48", "28"], "ci": 0, "exp": "The mean of 4 numbers is 12, so their sum is 4 &times; 12 = 48. A + B + 13 + 15 = 48, so A + B = 48 &minus; 28 = 20. 48 is the total of all four numbers, 28 is 13 + 15, and 24 is 2 &times; 12 (using only two numbers)."}, {"q": "Three trees have heights of A, B, and 10 feet. If the mode of the trees' heights is 7 feet, what is the mean of the trees' heights?", "opts": ["8 feet", "7 feet", "17 feet", "24 feet"], "ci": 0, "exp": "A mode of 7 means 7 appears more often than any other height. The third tree is 10 feet, so both A and B must be 7. Mean: (7 + 7 + 10) &divide; 3 = 24 &divide; 3 = 8 feet. 24 is the total before dividing, 7 is the mode, and 17 adds 7 and 10 without finding the mean."}, {"q": "Given an arranged set, {14, 16, A, 20, 22, B}, the median and the mean is 20. Find the positive difference between A and B.", "opts": ["8", "28", "20", "48"], "ci": 0, "exp": "The set is in order, so the median is the mean of the 3rd and 4th numbers: (A + 20) &divide; 2 = 20, so A + 20 = 40 and A = 20. The mean is 20, so the sum is 6 &times; 20 = 120: 14 + 16 + 20 + 20 + 22 + B = 92 + B = 120, so B = 28. Difference: 28 &minus; 20 = 8. 28 is B by itself, 20 is A, and 48 is A + B."}, {"q": "Given an arranged set, {10, 16, 17, A, B, 23, C}, the mean and median is 19 and the range is 18. Find the product of the median and range of set: {A, B, C}", "opts": ["180", "342", "171", "162"], "ci": 0, "exp": "Median: 7 numbers in order, so the median is the 4th number: A = 19. Range: C &minus; 10 = 18, so C = 28. Mean: the sum is 7 &times; 19 = 133, and 10 + 16 + 17 + 19 + B + 23 + 28 = 113 + B, so B = 20. The set {19, 20, 28} has median 20 and range 28 &minus; 19 = 9. Product: 20 &times; 9 = 180. 342 multiplies the original median and range (19 &times; 18), 171 uses median 19 with range 9, and 162 multiplies the original range by the new range (18 &times; 9).", "tag": "Challenge", "tagColor": "#f5a623"}];
+
+function shuffle(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var tmp=a[i]; a[i]=a[j]; a[j]=tmp;
+  }
+  return a;
+}
+function identityOrder(){ var o=[]; for(var i=0;i<RAW_QUESTIONS.length;i++) o.push(i); return o; }
+function isValidOrder(arr){
+  if(!Array.isArray(arr) || arr.length!==RAW_QUESTIONS.length) return false;
+  var sorted = arr.slice().sort(function(a,b){return a-b;});
+  for(var i=0;i<sorted.length;i++) if(sorted[i]!==i) return false;
+  return true;
+}
+function loadOrder(){
+  try{
+    var raw = localStorage.getItem(ORDER_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!isValidOrder(arr)) throw new Error('bad order');
+    return arr;
+  }catch(e){ localStorage.removeItem(ORDER_KEY); return null; }
+}
+function saveOrder(order){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(order)); }catch(e){} }
+function buildQuestions(raw, order){
+  var out=[];
+  for(var i=0;i<order.length;i++) out.push(raw[order[i]]);
+  return out;
+}
+var currentOrder = loadOrder() || identityOrder();
+var qs = buildQuestions(RAW_QUESTIONS, currentOrder);
+var pendingFreshMode = 'original';
+
+var state = {};
+
+function loadState() {
+  try {
+    var s = JSON.parse(localStorage.getItem(QUIZ_KEY) || 'null');
+    if (s && typeof s.cur === 'number' && s.answers && s.shuffles) {
+      state = s;
+    } else {
+      resetState();
+    }
+  } catch(e) {
+    localStorage.removeItem(QUIZ_KEY);
+    resetState();
+  }
+}
+function resetState() {
+  state = { cur: 0, answers: {}, shuffles: {}, showResults: false, timerTotalSec: null, timerStartedAt: null };
+}
+function saveState() {
+  localStorage.setItem(QUIZ_KEY, JSON.stringify(state));
+}
+
+function getShuffle(i) {
+  if (!state.shuffles[i]) {
+    var a = [0, 1, 2, 3];
+    for (var k = 3; k > 0; k--) {
+      var j = Math.floor(Math.random() * (k + 1));
+      var t = a[k]; a[k] = a[j]; a[j] = t;
+    }
+    state.shuffles[i] = a;
+  }
+  return state.shuffles[i];
+}
+function getCSI(i) {
+  return getShuffle(i).indexOf(qs[i].ci);
+}
+
+function loadAttempts() {
+  return parseInt(localStorage.getItem(ATT_KEY) || '0', 10);
+}
+function renderAttempts(){
+  document.getElementById('qzAttemptsCount').textContent = loadAttempts();
+}
+
+var timerInterval = null;
+function formatTime(sec) {
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec / 60);
+  var s = sec % 60;
+  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+function renderTimer() {
+  var setupEl = document.getElementById('timerSetup');
+  var runningEl = document.getElementById('timerRunning');
+  var displayEl = document.getElementById('timerDisplay');
+  if (!state.timerStartedAt) { setupEl.style.display = 'flex'; runningEl.style.display = 'none'; return; }
+  setupEl.style.display = 'none'; runningEl.style.display = 'flex';
+  var elapsed = (Date.now() - state.timerStartedAt) / 1000;
+  var remaining = state.timerTotalSec - elapsed;
+  displayEl.classList.remove('warn', 'danger');
+  if (remaining <= 0) { displayEl.textContent = "Time's Up"; displayEl.classList.add('danger'); stopTimerInterval(); return; }
+  displayEl.textContent = formatTime(remaining);
+  if (remaining <= state.timerTotalSec * 0.1) displayEl.classList.add('danger');
+  else if (remaining <= state.timerTotalSec * 0.25) displayEl.classList.add('warn');
+}
+function startTimer() {
+  var input = document.getElementById('timerMinutesInput');
+  var minutes = parseFloat(input.value);
+  if (!minutes || minutes <= 0) minutes = 20;
+  state.timerTotalSec = Math.round(minutes * 60);
+  state.timerStartedAt = Date.now();
+  saveState();
+  renderTimer();
+  startTimerInterval();
+}
+function startTimerInterval() { stopTimerInterval(); timerInterval = setInterval(renderTimer, 1000); }
+function stopTimerInterval() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
+function resetTimerForRestart(){
+  state.timerTotalSec = null;
+  state.timerStartedAt = null;
+  stopTimerInterval();
+}
+
+function updateNav() {
+  var ans = Object.keys(state.answers).length;
+  document.getElementById('nav-count').textContent = ans + ' / ' + qs.length;
+  document.getElementById('prog-fill').style.width = (ans / qs.length * 100).toFixed(1) + '%';
+  renderDots();
+}
+function toggleJump() {
+  var p = document.getElementById('dot-panel');
+  var b = document.getElementById('jump-btn');
+  if (p.style.display === 'none' || !p.style.display) {
+    p.style.display = 'block'; b.innerHTML = 'Hide &#9652;'; renderDots();
+  } else {
+    p.style.display = 'none'; b.innerHTML = 'Jump &#9662;';
+  }
+}
+function renderDots() {
+  var p = document.getElementById('dot-panel');
+  if (p.style.display !== 'block') return;
+  var h = '';
+  for (var i = 0; i < qs.length; i++) {
+    var bg = state.answers[i] === undefined ? '#d7dde6'
+           : (state.answers[i] === getCSI(i) ? '#185FA5' : '#E24B4A');
+    h += '<span class="dot" style="background:' + bg + ';" onclick="goToQ(' + i + ')">' + (i + 1) + '</span>';
+  }
+  if (Object.keys(state.answers).length === qs.length) {
+    h += '<br><span onclick="showResults()" style="display:inline-block;margin-top:6px;background:#1D9E75;color:#fff;padding:4px 16px;border-radius:12px;font-size:0.82rem;cursor:pointer;">Results</span>';
+  }
+  p.innerHTML = h;
+}
+function goToQ(i) {
+  state.cur = i; state.showResults = false; saveState(); render();
+  document.getElementById('dot-panel').style.display = 'none';
+  document.getElementById('jump-btn').innerHTML = 'Jump &#9662;';
+}
+
+function showResults() {
+  state.showResults = true;
+  localStorage.setItem(ATT_KEY, loadAttempts() + 1);
+  saveState(); render();
+}
+
+function render() {
+  if (state.showResults) { renderResults(); renderAttempts(); renderTimer(); return; }
+  document.getElementById('quizArea').style.display = 'block';
+  document.getElementById('resultsArea').style.display = 'none';
+  updateNav();
+
+  var i = state.cur;
+  var q = qs[i];
+  var isLast = (i === qs.length - 1);
+
+  document.getElementById('q-num').textContent = 'Question ' + (i + 1) + ' of ' + qs.length;
+
+  var tagEl = document.getElementById('q-tag-label');
+  if (q.tag) { tagEl.style.display='inline-block'; tagEl.textContent = q.tag; tagEl.style.background = q.tagColor || '#1D9E75'; } else { tagEl.style.display='none'; }
+
+  var pb = document.getElementById('passage-box');
+  if (q.passage) { pb.style.display='block'; pb.innerHTML = q.passage; } else { pb.style.display='none'; }
+
+  var cb = document.getElementById('context-box');
+  if (q.context) { cb.style.display='block'; cb.innerHTML = q.context; } else { cb.style.display='none'; }
+
+  document.getElementById('q-text').innerHTML = q.q;
+
+  var sh = getShuffle(i);
+  var ans = state.answers[i];
+  var csi = getCSI(i);
+  var html = '';
+  for (var s = 0; s < 4; s++) {
+    var oi = sh[s];
+    var cls = 'opt-btn';
+    var dis = '';
+    if (ans !== undefined) {
+      dis = 'disabled';
+      if (s === csi) cls += ' correct';
+      else if (s === ans) cls += ' wrong';
+    }
+    html += '<button class="' + cls + '" ' + dis + ' onclick="pick(' + i + ',' + s + ')">' + q.opts[oi] + '</button>';
+  }
+  document.getElementById('opts-area').innerHTML = html;
+
+  var eb = document.getElementById('exp-box');
+  if (ans !== undefined && ans !== csi) {
+    eb.style.display = 'block';
+    eb.innerHTML = q.exp;
+  } else {
+    eb.style.display = 'none';
+  }
+
+  document.getElementById('next-btn').textContent = isLast ? 'See Results →' : 'Next';
+  document.querySelector('.prev-btn').disabled = (i === 0);
+  renderAttempts();
+  renderTimer();
+}
+
+function renderResults() {
+  document.getElementById('quizArea').style.display = 'none';
+  document.getElementById('resultsArea').style.display = 'block';
+  updateNav();
+
+  var c = 0, w = 0, sk = 0;
+  for (var i = 0; i < qs.length; i++) {
+    if (state.answers[i] === undefined) sk++;
+    else if (state.answers[i] === getCSI(i)) c++;
+    else w++;
+  }
+  document.getElementById('results-summary').innerHTML =
+    '<span style="color:#1D9E75;font-weight:700;">' + c + '</span> correct &nbsp;' +
+    '<span style="color:#E24B4A;font-weight:700;">' + w + '</span> wrong &nbsp;' +
+    '<span style="color:#888;font-weight:700;">' + sk + '</span> skipped';
+
+  var html = '';
+  for (var i = 0; i < qs.length; i++) {
+    var a = state.answers[i];
+    var label, bg, tc;
+    if (a === undefined)              { label = 'Skipped'; bg = '#d7dde6'; tc = '#555'; }
+    else if (a === getCSI(i))         { label = 'Correct'; bg = '#E1F5EE'; tc = '#085041'; }
+    else                              { label = 'Wrong';   bg = '#FCEBEB'; tc = '#501313'; }
+    html += '<div class="results-card" onclick="goToQ(' + i + ')">' +
+            '<span style="font-size:0.92rem;font-weight:600;color:#333;">Q' + (i+1) + '</span>' +
+            '<span style="padding:3px 12px;border-radius:12px;font-size:0.82rem;font-weight:600;background:' + bg + ';color:' + tc + ';">' + label + '</span>' +
+            '</div>';
+  }
+  document.getElementById('results-cards').innerHTML = html;
+}
+
+function pick(qi, si) {
+  if (state.answers[qi] !== undefined) return;
+  state.answers[qi] = si;
+  saveState(); render();
+}
+function go(dir) {
+  if (dir === 1 && state.cur === qs.length - 1) { showResults(); return; }
+  state.cur = Math.max(0, Math.min(qs.length - 1, state.cur + dir));
+  saveState(); render();
+}
+function retryWrong() {
+  var first = -1;
+  for (var i = 0; i < qs.length; i++) {
+    if (state.answers[i] !== undefined && state.answers[i] !== getCSI(i)) {
+      if (first === -1) first = i;
+      delete state.answers[i];
+    }
+  }
+  resetTimerForRestart();
+  if (first !== -1) {
+    state.cur = first; state.showResults = false; saveState(); render();
+  } else {
+    saveState(); render();
+  }
+}
+function copyRes() {
+  var lines = [QUIZ_LABEL];
+  for (var i = 0; i < qs.length; i++) {
+    var a = state.answers[i];
+    lines.push('Q' + (i + 1) + ': ' +
+      (a === undefined ? 'Skipped' : a === getCSI(i) ? 'Correct' : 'Wrong'));
+  }
+  var txt = lines.join('\n');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(txt).catch(function() { fallbackCopy(txt); });
+  } else {
+    fallbackCopy(txt);
+  }
+}
+function fallbackCopy(txt) {
+  var ta = document.createElement('textarea');
+  ta.value = txt;
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+}
+
+function openFreshModal(mode){
+  pendingFreshMode = mode;
+  var titleEl = document.getElementById('freshModalTitle');
+  var textEl = document.getElementById('freshModalText');
+  if(mode==='random'){
+    titleEl.textContent = 'Start Fresh (Random Order)?';
+    textEl.textContent = 'Questions will be reshuffled into a new random order, and all progress will be cleared. This cannot be undone.';
+  } else {
+    titleEl.textContent = 'Start Fresh (Original Order)?';
+    textEl.textContent = 'Questions will return to their original order, and all progress will be cleared. This cannot be undone.';
+  }
+  document.getElementById('freshModal').classList.add('show');
+}
+function openFreshModalOriginal(){ openFreshModal('original'); }
+function openFreshModalRandom(){ openFreshModal('random'); }
+function closeFreshModal(){ document.getElementById('freshModal').classList.remove('show'); }
+function confirmFresh(){
+  currentOrder = (pendingFreshMode==='random') ? shuffle(identityOrder()) : identityOrder();
+  saveOrder(currentOrder);
+  qs = buildQuestions(RAW_QUESTIONS, currentOrder);
+  resetState();
+  resetTimerForRestart();
+  saveState();
+  closeFreshModal();
+  render();
+}
+
+window.pick = pick;
+window.go = go;
+window.goToQ = goToQ;
+window.toggleJump = toggleJump;
+window.retryWrong = retryWrong;
+window.copyRes = copyRes;
+window.openFreshModalOriginal = openFreshModalOriginal;
+window.openFreshModalRandom = openFreshModalRandom;
+window.closeFreshModal = closeFreshModal;
+window.confirmFresh = confirmFresh;
+window.showResults = showResults;
+window.startTimer = startTimer;
+
+loadState(); saveState(); render(); renderTimer(); renderAttempts();
+if (state.timerStartedAt) startTimerInterval();
+
+})();
+</script>
+</body>
+</html>
