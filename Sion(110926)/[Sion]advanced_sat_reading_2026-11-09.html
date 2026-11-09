@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Advanced SAT Reading</title>
+<style>
+.q-position{font-size:0.85rem;font-weight:700;color:#185FA5;margin-bottom:8px;}
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f4f6fa; margin:0; padding: 20px 12px 60px; color:#1a1a2e; }
+  .quiz-wrap { max-width: 680px; margin: 0 auto; }
+  .quiz-title { font-size: 1.4rem; font-weight: 800; text-align:center; margin: 8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom: 14px; min-height: 0; }
+  .nav-bar { background:#fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .nav-summary { display:flex; align-items:center; gap:10px; }
+  #nav-count { font-weight:700; font-size:0.85rem; color:#333; white-space:nowrap; }
+  .progress-track { flex:1; height:6px; background:#d7dde6; border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; width:0%; background:#185FA5; border-radius:3px; transition: width .2s; }
+  .jump-btn { background:#eef2f7; border:none; border-radius:8px; padding:6px 12px; font-size:0.8rem; font-weight:700; color:#185FA5; cursor:pointer; white-space:nowrap; }
+  .dots-panel { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .dot { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; cursor:pointer; background:#d7dde6; color:#555; border:none; }
+  .dot.answered-correct { background:#185FA5; color:#fff; }
+  .dot.answered-wrong { background:#E24B4A; color:#fff; }
+  .results-pill { display:inline-block; margin: 0 auto 14px; padding: 8px 20px; background:#1D9E75; color:#fff; border-radius:20px; font-weight:700; text-align:center; cursor:pointer; width:fit-content; }
+  .results-pill-wrap { text-align:center; }
+  .quiz-card, .results-card { background:#fff; border-radius: 14px; padding: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 16px; }
+  .passage-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:0.92rem; line-height:1.6; color:#222; }
+  .context-label { font-size:0.92rem; font-weight:600; color:#333; margin-bottom:8px; line-height:1.4; }
+  .context-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; }
+  .tag-badge { display:inline-block; font-size:0.72rem; font-weight:700; color:#fff; padding:3px 10px; border-radius:12px; margin-bottom:10px; }
+  .q-text { font-size:1.05rem; font-weight:600; margin-bottom:16px; line-height:1.5; }
+  #options { display:flex; flex-direction:column; gap:10px; }
+  .opt-btn { text-align:left; padding:12px 14px; border-radius:10px; border:1.5px solid #d7dde6; background:#fafbfc; font-size:0.95rem; cursor:pointer; line-height:1.4; }
+  .opt-btn:hover { border-color:#185FA5; }
+  .opt-btn.selected-correct { background:#e6f4ec; border-color:#1D9E75; color:#0d6b3f; font-weight:700; }
+  .opt-btn.selected-wrong { background:#fbeaea; border-color:#E24B4A; color:#a52a2a; font-weight:700; }
+  .opt-btn.reveal-correct { background:#e6f4ec; border-color:#1D9E75; }
+  .opt-btn:disabled { cursor:default; }
+  .exp-box { margin-top:14px; background:#eef7f2; border-left:4px solid #1D9E75; border-radius:8px; padding:12px 14px; font-size:0.88rem; color:#2d4d3f; line-height:1.5; display:none; }
+  .hint-btn { background:#fff8e1;color:#a5720a;border:1.5px solid #f5a623;border-radius:8px;padding:7px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-top:12px;margin-bottom:12px;display:inline-block; }
+  .hint-box { background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.88rem;color:#6b5215;line-height:1.5;display:none; }
+  .hint-box.show { display:block; }
+  .tts-btn { background:#eef2f7; border:none; border-radius:50%; width:34px; height:34px; font-size:1rem; cursor:pointer; margin-left:8px; vertical-align:middle; }
+  .nav-btns { display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .nav-btns button { flex:1; padding:11px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; background:#185FA5; color:#fff; }
+  .nav-btns button:disabled { background:#c9d2dc; cursor:default; }
+  .results-card h2 { text-align:center; margin-top:0; }
+  .score-big { text-align:center; font-size:2.2rem; font-weight:800; color:#185FA5; margin: 6px 0 16px; }
+  .action-row { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .action-row button { padding:12px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; }
+  .btn-retry { background:#f5a623; color:#fff; }
+  .btn-save { background:#7b61ff; color:#fff; }
+  .btn-fresh { background:#E24B4A; color:#fff; }
+  .fresh-btn-bottom { display:block; margin: 6px auto 0; background:none; border:1.5px solid #d7dde6; color:#888; padding:8px 16px; border-radius:20px; font-size:0.8rem; cursor:pointer; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:14px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { font-size:0.95rem; margin-bottom:18px; }
+  .modal-box button { padding:10px 16px; border-radius:8px; border:none; font-weight:700; margin:0 6px; cursor:pointer; }
+  .modal-yes { background:#E24B4A; color:#fff; }
+  .modal-no { background:#eef2f7; color:#333; }
+
+
+  .sat-timer{display:flex;align-items:center;gap:10px;justify-content:space-between;background:#eef3fb;border:1px solid #c9d8ef;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:0.9rem;font-weight:700;color:#185FA5;position:sticky;top:0;z-index:5;}
+  .sat-timer .over{color:#E24B4A;}
+  .sat-timer button{background:#fff;border:1.5px solid #185FA5;color:#185FA5;border-radius:8px;padding:4px 10px;font-weight:700;cursor:pointer;}
+  .sat-pausebox{display:none;text-align:center;background:#fff;border-radius:14px;padding:30px 20px;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);font-weight:700;color:#185FA5;}
+</style>
+</head>
+<body>
+<div class="quiz-wrap">
+  <div class="quiz-title">[Sion] Advanced SAT Reading</div>
+  <div class="instruction" id="instruction"></div>
+
+  <div class="nav-bar">
+    <div class="nav-summary">
+      <span id="nav-count">0/0</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <button class="jump-btn" id="jump-btn" onclick="toggleJump()">Jump&#9662;</button>
+    </div>
+    <div class="dots-panel" id="dots-panel" style="display:none;"></div>
+  </div>
+
+  <div class="results-pill-wrap"><span class="results-pill" id="results-pill" style="display:none;" onclick="showResultsNow()">Results</span></div>
+
+  <div class="quiz-card" id="quiz-card">
+    <div class="q-position" id="q-position"></div>
+    <div class="passage-box" id="passage-box" style="display:none;"></div>
+    <div class="context-label" id="context-label" style="display:none;"></div>
+    <div class="context-box" id="context-box" style="display:none;"></div>
+    <div class="tag-badge" id="tag-badge" style="display:none;"></div>
+    <div class="q-text" id="q-text"></div>
+    <div id="options"></div>
+    <button class="hint-btn" id="hint-btn" onclick="toggleHint()" style="display:none;">Show Hint</button>
+    <div class="hint-box" id="hint-box"></div>
+    <div class="exp-box" id="exp-box"></div>
+    <div class="nav-btns">
+      <button id="prev-btn" onclick="prevQ()">Prev</button>
+      <button id="next-btn" onclick="goNext()">Next</button>
+    </div>
+  </div>
+
+  <div class="results-card" id="results-card" style="display:none;">
+    <h2>Results</h2>
+    <div class="score-big" id="score-big"></div>
+    <div id="score-detail" style="text-align:center;color:#555;font-size:0.9rem;"></div>
+    <div class="action-row">
+      <button class="btn-retry" onclick="startRetry()">Retry Wrong Ones</button>
+      <button class="btn-fresh" onclick="openFreshModal()">Start Fresh</button>
+    </div>
+  </div>
+
+  <button class="fresh-btn-bottom" onclick="openFreshModal()">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="fresh-modal" style="display:none;">
+  <div class="modal-box">
+    <p>Reset all progress and start over?</p>
+    <button class="modal-yes" onclick="confirmFresh()">Yes, Start Fresh</button>
+    <button class="modal-no" onclick="closeFreshModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Sion] Advanced SAT Reading";
+var QUIZ_KEY = "sionadvreading";
+var INSTRUCTION = "Read each passage and choose the best answer.";
+var TODAY_STR = "20261109";
+var RAW_QUESTIONS = [{"passage": "<strong>Text 1</strong><br>Whistled languages, such as Silbo Gomero of the Canary Islands, allow people to communicate across valleys over distances at which shouting would fail. Many early observers assumed that such systems were simple codes, able to carry only a small set of fixed signals, like &ldquo;come home&rdquo; or &ldquo;danger,&rdquo; agreed on in advance.<br><br><strong>Text 2</strong><br>Linguist Rosa Albarr&aacute;n asked experienced whistlers to transmit sentences they had never heard before, including invented place names. Listeners reconstructed most of these sentences accurately. Albarr&aacute;n notes that the whistle follows the shifting pitch and rhythm of spoken Spanish, so whistlers are not choosing from a list of signals but re-encoding ordinary speech.", "stem": "Based on the texts, how would Albarr&aacute;n (Text 2) most likely respond to the assumption made by the early observers in Text 1?", "opts": ["By questioning it, since whistled languages actually work best at short distances", "By arguing that it underestimates the system, since whistlers can convey new sentences rather than only prearranged signals", "By accepting it for Silbo Gomero but rejecting it for whistled languages that are not based on Spanish", "By agreeing with it, since whistled messages lose much of the detail of spoken Spanish"], "ci": 1, "exp": "Text 1 reports the assumption that whistled languages carry &ldquo;only a small set of fixed signals.&rdquo; Albarr&aacute;n&rsquo;s experiment shows listeners reconstructing sentences &ldquo;they had never heard before,&rdquo; and she concludes whistlers are &ldquo;re-encoding ordinary speech,&rdquo; so she would say the assumption underestimates the system. The idea that whistling works best at short distances contradicts Text 1 and appears nowhere in Text 2.", "tag": "Cross-Text Connections", "tagcolor": "#d6336c"}, {"passage": "<strong>Text 1</strong><br>In recent trials of a four-day workweek, many participating companies reported that output stayed the same or rose even though employees worked about 20 percent fewer hours. Supporters conclude that shorter weeks make workers more productive: rested employees, they argue, waste less time and make fewer errors.<br><br><strong>Text 2</strong><br>Economist Dana Whitcomb points out that the companies in these trials chose to participate, and their managers generally expected the change to succeed. Moreover, most firms used the trial period to cut unnecessary meetings and streamline approval procedures. Whitcomb argues that results from such trials are therefore difficult to interpret.", "stem": "Based on the texts, how would Whitcomb (Text 2) most likely respond to the supporters&rsquo; conclusion in Text 1?", "opts": ["She would argue that the trials show output actually fell once the number of meetings was reduced.", "She would claim that productivity gains occurred only at firms whose managers opposed the trials.", "She would suggest that the gains may not be due to the shorter week itself, because the participating firms were unusual and also changed how they worked.", "She would agree that rested employees make fewer errors but question whether companies can afford the change."], "ci": 2, "exp": "Whitcomb does not deny the reported results; she notes that participating firms &ldquo;chose to participate,&rdquo; expected success, and also &ldquo;streamline[d] approval procedures,&rdquo; so the gains could come from these factors rather than from fewer hours. Text 2 never says output fell, never discusses affordability, and describes managers as expecting success, not opposing the trials.", "tag": "Cross-Text Connections", "tagcolor": "#d6336c"}, {"passage": "Coastal salt marshes have long been regarded as wasteland&mdash;muddy, mosquito-ridden ground best drained and built upon. Yet an acre of healthy marsh can store carbon in its waterlogged soil for centuries, absorb the force of storm surges before they reach inland neighborhoods, and shelter the young of many commercially valuable fish. Communities that once filled in their marshes are now paying to restore them.", "stem": "Which choice best describes the function of the first sentence in the overall structure of the text?", "opts": ["It introduces a problem that the text later argues cannot be solved.", "It presents a widely held view that the rest of the text challenges.", "It offers a definition of salt marshes that the text then expands with technical detail.", "It describes a recent change in attitudes that the text goes on to explain."], "ci": 1, "exp": "The first sentence states that marshes &ldquo;have long been regarded as wasteland.&rdquo; The text then turns with &ldquo;Yet&rdquo; to list their value (carbon storage, storm protection, fish nurseries), challenging that view. The idea of a recent change in attitudes comes only at the end, with restoration; the opening sentence describes the older view, not the change.", "tag": "Text Structure and Purpose", "tagcolor": "#0d9488"}, {"passage": "Critics often fault the novelist Teodora Vance for endings that resolve nothing: her characters walk out of the final chapter with their problems still intact. Yet this refusal of closure matches the view Vance set out in her essays, where she argued that fiction should imitate the unfinished quality of real lives. Read in that light, her endings look less like lapses in craft than like deliberate choices.", "stem": "Which choice best describes the overall structure of the text?", "opts": ["It summarizes the plots of a writer&rsquo;s novels and then evaluates which of them is most successful.", "It explains a writer&rsquo;s theory of fiction and then shows that her novels fail to follow it.", "It describes a writer&rsquo;s technique and then traces that technique to the influence of earlier novelists.", "It presents a criticism of a writer&rsquo;s work and then offers a reason to reinterpret the feature being criticized."], "ci": 3, "exp": "The text opens with the critics&rsquo; complaint about Vance&rsquo;s unresolved endings, then points to her essays to argue the endings are &ldquo;deliberate choices&rdquo; rather than &ldquo;lapses in craft.&rdquo; Rather than showing that her novels fail to follow her theory, the text says her novels match it, and it never mentions earlier novelists or individual plots.", "tag": "Text Structure and Purpose", "tagcolor": "#0d9488"}, {"passage": "Asked whether she supported the proposed transit tax, the senator gave an answer so carefully ______ that the bill&rsquo;s advocates quoted it as an endorsement while its opponents cited it as evidence of her doubts.", "stem": "Which choice completes the text with the most logical and precise word or phrase?", "opts": ["conciliatory", "emphatic", "equivocal", "perfunctory"], "ci": 2, "exp": "<i>Equivocal</i> means open to more than one interpretation, which explains why both sides could read the answer as support for their position. <i>Conciliatory</i> (meant to calm or please others) is tempting, but a soothing answer would not necessarily be readable as both an endorsement and a doubt; <i>emphatic</i> (forceful and clear) contradicts the double reading.", "tag": "Words in Context", "tagcolor": "#7b61ff"}, {"passage": "In 1920s Chicago, jazz musicians would often <u>appropriate</u> popular show tunes, keeping a song&rsquo;s familiar title and opening phrase but reworking its melody over new harmonies until the original was barely recognizable.", "stem": "As used in the text, what does the word &ldquo;appropriate&rdquo; most nearly mean?", "opts": ["Make suitable for an occasion", "Set aside for a specific purpose", "Approve officially", "Take and adapt for their own use"], "ci": 3, "exp": "The musicians kept the songs&rsquo; titles and opening phrases but reworked them &ldquo;until the original was barely recognizable,&rdquo; so they took the tunes and adapted them for their own use. &ldquo;Set aside for a specific purpose&rdquo; is a real meaning of the verb (as in appropriating funds), but nothing in the text involves reserving money or resources.", "tag": "Words in Context", "tagcolor": "#7b61ff"}, {"passage": "Astronomers can estimate the age of a sunlike star from how fast it rotates, because such stars gradually lose spin as they age: young stars rotate quickly, older stars slowly. In binary systems where two stars orbit each other very closely, however, tidal forces between the stars can lock each star&rsquo;s rotation to the period of their orbit, regardless of how old the stars are. Therefore, an astronomer who applies the rotation method to a star in a close binary system ______", "stem": "Which choice most logically completes the text?", "opts": ["will be unable to measure how fast the star rotates.", "will find that the star is older than its companion.", "may obtain an age estimate that does not reflect the star&rsquo;s actual age.", "should expect the star to rotate faster than a single star of the same age."], "ci": 2, "exp": "The rotation method works only because spin slows predictably with age. In a close binary, the rotation is set by the orbit &ldquo;regardless of how old the stars are,&rdquo; so the method could give a misleading age. The text does not say whether tidal locking speeds a star up or slows it down, so the claim that it rotates faster than a single star of the same age goes beyond the evidence.", "tag": "Inferences", "tagcolor": "#f5a623"}, {"passage": "At an archaeological site in the American Southwest, nearly all pottery from layers dated before 900 CE was made from local clay. In layers dated after 900 CE, about half the pots contain clay that chemical analysis traces to a region some 200 kilometers away. The shapes, painted designs, and firing methods of the pots, however, remained the same as before. Because pottery styles tend to travel with the people who make them, the researchers concluded that ______", "stem": "Which choice most logically completes the text?", "opts": ["the site&rsquo;s residents stopped making pottery after 900 CE and relied on imported finished pots.", "the local clay near the site had become unusable by 900 CE.", "the later pots were most likely made at or near the site by local potters working with clay obtained through trade.", "potters from the distant region moved to the site after 900 CE and began making most of its pottery."], "ci": 2, "exp": "The text says styles &ldquo;travel with the people who make them,&rdquo; and the styles did not change, so the potters were likely still the local ones&mdash;only the clay came from far away, suggesting trade in raw clay. Newcomer potters would be expected to bring new styles, and the text gives no evidence that local clay became unusable (half the pots still used it).", "tag": "Inferences", "tagcolor": "#f5a623"}, {"passage": "Botanist Imani Okoro studies a desert shrub whose leaves are covered with a waxy coating. Some researchers think the coating mainly reflects sunlight, keeping leaves cool. Okoro hypothesizes instead that the coating&rsquo;s main role is to reduce water loss from the leaves.", "stem": "Which finding, if true, would most directly support Okoro&rsquo;s hypothesis?", "opts": ["In full sun, the coating reflects a larger share of incoming light than the leaves of most nearby plants do.", "The compounds in the coating are also found on the leaves of several other desert species.", "When the coating was carefully removed from some plants, those plants lost water much faster than untreated plants, while their leaf temperature in full sun rose only slightly.", "Plants of the species growing in the sunniest locations have thicker coatings than plants growing in partial shade."], "ci": 2, "exp": "Okoro claims the coating mainly reduces water loss rather than mainly reflecting sunlight. Removing it sharply increased water loss but barely changed leaf temperature, which supports her view over the alternative. Thicker coatings in sunnier spots and high light reflection would instead support the sunlight-reflection explanation, and the shared compounds say nothing about function.", "tag": "Command of Evidence", "tagcolor": "#1D9E75"}, {"passage": "<table style=\"border-collapse:collapse;margin:6px 0;font-size:0.92rem;\"><tr><th style=\"border:1px solid #999;padding:4px 8px;\">Group (by starting score)</th><th style=\"border:1px solid #999;padding:4px 8px;\">Average score before program</th><th style=\"border:1px solid #999;padding:4px 8px;\">Average score after program</th></tr><tr><td style=\"border:1px solid #999;padding:4px 8px;\">Lower</td><td style=\"border:1px solid #999;padding:4px 8px;\">52</td><td style=\"border:1px solid #999;padding:4px 8px;\">67</td></tr><tr><td style=\"border:1px solid #999;padding:4px 8px;\">Middle</td><td style=\"border:1px solid #999;padding:4px 8px;\">68</td><td style=\"border:1px solid #999;padding:4px 8px;\">76</td></tr><tr><td style=\"border:1px solid #999;padding:4px 8px;\">Higher</td><td style=\"border:1px solid #999;padding:4px 8px;\">81</td><td style=\"border:1px solid #999;padding:4px 8px;\">85</td></tr></table>A school district introduced a summer reading program and grouped participating students by their reading scores before the program. An education researcher claims that the program helped students who began with lower scores more than it helped other students.", "stem": "Which choice best describes data from the table that support the researcher&rsquo;s claim?", "opts": ["Students in the lower group gained 15 points on average, while students in the middle group gained 10 points.", "Students in the lower group gained 15 points on average, while students in the higher group gained only 4 points.", "Students in all three groups had higher average scores after the program than before it.", "Students in the higher group had the highest average score after the program, 85 points."], "ci": 1, "exp": "The claim is about the size of the improvement. The lower group rose from 52 to 67 (a gain of 15), the higher group from 81 to 85 (a gain of 4), so the lower group gained much more. The middle group rose from 68 to 76, a gain of 8, not 10, so that choice misreads the table; the other two choices are accurate but do not compare the size of the gains.", "tag": "Command of Evidence", "tagcolor": "#1D9E75"}, {"passage": "Early photographic portraits required sitters to hold perfectly still for long exposures, sometimes close to a minute. <u>Studios often supplied hidden iron stands that braced a sitter&rsquo;s head and back.</u> The stiff, unsmiling faces familiar from such portraits, then, may reveal less about the temperament of the era than about the demands of the technology.", "stem": "Which choice best describes the function of the underlined sentence in the text as a whole?", "opts": ["It explains how photographers eventually shortened exposure times.", "It gives a detail that helps explain why people in early portraits look rigid and serious.", "It introduces a claim about early photography that the text later disputes.", "It offers evidence that people of the era were naturally solemn."], "ci": 1, "exp": "The underlined sentence shows how much the technology physically restricted sitters, which supports the conclusion that stiff expressions reflect &ldquo;the demands of the technology&rdquo; rather than the era&rsquo;s temperament. The text actually argues against the idea that people were naturally solemn, and it never discusses shorter exposure times.", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"passage": "The letter from the conservatory had been in Mara&rsquo;s coat pocket for three days. She had read it once, on the bus, and then folded it along its original creases, as if that might return it to its unopened state. At dinner she talked about her chemistry exam, about the neighbor&rsquo;s new dog, about anything else. When her father finally asked whether the mail had brought anything interesting, she said, &ldquo;Nothing that can&rsquo;t wait,&rdquo; and reached for the bread.", "stem": "Which choice best states the main purpose of the text?", "opts": ["To suggest that the letter a character received contained good news", "To explain why a character has chosen to study chemistry instead of music", "To describe a long-standing conflict between a character and her father", "To portray a character&rsquo;s reluctance to face news she has received"], "ci": 3, "exp": "Mara refolds the letter &ldquo;as if that might return it to its unopened state,&rdquo; talks about &ldquo;anything else,&rdquo; and deflects her father&rsquo;s question, all showing her reluctance to deal with the letter. The text never reveals what the letter says, so it does not suggest the news was good, and the brief, calm exchange with her father shows no long-standing conflict.", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}];
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var ORDER_KEY = STORAGE_KEY + '_order';
+var ACTIVE_KEY = STORAGE_KEY + '_active';
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+function wrongTxt(s){ s = (s===undefined || s===null) ? '' : String(s); return /^\s*</.test(s) ? s : '<span>' + s + '</span>'; }
+function wrongDetail(qi, yourAnswer){
+  var q = RAW_QUESTIONS[qi];
+  var qtext = (q.passage ? q.passage + '<br><br>' : '') + (q.contextLabel ? q.contextLabel + '<br>' : '') + (q.context ? q.context + '<br>' : '') + q.stem;
+  return { question: wrongTxt(qtext), yourAnswer: wrongTxt(yourAnswer), correctAnswer: wrongTxt(q.opts[q.ci]), explanation: wrongTxt(q.exp) };
+}
+function quizDateStr(){ return (typeof TODAY_STR !== 'undefined') ? TODAY_STR : ((String(QUIZ_KEY).match(/\d{8}/) || [''])[0]); }
+function reportResult(){
+  try{
+    var ao = activeOrder();
+    var correct=0, wrong=0, skipped=0;
+    var wrongPositions=[];
+    var wrongDetails=[];
+    for(var pos=0; pos<ao.length; pos++){
+      var qi = ao[pos];
+      if(state.answers[qi]===undefined){ if(window.SAT_TIMEUP && SAT_TIMEUP() && !(activeSet && activeSet.length)){ wrong++; wrongPositions.push(pos+1); wrongDetails.push(wrongDetail(qi, "(time's up)")); } else skipped++; continue; }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else { wrong++; wrongPositions.push(pos+1); wrongDetails.push(wrongDetail(qi, RAW_QUESTIONS[qi].opts[state.answers[qi]])); }
+    }
+    var total = ao.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0,
+      wrongNumbers: wrongPositions.join(','),
+      quizDate: quizDateStr()
+    };
+    var firstKey = STORAGE_KEY + '_wrongsent';
+    if(!(activeSet && activeSet.length) && !localStorage.getItem(firstKey)){
+      payload.wrongAnswers = wrongDetails;
+      localStorage.setItem(firstKey, '1');
+    }
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
+}
+/* progress-report 2026-10-27 */
+var _lastProgressSig = '';
+function reportProgress(){
+  try{
+    if(state.showResults) return;
+    if(!(!(activeSet && activeSet.length) && !localStorage.getItem(STORAGE_KEY + '_wrongsent'))) return;
+    var answered=0, correct=0, wd=[];
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos]; var a = state.answers[qi];
+      if(a===undefined){ wd.push(wrongDetail(qi, '(not answered)')); continue; }
+      answered++;
+      if(a===RAW_QUESTIONS[qi].ci) correct++; else wd.push(wrongDetail(qi, RAW_QUESTIONS[qi].opts[a]));
+    }
+    if(answered===0) return;
+    var sig = answered + '/' + correct; if(sig===_lastProgressSig) return; _lastProgressSig = sig;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var body = JSON.stringify({ type:'progress', child: childName, quizTitle: TITLE, quizKey: QUIZ_KEY, quizDate: quizDateStr(),
+      answered: answered, total: order.length, correct: correct, wrongAnswers: wd });
+    fetch(REPORT_ENDPOINT, { method:'POST', mode:'no-cors', keepalive: body.length < 60000,
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, body: body }).catch(function(){});
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='hidden') reportProgress(); });
+window.addEventListener('pagehide', reportProgress);
+
+
+var ATTEMPTS_KEY = STORAGE_KEY + '_attempts';
+
+var order = [];
+var activeSet = null; // when in retry mode, holds subset of original indices
+var state = { answers:{}, cur:0, showResults:false };
+var hintShown = false;
+
+function loadState(){
+  var raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try{ state = JSON.parse(raw); }catch(e){ state = {answers:{},cur:0,showResults:false}; } }
+  var rawOrder = localStorage.getItem(ORDER_KEY);
+  if(rawOrder){ try{ order = JSON.parse(rawOrder); }catch(e){ order=null; } }
+  if(!order || !order.length){
+    order = RAW_QUESTIONS.map(function(_,i){return i;});
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  }
+  var rawActive = localStorage.getItem(ACTIVE_KEY);
+  if(rawActive){ try{ activeSet = JSON.parse(rawActive); }catch(e){ activeSet = null; } }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function getAttempts(){
+  var a = localStorage.getItem(ATTEMPTS_KEY);
+  return a ? parseInt(a,10) : 0; // 2026-10-24: start at 0 so the first finish reports attempt 1 (was 1 → first finish reported 2)
+}
+function incAttempts(){
+  var a = getAttempts() + 1;
+  localStorage.setItem(ATTEMPTS_KEY, String(a));
+}
+
+function activeOrder(){ return (activeSet && activeSet.length) ? activeSet : order; }
+
+function render(){
+  document.getElementById('instruction').textContent = INSTRUCTION;
+  var ord = activeOrder();
+  if(state.showResults){
+    document.getElementById('quiz-card').style.display='none';
+    document.getElementById('results-card').style.display='block';
+    renderResults();
+  } else {
+    document.getElementById('quiz-card').style.display='block';
+    document.getElementById('results-card').style.display='none';
+    renderQuestion();
+  }
+  updateNav();
+}
+
+function renderQuestion(){
+  hintShown = false;
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  var qpEl = document.getElementById('q-position');
+  if(qpEl) qpEl.textContent = 'Q' + (state.cur + 1) + ' / ' + ord.length;
+
+  var pb = document.getElementById('passage-box');
+  if(q.passage){ pb.style.display='block'; pb.innerHTML = q.passage; } else { pb.style.display='none'; pb.innerHTML=''; }
+
+  var cl = document.getElementById('context-label');
+  if(q.contextLabel){ cl.style.display='block'; cl.textContent = q.contextLabel; } else { cl.style.display='none'; cl.textContent=''; }
+
+  var cb = document.getElementById('context-box');
+  if(q.context){ cb.style.display='block'; cb.innerHTML = q.context; } else { cb.style.display='none'; cb.innerHTML=''; }
+
+  var tb = document.getElementById('tag-badge');
+  if(q.tag){ tb.style.display='inline-block'; tb.textContent = q.tag; tb.style.background = q.tagcolor || '#185FA5'; } else { tb.style.display='none'; }
+
+  var qt = document.getElementById('q-text');
+  qt.innerHTML = q.stem + (q.tts ? ' <button class="tts-btn" onclick="speak(' + qi + ')" title="Listen">&#128266;</button>' : '');
+
+  var opts = document.getElementById('options');
+  opts.innerHTML = '';
+  var answered = state.answers[qi] !== undefined;
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = optText;
+    if(answered){
+      btn.disabled = true;
+      if(idx === q.ci) btn.className += ' reveal-correct';
+      if(idx === state.answers[qi] && idx !== q.ci) btn.className += ' selected-wrong';
+      if(idx === state.answers[qi] && idx === q.ci) btn.className += ' selected-correct';
+    } else {
+      btn.onclick = function(){ pick(idx); };
+    }
+    opts.appendChild(btn);
+  });
+
+  var hb = document.getElementById('hint-btn');
+  var hx = document.getElementById('hint-box');
+  if(q.hint){
+    hb.style.display='inline-block'; hb.textContent='Show Hint';
+    hx.innerHTML = q.hint; hx.classList.remove('show');
+  } else {
+    hb.style.display='none'; hx.classList.remove('show');
+  }
+
+  var eb = document.getElementById('exp-box');
+  if(answered){
+    eb.style.display='block';
+    eb.innerHTML = '<strong>Explanation:</strong> ' + q.exp;
+  } else {
+    eb.style.display='none'; eb.innerHTML='';
+  }
+
+  document.getElementById('prev-btn').disabled = (state.cur === 0);
+  var ord2 = activeOrder();
+  var isLast = (state.cur === ord2.length - 1);
+  document.getElementById('next-btn').textContent = isLast ? 'Finish' : 'Next';
+}
+
+function toggleHint(){
+  hintShown = !hintShown;
+  var b=document.getElementById('hint-btn'), x=document.getElementById('hint-box');
+  if(hintShown){ x.classList.add('show'); b.textContent='Hide Hint'; }
+  else { x.classList.remove('show'); b.textContent='Show Hint'; }
+}
+window.toggleHint = toggleHint;
+
+function pick(idx){
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState();
+  render();
+}
+window.pick = pick;
+
+function prevQ(){
+  if(state.cur > 0){ state.cur--; saveState(); render(); }
+}
+window.prevQ = prevQ;
+window.go = prevQ;
+
+function goNext(){
+  if(state.showResults) return; // 2026-10-14: ignore double taps / Results tap on the results screen (prevented duplicate result emails)
+    var ord = activeOrder();
+  if(state.cur < ord.length - 1){
+    state.cur++;
+    saveState();
+    render();
+  } else {
+    if(state.reported){ state.showResults=true; saveState(); render(); return; } /* no-resend-after-review 2026-10-28 */
+    state.showResults = true;
+    incAttempts();
+    saveState();
+    render();
+    reportResult(); state.reported = true; saveState();
+  }
+}
+window.goNext = goNext;
+
+function showResultsNow(){
+  if(state.showResults) return; // 2026-10-14: ignore double taps / Results tap on the results screen (prevented duplicate result emails)
+    if(state.reported){ state.showResults=true; saveState(); render(); return; } /* no-resend-after-review 2026-10-28 */
+  state.showResults = true;
+  incAttempts(); // 2026-10-24: count a finish from the Results pill too
+  saveState();
+  render();
+  reportResult(); state.reported = true; saveState();
+}
+window.showResultsNow = showResultsNow;
+
+function goToQ(pos){
+  state.cur = pos;
+  state.showResults = false;
+  saveState();
+  render();
+}
+window.goToQ = goToQ;
+
+function renderResults(){
+  var ord = activeOrder();
+  var correct=0, wrong=0, skipped=0;
+  ord.forEach(function(qi){
+    if(state.answers[qi]===undefined) skipped++;
+    else if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++;
+    else wrong++;
+  });
+  var total = ord.length;
+  document.getElementById('score-big').textContent = correct + ' / ' + total;
+  document.getElementById('score-detail').textContent = 'Correct: ' + correct + '  Wrong: ' + wrong + '  Skipped: ' + skipped;
+}
+
+function updateNav(){
+  var ord = activeOrder();
+  var answeredCount = 0;
+  ord.forEach(function(qi){ if(state.answers[qi]!==undefined) answeredCount++; });
+  document.getElementById('nav-count').textContent = answeredCount + '/' + ord.length;
+  var pct = ord.length ? Math.round(answeredCount/ord.length*100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('results-pill').style.display = (answeredCount === ord.length && ord.length>0 && !state.showResults) ? 'inline-block' : 'none';
+  renderDots();
+}
+
+function renderDots(){
+  var panel = document.getElementById('dots-panel');
+  if(panel.style.display === 'none') { buildDots(); return; }
+  buildDots();
+}
+function buildDots(){
+  var panel = document.getElementById('dots-panel');
+  var ord = activeOrder();
+  panel.innerHTML = '';
+  ord.forEach(function(qi, pos){
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.textContent = (pos+1);
+    if(state.answers[qi]!==undefined){
+      d.className += (state.answers[qi]===RAW_QUESTIONS[qi].ci) ? ' answered-correct' : ' answered-wrong';
+    }
+    d.onclick = function(){ goToQ(pos); };
+    panel.appendChild(d);
+  });
+}
+
+function toggleJump(){
+  var panel = document.getElementById('dots-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display === 'none'){
+    panel.style.display = 'flex';
+    btn.innerHTML = 'Hide&#9652;';
+    buildDots();
+  } else {
+    panel.style.display = 'none';
+    btn.innerHTML = 'Jump&#9662;';
+  }
+}
+window.toggleJump = toggleJump;
+
+function startRetry(){
+  var ord = activeOrder();
+  var wrongIdx = ord.filter(function(qi){ return (state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci) || (state.answers[qi]===undefined && window.SAT_TIMEUP && SAT_TIMEUP()); });
+  if(!wrongIdx.length) return;
+  activeSet = wrongIdx;
+  localStorage.setItem(ACTIVE_KEY, JSON.stringify(activeSet));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  render();
+}
+window.startRetry = startRetry;
+
+function openFreshModal(){ document.getElementById('fresh-modal').style.display='flex'; }
+window.openFreshModal = openFreshModal;
+function closeFreshModal(){ document.getElementById('fresh-modal').style.display='none'; }
+window.closeFreshModal = closeFreshModal;
+function confirmFresh(){
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(ORDER_KEY);
+  localStorage.removeItem(ACTIVE_KEY);
+  activeSet = null;
+  order = RAW_QUESTIONS.map(function(_,i){return i;});
+  localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  document.getElementById('fresh-modal').style.display='none';
+  render();
+}
+window.confirmFresh = confirmFresh;
+
+function speak(qi){
+  try{
+    var q = RAW_QUESTIONS[qi];
+    var text = q.tts || q.stem.replace(/<[^>]+>/g,'');
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ko-KR';
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+window.speak = speak;
+
+loadState();
+render();
+</script>
+<script>
+/* sat-timer 2026-11-06 */
+(function(){
+  var PER_Q = 75;
+  var LIMIT = PER_Q * RAW_QUESTIONS.length;
+  var TK = STORAGE_KEY + '_timer';
+  function blank(){ return {el:0, per:{}, up:false}; }
+  function load(){ try{ return JSON.parse(localStorage.getItem(TK)) || blank(); }catch(e){ return blank(); } }
+  var T = load(), paused = false, last = Date.now();
+  function save(){ try{ localStorage.setItem(TK, JSON.stringify(T)); }catch(e){} }
+  function retrying(){ return !!(activeSet && activeSet.length); }
+  window.SAT_TIMEUP = function(){ return !!T.up; };
+  var bar = document.createElement('div'); bar.className = 'sat-timer'; bar.id = 'sat-timer';
+  bar.innerHTML = '<span id="sat-total"></span><span id="sat-q"></span><button id="sat-pause" onclick="satPause()">Pause</button>';
+  var nav = document.querySelector('.nav-bar'); nav.parentNode.insertBefore(bar, nav);
+  var pbox = document.createElement('div'); pbox.className = 'sat-pausebox'; pbox.id = 'sat-pausebox';
+  pbox.innerHTML = 'Paused<br><br><button onclick="satPause()" style="background:#185FA5;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer;">Resume</button>';
+  var card = document.getElementById('quiz-card'); card.parentNode.insertBefore(pbox, card);
+  function fmt(s){ s = Math.max(0, Math.ceil(s)); return Math.floor(s/60) + ':' + ('0' + (s%60)).slice(-2); }
+  function running(){ return !T.up && !state.showResults && !retrying() && !paused && document.visibilityState !== 'hidden'; }
+  function draw(){
+    var show = !retrying() && !state.showResults;
+    bar.style.display = show ? 'flex' : 'none';
+    var left = LIMIT - T.el;
+    var tot = document.getElementById('sat-total');
+    tot.textContent = 'Time left ' + fmt(left); tot.className = left < 60 ? 'over' : '';
+    var qi = activeOrder()[state.cur], used = T.per[qi] || 0;
+    var qs = document.getElementById('sat-q');
+    qs.textContent = 'This question ' + fmt(used) + ' / ' + fmt(PER_Q); qs.className = used > PER_Q ? 'over' : '';
+    document.getElementById('sat-pause').textContent = paused ? 'Resume' : 'Pause';
+    pbox.style.display = (paused && show) ? 'block' : 'none';
+    if(paused && show) card.style.display = 'none';
+    var det = document.getElementById('score-detail');
+    if(T.up && state.showResults && !retrying() && det && det.textContent.indexOf("Time's up") < 0) det.textContent = "Time's up! Unanswered questions count as wrong. " + det.textContent;
+  }
+  function timeUp(){
+    T.up = true; T.el = LIMIT; save(); paused = false;
+    if(!state.showResults) showResultsNow();
+    draw();
+  }
+  function tick(){
+    var now = Date.now(), dt = (now - last) / 1000; last = now;
+    if(dt > 5 || dt < 0) dt = 0;
+    if(running()){
+      T.el += dt;
+      var qi = activeOrder()[state.cur];
+      if(state.answers[qi] === undefined) T.per[qi] = (T.per[qi] || 0) + dt;
+      save();
+      if(T.el >= LIMIT){ timeUp(); return; }
+    }
+    draw();
+  }
+  window.satPause = function(){ paused = !paused; last = Date.now(); if(!paused) render(); draw(); };
+  var _pick = window.pick;
+  window.pick = function(i){ if(T.up && !retrying()) return; if(paused) return; return _pick(i); };
+  var _fresh = window.confirmFresh;
+  window.confirmFresh = function(){ T = blank(); save(); paused = false; last = Date.now(); var r = _fresh.apply(this, arguments); draw(); return r; };
+  var _render = window.render;
+  if(typeof _render === 'function'){ window.render = function(){ var r = _render.apply(this, arguments); try{ draw(); }catch(e){} return r; }; }
+  document.addEventListener('visibilitychange', function(){ last = Date.now(); });
+  if(!T.up && T.el >= LIMIT && !state.showResults) timeUp();
+  window.__satTimer = { tick: tick, get T(){ return T; }, LIMIT: LIMIT };
+  setInterval(tick, 500);
+  draw();
+})();
+</script>
+</body>
+</html>
