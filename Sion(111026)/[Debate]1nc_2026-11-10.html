@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Debate] 1NC</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background:#f4f6fa; margin:0; padding:20px 12px 60px; color:#1a1a2e; }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  .quiz-title { font-size:1.4rem; font-weight:800; text-align:center; margin:8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom:14px; }
+  .card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 1px 6px rgba(0,0,0,0.08); margin-bottom:16px; }
+  .blk { margin-bottom:14px; }
+  .blk:last-child { margin-bottom:0; }
+  .blk-label { font-size:0.75rem; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#185FA5; margin-bottom:6px; }
+  .blk-body { font-size:0.97rem; line-height:1.6; color:#222; }
+  .blk-body ol, .blk-body ul { margin:4px 0 0 0; padding-left:22px; }
+  .quote { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; font-family:Georgia,'Times New Roman',serif; font-style:italic; font-size:1rem; line-height:1.65; color:#1a1a2e; }
+  .task { font-size:1rem; font-weight:600; line-height:1.55; margin-bottom:12px; }
+  textarea { width:100%; height:300px; resize:vertical; border:1.5px solid #d7dde6; border-radius:10px; padding:12px 14px; font-size:1rem; line-height:1.6; font-family:inherit; }
+  textarea:focus { outline:none; border-color:#185FA5; }
+  textarea[readonly] { background:#f5f7fa; color:#444; }
+  .counter-row { display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:0.88rem; }
+  #wc { font-weight:700; }
+  .wc-low { color:#E24B4A; } .wc-ok { color:#1D9E75; } .wc-high { color:#f5a623; }
+  #limit-note { color:#777; }
+  .bar { height:6px; background:#d7dde6; border-radius:3px; overflow:hidden; margin-top:6px; }
+  #bar-fill { height:100%; width:0%; background:#185FA5; transition:width .15s; }
+  #msg { min-height:20px; margin-top:8px; font-size:0.86rem; color:#a52a2a; }
+  .btn { display:block; width:100%; padding:13px; border:none; border-radius:10px; font-weight:700; font-size:0.97rem; cursor:pointer; margin-top:10px; }
+  .btn-primary { background:#185FA5; color:#fff; }
+  .btn-primary:disabled { background:#c9d2dc; cursor:default; }
+  .btn-secondary { background:#eef2f7; color:#185FA5; }
+  .done { background:#eef7f2; border-left:4px solid #1D9E75; }
+  .done h3 { margin:0 0 6px; color:#0d6b3f; font-size:1.05rem; }
+  .done p { margin:4px 0; font-size:0.92rem; color:#2d4d3f; line-height:1.5; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:14px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { font-size:0.95rem; margin-bottom:18px; }
+  .modal-box button { padding:10px 16px; border-radius:8px; border:none; font-weight:700; margin:0 6px; cursor:pointer; }
+  .modal-yes { background:#185FA5; color:#fff; } .modal-no { background:#eef2f7; color:#333; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="quiz-title" id="quiz-title"></div>
+  <div class="instruction" id="instruction"></div>
+  <div class="card" id="prompt-card"></div>
+  <div class="card">
+    <div class="task" id="task"></div>
+    <textarea id="essay" autocomplete="off" autocapitalize="sentences" spellcheck="true" placeholder="Write your answer here..."></textarea>
+    <div class="counter-row"><span id="wc">0 words</span><span id="limit-note"></span></div>
+    <div class="bar"><div id="bar-fill"></div></div>
+    <div id="msg"></div>
+    <button class="btn btn-primary" id="submit-btn" onclick="openSubmitModal()" disabled>Submit</button>
+  </div>
+  <div class="card done" id="done-card" style="display:none;">
+    <h3>Submitted!</h3>
+    <p id="done-text"></p>
+    <p>Your feedback will be posted with tomorrow's quizzes.</p>
+    <button class="btn btn-secondary" onclick="editAgain()">Edit &amp; Resubmit</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="submit-modal" style="display:none;">
+  <div class="modal-box">
+    <p id="modal-text">Submit your answer?</p>
+    <button class="modal-yes" onclick="confirmSubmit()">Submit</button>
+    <button class="modal-no" onclick="closeSubmitModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Debate] 1NC";
+var QUIZ_KEY = "siondebate_essay";
+var TODAY_STR = "20261110";
+var INSTRUCTION = "Read the 1AC, then write your 1NC: attack the Affirmative case only.";
+var MIN_WORDS = 100;
+var MAX_WORDS = 1000; // 0 = no maximum
+var TARGET_TEXT = "Aim for 700–1000 words (about 5–7 minutes)";
+var PROMPT = {"blocks": [{"label": "Resolution", "html": "Resolved: The United States federal government should establish national health insurance in the United States. (NFHS 2026–27 national policy topic)"}, {"label": "Your side", "html": "You are on the <b>Negative</b>. The Affirmative spoke first. This is the first speech of a new round, so read the 1AC below carefully."}, {"label": "The 1AC you are answering", "html": "<p><b class=\"sp\">Because too many Americans cannot get the care they need, my partner and I affirm:</b> Resolved: The United States federal government should establish national health insurance in the United States.</p><p><b class=\"sp\">Our plan:</b> The United States federal government will establish a single, publicly financed national health insurance program that covers every person residing in the United States for hospital care, doctor visits, prescription drugs, and mental health care, with no premiums, deductibles, or copays at the point of service. The program will be funded through a dedicated payroll tax and a progressive income surcharge, and it will negotiate prices for drugs and services nationwide. Implementation begins one year after passage.</p><p><b class=\"sp\">Observation one: Inherency.</b> The current system leaves millions behind by design. Coverage depends on a job, an income cutoff, or the state you live in. Harlan, Journal of Coverage Policy, 2025 (practice card): “Even after a decade of reforms, roughly 26 million residents still have no insurance at all, and the patchwork of employer plans, marketplace subsidies, and state Medicaid rules means coverage can vanish the moment a worker changes jobs or a family crosses an income line. No current federal proposal closes this gap.” <b class=\"sp\">And,</b> the gap is not closing on its own. Harlan continues: “Temporary subsidy boosts have expired or face expiration, and several states have declined to expand Medicaid, so the uninsured count has stopped falling.” <b class=\"sp\">Next, job-based coverage is eroding.</b> Morrow, Labor and Benefits Monitor, 2025 (practice card): “Employers are shifting more costs onto workers every year. Average family premiums have risen far faster than wages over the past two decades, and a growing share of small businesses no longer offer health benefits at all. For millions of workers, the coverage they have is one layoff away from disappearing.”</p><p><b class=\"sp\">Advantage one: Lives.</b> <b class=\"sp\">First, being uninsured kills.</b> Okonkwo, American Review of Public Health, 2024 (practice card): “Uninsured adults are significantly less likely to receive preventive screenings and more likely to be diagnosed with cancer at a late stage. Our cohort analysis associates lack of coverage with a 25 percent higher risk of death among working-age adults, which translates to tens of thousands of preventable deaths each year.” <b class=\"sp\">Next, underinsurance is nearly as dangerous.</b> Delgado, Health Equity Quarterly, 2025 (practice card): “About four in ten insured adults report skipping or delaying care because of deductibles and copays. When cost sharing rises, patients cut back on necessary medications for blood pressure and diabetes, not just unnecessary visits.” <b class=\"sp\">So the impact is clear:</b> every year the status quo continues, thousands of Americans die from conditions that are treatable when they are caught early.</p><p><b class=\"sp\">Advantage two: Financial security.</b> <b class=\"sp\">First, medical bills push families into debt.</b> Whitfield, Center for Household Finance, 2025 (practice card): “Medical debt is the most common type of debt in collections in the United States, and illness or medical bills contribute to a majority of personal bankruptcies we studied.” <b class=\"sp\">And,</b> the system wastes money that could fund care. Brennan, Fiscal Health Institute, 2024 (practice card): “Administrative costs consume a far larger share of U.S. health spending than in single-payer countries. A unified public program could save between 300 and 500 billion dollars a year in billing, marketing, and claims processing, more than enough to cover the uninsured.” <b class=\"sp\">Next, debt itself makes people sicker.</b> Whitfield, 2025 (practice card): “Households carrying medical debt are more likely to postpone future care, skip prescriptions, and report anxiety and depression, creating a cycle in which one illness leads to the next. Ending surprise bills breaks that cycle.” <b class=\"sp\">The impact:</b> families stop choosing between rent and a hospital bill, and the nation spends less overall.</p><p><b class=\"sp\">Observation two: Solvency.</b> <b class=\"sp\">First, universal coverage works.</b> Ishikawa, Comparative Health Systems Review, 2023 (practice card): “Every other wealthy democracy guarantees coverage to all residents, and these nations achieve longer life expectancy and lower infant mortality while spending less per person than the United States.” <b class=\"sp\">Next, removing cost at the point of service changes behavior.</b> Delgado again, 2025 (practice card): “When financial barriers are removed, patients schedule checkups earlier and fill prescriptions they previously skipped.” <b class=\"sp\">And,</b> national price negotiation controls costs. Brennan, 2024 (practice card): “Single-buyer bargaining is the main reason drug prices abroad are a fraction of U.S. prices.” <b class=\"sp\">Further, the plan reaches the people the current system misses.</b> Harlan, 2025 (practice card): “Because enrollment in a universal program is automatic at birth or residency, no one falls through the cracks because of paperwork, missed deadlines, or a change in income. Programs that enroll people automatically reach nearly everyone they are meant to cover, while programs that require people to sign up leave millions eligible but uninsured.”</p><p><b class=\"sp\">Now, on what the Negative will say:</b> they will claim the plan costs too much. But Brennan shows administrative savings alone offset much of the price, and families already pay through premiums and deductibles; the plan simply replaces those costs with a fairer tax. They may also say the status quo can be fixed piece by piece. But Harlan proves that a decade of piece-by-piece reform still left 26 million people uninsured, and every patch can be undone by the next Congress. <b class=\"sp\">So weigh the round this way:</b> on magnitude, our advantages reach tens of millions of people; on probability, the link between coverage and survival is backed by cohort data; and on timeframe, people are dying and going bankrupt right now. Any risk of saving those lives outweighs the Negative’s speculative cost arguments. We are proud to affirm.</p>", "quote": true}, {"label": "Speech", "html": "<b>1NC &mdash; First Negative Constructive</b> (8:00, followed by 3 minutes of cross-examination). Evidence marked (practice card) was written for this drill. Do not quote it in a real round. Your league&rsquo;s times may differ."}], "task": "Write your 1NC (aim for 700–1000 words, about 5–7 minutes of an 8-minute speech). Do not build a case of your own. Go down the 1AC in order and attack it: harms (are they real and big?), inherency (is the status quo already solving?), and solvency (would the plan really work?). Explain why each attack means the judge should not vote Affirmative."};
+
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var DRAFT_KEY = STORAGE_KEY + '_draft';
+var SUBMITTED_KEY = STORAGE_KEY + '_submitted';
+var COUNT_KEY = STORAGE_KEY + '_submitcount';
+
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+
+function countWords(t){ var m = String(t).match(/\S+/g); return m ? m.length : 0; }
+function truncateWords(t, max){
+  var re = /\S+/g, m, n = 0, end = t.length;
+  while((m = re.exec(t))){ n++; if(n === max){ end = m.index + m[0].length; break; } }
+  return t.slice(0, end);
+}
+function childName(){
+  if(TITLE.indexOf('[Sion]')===0) return 'Sion';
+  if(TITLE.indexOf('[Grant]')===0) return 'Grant';
+  if(TITLE.indexOf('[Debate]')===0) return 'Sion'; // 2026-10-13: [Debate] quizzes are Sion's
+  return 'Unknown';
+}
+function plain(html){ var d = document.createElement('div'); d.innerHTML = html; return (d.textContent || '').replace(/\s+/g,' ').trim(); }
+
+function renderPrompt(){
+  document.getElementById('quiz-title').textContent = TITLE;
+  document.getElementById('instruction').textContent = INSTRUCTION;
+  var pc = document.getElementById('prompt-card');
+  pc.innerHTML = '';
+  PROMPT.blocks.forEach(function(b){
+    var blk = document.createElement('div'); blk.className = 'blk';
+    var lab = document.createElement('div'); lab.className = 'blk-label'; lab.textContent = b.label;
+    var body = document.createElement('div'); body.className = 'blk-body' + (b.quote ? ' quote' : '');
+    body.innerHTML = b.html;
+    blk.appendChild(lab); blk.appendChild(body); pc.appendChild(blk);
+  });
+  document.getElementById('task').innerHTML = PROMPT.task;
+  var note = TARGET_TEXT + ' · minimum ' + MIN_WORDS + (MAX_WORDS ? ' · maximum ' + MAX_WORDS : '');
+  document.getElementById('limit-note').textContent = note;
+}
+
+function updateCount(){
+  var ta = document.getElementById('essay');
+  var msg = document.getElementById('msg');
+  msg.textContent = '';
+  if(MAX_WORDS && countWords(ta.value) > MAX_WORDS){
+    ta.value = truncateWords(ta.value, MAX_WORDS);
+    msg.textContent = 'You reached the ' + MAX_WORDS + '-word limit.';
+  }
+  var n = countWords(ta.value);
+  var wc = document.getElementById('wc');
+  wc.textContent = n + (n === 1 ? ' word' : ' words');
+  wc.className = n < MIN_WORDS ? 'wc-low' : ((MAX_WORDS && n >= MAX_WORDS) ? 'wc-high' : 'wc-ok');
+  var cap = MAX_WORDS || Math.max(MIN_WORDS * 3, 300);
+  document.getElementById('bar-fill').style.width = Math.min(100, Math.round(n / cap * 100)) + '%';
+  var btn = document.getElementById('submit-btn');
+  btn.disabled = ta.readOnly || n < MIN_WORDS;
+  if(!ta.readOnly && n > 0 && n < MIN_WORDS && !msg.textContent) msg.textContent = 'Write at least ' + MIN_WORDS + ' words to submit (' + (MIN_WORDS - n) + ' more).';
+  if(!ta.readOnly) lsSet(DRAFT_KEY, ta.value);
+}
+
+function showSubmitted(){
+  var ta = document.getElementById('essay');
+  ta.readOnly = true;
+  document.getElementById('submit-btn').style.display = 'none';
+  var info = lsGet(SUBMITTED_KEY) || '';
+  document.getElementById('done-text').textContent = 'You submitted ' + countWords(ta.value) + ' words' + (info ? ' at ' + info : '') + '.';
+  document.getElementById('done-card').style.display = 'block';
+  updateCount();
+}
+
+function openSubmitModal(){
+  var n = countWords(document.getElementById('essay').value);
+  if(n < MIN_WORDS) return;
+  document.getElementById('modal-text').textContent = 'Submit your ' + n + '-word answer?';
+  document.getElementById('submit-modal').style.display = 'flex';
+}
+function closeSubmitModal(){ document.getElementById('submit-modal').style.display = 'none'; }
+
+function confirmSubmit(){
+  closeSubmitModal();
+  var ta = document.getElementById('essay');
+  var n = countWords(ta.value);
+  if(n < MIN_WORDS) return;
+  var count = parseInt(lsGet(COUNT_KEY) || '0', 10) + 1;
+  lsSet(COUNT_KEY, String(count));
+  var payload = {
+    type: 'essay',
+    child: childName(),
+    quizTitle: TITLE,
+    quizKey: QUIZ_KEY,
+    quizDate: TODAY_STR,
+    submissionNumber: count,
+    prompt: PROMPT.blocks.map(function(b){ return b.label + ': ' + plain(b.html); }).join('\n') + '\nTask: ' + plain(PROMPT.task),
+    essay: ta.value,
+    wordCount: n
+  };
+  try{
+    fetch(REPORT_ENDPOINT, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) }).catch(function(){});
+  }catch(e){}
+  var d = new Date();
+  lsSet(SUBMITTED_KEY, d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}));
+  lsSet(DRAFT_KEY, ta.value);
+  showSubmitted();
+}
+
+function editAgain(){
+  var ta = document.getElementById('essay');
+  ta.readOnly = false;
+  lsDel(SUBMITTED_KEY);
+  document.getElementById('done-card').style.display = 'none';
+  var btn = document.getElementById('submit-btn');
+  btn.style.display = 'block';
+  btn.textContent = 'Resubmit';
+  updateCount();
+  ta.focus();
+}
+
+window.openSubmitModal = openSubmitModal;
+window.closeSubmitModal = closeSubmitModal;
+window.confirmSubmit = confirmSubmit;
+window.editAgain = editAgain;
+
+renderPrompt();
+var ta0 = document.getElementById('essay');
+ta0.value = lsGet(DRAFT_KEY) || '';
+ta0.addEventListener('input', updateCount);
+if(lsGet(SUBMITTED_KEY)) showSubmitted(); else updateCount();
+</script>
+</body>
+</html>
