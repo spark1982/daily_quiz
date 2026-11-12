@@ -307,6 +307,10 @@ function goNext(){
   state.showResults=true; incAttempts(); saveState(); render(); reportResult(); state.reported=true; saveState();
 }
 function showResultsNow(){ if(state.showResults) return; if(!state.checked.every(function(c){return c;})) return; goNext(); }
+function fullNum(si,id){ /* keep-orig-num 2026-11-11: item number in the full (first-try) list */
+  var keep=state.retry, n=0, hit=0; state.retry=null;
+  for(var s=0;s<DATA.sentences.length && !hit;s++){ var L=items(s); for(var j=0;j<L.length;j++){ n++; if(s===si && L[j].id===id){ hit=n; break; } } }
+  state.retry=keep; return hit; }
 function totals(){ var c=0,t=0,wrong=[]; for(var si=0;si<DATA.sentences.length;si++){ items(si).forEach(function(it){ t++; if(it.ok) c++; else wrong.push([si,it]); }); } return {c:c,t:t,wrong:wrong}; }
 function updateProgress(){ var tt=0, dn=0; for(var si=0;si<DATA.sentences.length;si++){ var a=state.ans[si]; words(si).forEach(function(i){ tt++; if(a.pos[i]) dn++; }); tt+=3; if(a.phrases.length) dn++; if(a.subj.length && a.verb.length) dn++; if(a.structure&&a.purpose&&a.pov&&a.tense) dn++; }
   document.getElementById('prog-text').textContent = state.showResults ? 'Done' : (dn+'/'+tt); document.getElementById('prog-fill').style.width = (state.showResults?100:Math.round(dn/tt*100))+'%'; }
@@ -321,7 +325,7 @@ function quizDateStr(){ return TODAY_STR; }
 function reportResult(){
   try{
     var T=totals(), det=[], pos=[];
-    T.wrong.forEach(function(w,k){ pos.push(k+1); det.push({ question: wrongTxt(questionText(w[0],w[1])), yourAnswer: wrongTxt(w[1].your), correctAnswer: wrongTxt(w[1].correct), explanation: wrongTxt(explain(w[0],w[1])) }); });
+    T.wrong.forEach(function(w,k){ pos.push(fullNum(w[0],w[1].id)); det.push({ question: wrongTxt(questionText(w[0],w[1])), yourAnswer: wrongTxt(w[1].your), correctAnswer: wrongTxt(w[1].correct), explanation: wrongTxt(explain(w[0],w[1])) }); });
     var payload = { child:'Grant', quizTitle:TITLE, quizKey:QUIZ_KEY, attemptNumber:getAttempts(), correct:T.c, wrong:T.wrong.length, skipped:0, total:T.t,
       scorePercent: T.t>0 ? Math.round(T.c/T.t*1000)/10 : 0, wrongNumbers: pos.join(','), quizDate: quizDateStr() };
     var firstKey = STORAGE_KEY + '_wrongsent';

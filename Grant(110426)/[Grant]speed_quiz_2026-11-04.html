@@ -147,10 +147,10 @@ function reportResult(){
       var a = state.answers[qi];
       var t = state.timers[qi];
       if(a===undefined){
-        if(t && t.timedOut) { timedout++; wrongPositions.push(pos+1); wrongDetails.push(wrongDetail(qi, '(timed out)')); } else skipped++;
+        if(t && t.timedOut) { timedout++; wrongPositions.push(origNum(qi)); wrongDetails.push(wrongDetail(qi, '(timed out)')); } else skipped++;
         continue;
       }
-      if(a===RAW_QUESTIONS[qi].ci) correct++; else { wrong++; wrongPositions.push(pos+1); wrongDetails.push(wrongDetail(qi, RAW_QUESTIONS[qi].opts[a])); }
+      if(a===RAW_QUESTIONS[qi].ci) correct++; else { wrong++; wrongPositions.push(origNum(qi)); wrongDetails.push(wrongDetail(qi, RAW_QUESTIONS[qi].opts[a])); }
     }
     var total = order.length;
     var childName = 'Unknown';
@@ -240,6 +240,10 @@ function saveOrder(o){ try{ localStorage.setItem(ORDER_KEY, JSON.stringify(o)); 
 
 var order = loadOrder() || shuffleArr(identityOrder());
 if(!loadOrder()) saveOrder(order);
+var ORIG_KEY = ORDER_KEY + '_orig'; var origOrder = null; /* keep-orig-num 2026-11-11 */
+try{ origOrder = JSON.parse(localStorage.getItem(ORIG_KEY) || 'null'); }catch(e){ origOrder = null; }
+if(!origOrder || origOrder.length !== N){ origOrder = (order.length === N) ? order.slice() : identityOrder(); try{ localStorage.setItem(ORIG_KEY, JSON.stringify(origOrder)); }catch(e){} }
+function origNum(qi){ var i = origOrder.indexOf(qi); return i >= 0 ? i + 1 : 0; }
 var pendingFresh = false;
 
 function defaultTimerState(){ return { remainingAtStart: Q_TIME, startedAt: null, running: false, timedOut: false }; }
@@ -411,7 +415,7 @@ function render(){
 
   var qi = order[state.cur];
   var q = RAW_QUESTIONS[qi];
-  document.getElementById('q-num').textContent = 'Q' + (state.cur+1) + ' / ' + order.length;
+  document.getElementById('q-num').textContent = 'Q' + origNum(order[state.cur]) + ' / ' + N + (order.length < N ? '  (retry ' + (state.cur+1) + ' of ' + order.length + ')' : '');
 
   var badge = document.getElementById('tag-badge');
   badge.textContent = q.tag;
@@ -479,7 +483,7 @@ function renderDots(){
     } else {
       bg = state.answers[qi]===RAW_QUESTIONS[qi].ci ? '#185FA5' : '#E24B4A';
     }
-    html += '<button class="dot" style="background:'+bg+';" onclick="goToQ('+pos+')">'+(pos+1)+'</button>';
+    html += '<button class="dot" style="background:'+bg+';" onclick="goToQ('+pos+')">'+origNum(qi)+'</button>';
   }
   var done=0;
   for(var k=0;k<order.length;k++){
@@ -550,12 +554,12 @@ function renderResults(){
     var t = state.timers[qi];
     var card = document.createElement('div');
     if(a===undefined){
-      if(t && t.timedOut){ card.className='r-card timedout'; card.textContent='Q'+(pos+1)+' Time'; }
-      else { card.className='r-card skipped'; card.textContent='Q'+(pos+1)+' Skip'; }
+      if(t && t.timedOut){ card.className='r-card timedout'; card.textContent='Q'+origNum(qi)+' Time'; }
+      else { card.className='r-card skipped'; card.textContent='Q'+origNum(qi)+' Skip'; }
     } else {
       var ok = a===RAW_QUESTIONS[qi].ci;
       card.className='r-card '+(ok?'correct':'wrong');
-      card.textContent='Q'+(pos+1)+' '+(ok?'OK':'X');
+      card.textContent='Q'+origNum(qi)+' '+(ok?'OK':'X');
     }
     (function(p){ card.onclick=function(){ state.showResults=false; state.cur=p; saveState(); render(); }; })(pos);
     grid.appendChild(card);
@@ -588,6 +592,7 @@ function closeFreshModal(){ document.getElementById('freshModal').classList.remo
 function confirmFresh(){
   order = shuffleArr(identityOrder());
   saveOrder(order);
+  origOrder = order.slice(); try{ localStorage.setItem(ORIG_KEY, JSON.stringify(origOrder)); }catch(e){}
   state = defaultState();
   saveState();
   closeFreshModal();
