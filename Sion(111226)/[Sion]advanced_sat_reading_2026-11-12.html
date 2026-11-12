@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] Advanced SAT Reading</title>
+<style>
+.q-position{font-size:0.85rem;font-weight:700;color:#185FA5;margin-bottom:8px;}
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f4f6fa; margin:0; padding: 20px 12px 60px; color:#1a1a2e; }
+  .quiz-wrap { max-width: 680px; margin: 0 auto; }
+  .quiz-title { font-size: 1.4rem; font-weight: 800; text-align:center; margin: 8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom: 14px; min-height: 0; }
+  .nav-bar { background:#fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .nav-summary { display:flex; align-items:center; gap:10px; }
+  #nav-count { font-weight:700; font-size:0.85rem; color:#333; white-space:nowrap; }
+  .progress-track { flex:1; height:6px; background:#d7dde6; border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; width:0%; background:#185FA5; border-radius:3px; transition: width .2s; }
+  .jump-btn { background:#eef2f7; border:none; border-radius:8px; padding:6px 12px; font-size:0.8rem; font-weight:700; color:#185FA5; cursor:pointer; white-space:nowrap; }
+  .dots-panel { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .dot { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; cursor:pointer; background:#d7dde6; color:#555; border:none; }
+  .dot.answered-correct { background:#185FA5; color:#fff; }
+  .dot.answered-wrong { background:#E24B4A; color:#fff; }
+  .results-pill { display:inline-block; margin: 0 auto 14px; padding: 8px 20px; background:#1D9E75; color:#fff; border-radius:20px; font-weight:700; text-align:center; cursor:pointer; width:fit-content; }
+  .results-pill-wrap { text-align:center; }
+  .quiz-card, .results-card { background:#fff; border-radius: 14px; padding: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 16px; }
+  .passage-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:0.92rem; line-height:1.6; color:#222; }
+  .context-label { font-size:0.92rem; font-weight:600; color:#333; margin-bottom:8px; line-height:1.4; }
+  .context-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; }
+  .tag-badge { display:inline-block; font-size:0.72rem; font-weight:700; color:#fff; padding:3px 10px; border-radius:12px; margin-bottom:10px; }
+  .q-text { font-size:1.05rem; font-weight:600; margin-bottom:16px; line-height:1.5; }
+  #options { display:flex; flex-direction:column; gap:10px; }
+  .opt-btn { text-align:left; padding:12px 14px; border-radius:10px; border:1.5px solid #d7dde6; background:#fafbfc; font-size:0.95rem; cursor:pointer; line-height:1.4; }
+  .opt-btn:hover { border-color:#185FA5; }
+  .opt-btn.selected-correct { background:#e6f4ec; border-color:#1D9E75; color:#0d6b3f; font-weight:700; }
+  .opt-btn.selected-wrong { background:#fbeaea; border-color:#E24B4A; color:#a52a2a; font-weight:700; }
+  .opt-btn.reveal-correct { background:#e6f4ec; border-color:#1D9E75; }
+  .opt-btn:disabled { cursor:default; }
+  .exp-box { margin-top:14px; background:#eef7f2; border-left:4px solid #1D9E75; border-radius:8px; padding:12px 14px; font-size:0.88rem; color:#2d4d3f; line-height:1.5; display:none; }
+  .hint-btn { background:#fff8e1;color:#a5720a;border:1.5px solid #f5a623;border-radius:8px;padding:7px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-top:12px;margin-bottom:12px;display:inline-block; }
+  .hint-box { background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.88rem;color:#6b5215;line-height:1.5;display:none; }
+  .hint-box.show { display:block; }
+  .tts-btn { background:#eef2f7; border:none; border-radius:50%; width:34px; height:34px; font-size:1rem; cursor:pointer; margin-left:8px; vertical-align:middle; }
+  .nav-btns { display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .nav-btns button { flex:1; padding:11px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; background:#185FA5; color:#fff; }
+  .nav-btns button:disabled { background:#c9d2dc; cursor:default; }
+  .results-card h2 { text-align:center; margin-top:0; }
+  .score-big { text-align:center; font-size:2.2rem; font-weight:800; color:#185FA5; margin: 6px 0 16px; }
+  .action-row { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .action-row button { padding:12px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; }
+  .btn-retry { background:#f5a623; color:#fff; }
+  .btn-save { background:#7b61ff; color:#fff; }
+  .btn-fresh { background:#E24B4A; color:#fff; }
+  .fresh-btn-bottom { display:block; margin: 6px auto 0; background:none; border:1.5px solid #d7dde6; color:#888; padding:8px 16px; border-radius:20px; font-size:0.8rem; cursor:pointer; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:14px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { font-size:0.95rem; margin-bottom:18px; }
+  .modal-box button { padding:10px 16px; border-radius:8px; border:none; font-weight:700; margin:0 6px; cursor:pointer; }
+  .modal-yes { background:#E24B4A; color:#fff; }
+  .modal-no { background:#eef2f7; color:#333; }
+
+
+  .sat-timer{display:flex;align-items:center;gap:10px;justify-content:space-between;background:#eef3fb;border:1px solid #c9d8ef;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:0.9rem;font-weight:700;color:#185FA5;position:sticky;top:0;z-index:5;}
+  .sat-timer .over{color:#E24B4A;}
+  .sat-timer button{background:#fff;border:1.5px solid #185FA5;color:#185FA5;border-radius:8px;padding:4px 10px;font-weight:700;cursor:pointer;}
+  .sat-pausebox{display:none;text-align:center;background:#fff;border-radius:14px;padding:30px 20px;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);font-weight:700;color:#185FA5;}
+</style>
+</head>
+<body>
+<div class="quiz-wrap">
+  <div class="quiz-title">[Sion] Advanced SAT Reading</div>
+  <div class="instruction" id="instruction"></div>
+
+  <div class="nav-bar">
+    <div class="nav-summary">
+      <span id="nav-count">0/0</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <button class="jump-btn" id="jump-btn" onclick="toggleJump()">Jump&#9662;</button>
+    </div>
+    <div class="dots-panel" id="dots-panel" style="display:none;"></div>
+  </div>
+
+  <div class="results-pill-wrap"><span class="results-pill" id="results-pill" style="display:none;" onclick="showResultsNow()">Results</span></div>
+
+  <div class="quiz-card" id="quiz-card">
+    <div class="q-position" id="q-position"></div>
+    <div class="passage-box" id="passage-box" style="display:none;"></div>
+    <div class="context-label" id="context-label" style="display:none;"></div>
+    <div class="context-box" id="context-box" style="display:none;"></div>
+    <div class="tag-badge" id="tag-badge" style="display:none;"></div>
+    <div class="q-text" id="q-text"></div>
+    <div id="options"></div>
+    <button class="hint-btn" id="hint-btn" onclick="toggleHint()" style="display:none;">Show Hint</button>
+    <div class="hint-box" id="hint-box"></div>
+    <div class="exp-box" id="exp-box"></div>
+    <div class="nav-btns">
+      <button id="prev-btn" onclick="prevQ()">Prev</button>
+      <button id="next-btn" onclick="goNext()">Next</button>
+    </div>
+  </div>
+
+  <div class="results-card" id="results-card" style="display:none;">
+    <h2>Results</h2>
+    <div class="score-big" id="score-big"></div>
+    <div id="score-detail" style="text-align:center;color:#555;font-size:0.9rem;"></div>
+    <div class="action-row">
+      <button class="btn-retry" onclick="startRetry()">Retry Wrong Ones</button>
+      <button class="btn-fresh" onclick="openFreshModal()">Start Fresh</button>
+    </div>
+  </div>
+
+  <button class="fresh-btn-bottom" onclick="openFreshModal()">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="fresh-modal" style="display:none;">
+  <div class="modal-box">
+    <p>Reset all progress and start over?</p>
+    <button class="modal-yes" onclick="confirmFresh()">Yes, Start Fresh</button>
+    <button class="modal-no" onclick="closeFreshModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Sion] Advanced SAT Reading";
+var QUIZ_KEY = "sionadvreading";
+var INSTRUCTION = "Read each passage and choose the best answer.";
+var TODAY_STR = "20261112";
+var RAW_QUESTIONS = [{"passage": "<strong>Text 1</strong><br>Rooftop beehives have spread rapidly across North American and European cities, and many city governments now promote urban beekeeping as a way to help pollinators. Advocates point out that honeybee colonies in cities often produce more honey than rural colonies do, a sign, they argue, that cities can offer abundant food for pollinating insects.<br><br><strong>Text 2</strong><br>Ecologist Marisol Okafor surveyed wild bees in Montreal neighborhoods with and without rooftop hives. Where hive density was highest, wild bee species were less diverse, and flowers that wild bees depend on showed signs of heavy foraging by honeybees. Okafor concludes that a city full of honeybees is not the same as a city that is good for bees: honeybees are managed livestock that can outcompete the hundreds of native species doing much of the actual pollination.", "stem": "Based on the texts, how would Okafor (Text 2) most likely respond to the advocates' reasoning in Text 1?", "opts": ["She would agree that honey yields are a useful measure of urban flower abundance but question whether the yields have been measured accurately.", "She would argue that cities should limit rooftop hives because honeybees are poor pollinators of the plants grown in urban gardens.", "She would argue that strong honey production shows only that honeybees are thriving, not that urban pollinators in general are benefiting.", "She would suggest that the advocates' claim applies to European cities but not to North American cities such as Montreal."], "ci": 2, "exp": "Text 1's advocates treat high honey yields as a sign that cities are good for &ldquo;pollinating insects&rdquo; in general. Okafor's finding that wild bee diversity drops where hives are dense, and her line that &ldquo;a city full of honeybees is not the same as a city that is good for bees,&rdquo; challenge exactly that leap from one managed species to all pollinators. Text 2 never questions how honey was measured, never says honeybees pollinate poorly, and studies only Montreal without contrasting continents.", "tag": "Cross-Text Connections", "tagcolor": "#d6336c"}, {"passage": "<strong>Text 1</strong><br>Historians have long linked the printing press to the dramatic rise in literacy in early modern Europe. Once books could be produced quickly and cheaply, the argument goes, reading spread wherever printed material became available, transforming societies within a few generations.<br><br><strong>Text 2</strong><br>Historian Anders Lindqvist points out that by 1600 printed books circulated in nearly every region of Europe, yet literacy rates differed enormously from place to place. In Sweden, where church law required every household to demonstrate reading ability, literacy rose sharply even though the country had few presses. Lindqvist argues that cheap books made widespread reading possible but did not by themselves make people want or need to read.", "stem": "Based on the texts, Lindqvist (Text 2) would most likely describe the explanation presented in Text 1 as", "opts": ["mistaken, because the printing press had little effect on how many books were available in most of Europe.", "incomplete, because it treats the availability of printed material as if it were enough to produce literacy.", "convincing, because the Swedish example shows that literacy rose fastest in places with many printing presses.", "outdated, because recent evidence shows that literacy in Europe declined after printed books became common."], "ci": 1, "exp": "Lindqvist accepts that cheap books &ldquo;made widespread reading possible,&rdquo; so he does not call the printing-press account simply wrong. His point is that printed books were nearly everywhere while literacy varied greatly, and that Sweden's church requirement drove reading despite few presses. That makes Text 1's account incomplete: availability alone does not explain the rise. Sweden actually had few presses, and Text 2 describes no decline in literacy.", "tag": "Cross-Text Connections", "tagcolor": "#d6336c"}, {"passage": "Many deep-sea fish produce their own light, but researchers long assumed that the glow mainly helped them lure prey or find mates. Marine biologist Keiko Arai noticed something odd about the hatchetfish: its light organs line its belly and point straight down. In laboratory tanks, Arai found that the fish adjusted the brightness of these organs to match the faint sunlight filtering from above. <u>Seen from below by a predator, a hatchetfish therefore blends into the glow of the surface instead of appearing as a dark silhouette.</u> Arai's work suggests that for some species, light serves less as a signal than as a form of camouflage.", "stem": "Which choice best describes the function of the underlined sentence in the text as a whole?", "opts": ["It introduces a second hypothesis that Arai tested after her laboratory findings failed to support the idea of camouflage.", "It explains how the behavior Arai observed in the laboratory could protect the fish, linking that observation to the conclusion in the final sentence.", "It describes the assumption that researchers held before Arai began studying the light organs of the hatchetfish.", "It qualifies Arai's conclusion by noting that predators can still detect hatchetfish in certain lighting conditions."], "ci": 1, "exp": "The sentence before it reports what Arai saw in the tanks (the fish matches the brightness of light from above). The underlined sentence explains the consequence: a predator below cannot see a dark silhouette. That explanation is what lets the final sentence conclude that light can work as camouflage. It is not a new hypothesis, it is not the older assumption (that appears in the first sentence), and it does not weaken the conclusion.", "tag": "Text Structure and Purpose", "tagcolor": "#0d9488"}, {"passage": "For decades, city planners measured a street's success by how many cars it could move per hour. In the 1960s, writer and activist Jane Jacobs proposed a different yardstick. Watching the sidewalks of her Greenwich Village neighborhood, she recorded how shopkeepers, children, and passersby kept an informal watch on the street, a pattern she called &ldquo;eyes on the street.&rdquo; Busy, mixed-use blocks, she argued, were safer and livelier than wide roads lined with single-use buildings. Although planners initially dismissed her as an amateur, many cities now design streets around the very measures of daily life that Jacobs counted.", "stem": "Which choice best describes the overall structure of the text?", "opts": ["It describes a debate between two planners, evaluates the evidence each offered, and concludes that neither standard is adequate on its own.", "It explains a problem that cities faced in the 1960s, outlines several proposed solutions, and identifies the one that proved least costly.", "It presents a conventional standard for judging streets, describes an alternative standard and how it was developed, and then notes how that alternative was eventually received.", "It summarizes Jacobs's career as a writer, lists the neighborhoods she studied, and argues that her methods were too informal to be useful."], "ci": 2, "exp": "The text opens with the old yardstick (cars moved per hour), then describes Jacobs's alternative and how she arrived at it (watching sidewalks, &ldquo;eyes on the street&rdquo;), and ends with its reception (first dismissed, now widely used). There is no second planner, no list of solutions or costs, and the text does not call her methods useless.", "tag": "Text Structure and Purpose", "tagcolor": "#0d9488"}, {"passage": "Although the school board's new policy was announced as a sweeping overhaul of the district's grading system, its actual provisions were largely ______: teachers would keep the existing letter grades and report cards, making only small adjustments to how late assignments were scored.", "stem": "Which choice completes the text with the most logical and precise word or phrase?", "opts": ["incremental", "radical", "ambiguous", "redundant"], "ci": 0, "exp": "The colon introduces evidence of the provisions' character: the existing system stays and only &ldquo;small adjustments&rdquo; are made. &ldquo;Incremental&rdquo; (proceeding in small steps) fits that evidence and contrasts with &ldquo;sweeping overhaul.&rdquo; &ldquo;Radical&rdquo; says the opposite. &ldquo;Ambiguous&rdquo; is not supported, because the changes are described clearly. &ldquo;Redundant&rdquo; would mean the provisions repeat one another or are unnecessary, which the text never says.", "tag": "Words in Context", "tagcolor": "#7b61ff"}, {"passage": "When divers reached the merchant ship that sank in Lake Superior in 1875, they were astonished at how intact its wooden hull remained. The lake's frigid, oxygen-poor water had <u>arrested</u> the work of the bacteria and wood-boring organisms that would quickly destroy a wreck in warmer seas.", "stem": "As used in the text, what does the word &ldquo;arrested&rdquo; most nearly mean?", "opts": ["halted", "captured", "attracted", "punished"], "ci": 0, "exp": "The cold, oxygen-poor water is the reason the hull stayed intact, so it must have stopped the organisms that cause decay. &ldquo;Halted&rdquo; fits. &ldquo;Captured&rdquo; and &ldquo;punished&rdquo; draw on the police sense of &ldquo;arrest&rdquo;; &ldquo;attracted&rdquo; comes from &ldquo;arresting&rdquo; meaning eye-catching. None of these describes what the water did to the bacteria's work.", "tag": "Words in Context", "tagcolor": "#7b61ff"}, {"passage": "Wood frogs survive Alaskan winters by freezing nearly solid; their hearts stop and up to two-thirds of their body water turns to ice. Biologist Jon Costanzo observed that frogs collected in the far north survive colder temperatures and longer freezes than frogs of the same species collected farther south. When he raised frogs from both regions in identical laboratory conditions, however, the northern frogs still tolerated deeper freezing. This finding suggests that ______", "stem": "Which choice most logically completes the text?", "opts": ["southern frogs would develop the same freeze tolerance as northern frogs if they were raised in Alaska.", "laboratory conditions reduce the freeze tolerance of wood frogs from both northern and southern regions.", "the northern frogs' greater freeze tolerance is not simply a response to the conditions they experienced while growing up.", "wood frogs in the far north freeze less often than wood frogs that live farther south."], "ci": 2, "exp": "Raising both groups in identical conditions removes differences in upbringing. Since the northern frogs still tolerated deeper freezing, their advantage cannot be explained only by the environment they grew up in. The claim about southern frogs raised in Alaska contradicts that result; nothing compares laboratory frogs with wild ones; and the text says northern frogs face colder, longer freezes, not fewer freezes.", "tag": "Inferences", "tagcolor": "#f5a623"}, {"passage": "A medieval manuscript held by a university library contains a poem copied in an unknown scribe's handwriting. Because the poem's language matches that of the early 1300s, scholars long dated the manuscript to that period. Recently, however, conservator Elena Brandt found that the paper bears a watermark used only by a mill that did not begin operating until 1392. Since scribes often copied poems written many years earlier, Brandt concludes that ______", "stem": "Which choice most logically completes the text?", "opts": ["the poem was probably composed after 1392 by a poet who imitated the language of an earlier period.", "the watermark was probably added to the paper long after the manuscript had been copied.", "the manuscript was probably made after 1392, even though the poem itself may have been written in the early 1300s.", "scholars probably misidentified the language of the poem as belonging to the early 1300s."], "ci": 2, "exp": "The watermark shows the paper could not exist before 1392, so the copy was made then or later. The sentence about scribes copying older poems explains how the poem's early-1300s language can still be correct: the poem is old, the copy is newer. Nothing in the text suggests a later poet imitating old language, a watermark added afterward (watermarks are made with the paper), or an error about the language.", "tag": "Inferences", "tagcolor": "#f5a623"}, {"passage": "Sociologist Priya Raman hypothesizes that public libraries strengthen neighborhood ties not mainly through their book collections but by giving people of different ages a free place to spend time together. To test this idea, she studied neighborhoods in three cities where libraries had cut hours or added hours.", "stem": "Which finding, if true, would most directly support Raman's hypothesis?", "opts": ["In neighborhoods where libraries expanded their book collections, residents borrowed more books but reported no change in how often they talked with neighbors.", "In neighborhoods where libraries added evening hours but did not expand their collections, residents reported more conversations with neighbors outside their own age group.", "In neighborhoods where libraries cut hours, residents bought more books online and visited bookstores more often.", "In neighborhoods with large libraries, residents were more likely to say that reading was one of their favorite activities."], "ci": 1, "exp": "The hypothesis says the shared space, not the books, builds ties across ages. A finding where only time in the space increased (added hours, same collection) and cross-age conversations rose isolates that cause and matches the predicted effect. The collection-expansion finding shows that books did not build ties, but it does not show that the space did, so it is weaker support. Online book buying and attitudes toward reading say nothing about neighborhood ties.", "tag": "Command of Evidence", "tagcolor": "#1D9E75"}, {"passage": "<table style=\"border-collapse:collapse;font-size:0.88rem;margin:4px 0 10px;\"><tr><th style=\"border:1px solid #c9d1dc;padding:4px 8px;\">Soil type</th><th style=\"border:1px solid #c9d1dc;padding:4px 8px;\">Corn yield without cover crop (bushels/acre)</th><th style=\"border:1px solid #c9d1dc;padding:4px 8px;\">Corn yield with cover crop (bushels/acre)</th></tr><tr><td style=\"border:1px solid #c9d1dc;padding:4px 8px;\">Sandy</td><td style=\"border:1px solid #c9d1dc;padding:4px 8px;\">142</td><td style=\"border:1px solid #c9d1dc;padding:4px 8px;\">161</td></tr><tr><td style=\"border:1px solid #c9d1dc;padding:4px 8px;\">Loam</td><td style=\"border:1px solid #c9d1dc;padding:4px 8px;\">188</td><td style=\"border:1px solid #c9d1dc;padding:4px 8px;\">193</td></tr><tr><td style=\"border:1px solid #c9d1dc;padding:4px 8px;\">Clay</td><td style=\"border:1px solid #c9d1dc;padding:4px 8px;\">171</td><td style=\"border:1px solid #c9d1dc;padding:4px 8px;\">170</td></tr></table>Cover crops such as winter rye are planted after harvest to protect bare soil. Agronomist Luis Ferreira tested whether a rye cover crop raised the next season's corn yield on three soil types in Iowa. He suspected that the benefit would be largest where soil holds water and nutrients poorly, as sandy soil does, and smallest where soil already holds them well. The data in the table ______", "stem": "Which choice most effectively uses data from the table to complete the statement?", "opts": ["support Ferreira's expectation, since yield rose by 19 bushels per acre on sandy soil but by only 5 on loam and not at all on clay.", "support Ferreira's expectation, since loam produced the highest corn yield both with and without the cover crop.", "weaken Ferreira's expectation, since clay produced a higher yield than sandy soil when no cover crop was planted.", "weaken Ferreira's expectation, since the cover crop raised yield on sandy soil by less than it did on loam."], "ci": 0, "exp": "Ferreira's expectation is about the size of the benefit on each soil. The gains are 161 &minus; 142 = 19 (sandy), 193 &minus; 188 = 5 (loam), and 170 &minus; 171 = &minus;1 (clay), so the benefit is largest on sandy soil and essentially absent on clay, as he predicted. Loam's high overall yield and the clay-versus-sand comparison without cover crops do not measure the benefit, and the claim that the sandy gain was smaller than loam's misreads the table.", "tag": "Command of Evidence", "tagcolor": "#1D9E75"}, {"passage": "The following text is adapted from a short story. Teo has just started working at his uncle's bicycle repair shop.<br><br>Uncle Rafa handed Teo a wheel so warped that it wobbled like a dinner plate spun on a table. &ldquo;Make it true,&rdquo; he said, and went back to his coffee. Teo turned the spoke wrench a quarter turn, spun the wheel, and watched the wobble move to a new place. He tried again, and again. <u>Across the shop, his uncle did not look up, but every time the wheel slowed, the newspaper in his hands stopped rustling.</u> By closing time the rim spun almost straight, and Uncle Rafa, still without a word, set a second warped wheel on the bench.", "stem": "Which choice best describes the function of the underlined sentence in the text as a whole?", "opts": ["It shows that Uncle Rafa is too busy with his own tasks to teach Teo how to repair the wheel.", "It reveals that Teo is distracted by the noise his uncle makes while reading the newspaper.", "It indicates that Uncle Rafa doubts Teo will be able to repair the wheel before closing time.", "It suggests that Uncle Rafa is paying close attention to Teo's work even though he seems uninterested."], "ci": 3, "exp": "The rustling stops each time the wheel slows, which means Uncle Rafa pauses to watch the result, even though he &ldquo;did not look up.&rdquo; The detail quietly shows attention behind an indifferent surface, which also explains why he hands Teo a second wheel at the end. Nothing indicates he is too busy, that the noise bothers Teo, or that he doubts Teo.", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"passage": "Critics of lab-grown meat often argue that consumers will never accept food produced in steel tanks. Such resistance should not be dismissed; surveys show that many shoppers are uneasy about the idea. Yet history suggests that discomfort with new food technology can fade. Pasteurized milk was once denounced as &ldquo;cooked&rdquo; and lifeless, and frozen vegetables were considered inferior to fresh ones for decades. In both cases, acceptance followed once the products became familiar, affordable, and reliably safe. Whether lab-grown meat follows the same path will depend less on initial reactions than on whether it can meet those same three conditions.", "stem": "Which choice best describes the main purpose of the text?", "opts": ["To argue that lab-grown meat will be accepted more quickly than pasteurized milk and frozen vegetables were", "To explain why surveys about new food technologies tend to exaggerate how uneasy consumers feel", "To describe the process by which lab-grown meat is produced and compare it with traditional farming", "To argue that current consumer resistance to lab-grown meat is not decisive, while acknowledging that the resistance is real"], "ci": 3, "exp": "The author concedes that resistance is real (&ldquo;should not be dismissed&rdquo;), then uses historical examples to argue that early discomfort does not settle the outcome, which will depend on familiarity, price, and safety. The text never predicts faster acceptance than past products, never says surveys exaggerate, and does not describe how the meat is made.", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}];
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var ORDER_KEY = STORAGE_KEY + '_order';
+var ACTIVE_KEY = STORAGE_KEY + '_active';
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+function wrongTxt(s){ s = (s===undefined || s===null) ? '' : String(s); return /^\s*</.test(s) ? s : '<span>' + s + '</span>'; }
+function wrongDetail(qi, yourAnswer){
+  var q = RAW_QUESTIONS[qi];
+  var qtext = (q.passage ? q.passage + '<br><br>' : '') + (q.contextLabel ? q.contextLabel + '<br>' : '') + (q.context ? q.context + '<br>' : '') + q.stem;
+  return { question: wrongTxt(qtext), yourAnswer: wrongTxt(yourAnswer), correctAnswer: wrongTxt(q.opts[q.ci]), explanation: wrongTxt(q.exp) };
+}
+function quizDateStr(){ return (typeof TODAY_STR !== 'undefined') ? TODAY_STR : ((String(QUIZ_KEY).match(/\d{8}/) || [''])[0]); }
+function reportResult(){
+  try{
+    var ao = activeOrder();
+    var correct=0, wrong=0, skipped=0;
+    var wrongPositions=[];
+    var wrongDetails=[];
+    for(var pos=0; pos<ao.length; pos++){
+      var qi = ao[pos];
+      if(state.answers[qi]===undefined){ if(window.SAT_TIMEUP && SAT_TIMEUP() && !(activeSet && activeSet.length)){ wrong++; wrongPositions.push(origNum(qi)); wrongDetails.push(wrongDetail(qi, "(time's up)")); } else skipped++; continue; }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else { wrong++; wrongPositions.push(origNum(qi)); wrongDetails.push(wrongDetail(qi, RAW_QUESTIONS[qi].opts[state.answers[qi]])); }
+    }
+    var total = ao.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0,
+      wrongNumbers: wrongPositions.join(','),
+      quizDate: quizDateStr()
+    };
+    var firstKey = STORAGE_KEY + '_wrongsent';
+    if(!(activeSet && activeSet.length) && !localStorage.getItem(firstKey)){
+      payload.wrongAnswers = wrongDetails;
+      localStorage.setItem(firstKey, '1');
+    }
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
+}
+/* progress-report 2026-10-27 */
+var _lastProgressSig = '';
+function reportProgress(){
+  try{
+    if(state.showResults) return;
+    if(!(!(activeSet && activeSet.length) && !localStorage.getItem(STORAGE_KEY + '_wrongsent'))) return;
+    var answered=0, correct=0, wd=[];
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos]; var a = state.answers[qi];
+      if(a===undefined){ wd.push(wrongDetail(qi, '(not answered)')); continue; }
+      answered++;
+      if(a===RAW_QUESTIONS[qi].ci) correct++; else wd.push(wrongDetail(qi, RAW_QUESTIONS[qi].opts[a]));
+    }
+    if(answered===0) return;
+    var sig = answered + '/' + correct; if(sig===_lastProgressSig) return; _lastProgressSig = sig;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var body = JSON.stringify({ type:'progress', child: childName, quizTitle: TITLE, quizKey: QUIZ_KEY, quizDate: quizDateStr(),
+      answered: answered, total: order.length, correct: correct, wrongAnswers: wd });
+    fetch(REPORT_ENDPOINT, { method:'POST', mode:'no-cors', keepalive: body.length < 60000,
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, body: body }).catch(function(){});
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='hidden') reportProgress(); });
+window.addEventListener('pagehide', reportProgress);
+
+
+var ATTEMPTS_KEY = STORAGE_KEY + '_attempts';
+
+var order = [];
+var activeSet = null; // when in retry mode, holds subset of original indices
+var state = { answers:{}, cur:0, showResults:false };
+var hintShown = false;
+
+function loadState(){
+  var raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try{ state = JSON.parse(raw); }catch(e){ state = {answers:{},cur:0,showResults:false}; } }
+  var rawOrder = localStorage.getItem(ORDER_KEY);
+  if(rawOrder){ try{ order = JSON.parse(rawOrder); }catch(e){ order=null; } }
+  if(!order || !order.length){
+    order = RAW_QUESTIONS.map(function(_,i){return i;});
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  }
+  var rawActive = localStorage.getItem(ACTIVE_KEY);
+  if(rawActive){ try{ activeSet = JSON.parse(rawActive); }catch(e){ activeSet = null; } }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function getAttempts(){
+  var a = localStorage.getItem(ATTEMPTS_KEY);
+  return a ? parseInt(a,10) : 0; // 2026-10-24: start at 0 so the first finish reports attempt 1 (was 1 → first finish reported 2)
+}
+function incAttempts(){
+  var a = getAttempts() + 1;
+  localStorage.setItem(ATTEMPTS_KEY, String(a));
+}
+
+function activeOrder(){ return (activeSet && activeSet.length) ? activeSet : order; }
+function origNum(qi){ var i = order.indexOf(qi); return i >= 0 ? i + 1 : 0; } /* keep-orig-num 2026-11-11 */
+
+function render(){
+  document.getElementById('instruction').textContent = INSTRUCTION;
+  var ord = activeOrder();
+  if(state.showResults){
+    document.getElementById('quiz-card').style.display='none';
+    document.getElementById('results-card').style.display='block';
+    renderResults();
+  } else {
+    document.getElementById('quiz-card').style.display='block';
+    document.getElementById('results-card').style.display='none';
+    renderQuestion();
+  }
+  updateNav();
+}
+
+function renderQuestion(){
+  hintShown = false;
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  var qpEl = document.getElementById('q-position');
+  if(qpEl) qpEl.textContent = 'Q' + origNum(ord[state.cur]) + ' / ' + order.length + ((activeSet && activeSet.length) ? '  (retry ' + (state.cur + 1) + ' of ' + ord.length + ')' : '');
+
+  var pb = document.getElementById('passage-box');
+  if(q.passage){ pb.style.display='block'; pb.innerHTML = q.passage; } else { pb.style.display='none'; pb.innerHTML=''; }
+
+  var cl = document.getElementById('context-label');
+  if(q.contextLabel){ cl.style.display='block'; cl.textContent = q.contextLabel; } else { cl.style.display='none'; cl.textContent=''; }
+
+  var cb = document.getElementById('context-box');
+  if(q.context){ cb.style.display='block'; cb.innerHTML = q.context; } else { cb.style.display='none'; cb.innerHTML=''; }
+
+  var tb = document.getElementById('tag-badge');
+  if(q.tag){ tb.style.display='inline-block'; tb.textContent = q.tag; tb.style.background = q.tagcolor || '#185FA5'; } else { tb.style.display='none'; }
+
+  var qt = document.getElementById('q-text');
+  qt.innerHTML = q.stem + (q.tts ? ' <button class="tts-btn" onclick="speak(' + qi + ')" title="Listen">&#128266;</button>' : '');
+
+  var opts = document.getElementById('options');
+  opts.innerHTML = '';
+  var answered = state.answers[qi] !== undefined;
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = optText;
+    if(answered){
+      btn.disabled = true;
+      if(idx === q.ci) btn.className += ' reveal-correct';
+      if(idx === state.answers[qi] && idx !== q.ci) btn.className += ' selected-wrong';
+      if(idx === state.answers[qi] && idx === q.ci) btn.className += ' selected-correct';
+    } else {
+      btn.onclick = function(){ pick(idx); };
+    }
+    opts.appendChild(btn);
+  });
+
+  var hb = document.getElementById('hint-btn');
+  var hx = document.getElementById('hint-box');
+  if(q.hint){
+    hb.style.display='inline-block'; hb.textContent='Show Hint';
+    hx.innerHTML = q.hint; hx.classList.remove('show');
+  } else {
+    hb.style.display='none'; hx.classList.remove('show');
+  }
+
+  var eb = document.getElementById('exp-box');
+  if(answered){
+    eb.style.display='block';
+    eb.innerHTML = '<strong>Explanation:</strong> ' + q.exp;
+  } else {
+    eb.style.display='none'; eb.innerHTML='';
+  }
+
+  document.getElementById('prev-btn').disabled = (state.cur === 0);
+  var ord2 = activeOrder();
+  var isLast = (state.cur === ord2.length - 1);
+  document.getElementById('next-btn').textContent = isLast ? 'Finish' : 'Next';
+}
+
+function toggleHint(){
+  hintShown = !hintShown;
+  var b=document.getElementById('hint-btn'), x=document.getElementById('hint-box');
+  if(hintShown){ x.classList.add('show'); b.textContent='Hide Hint'; }
+  else { x.classList.remove('show'); b.textContent='Show Hint'; }
+}
+window.toggleHint = toggleHint;
+
+function pick(idx){
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState();
+  render();
+}
+window.pick = pick;
+
+function prevQ(){
+  if(state.cur > 0){ state.cur--; saveState(); render(); }
+}
+window.prevQ = prevQ;
+window.go = prevQ;
+
+function goNext(){
+  if(state.showResults) return; // 2026-10-14: ignore double taps / Results tap on the results screen (prevented duplicate result emails)
+    var ord = activeOrder();
+  if(state.cur < ord.length - 1){
+    state.cur++;
+    saveState();
+    render();
+  } else {
+    if(state.reported){ state.showResults=true; saveState(); render(); return; } /* no-resend-after-review 2026-10-28 */
+    state.showResults = true;
+    incAttempts();
+    saveState();
+    render();
+    reportResult(); state.reported = true; saveState();
+  }
+}
+window.goNext = goNext;
+
+function showResultsNow(){
+  if(state.showResults) return; // 2026-10-14: ignore double taps / Results tap on the results screen (prevented duplicate result emails)
+    if(state.reported){ state.showResults=true; saveState(); render(); return; } /* no-resend-after-review 2026-10-28 */
+  state.showResults = true;
+  incAttempts(); // 2026-10-24: count a finish from the Results pill too
+  saveState();
+  render();
+  reportResult(); state.reported = true; saveState();
+}
+window.showResultsNow = showResultsNow;
+
+function goToQ(pos){
+  state.cur = pos;
+  state.showResults = false;
+  saveState();
+  render();
+}
+window.goToQ = goToQ;
+
+function renderResults(){
+  var ord = activeOrder();
+  var correct=0, wrong=0, skipped=0;
+  ord.forEach(function(qi){
+    if(state.answers[qi]===undefined) skipped++;
+    else if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++;
+    else wrong++;
+  });
+  var total = ord.length;
+  document.getElementById('score-big').textContent = correct + ' / ' + total;
+  document.getElementById('score-detail').textContent = 'Correct: ' + correct + '  Wrong: ' + wrong + '  Skipped: ' + skipped;
+}
+
+function updateNav(){
+  var ord = activeOrder();
+  var answeredCount = 0;
+  ord.forEach(function(qi){ if(state.answers[qi]!==undefined) answeredCount++; });
+  document.getElementById('nav-count').textContent = answeredCount + '/' + ord.length;
+  var pct = ord.length ? Math.round(answeredCount/ord.length*100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('results-pill').style.display = (answeredCount === ord.length && ord.length>0 && !state.showResults) ? 'inline-block' : 'none';
+  renderDots();
+}
+
+function renderDots(){
+  var panel = document.getElementById('dots-panel');
+  if(panel.style.display === 'none') { buildDots(); return; }
+  buildDots();
+}
+function buildDots(){
+  var panel = document.getElementById('dots-panel');
+  var ord = activeOrder();
+  panel.innerHTML = '';
+  ord.forEach(function(qi, pos){
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.textContent = origNum(qi);
+    if(state.answers[qi]!==undefined){
+      d.className += (state.answers[qi]===RAW_QUESTIONS[qi].ci) ? ' answered-correct' : ' answered-wrong';
+    }
+    d.onclick = function(){ goToQ(pos); };
+    panel.appendChild(d);
+  });
+}
+
+function toggleJump(){
+  var panel = document.getElementById('dots-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display === 'none'){
+    panel.style.display = 'flex';
+    btn.innerHTML = 'Hide&#9652;';
+    buildDots();
+  } else {
+    panel.style.display = 'none';
+    btn.innerHTML = 'Jump&#9662;';
+  }
+}
+window.toggleJump = toggleJump;
+
+function startRetry(){
+  var ord = activeOrder();
+  var wrongIdx = ord.filter(function(qi){ return (state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci) || (state.answers[qi]===undefined && window.SAT_TIMEUP && SAT_TIMEUP()); });
+  if(!wrongIdx.length) return;
+  activeSet = wrongIdx;
+  localStorage.setItem(ACTIVE_KEY, JSON.stringify(activeSet));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  render();
+}
+window.startRetry = startRetry;
+
+function openFreshModal(){ document.getElementById('fresh-modal').style.display='flex'; }
+window.openFreshModal = openFreshModal;
+function closeFreshModal(){ document.getElementById('fresh-modal').style.display='none'; }
+window.closeFreshModal = closeFreshModal;
+function confirmFresh(){
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(ORDER_KEY);
+  localStorage.removeItem(ACTIVE_KEY);
+  activeSet = null;
+  order = RAW_QUESTIONS.map(function(_,i){return i;});
+  localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  document.getElementById('fresh-modal').style.display='none';
+  render();
+}
+window.confirmFresh = confirmFresh;
+
+function speak(qi){
+  try{
+    var q = RAW_QUESTIONS[qi];
+    var text = q.tts || q.stem.replace(/<[^>]+>/g,'');
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ko-KR';
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+window.speak = speak;
+
+loadState();
+render();
+</script>
+<script>
+/* sat-timer 2026-11-06 */
+(function(){
+  var PER_Q = 75;
+  var LIMIT = PER_Q * RAW_QUESTIONS.length;
+  var TK = STORAGE_KEY + '_timer';
+  function blank(){ return {el:0, per:{}, up:false}; }
+  function load(){ try{ return JSON.parse(localStorage.getItem(TK)) || blank(); }catch(e){ return blank(); } }
+  var T = load(), paused = false, last = Date.now();
+  function save(){ try{ localStorage.setItem(TK, JSON.stringify(T)); }catch(e){} }
+  function retrying(){ return !!(activeSet && activeSet.length); }
+  window.SAT_TIMEUP = function(){ return !!T.up; };
+  var bar = document.createElement('div'); bar.className = 'sat-timer'; bar.id = 'sat-timer';
+  bar.innerHTML = '<span id="sat-total"></span><span id="sat-q"></span><button id="sat-pause" onclick="satPause()">Pause</button>';
+  var nav = document.querySelector('.nav-bar'); nav.parentNode.insertBefore(bar, nav);
+  var pbox = document.createElement('div'); pbox.className = 'sat-pausebox'; pbox.id = 'sat-pausebox';
+  pbox.innerHTML = 'Paused<br><br><button onclick="satPause()" style="background:#185FA5;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer;">Resume</button>';
+  var card = document.getElementById('quiz-card'); card.parentNode.insertBefore(pbox, card);
+  function fmt(s){ s = Math.max(0, Math.ceil(s)); return Math.floor(s/60) + ':' + ('0' + (s%60)).slice(-2); }
+  function running(){ return !T.up && !state.showResults && !retrying() && !paused && document.visibilityState !== 'hidden'; }
+  function draw(){
+    var show = !retrying() && !state.showResults;
+    bar.style.display = show ? 'flex' : 'none';
+    var left = LIMIT - T.el;
+    var tot = document.getElementById('sat-total');
+    tot.textContent = 'Time left ' + fmt(left); tot.className = left < 60 ? 'over' : '';
+    var qi = activeOrder()[state.cur], used = T.per[qi] || 0;
+    var qs = document.getElementById('sat-q');
+    qs.textContent = 'This question ' + fmt(used) + ' / ' + fmt(PER_Q); qs.className = used > PER_Q ? 'over' : '';
+    document.getElementById('sat-pause').textContent = paused ? 'Resume' : 'Pause';
+    pbox.style.display = (paused && show) ? 'block' : 'none';
+    if(paused && show) card.style.display = 'none';
+    var det = document.getElementById('score-detail');
+    if(T.up && state.showResults && !retrying() && det && det.textContent.indexOf("Time's up") < 0) det.textContent = "Time's up! Unanswered questions count as wrong. " + det.textContent;
+  }
+  function timeUp(){
+    T.up = true; T.el = LIMIT; save(); paused = false;
+    if(!state.showResults) showResultsNow();
+    draw();
+  }
+  function tick(){
+    var now = Date.now(), dt = (now - last) / 1000; last = now;
+    if(dt > 5 || dt < 0) dt = 0;
+    if(running()){
+      T.el += dt;
+      var qi = activeOrder()[state.cur];
+      if(state.answers[qi] === undefined) T.per[qi] = (T.per[qi] || 0) + dt;
+      save();
+      if(T.el >= LIMIT){ timeUp(); return; }
+    }
+    draw();
+  }
+  window.satPause = function(){ paused = !paused; last = Date.now(); if(!paused) render(); draw(); };
+  var _pick = window.pick;
+  window.pick = function(i){ if(T.up && !retrying()) return; if(paused) return; return _pick(i); };
+  var _fresh = window.confirmFresh;
+  window.confirmFresh = function(){ T = blank(); save(); paused = false; last = Date.now(); var r = _fresh.apply(this, arguments); draw(); return r; };
+  var _render = window.render;
+  if(typeof _render === 'function'){ window.render = function(){ var r = _render.apply(this, arguments); try{ draw(); }catch(e){} return r; }; }
+  document.addEventListener('visibilitychange', function(){ last = Date.now(); });
+  if(!T.up && T.el >= LIMIT && !state.showResults) timeUp();
+  window.__satTimer = { tick: tick, get T(){ return T; }, LIMIT: LIMIT };
+  setInterval(tick, 500);
+  draw();
+})();
+</script>
+</body>
+</html>
