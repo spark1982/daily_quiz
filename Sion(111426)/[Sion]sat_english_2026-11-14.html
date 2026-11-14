@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT English</title>
+<style>
+.q-position{font-size:0.85rem;font-weight:700;color:#185FA5;margin-bottom:8px;}
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f4f6fa; margin:0; padding: 20px 12px 60px; color:#1a1a2e; }
+  .quiz-wrap { max-width: 680px; margin: 0 auto; }
+  .quiz-title { font-size: 1.4rem; font-weight: 800; text-align:center; margin: 8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom: 14px; min-height: 0; }
+  .nav-bar { background:#fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .nav-summary { display:flex; align-items:center; gap:10px; }
+  #nav-count { font-weight:700; font-size:0.85rem; color:#333; white-space:nowrap; }
+  .progress-track { flex:1; height:6px; background:#d7dde6; border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; width:0%; background:#185FA5; border-radius:3px; transition: width .2s; }
+  .jump-btn { background:#eef2f7; border:none; border-radius:8px; padding:6px 12px; font-size:0.8rem; font-weight:700; color:#185FA5; cursor:pointer; white-space:nowrap; }
+  .dots-panel { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .dot { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; cursor:pointer; background:#d7dde6; color:#555; border:none; }
+  .dot.answered-correct { background:#185FA5; color:#fff; }
+  .dot.answered-wrong { background:#E24B4A; color:#fff; }
+  .results-pill { display:inline-block; margin: 0 auto 14px; padding: 8px 20px; background:#1D9E75; color:#fff; border-radius:20px; font-weight:700; text-align:center; cursor:pointer; width:fit-content; }
+  .results-pill-wrap { text-align:center; }
+  .quiz-card, .results-card { background:#fff; border-radius: 14px; padding: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 16px; }
+  .passage-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:0.92rem; line-height:1.6; color:#222; }
+  .context-label { font-size:0.92rem; font-weight:600; color:#333; margin-bottom:8px; line-height:1.4; }
+  .context-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; }
+  .tag-badge { display:inline-block; font-size:0.72rem; font-weight:700; color:#fff; padding:3px 10px; border-radius:12px; margin-bottom:10px; }
+  .q-text { font-size:1.05rem; font-weight:600; margin-bottom:16px; line-height:1.5; }
+  #options { display:flex; flex-direction:column; gap:10px; }
+  .opt-btn { text-align:left; padding:12px 14px; border-radius:10px; border:1.5px solid #d7dde6; background:#fafbfc; font-size:0.95rem; cursor:pointer; line-height:1.4; }
+  .opt-btn:hover { border-color:#185FA5; }
+  .opt-btn.selected-correct { background:#e6f4ec; border-color:#1D9E75; color:#0d6b3f; font-weight:700; }
+  .opt-btn.selected-wrong { background:#fbeaea; border-color:#E24B4A; color:#a52a2a; font-weight:700; }
+  .opt-btn.reveal-correct { background:#e6f4ec; border-color:#1D9E75; }
+  .opt-btn:disabled { cursor:default; }
+  .exp-box { margin-top:14px; background:#eef7f2; border-left:4px solid #1D9E75; border-radius:8px; padding:12px 14px; font-size:0.88rem; color:#2d4d3f; line-height:1.5; display:none; }
+  .hint-btn { background:#fff8e1;color:#a5720a;border:1.5px solid #f5a623;border-radius:8px;padding:7px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-top:12px;margin-bottom:12px;display:inline-block; }
+  .hint-box { background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.88rem;color:#6b5215;line-height:1.5;display:none; }
+  .hint-box.show { display:block; }
+  .tts-btn { background:#eef2f7; border:none; border-radius:50%; width:34px; height:34px; font-size:1rem; cursor:pointer; margin-left:8px; vertical-align:middle; }
+  .nav-btns { display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .nav-btns button { flex:1; padding:11px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; background:#185FA5; color:#fff; }
+  .nav-btns button:disabled { background:#c9d2dc; cursor:default; }
+  .results-card h2 { text-align:center; margin-top:0; }
+  .score-big { text-align:center; font-size:2.2rem; font-weight:800; color:#185FA5; margin: 6px 0 16px; }
+  .action-row { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .action-row button { padding:12px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; }
+  .btn-retry { background:#f5a623; color:#fff; }
+  .btn-save { background:#7b61ff; color:#fff; }
+  .btn-fresh { background:#E24B4A; color:#fff; }
+  .fresh-btn-bottom { display:block; margin: 6px auto 0; background:none; border:1.5px solid #d7dde6; color:#888; padding:8px 16px; border-radius:20px; font-size:0.8rem; cursor:pointer; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:14px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { font-size:0.95rem; margin-bottom:18px; }
+  .modal-box button { padding:10px 16px; border-radius:8px; border:none; font-weight:700; margin:0 6px; cursor:pointer; }
+  .modal-yes { background:#E24B4A; color:#fff; }
+  .modal-no { background:#eef2f7; color:#333; }
+
+
+  .sat-timer{display:flex;align-items:center;gap:10px;justify-content:space-between;background:#eef3fb;border:1px solid #c9d8ef;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:0.9rem;font-weight:700;color:#185FA5;position:sticky;top:0;z-index:5;}
+  .sat-timer .over{color:#E24B4A;}
+  .sat-timer button{background:#fff;border:1.5px solid #185FA5;color:#185FA5;border-radius:8px;padding:4px 10px;font-weight:700;cursor:pointer;}
+  .sat-pausebox{display:none;text-align:center;background:#fff;border-radius:14px;padding:30px 20px;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);font-weight:700;color:#185FA5;}
+</style>
+</head>
+<body>
+<div class="quiz-wrap">
+  <div class="quiz-title">[Sion] SAT English</div>
+  <div class="instruction" id="instruction"></div>
+
+  <div class="nav-bar">
+    <div class="nav-summary">
+      <span id="nav-count">0/0</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <button class="jump-btn" id="jump-btn" onclick="toggleJump()">Jump&#9662;</button>
+    </div>
+    <div class="dots-panel" id="dots-panel" style="display:none;"></div>
+  </div>
+
+  <div class="results-pill-wrap"><span class="results-pill" id="results-pill" style="display:none;" onclick="showResultsNow()">Results</span></div>
+
+  <div class="quiz-card" id="quiz-card">
+    <div class="q-position" id="q-position"></div>
+    <div class="passage-box" id="passage-box" style="display:none;"></div>
+    <div class="context-label" id="context-label" style="display:none;"></div>
+    <div class="context-box" id="context-box" style="display:none;"></div>
+    <div class="tag-badge" id="tag-badge" style="display:none;"></div>
+    <div class="q-text" id="q-text"></div>
+    <div id="options"></div>
+    <button class="hint-btn" id="hint-btn" onclick="toggleHint()" style="display:none;">Show Hint</button>
+    <div class="hint-box" id="hint-box"></div>
+    <div class="exp-box" id="exp-box"></div>
+    <div class="nav-btns">
+      <button id="prev-btn" onclick="prevQ()">Prev</button>
+      <button id="next-btn" onclick="goNext()">Next</button>
+    </div>
+  </div>
+
+  <div class="results-card" id="results-card" style="display:none;">
+    <h2>Results</h2>
+    <div class="score-big" id="score-big"></div>
+    <div id="score-detail" style="text-align:center;color:#555;font-size:0.9rem;"></div>
+    <div class="action-row">
+      <button class="btn-retry" onclick="startRetry()">Retry Wrong Ones</button>
+      <button class="btn-fresh" onclick="openFreshModal()">Start Fresh</button>
+    </div>
+  </div>
+
+  <button class="fresh-btn-bottom" onclick="openFreshModal()">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="fresh-modal" style="display:none;">
+  <div class="modal-box">
+    <p>Reset all progress and start over?</p>
+    <button class="modal-yes" onclick="confirmFresh()">Yes, Start Fresh</button>
+    <button class="modal-no" onclick="closeFreshModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Sion] SAT English";
+var QUIZ_KEY = "sionsatenglish_10";
+var INSTRUCTION = "Read each text carefully and choose the best answer. Use the timer to practice real SAT pacing.";
+var TODAY_STR = "20261114";
+var RAW_QUESTIONS = [{"passage": "Although the first two trial runs of the new desalination system had produced only cloudy, salty water, the lead engineer remained ______ about the project, pointing out that each failed test had revealed a specific flaw that her team already knew how to fix.", "stem": "Which choice completes the text with the most logical and precise word or phrase?", "opts": ["indifferent", "despondent", "credulous", "sanguine"], "ci": 3, "exp": "<b>What the question asks:</b> choose the word that describes the engineer&rsquo;s attitude, using the clues in the sentence.<br><br><b>Clue:</b> <i>Although</i> signals a contrast with the failed trials, and the second half gives her reason for hope &mdash; every flaw is one the team &ldquo;already knew how to fix.&rdquo; So she stays hopeful and confident. <i>Sanguine</i> means cheerfully optimistic, especially in a difficult situation.<br><br><b>Why the others fail:</b> <i>despondent</i> (hopeless, dejected) is the opposite of the attitude the contrast word <i>Although</i> sets up. <i>Indifferent</i> (not caring) clashes with her active explanation of how the team will fix each flaw. <i>Credulous</i> means too ready to believe things without evidence &mdash; but she has a concrete, evidence-based reason for her optimism, so the negative shade of <i>credulous</i> does not fit.<br><br><b>Vocabulary:</b> sanguine (adj.) &mdash; optimistic, confident about the future. Related: sanguinely (adv.). Example: <i>Despite the delay, the coach was <b>sanguine</b> about the team&rsquo;s chances.</i><br><br><b>Strategy:</b> when a sentence begins with <i>Although</i>, predict a word that pushes against the first clause before you look at the choices.", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"passage": "The veteran air traffic controller was known for her ______: even when a sudden storm forced dozens of flights to change course at once, she spoke to every pilot in the same calm, measured tone she used on quiet mornings.", "stem": "Which choice completes the text with the most logical and precise word or phrase?", "opts": ["ambivalence", "equanimity", "vehemence", "audacity"], "ci": 1, "exp": "<b>What the question asks:</b> choose the quality that the colon&rsquo;s example illustrates.<br><br><b>Clue:</b> the colon introduces an example: under heavy pressure (a storm, dozens of rerouted flights), she kept &ldquo;the same calm, measured tone.&rdquo; The blank must name steady calmness under stress &mdash; <i>equanimity</i>.<br><br><b>Why the others fail:</b> <i>audacity</i> means bold daring or willingness to take risks; nothing in the example shows risk-taking. <i>Ambivalence</i> means having mixed feelings or being unable to decide &mdash; she shows no uncertainty. <i>Vehemence</i> means forceful, intense emotion, the opposite of a &ldquo;calm, measured tone.&rdquo;<br><br><b>Vocabulary:</b> equanimity (n.) &mdash; mental calmness and evenness of temper, especially in a hard situation. Related: equanimous (adj.). Example: <i>She accepted the bad news with surprising <b>equanimity</b>.</i><br><br><b>Strategy:</b> a colon often means &ldquo;here is an example or explanation.&rdquo; Describe the example in your own words (&ldquo;stays calm under pressure&rdquo;) and match that.", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"passage": "Because the direct mountain pass was buried under snow from November until May, winter traders had to follow a ______ route that wound through three separate river valleys and nearly doubled the length of their journey.", "stem": "Which choice completes the text with the most logical and precise word or phrase?", "opts": ["clandestine", "truncated", "circuitous", "congested"], "ci": 2, "exp": "<b>What the question asks:</b> choose the word that describes the winter route.<br><br><b>Clue:</b> the route &ldquo;wound through three separate river valleys&rdquo; and &ldquo;nearly doubled the length&rdquo; of the trip compared with the direct pass. A route that is long, winding, and indirect is <i>circuitous</i>.<br><br><b>Why the others fail:</b> <i>truncated</i> means shortened &mdash; the opposite of a route that doubles the distance. <i>Clandestine</i> means secret; the text says nothing about hiding. <i>Congested</i> means crowded or blocked by traffic; the text describes length and winding, not crowds.<br><br><b>Vocabulary:</b> circuitous (adj.) &mdash; longer than the most direct way; roundabout. Related: circuit (n.). It can also describe indirect speech: <i>a <b>circuitous</b> explanation</i>.<br><br><b>Strategy:</b> the most useful clue is often a phrase that restates the blank (&ldquo;wound through&hellip; nearly doubled the length&rdquo;).", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"passage": "In the first hours after the earthquake, relief coordinators set aside routine paperwork so that they could concentrate on the most ______ needs: locating trapped residents, restoring clean drinking water, and treating the injured.", "stem": "Which choice completes the text with the most logical and precise word or phrase?", "opts": ["hypothetical", "perennial", "exigent", "peripheral"], "ci": 2, "exp": "<b>What the question asks:</b> choose the word that describes the needs the coordinators focused on.<br><br><b>Clue:</b> the coordinators set aside routine work, and the needs listed after the colon (trapped residents, clean water, injuries) are matters of life and death that must be handled immediately. <i>Exigent</i> means pressing, urgent, demanding immediate action.<br><br><b>Why the others fail:</b> <i>peripheral</i> means minor or on the edge &mdash; the opposite of the top priorities named. <i>Hypothetical</i> means imagined or supposed; these needs are real and present. <i>Perennial</i> means lasting or recurring year after year; the text stresses the first hours after a sudden disaster, not long-term, repeating problems.<br><br><b>Vocabulary:</b> exigent (adj.) &mdash; urgent; requiring immediate attention. Related: exigency (n.), an urgent need. Example: <i>The <b>exigent</b> circumstances allowed police to enter without a warrant.</i><br><br><b>Strategy:</b> a list after a colon tells you what kind of thing the blank describes &mdash; here, emergencies.", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"passage": "Octopuses can match the color of a coral reef or a patch of algae within seconds, shifting their skin from rust to olive to pale gray. <u>Yet their eyes contain only one type of light-sensitive receptor, which in most animals would mean seeing the world without color.</u> Researchers have proposed several solutions to this puzzle, including the possibility that light-sensitive proteins in the skin itself help the animal detect color and the possibility that its unusually shaped pupils let it extract color information from the way different wavelengths of light blur.", "stem": "Which choice best describes the function of the underlined sentence in the text as a whole?", "opts": ["It presents a fact that seems to conflict with the ability described in the previous sentence, setting up the puzzle the rest of the text addresses.", "It explains the biological process that allows octopuses to change the color of their skin.", "It offers evidence that disproves an explanation that researchers had previously accepted.", "It narrows the discussion from octopuses in general to a single species that lacks color vision."], "ci": 0, "exp": "<b>What the question asks:</b> what job the underlined sentence does in the passage.<br><br><b>Reasoning:</b> sentence 1 describes an impressive ability (fast, accurate color matching). The underlined sentence begins with <i>Yet</i> and states that octopus eyes have only one receptor type, &ldquo;which in most animals would mean seeing the world without color.&rdquo; That fact seems to contradict the ability just described. The next sentence calls it &ldquo;this puzzle&rdquo; and lists proposed solutions. So the underlined sentence creates the puzzle that the rest of the text tries to solve.<br><br><b>Why the others fail:</b> &ldquo;disproves an explanation that researchers had previously accepted&rdquo; &mdash; no earlier explanation appears before the underlined sentence; the explanations come <i>after</i> it. &ldquo;explains the biological process that allows octopuses to change color&rdquo; &mdash; the sentence is about their eyes, not about how the skin changes color. &ldquo;narrows the discussion&hellip; to a single species&rdquo; &mdash; no particular species is named; the text keeps talking about octopuses in general.<br><br><b>Strategy:</b> for function questions, look at the sentence before and after. Words like <i>Yet</i> and phrases like &ldquo;this puzzle&rdquo; are strong signals of a problem being introduced.", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"passage": "Gardeners have long noticed that bumblebees visit flowers less often on very windy days. A team of ecologists hypothesized that the drop in visits is not caused by bees being unable to fly in wind. Instead, the team proposed, wind makes flowers harder to land on: a swaying flower forces a bee to spend more time and energy on each landing, so visiting flowers becomes less worthwhile.", "stem": "Which finding, if true, would most directly support the team&rsquo;s hypothesis?", "opts": ["On windy days, bees spent noticeably more time inside their nests than they did on calm days.", "Flowers with stiff stems produced more nectar than flowers with flexible stems did.", "On windy days, bees flew between flower patches just as fast as on calm days, but they took nearly twice as long to land on swaying flowers as on flowers held still with small clips.", "Bees visited fewer flowers on windy days in both city gardens and rural meadows."], "ci": 2, "exp": "<b>What the question asks:</b> which result would support the specific claim that wind reduces visits because <i>landing</i> on swaying flowers is costly &mdash; <i>not</i> because bees cannot fly.<br><br><b>Why the correct answer works:</b> it supports both halves of the hypothesis. (1) Flight speed between patches is unchanged in wind, so flying itself is not the problem. (2) Landing takes about twice as long on swaying flowers as on clipped (still) flowers, which directly shows the extra time cost of landing that the team proposed.<br><br><b>Why the others fail:</b> &ldquo;fewer flowers on windy days in both city gardens and rural meadows&rdquo; only repeats the original observation in more places; it does not show <i>why</i> visits drop. &ldquo;more time inside their nests&rdquo; actually fits the rival explanation the team rejected (that bees avoid flying in wind). &ldquo;stiff stems produced more nectar&rdquo; is about the reward inside flowers, not about wind or the difficulty of landing.<br><br><b>Strategy:</b> when a hypothesis rejects one explanation and proposes another, the best evidence usually rules out the rejected explanation <i>and</i> confirms the proposed mechanism.", "tag": "Information and Ideas", "tagcolor": "#185FA5"}, {"passage": "Before the 1880s, most towns in the United States set their clocks by local solar time, so noon in one city could fall several minutes earlier or later than noon in a city just a hundred miles away. For railroad companies, this patchwork created a practical problem: a single timetable had to list arrival and departure times in dozens of different local times. In November 1883, the major railroads adopted a system of standard time zones, and many towns quickly reset their own clocks to match, even though Congress did not make standard time zones a matter of federal law until 1918. This suggests that ______", "stem": "Which choice most logically completes the text?", "opts": ["railroad timetables did not actually become simpler until standard time zones were made official by law.", "the railroads&rsquo; influence on everyday life was strong enough to change how towns kept time even without a legal requirement.", "most towns had been dissatisfied with local solar time for many years before the railroads were built.", "Congress actively opposed the railroads&rsquo; time zones until it was finally persuaded to accept them in 1918."], "ci": 1, "exp": "<b>What the question asks:</b> which conclusion follows logically from the facts in the text.<br><br><b>Reasoning:</b> the key contrast is in the last sentence: towns <i>quickly</i> adopted the railroads&rsquo; time zones <i>even though</i> no federal law required them to until 1918 (35 years later). If towns changed without being legally forced, something else must have pushed them &mdash; the obvious candidate in the text is the railroads, whose schedules people depended on. So the railroads&rsquo; practical influence was strong enough to change local timekeeping on its own.<br><br><b>Why the others fail:</b> &ldquo;Congress actively opposed the railroads&rsquo; time zones&rdquo; &mdash; the text says only that a law came in 1918; a delay is not the same as opposition. &ldquo;dissatisfied with local solar time for many years before the railroads&rdquo; &mdash; the text presents the problem as a railroad problem and gives no information about towns&rsquo; feelings before railroads. &ldquo;timetables did not actually become simpler until&hellip; law&rdquo; &mdash; the railroads adopted the zones themselves in 1883, so their timetables could use the zones right away; nothing suggests they waited for the law.<br><br><b>Strategy:</b> for inference completions, look for the sentence with a contrast (<i>even though</i>) &mdash; the answer usually explains that contrast without adding new facts.", "tag": "Information and Ideas", "tagcolor": "#185FA5"}, {"passage": "<b>Community Garden Results, One Season (hypothetical data)</b><table style=\"border-collapse:collapse;margin:8px 0;font-size:0.92rem;\"><tr><th style=\"border:1px solid #999;padding:4px 8px;\">Garden</th><th style=\"border:1px solid #999;padding:4px 8px;\">Plots</th><th style=\"border:1px solid #999;padding:4px 8px;\">Volunteers</th><th style=\"border:1px solid #999;padding:4px 8px;\">Total harvest (kg)</th></tr><tr><td style=\"border:1px solid #999;padding:4px 8px;\">North</td><td style=\"border:1px solid #999;padding:4px 8px;\">20</td><td style=\"border:1px solid #999;padding:4px 8px;\">30</td><td style=\"border:1px solid #999;padding:4px 8px;\">900</td></tr><tr><td style=\"border:1px solid #999;padding:4px 8px;\">East</td><td style=\"border:1px solid #999;padding:4px 8px;\">12</td><td style=\"border:1px solid #999;padding:4px 8px;\">24</td><td style=\"border:1px solid #999;padding:4px 8px;\">660</td></tr><tr><td style=\"border:1px solid #999;padding:4px 8px;\">South</td><td style=\"border:1px solid #999;padding:4px 8px;\">25</td><td style=\"border:1px solid #999;padding:4px 8px;\">25</td><td style=\"border:1px solid #999;padding:4px 8px;\">1,000</td></tr><tr><td style=\"border:1px solid #999;padding:4px 8px;\">West</td><td style=\"border:1px solid #999;padding:4px 8px;\">10</td><td style=\"border:1px solid #999;padding:4px 8px;\">25</td><td style=\"border:1px solid #999;padding:4px 8px;\">520</td></tr></table>A student studying four community gardens claims that harvest per plot rose as the number of volunteers per plot increased, but only up to about two volunteers per plot; beyond that point, adding more volunteers per plot did not raise the harvest per plot any further.", "stem": "Which choice most effectively uses data from the table to support the student&rsquo;s claim?", "opts": ["South had the most plots and the largest total harvest, while West had the fewest plots and the smallest total harvest.", "East had twice as many volunteers per plot as South did and harvested more than 1.3 times as many kilograms per plot as South did.", "South, North, and East had 1.0, 1.5, and 2.0 volunteers per plot and harvested 40, 45, and 55 kilograms per plot, respectively, whereas West had 2.5 volunteers per plot but harvested only 52 kilograms per plot.", "West had more volunteers per plot than any other garden and harvested more kilograms per plot than both North and South did."], "ci": 2, "exp": "<b>What the question asks:</b> the claim has <i>two parts</i>: (1) harvest per plot rises with volunteers per plot up to about 2, and (2) above about 2, more volunteers per plot do <i>not</i> raise harvest per plot. The correct choice must support both, using per-plot numbers.<br><br><b>Step 1 &mdash; Compute per-plot values.</b> Volunteers per plot = volunteers &divide; plots: North 30 &divide; 20 = 1.5; East 24 &divide; 12 = 2.0; South 25 &divide; 25 = 1.0; West 25 &divide; 10 = 2.5. Harvest per plot = harvest &divide; plots: North 900 &divide; 20 = 45; East 660 &divide; 12 = 55; South 1,000 &divide; 25 = 40; West 520 &divide; 10 = 52.<br><b>Step 2 &mdash; Order by volunteers per plot.</b> 1.0 (South, 40 kg) &rarr; 1.5 (North, 45 kg) &rarr; 2.0 (East, 55 kg) &rarr; 2.5 (West, 52 kg). Harvest climbs up to 2.0 and then does not climb further (it even dips) at 2.5. That is exactly the claim.<br><b>Answer check:</b> every number in the correct choice matches Step 1, and it is the only choice that mentions a garden <i>above</i> two volunteers per plot together with the fact that its harvest did not rise.<br><br><b>Why the others fail:</b> the &ldquo;East had twice as many volunteers per plot as South&rdquo; choice is accurate (2.0 vs. 1.0; 55 &divide; 40 = 1.375) but supports only part (1), the rise. The &ldquo;West had more volunteers per plot than any other garden&rdquo; choice is also accurate (52 &gt; 45 and 52 &gt; 40), but it makes West look like support for &ldquo;more volunteers, more harvest,&rdquo; and it ignores the comparison with East that shows the leveling off &mdash; it works <i>against</i> part (2). The &ldquo;South had the most plots&rdquo; choice uses totals, not per-plot values, so it says nothing about the claim.<br><br><b>Strategy:</b> on the hardest data questions, every choice may be true. Underline each part of the claim and pick the only choice that addresses all of it, with the right kind of number (here, rates per plot, not totals).", "tag": "Information and Ideas", "tagcolor": "#185FA5"}, {"passage": "The Great Wall of China is not a single wall but a network of fortifications built and rebuilt over many ______ the most famous sections, near Beijing, date from the Ming dynasty (1368&ndash;1644).", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["centuries", "centuries;", "centuries,", "centuries, which"], "ci": 1, "exp": "<b>What the question asks:</b> how to join two parts of the sentence correctly.<br><br><b>Reasoning:</b> both sides are independent clauses (complete sentences): &ldquo;The Great Wall of China is not a single wall but a network of fortifications built and rebuilt over many centuries&rdquo; and &ldquo;the most famous sections, near Beijing, date from the Ming dynasty.&rdquo; Two independent clauses with no conjunction must be joined by a semicolon (or a period). So <i>centuries;</i> is correct.<br><br><b>Why the others fail:</b> <i>centuries,</i> joins two independent clauses with only a comma &mdash; a comma splice. <i>centuries</i> with no punctuation creates a run-on (fused) sentence. <i>centuries, which</i> makes the second part a relative clause, but &ldquo;which the most famous sections&hellip; date from the Ming dynasty&rdquo; is ungrammatical, because <i>which</i> has no role in that clause.<br><br><b>Strategy:</b> cover the blank and ask, &ldquo;Can each side stand alone as a sentence?&rdquo; If yes, you need a period, semicolon, or comma + FANBOYS conjunction.", "tag": "Standard English Conventions", "tagcolor": "#1D9E75"}, {"passage": "The collection of handwritten letters, field notebooks, and pressed plant specimens that the botanist left to the university ______ now available to researchers through a digitized online archive.", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["is", "were", "have been", "are"], "ci": 0, "exp": "<b>What the question asks:</b> which verb agrees with the subject.<br><br><b>Step 1 &mdash; Find the subject.</b> Strip away the modifiers: &ldquo;of handwritten letters, field notebooks, and pressed plant specimens&rdquo; is a prepositional phrase, and &ldquo;that the botanist left to the university&rdquo; is a relative clause. The simple subject is <i>collection</i>, which is singular.<br><b>Step 2 &mdash; Choose the verb.</b> A singular subject needs a singular verb, and <i>now</i> points to the present tense: &ldquo;The collection&hellip; <b>is</b> now available.&rdquo;<br><br><b>Why the others fail:</b> <i>are</i> and <i>have been</i> are plural; they agree with the nearby plural nouns (<i>specimens</i>, <i>letters</i>) instead of the true subject &mdash; the exact trap the long interrupting phrase is designed to set. <i>were</i> is plural and also past tense, which clashes with <i>now</i>.<br><br><b>Strategy:</b> when a long phrase separates subject and verb, mentally delete everything between them: &ldquo;The collection ______ now available.&rdquo;", "tag": "Standard English Conventions", "tagcolor": "#1D9E75"}, {"passage": "Many people picture deserts as hot, sandy places covered in dunes. Scientists, ______, define a desert by how little precipitation it receives rather than by its temperature: a region that gets less than about 25 centimeters of precipitation per year generally qualifies. By this definition, Antarctica is the largest desert on Earth.", "stem": "Which choice completes the text with the most logical transition?", "opts": ["however", "likewise", "as a result", "for instance"], "ci": 0, "exp": "<b>What the question asks:</b> which transition shows the logical relationship between the first two sentences.<br><br><b>Reasoning:</b> sentence 1 gives the popular image (deserts are hot and sandy). Sentence 2 gives the scientific definition, which is based on precipitation, <i>not</i> temperature. That is a contrast, so <i>however</i> is the logical transition.<br><br><b>Why the others fail:</b> <i>for instance</i> would make the scientific definition an example of the popular image, but it contradicts that image. <i>likewise</i> signals similarity, the opposite of the relationship here. <i>as a result</i> would claim the scientists&rsquo; definition is caused by people picturing deserts as hot, which makes no sense.<br><br><b>Strategy:</b> name the relationship in one word (contrast, example, similarity, cause) before reading the choices.", "tag": "Expression of Ideas", "tagcolor": "#f5a623"}, {"passage": "While researching a topic, a student has taken the following notes:<ul style=\"margin:6px 0 0 18px;\"><li>In 1977, NASA launched the Voyager 1 and Voyager 2 space probes.</li><li>Each probe carries a gold-plated copper phonograph record.</li><li>The records contain natural sounds, music, and spoken greetings in 55 languages.</li><li>The records were intended as a message to any intelligent life that might someday find the probes.</li><li>A committee chaired by astronomer Carl Sagan chose what to put on the records.</li></ul>", "stem": "The student wants to explain the purpose of the records. Which choice most effectively uses relevant information from the notes to accomplish this goal?", "opts": ["In 1977, NASA launched two space probes, Voyager 1 and Voyager 2, each carrying a gold-plated copper phonograph record.", "Carried by the Voyager probes launched in 1977, the gold-plated records were meant as a message to any intelligent life that might one day find them.", "The Voyager records contain natural sounds, music, and spoken greetings in 55 different languages.", "A committee chaired by astronomer Carl Sagan chose the contents of the two gold-plated copper records carried by the Voyager probes."], "ci": 1, "exp": "<b>What the question asks:</b> the goal is to explain the records&rsquo; <i>purpose</i> &mdash; why they were made.<br><br><b>Reasoning:</b> only one note states a purpose: the records &ldquo;were intended as a message to any intelligent life that might someday find the probes.&rdquo; The correct choice includes that purpose (&ldquo;meant as a message to any intelligent life&rdquo;) and adds brief context (the probes, 1977).<br><br><b>Why the others fail:</b> the Carl Sagan choice explains <i>who chose</i> the contents, not why the records exist. The &ldquo;natural sounds, music, and spoken greetings&rdquo; choice describes <i>what is on</i> the records. The &ldquo;In 1977, NASA launched two space probes&rdquo; choice describes the launch and the object. All three are accurate, but none states the purpose.<br><br><b>Strategy:</b> rhetorical synthesis is about the goal, not about including the most facts. Find the note that matches the goal word (here, <i>purpose</i>) and pick the choice built around it.", "tag": "Expression of Ideas", "tagcolor": "#f5a623"}];
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var ORDER_KEY = STORAGE_KEY + '_order';
+var ACTIVE_KEY = STORAGE_KEY + '_active';
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+function wrongTxt(s){ s = (s===undefined || s===null) ? '' : String(s); return /^\s*</.test(s) ? s : '<span>' + s + '</span>'; }
+function wrongDetail(qi, yourAnswer){
+  var q = RAW_QUESTIONS[qi];
+  var qtext = (q.passage ? q.passage + '<br><br>' : '') + (q.contextLabel ? q.contextLabel + '<br>' : '') + (q.context ? q.context + '<br>' : '') + q.stem;
+  return { question: wrongTxt(qtext), yourAnswer: wrongTxt(yourAnswer), correctAnswer: wrongTxt(q.opts[q.ci]), explanation: wrongTxt(q.exp) };
+}
+function quizDateStr(){ return (typeof TODAY_STR !== 'undefined') ? TODAY_STR : ((String(QUIZ_KEY).match(/\d{8}/) || [''])[0]); }
+function reportResult(){
+  try{
+    var ao = activeOrder();
+    var correct=0, wrong=0, skipped=0;
+    var wrongPositions=[];
+    var wrongDetails=[];
+    for(var pos=0; pos<ao.length; pos++){
+      var qi = ao[pos];
+      if(state.answers[qi]===undefined){ if(window.SAT_TIMEUP && SAT_TIMEUP() && !(activeSet && activeSet.length)){ wrong++; wrongPositions.push(pos+1); wrongDetails.push(wrongDetail(qi, "(time's up)")); } else skipped++; continue; }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else { wrong++; wrongPositions.push(origNum(qi)); wrongDetails.push(wrongDetail(qi, RAW_QUESTIONS[qi].opts[state.answers[qi]])); }
+    }
+    var total = ao.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0,
+      wrongNumbers: wrongPositions.join(','),
+      quizDate: quizDateStr()
+    };
+    var firstKey = STORAGE_KEY + '_wrongsent';
+    if(!(activeSet && activeSet.length) && !localStorage.getItem(firstKey)){
+      payload.wrongAnswers = wrongDetails;
+      localStorage.setItem(firstKey, '1');
+    }
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
+}
+/* progress-report 2026-10-27 */
+var _lastProgressSig = '';
+function reportProgress(){
+  try{
+    if(state.showResults) return;
+    if(!(!(activeSet && activeSet.length) && !localStorage.getItem(STORAGE_KEY + '_wrongsent'))) return;
+    var answered=0, correct=0, wd=[];
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos]; var a = state.answers[qi];
+      if(a===undefined){ wd.push(wrongDetail(qi, '(not answered)')); continue; }
+      answered++;
+      if(a===RAW_QUESTIONS[qi].ci) correct++; else wd.push(wrongDetail(qi, RAW_QUESTIONS[qi].opts[a]));
+    }
+    if(answered===0) return;
+    var sig = answered + '/' + correct; if(sig===_lastProgressSig) return; _lastProgressSig = sig;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var body = JSON.stringify({ type:'progress', child: childName, quizTitle: TITLE, quizKey: QUIZ_KEY, quizDate: quizDateStr(),
+      answered: answered, total: order.length, correct: correct, wrongAnswers: wd });
+    fetch(REPORT_ENDPOINT, { method:'POST', mode:'no-cors', keepalive: body.length < 60000,
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, body: body }).catch(function(){});
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='hidden') reportProgress(); });
+window.addEventListener('pagehide', reportProgress);
+
+
+var ATTEMPTS_KEY = STORAGE_KEY + '_attempts';
+
+var order = [];
+var activeSet = null; // when in retry mode, holds subset of original indices
+var state = { answers:{}, cur:0, showResults:false };
+var hintShown = false;
+
+function loadState(){
+  var raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try{ state = JSON.parse(raw); }catch(e){ state = {answers:{},cur:0,showResults:false}; } }
+  var rawOrder = localStorage.getItem(ORDER_KEY);
+  if(rawOrder){ try{ order = JSON.parse(rawOrder); }catch(e){ order=null; } }
+  if(!order || !order.length){
+    order = RAW_QUESTIONS.map(function(_,i){return i;});
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  }
+  var rawActive = localStorage.getItem(ACTIVE_KEY);
+  if(rawActive){ try{ activeSet = JSON.parse(rawActive); }catch(e){ activeSet = null; } }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function getAttempts(){
+  var a = localStorage.getItem(ATTEMPTS_KEY);
+  return a ? parseInt(a,10) : 0; // 2026-10-24: start at 0 so the first finish reports attempt 1 (was 1 → first finish reported 2)
+}
+function incAttempts(){
+  var a = getAttempts() + 1;
+  localStorage.setItem(ATTEMPTS_KEY, String(a));
+}
+
+function activeOrder(){ return (activeSet && activeSet.length) ? activeSet : order; }
+function origNum(qi){ var i = order.indexOf(qi); return i >= 0 ? i + 1 : 0; } /* keep-orig-num 2026-11-14 */
+
+function render(){
+  document.getElementById('instruction').textContent = INSTRUCTION;
+  var ord = activeOrder();
+  if(state.showResults){
+    document.getElementById('quiz-card').style.display='none';
+    document.getElementById('results-card').style.display='block';
+    renderResults();
+  } else {
+    document.getElementById('quiz-card').style.display='block';
+    document.getElementById('results-card').style.display='none';
+    renderQuestion();
+  }
+  updateNav();
+}
+
+function renderQuestion(){
+  hintShown = false;
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  var qpEl = document.getElementById('q-position');
+  if(qpEl) qpEl.textContent = 'Q' + origNum(ord[state.cur]) + ' / ' + order.length + ((activeSet && activeSet.length) ? '  (retry ' + (state.cur + 1) + ' of ' + ord.length + ')' : '');
+
+  var pb = document.getElementById('passage-box');
+  if(q.passage){ pb.style.display='block'; pb.innerHTML = q.passage; } else { pb.style.display='none'; pb.innerHTML=''; }
+
+  var cl = document.getElementById('context-label');
+  if(q.contextLabel){ cl.style.display='block'; cl.textContent = q.contextLabel; } else { cl.style.display='none'; cl.textContent=''; }
+
+  var cb = document.getElementById('context-box');
+  if(q.context){ cb.style.display='block'; cb.innerHTML = q.context; } else { cb.style.display='none'; cb.innerHTML=''; }
+
+  var tb = document.getElementById('tag-badge');
+  if(q.tag){ tb.style.display='inline-block'; tb.textContent = q.tag; tb.style.background = q.tagcolor || '#185FA5'; } else { tb.style.display='none'; }
+
+  var qt = document.getElementById('q-text');
+  qt.innerHTML = q.stem + (q.tts ? ' <button class="tts-btn" onclick="speak(' + qi + ')" title="Listen">&#128266;</button>' : '');
+
+  var opts = document.getElementById('options');
+  opts.innerHTML = '';
+  var answered = state.answers[qi] !== undefined;
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = optText;
+    if(answered){
+      btn.disabled = true;
+      if(idx === q.ci) btn.className += ' reveal-correct';
+      if(idx === state.answers[qi] && idx !== q.ci) btn.className += ' selected-wrong';
+      if(idx === state.answers[qi] && idx === q.ci) btn.className += ' selected-correct';
+    } else {
+      btn.onclick = function(){ pick(idx); };
+    }
+    opts.appendChild(btn);
+  });
+
+  var hb = document.getElementById('hint-btn');
+  var hx = document.getElementById('hint-box');
+  if(q.hint){
+    hb.style.display='inline-block'; hb.textContent='Show Hint';
+    hx.innerHTML = q.hint; hx.classList.remove('show');
+  } else {
+    hb.style.display='none'; hx.classList.remove('show');
+  }
+
+  var eb = document.getElementById('exp-box');
+  if(answered){
+    eb.style.display='block';
+    eb.innerHTML = '<strong>Explanation:</strong> ' + q.exp;
+  } else {
+    eb.style.display='none'; eb.innerHTML='';
+  }
+
+  document.getElementById('prev-btn').disabled = (state.cur === 0);
+  var ord2 = activeOrder();
+  var isLast = (state.cur === ord2.length - 1);
+  document.getElementById('next-btn').textContent = isLast ? 'Finish' : 'Next';
+}
+
+function toggleHint(){
+  hintShown = !hintShown;
+  var b=document.getElementById('hint-btn'), x=document.getElementById('hint-box');
+  if(hintShown){ x.classList.add('show'); b.textContent='Hide Hint'; }
+  else { x.classList.remove('show'); b.textContent='Show Hint'; }
+}
+window.toggleHint = toggleHint;
+
+function pick(idx){
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState();
+  render();
+}
+window.pick = pick;
+
+function prevQ(){
+  if(state.cur > 0){ state.cur--; saveState(); render(); }
+}
+window.prevQ = prevQ;
+window.go = prevQ;
+
+function goNext(){
+  if(state.showResults) return; // 2026-10-14: ignore double taps / Results tap on the results screen (prevented duplicate result emails)
+    var ord = activeOrder();
+  if(state.cur < ord.length - 1){
+    state.cur++;
+    saveState();
+    render();
+  } else {
+    if(state.reported){ state.showResults=true; saveState(); render(); return; } /* no-resend-after-review 2026-10-28 */
+    state.showResults = true;
+    incAttempts();
+    saveState();
+    render();
+    reportResult(); state.reported = true; saveState();
+  }
+}
+window.goNext = goNext;
+
+function showResultsNow(){
+  if(state.showResults) return; // 2026-10-14: ignore double taps / Results tap on the results screen (prevented duplicate result emails)
+    if(state.reported){ state.showResults=true; saveState(); render(); return; } /* no-resend-after-review 2026-10-28 */
+  state.showResults = true;
+  incAttempts(); // 2026-10-24: count a finish from the Results pill too
+  saveState();
+  render();
+  reportResult(); state.reported = true; saveState();
+}
+window.showResultsNow = showResultsNow;
+
+function goToQ(pos){
+  state.cur = pos;
+  state.showResults = false;
+  saveState();
+  render();
+}
+window.goToQ = goToQ;
+
+function renderResults(){
+  var ord = activeOrder();
+  var correct=0, wrong=0, skipped=0;
+  ord.forEach(function(qi){
+    if(state.answers[qi]===undefined) skipped++;
+    else if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++;
+    else wrong++;
+  });
+  var total = ord.length;
+  document.getElementById('score-big').textContent = correct + ' / ' + total;
+  document.getElementById('score-detail').textContent = 'Correct: ' + correct + '  Wrong: ' + wrong + '  Skipped: ' + skipped;
+}
+
+function updateNav(){
+  var ord = activeOrder();
+  var answeredCount = 0;
+  ord.forEach(function(qi){ if(state.answers[qi]!==undefined) answeredCount++; });
+  document.getElementById('nav-count').textContent = answeredCount + '/' + ord.length;
+  var pct = ord.length ? Math.round(answeredCount/ord.length*100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('results-pill').style.display = (answeredCount === ord.length && ord.length>0 && !state.showResults) ? 'inline-block' : 'none';
+  renderDots();
+}
+
+function renderDots(){
+  var panel = document.getElementById('dots-panel');
+  if(panel.style.display === 'none') { buildDots(); return; }
+  buildDots();
+}
+function buildDots(){
+  var panel = document.getElementById('dots-panel');
+  var ord = activeOrder();
+  panel.innerHTML = '';
+  ord.forEach(function(qi, pos){
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.textContent = origNum(qi);
+    if(state.answers[qi]!==undefined){
+      d.className += (state.answers[qi]===RAW_QUESTIONS[qi].ci) ? ' answered-correct' : ' answered-wrong';
+    }
+    d.onclick = function(){ goToQ(pos); };
+    panel.appendChild(d);
+  });
+}
+
+function toggleJump(){
+  var panel = document.getElementById('dots-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display === 'none'){
+    panel.style.display = 'flex';
+    btn.innerHTML = 'Hide&#9652;';
+    buildDots();
+  } else {
+    panel.style.display = 'none';
+    btn.innerHTML = 'Jump&#9662;';
+  }
+}
+window.toggleJump = toggleJump;
+
+function startRetry(){
+  var ord = activeOrder();
+  var wrongIdx = ord.filter(function(qi){ return (state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci) || (state.answers[qi]===undefined && window.SAT_TIMEUP && SAT_TIMEUP()); });
+  if(!wrongIdx.length) return;
+  activeSet = wrongIdx;
+  localStorage.setItem(ACTIVE_KEY, JSON.stringify(activeSet));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  render();
+}
+window.startRetry = startRetry;
+
+
+
+function openFreshModal(){ document.getElementById('fresh-modal').style.display='flex'; }
+window.openFreshModal = openFreshModal;
+function closeFreshModal(){ document.getElementById('fresh-modal').style.display='none'; }
+window.closeFreshModal = closeFreshModal;
+function confirmFresh(){
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(ORDER_KEY);
+  localStorage.removeItem(ACTIVE_KEY);
+  activeSet = null;
+  order = RAW_QUESTIONS.map(function(_,i){return i;});
+  localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  document.getElementById('fresh-modal').style.display='none';
+  render();
+}
+window.confirmFresh = confirmFresh;
+
+function speak(qi){
+  try{
+    var q = RAW_QUESTIONS[qi];
+    var text = q.tts || q.stem.replace(/<[^>]+>/g,'');
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ko-KR';
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+window.speak = speak;
+
+loadState();
+render();
+</script>
+<script>
+/* sat-timer 2026-11-06 */
+(function(){
+  var PER_Q = 60;
+  var LIMIT = PER_Q * RAW_QUESTIONS.length;
+  var TK = STORAGE_KEY + '_timer';
+  function blank(){ return {el:0, per:{}, up:false}; }
+  function load(){ try{ return JSON.parse(localStorage.getItem(TK)) || blank(); }catch(e){ return blank(); } }
+  var T = load(), paused = false, last = Date.now();
+  function save(){ try{ localStorage.setItem(TK, JSON.stringify(T)); }catch(e){} }
+  function retrying(){ return !!(activeSet && activeSet.length); }
+  window.SAT_TIMEUP = function(){ return !!T.up; };
+  var bar = document.createElement('div'); bar.className = 'sat-timer'; bar.id = 'sat-timer';
+  bar.innerHTML = '<span id="sat-total"></span><span id="sat-q"></span><button id="sat-pause" onclick="satPause()">Pause</button>';
+  var nav = document.querySelector('.nav-bar'); nav.parentNode.insertBefore(bar, nav);
+  var pbox = document.createElement('div'); pbox.className = 'sat-pausebox'; pbox.id = 'sat-pausebox';
+  pbox.innerHTML = 'Paused<br><br><button onclick="satPause()" style="background:#185FA5;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer;">Resume</button>';
+  var card = document.getElementById('quiz-card'); card.parentNode.insertBefore(pbox, card);
+  function fmt(s){ s = Math.max(0, Math.ceil(s)); return Math.floor(s/60) + ':' + ('0' + (s%60)).slice(-2); }
+  function running(){ return !T.up && !state.showResults && !retrying() && !paused && document.visibilityState !== 'hidden'; }
+  function draw(){
+    var show = !retrying() && !state.showResults;
+    bar.style.display = show ? 'flex' : 'none';
+    var left = LIMIT - T.el;
+    var tot = document.getElementById('sat-total');
+    tot.textContent = 'Time left ' + fmt(left); tot.className = left < 60 ? 'over' : '';
+    var qi = activeOrder()[state.cur], used = T.per[qi] || 0;
+    var qs = document.getElementById('sat-q');
+    qs.textContent = 'This question ' + fmt(used) + ' / ' + fmt(PER_Q); qs.className = used > PER_Q ? 'over' : '';
+    document.getElementById('sat-pause').textContent = paused ? 'Resume' : 'Pause';
+    pbox.style.display = (paused && show) ? 'block' : 'none';
+    if(paused && show) card.style.display = 'none';
+    var det = document.getElementById('score-detail');
+    if(T.up && state.showResults && !retrying() && det && det.textContent.indexOf("Time's up") < 0) det.textContent = "Time's up! Unanswered questions count as wrong. " + det.textContent;
+  }
+  function timeUp(){
+    T.up = true; T.el = LIMIT; save(); paused = false;
+    if(!state.showResults) showResultsNow();
+    draw();
+  }
+  function tick(){
+    var now = Date.now(), dt = (now - last) / 1000; last = now;
+    if(dt > 5 || dt < 0) dt = 0;
+    if(running()){
+      T.el += dt;
+      var qi = activeOrder()[state.cur];
+      if(state.answers[qi] === undefined) T.per[qi] = (T.per[qi] || 0) + dt;
+      save();
+      if(T.el >= LIMIT){ timeUp(); return; }
+    }
+    draw();
+  }
+  window.satPause = function(){ paused = !paused; last = Date.now(); if(!paused) render(); draw(); };
+  var _pick = window.pick;
+  window.pick = function(i){ if(T.up && !retrying()) return; if(paused) return; return _pick(i); };
+  var _fresh = window.confirmFresh;
+  window.confirmFresh = function(){ T = blank(); save(); paused = false; last = Date.now(); var r = _fresh.apply(this, arguments); draw(); return r; };
+  var _render = window.render;
+  if(typeof _render === 'function'){ window.render = function(){ var r = _render.apply(this, arguments); try{ draw(); }catch(e){} return r; }; }
+  document.addEventListener('visibilitychange', function(){ last = Date.now(); });
+  if(!T.up && T.el >= LIMIT && !state.showResults) timeUp();
+  window.__satTimer = { tick: tick, get T(){ return T; }, LIMIT: LIMIT };
+  setInterval(tick, 500);
+  draw();
+})();
+</script>
+</body>
+</html>
