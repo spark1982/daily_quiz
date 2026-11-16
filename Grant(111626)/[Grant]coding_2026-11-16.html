@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Grant] Coding</title>
+<!-- coding-quiz template 2026-11-16 (MASTER_SPEC "# 2-25") -->
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; background:#f3f6fb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; color:#1a1a2e; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 14px 14px 40px; }
+  .quiz-title { font-size: 1.4rem; font-weight: 800; text-align:center; margin: 8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom: 14px; }
+  .nav-bar { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .nav-count { font-size:0.85rem; font-weight:700; color:#333; white-space:nowrap; }
+  .prog-track { flex:1; height:6px; background:#d7dde6; border-radius:4px; overflow:hidden; }
+  .prog-fill { height:100%; background:#185FA5; width:0; transition: width .2s; }
+  .jump-btn, .pill { background:#fff; border:1.5px solid #185FA5; color:#185FA5; border-radius:16px; padding:4px 12px; font-size:0.8rem; font-weight:700; cursor:pointer; }
+  .pill { background:#185FA5; color:#fff; }
+  .dot-panel { display:none; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .dot { width:26px; height:26px; border-radius:50%; border:none; background:#d7dde6; color:#333; font-size:0.75rem; font-weight:700; cursor:pointer; }
+  .dot.ok { background:#185FA5; color:#fff; } .dot.bad { background:#E24B4A; color:#fff; } .dot.cur { outline: 2px solid #111; }
+  .card { background:#fff; border-radius:14px; box-shadow: 0 1px 4px rgba(0,0,0,.08); padding:16px; }
+  .q-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .q-pos { font-size:0.85rem; color:#666; font-weight:700; }
+  .tag { display:inline-block; font-size:0.72rem; font-weight:700; color:#fff; border-radius:10px; padding:2px 9px; }
+  .q-title { font-size:1.08rem; font-weight:800; margin:4px 0 6px; }
+  .q-text { font-size:1rem; line-height:1.5; margin: 6px 0 10px; }
+  pre.code, textarea.editor, pre.opt-code, .console { font-family: Menlo, Consolas, 'Courier New', monospace; font-size: 0.95rem; }
+  pre.code { background:#1e2533; color:#e8edf5; border-radius:10px; padding:12px; overflow-x:auto; line-height:1.45; margin:8px 0 12px; white-space:pre; }
+  .kw { color:#ff9ac1; font-weight:700; } .fn { color:#7fd6ff; } .num { color:#ffd479; } .str { color:#a6e3a1; } .cm { color:#8b95a7; font-style:italic; }
+  .opts { display:flex; flex-direction:column; gap:8px; }
+  .opt-btn { text-align:left; padding:11px 13px; border-radius:10px; border:1.5px solid #d7dde6; background:#fafbfc; font-size:0.97rem; cursor:pointer; line-height:1.4; color:#1a1a2e; }
+  .opt-btn pre.opt-code { margin:0; white-space:pre; background:transparent; }
+  .opt-btn.sel-ok { background:#e6f4ec; border-color:#1D9E75; color:#0d6b3f; font-weight:700; }
+  .opt-btn.sel-bad { background:#fbeaea; border-color:#E24B4A; color:#a52a2a; font-weight:700; }
+  .opt-btn.rev-ok { background:#e6f4ec; border-color:#1D9E75; }
+  .opt-btn:disabled { cursor:default; }
+  .exp-box { display:none; margin-top:12px; background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:10px 12px; font-size:0.93rem; line-height:1.5; }
+  .exp-box.show { display:block; }
+  .exp-box pre.code { font-size:0.88rem; }
+  .board { display:grid; gap:3px; margin: 8px auto 10px; width:max-content; background:#c9d6e8; padding:6px; border-radius:10px; }
+  .cell { width:40px; height:40px; border-radius:6px; background:#eef3f9; display:flex; align-items:center; justify-content:center; font-size:24px; position:relative; }
+  .cell.wall { background:#7a5a3a; }
+  .cell .lbl { position:absolute; left:2px; top:0; font-size:9px; color:#9aa6b8; }
+  .goal-box { background:#fff8e1; border-left:4px solid #f5a623; border-radius:8px; padding:8px 12px; font-size:0.92rem; margin-bottom:8px; line-height:1.45; }
+  .palette { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
+  .pal-btn { font-family: Menlo, Consolas, monospace; font-size:0.82rem; background:#eef3fb; border:1.5px solid #185FA5; color:#185FA5; border-radius:8px; padding:5px 9px; cursor:pointer; }
+  .pal-btn.kw2 { border-color:#8e44ad; color:#8e44ad; background:#f6effa; }
+  textarea.editor { width:100%; min-height:150px; border-radius:10px; border:1.5px solid #c9d6e8; padding:10px; line-height:1.45; background:#1e2533; color:#e8edf5; resize:vertical; tab-size:4; }
+  .ed-btns { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .run-btn { background:#1D9E75; color:#fff; border:none; border-radius:10px; padding:9px 18px; font-weight:800; font-size:0.95rem; cursor:pointer; }
+  .small-btn { background:#fff; color:#555; border:1.5px solid #c9d6e8; border-radius:10px; padding:8px 12px; font-size:0.85rem; font-weight:700; cursor:pointer; }
+  .giveup-btn { background:#fff; color:#a52a2a; border:1.5px solid #E24B4A; border-radius:10px; padding:8px 12px; font-size:0.85rem; font-weight:700; cursor:pointer; }
+  .console { background:#0f1420; color:#cfe3ff; border-radius:8px; padding:8px 10px; margin-top:8px; font-size:0.86rem; white-space:pre-wrap; min-height:20px; }
+  .msg { margin-top:8px; border-radius:8px; padding:8px 12px; font-size:0.92rem; line-height:1.45; display:none; }
+  .msg.ok { display:block; background:#e6f4ec; color:#0d6b3f; border-left:4px solid #1D9E75; }
+  .msg.bad { display:block; background:#fbeaea; color:#a52a2a; border-left:4px solid #E24B4A; }
+  .msg.info { display:block; background:#fff8e1; color:#6b5215; border-left:4px solid #f5a623; }
+  .hint-box { display:none; margin-top:8px; background:#fff8e1; border-left:3px solid #f5a623; border-radius:6px; padding:8px 12px; font-size:0.88rem; color:#6b5215; }
+  .nav-btns { display:flex; justify-content:space-between; margin-top:14px; gap:10px; }
+  .nav-btns button { flex:1; padding:11px; border-radius:10px; font-weight:800; font-size:0.95rem; cursor:pointer; border:1.5px solid #185FA5; }
+  #prev-btn { background:#fff; color:#185FA5; } #next-btn { background:#185FA5; color:#fff; }
+  .results { display:none; }
+  .big-score { font-size:2rem; font-weight:800; text-align:center; color:#185FA5; margin:6px 0; }
+  .res-row { display:flex; justify-content:space-between; gap:10px; padding:7px 4px; border-bottom:1px solid #eef1f5; font-size:0.92rem; cursor:pointer; }
+  .res-btns { display:flex; gap:10px; margin-top:14px; }
+  .res-btns button { flex:1; padding:11px; border-radius:10px; font-weight:800; cursor:pointer; border:1.5px solid #185FA5; background:#fff; color:#185FA5; }
+  .res-btns button.primary { background:#185FA5; color:#fff; }
+  .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); align-items:center; justify-content:center; z-index:50; }
+  .modal { background:#fff; border-radius:14px; padding:20px; max-width:340px; text-align:center; }
+  .modal button { margin:12px 6px 0; padding:9px 16px; border-radius:10px; font-weight:800; cursor:pointer; border:1.5px solid #185FA5; background:#fff; color:#185FA5; }
+  .modal button.danger { background:#E24B4A; border-color:#E24B4A; color:#fff; }
+  @media (max-width:520px){ .cell { width:32px; height:32px; font-size:19px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="quiz-title">[Grant] Coding</div>
+  <div class="instruction" id="instruction"></div>
+  <div class="nav-bar">
+    <span class="nav-count" id="nav-count"></span>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+    <button class="pill" id="results-pill" onclick="showResultsNow()" style="display:none">Results</button>
+    <button class="jump-btn" id="jump-btn" onclick="toggleJump()">Jump&#9662;</button>
+  </div>
+  <div class="dot-panel" id="dot-panel"></div>
+  <div class="card" id="quiz-card">
+    <div class="q-top"><span class="q-pos" id="q-pos"></span><span class="tag" id="q-tag"></span></div>
+    <div id="item"></div>
+    <div class="nav-btns"><button id="prev-btn" onclick="prevQ()">Prev</button><button id="next-btn" onclick="goNext()">Next</button></div>
+  </div>
+  <div class="card results" id="results">
+    <div class="big-score" id="res-score"></div>
+    <div id="res-detail" style="text-align:center;color:#555;font-size:0.9rem;margin-bottom:8px"></div>
+    <div id="res-list"></div>
+    <div class="res-btns"><button class="primary" id="retry-btn" onclick="startRetry()">Retry Wrong Ones</button><button onclick="openFresh()">Start Fresh</button></div>
+  </div>
+</div>
+<div class="modal-bg" id="fresh-modal"><div class="modal"><b>Start fresh?</b><br><br>All your answers and code for this quiz will be erased.<br><button onclick="closeFresh()">Cancel</button><button class="danger" onclick="confirmFresh()">Start Fresh</button></div></div>
+<div class="modal-bg" id="giveup-modal"><div class="modal"><b>See the solution?</b><br><br>This puzzle will count as wrong, but you can study the answer.<br><button onclick="closeGiveUp()">Keep trying</button><button class="danger" onclick="confirmGiveUp()">Show solution</button></div></div>
+<script>
+var TITLE = "[Grant] Coding";
+var QUIZ_KEY = "grantcoding_10";
+var INSTRUCTION = "Write Python to guide the robot through each maze, and read code to answer the questions. Press Run to test your code as many times as you like!";
+var TODAY_STR = "20261116";
+var ITEMS = [{"type": "puzzle", "tag": "Sequences", "title": "First Steps", "goal": "Grab the gem 💎, then stop on the flag 🚩.", "map": ["#######", "#H..*.#", "#####.#", "#####F#", "#######"], "palette": ["hero.move_right()", "hero.move_left()", "hero.move_up()", "hero.move_down()"], "hint": "Count the squares: how many steps right to reach the end of the hallway? Then how many steps down?", "solution": "hero.move_right()\nhero.move_right()\nhero.move_right()\nhero.move_right()\nhero.move_down()\nhero.move_down()", "explain": "Python runs your lines <b>from top to bottom, one at a time<\/b>. Four steps right reach the end of the hallway (the gem is picked up on the way), then two steps down land on the flag. Bonus: <code>hero.move_right(4)<\/code> does four steps in one line!", "id": "20261116-1", "tagcolor": "#185FA5"}, {"type": "mc", "tag": "Sequences", "stem": "The robot runs this code. When it finishes, how many squares to the <b>right<\/b> of its starting square is it?", "code": "hero.move_right()\nhero.move_right()\nhero.move_up()\nhero.move_left()", "opts": ["1", "2", "3", "0"], "ci": 0, "exp": "Follow the lines in order: right (+1), right (+2), up (still 2 to the right &mdash; up does not change left/right), left (back to +1). So the robot ends <b>1<\/b> square to the right. If you answered 2, you probably forgot the <code>move_left()<\/code> at the end; 3 counts the <code>move_up()<\/code> as a right step.", "id": "20261116-2", "tagcolor": "#185FA5"}, {"type": "puzzle", "tag": "Sequences", "title": "Gem Staircase", "goal": "Collect all 3 gems going down the stairs, then stop on the flag 🚩.", "map": ["#######", "#H*####", "##.*###", "###.*##", "####.F#", "#######"], "palette": ["hero.move_right()", "hero.move_left()", "hero.move_up()", "hero.move_down()"], "hint": "Look at the pattern: one step right, then one step down, then right again…", "solution": "hero.move_right()\nhero.move_down()\nhero.move_right()\nhero.move_down()\nhero.move_right()\nhero.move_down()\nhero.move_right()", "explain": "The stairs go <b>right, down, right, down, right, down, right<\/b>. Every step lands on a gem or a floor tile, never a wall. Notice the pattern repeats &mdash; next you will learn how a <b>loop<\/b> can repeat it for you.", "id": "20261116-3", "tagcolor": "#185FA5"}, {"type": "mc", "tag": "Loops", "stem": "How many times does this code print <code>hop<\/code>?", "code": "for i in range(4):\n    print(\"hop\")", "opts": ["4", "3", "5", "1"], "ci": 0, "exp": "<code>range(4)<\/code> means &ldquo;repeat 4 times.&rdquo; The indented line <code>print(\"hop\")<\/code> is inside the loop, so it runs 4 times. (The numbers counted are 0, 1, 2, 3 &mdash; that is still 4 numbers, which is why 3 is a trap.)", "id": "20261116-4", "tagcolor": "#1D9E75"}, {"type": "mc", "tag": "Loops", "stem": "What does this code print?", "code": "for i in range(3):\n    print(i)", "opts_code": true, "opts": ["0\n1\n2", "1\n2\n3", "0\n1\n2\n3", "3"], "ci": 0, "exp": "In Python, <code>range(3)<\/code> counts <b>starting at 0<\/b>: 0, 1, 2. The loop variable <code>i<\/code> takes each value in turn, and <code>print(i)<\/code> shows it. It stops <i>before<\/i> 3, so 3 is never printed.", "id": "20261116-5", "tagcolor": "#1D9E75"}, {"type": "puzzle", "tag": "Loops", "title": "Loop the Stairs", "goal": "Collect all 4 gems and stop on the flag 🚩 &mdash; but this time use a <b>for loop<\/b>.", "map": ["#######", "#H#####", "#*.####", "##*.###", "###*.##", "####*F#", "#######"], "palette": ["hero.move_right()", "hero.move_left()", "hero.move_up()", "hero.move_down()", "for i in range(4):"], "max_lines": 3, "must_use": ["for"], "hint": "The robot repeats the same two moves: down, then right. Put those two lines <b>inside<\/b> (indented under) <code>for i in range(4):<\/code>.", "solution": "for i in range(4):\n    hero.move_down()\n    hero.move_right()", "explain": "The pattern <b>down, right<\/b> happens 4 times. A <code>for<\/code> loop repeats every indented line under it, so 3 lines do the work of 8. The 4 spaces at the start of lines 2&ndash;3 tell Python those lines belong <b>inside<\/b> the loop.", "id": "20261116-6", "tagcolor": "#1D9E75"}, {"type": "mc", "tag": "Loops", "stem": "What does this code print? Look carefully at which lines are indented.", "code": "for i in range(2):\n    print(\"A\")\nprint(\"B\")", "opts_code": true, "opts": ["A\nA\nB", "A\nB\nA\nB", "A\nB\nB", "A\nA\nB\nB"], "ci": 0, "exp": "Only the <b>indented<\/b> line <code>print(\"A\")<\/code> is inside the loop, so <code>A<\/code> is printed 2 times. <code>print(\"B\")<\/code> is not indented, so it runs <b>once<\/b>, after the loop is finished. &ldquo;A, B, A, B&rdquo; would be right only if <code>print(\"B\")<\/code> were also indented.", "id": "20261116-7", "tagcolor": "#1D9E75"}, {"type": "mc", "tag": "Debugging", "stem": "This code is supposed to move the robot right 3 times, but Python gives an error. What is the mistake?", "code": "for i in range(3)\n    hero.move_right()", "opts": ["The first line is missing a colon <code>:<\/code> at the end", "The second line should not be indented", "<code>range(3)<\/code> should be <code>range[3]<\/code>", "<code>hero.move_right()<\/code> needs a number inside the parentheses"], "ci": 0, "exp": "Every line that starts a block &mdash; <code>for<\/code>, <code>if<\/code>, <code>while<\/code>, <code>def<\/code> &mdash; must end with a colon: <code>for i in range(3):<\/code>. The indentation of the second line is correct (it must be indented to be inside the loop), <code>range<\/code> uses round parentheses, and <code>move_right()<\/code> works fine without a number (it moves 1 step).", "id": "20261116-8", "tagcolor": "#495057"}, {"type": "puzzle", "tag": "Loops", "title": "Hurdle Jumper", "goal": "Hop over the brick hurdles, landing on both gems 💎, and finish on the flag 🚩. Use a <b>for loop<\/b>.", "map": ["#########", "#.......#", "#H#*#*#F#", "#########"], "palette": ["hero.move_right()", "hero.move_left()", "hero.move_up()", "hero.move_down()", "hero.move_right(2)", "for i in range(3):"], "max_lines": 5, "must_use": ["for"], "hint": "One hop is: up, right, right, down. How many hops get you to the flag? Put the hop inside <code>for i in range(…):<\/code>.", "solution": "for i in range(3):\n    hero.move_up()\n    hero.move_right(2)\n    hero.move_down()", "explain": "One hop is <b>up, right 2, down<\/b>, and it lands the robot just past a hurdle. Three hops land on the two gems and then the flag. Going along the top row the whole way would skip the gems, which sit down between the hurdles.", "id": "20261116-9", "tagcolor": "#1D9E75"}, {"type": "mc", "tag": "Loops", "stem": "Which code moves the robot <b>right 6 times<\/b> with no errors?", "opts_code": true, "opts": ["for i in range(6):\n    hero.move_right()", "for i in range(5):\n    hero.move_right()", "for i in range(6):\nhero.move_right()", "for i in range(3):\n    hero.move_right()\nhero.move_right()"], "ci": 0, "exp": "<code>range(6)<\/code> repeats 6 times, and the indented <code>hero.move_right()<\/code> runs each time. <code>range(5)<\/code> moves only 5 times. Without the indent, Python gives an error because the loop has nothing inside it. The last choice moves 3 times in the loop and once after it &mdash; only 4 steps.", "id": "20261116-10", "tagcolor": "#1D9E75"}];
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var ACTIVE_KEY = STORAGE_KEY + '_active';
+var ATT_KEY = STORAGE_KEY + '_att';
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+var N = ITEMS.length;
+var order = ITEMS.map(function(_, i){ return i; });
+var activeSet = null;
+var state = null;
+function blankState(){ return { answers:{}, codes:{}, runs:{}, cur:0, showResults:false, reported:false }; }
+function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+function loadState(){
+  try{ state = JSON.parse(localStorage.getItem(STORAGE_KEY)); }catch(e){ state = null; }
+  if(!state || typeof state !== 'object') state = blankState();
+  ['answers','codes','runs'].forEach(function(k){ if(!state[k]) state[k] = {}; });
+  try{ var a = JSON.parse(localStorage.getItem(ACTIVE_KEY)); if(a && a.length) activeSet = a; }catch(e){ activeSet = null; }
+}
+function activeOrder(){ return (activeSet && activeSet.length) ? activeSet : order; }
+function getAttempts(){ try{ return parseInt(localStorage.getItem(ATT_KEY) || '0', 10) || 0; }catch(e){ return 0; } }
+function incAttempts(){ try{ localStorage.setItem(ATT_KEY, String(getAttempts() + 1)); }catch(e){} }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function hl(code){
+  var KW = /^(for|in|range|if|elif|else|while|def|return|and|or|not|True|False|break|pass|print)$/;
+  return code.split('\n').map(function(line){
+    var out = '', i = 0, m;
+    while(i < line.length){
+      var rest = line.slice(i);
+      if(rest[0] === '#'){ out += '<span class="cm">' + esc(rest) + '</span>'; break; }
+      if((m = rest.match(/^("[^"]*"|'[^']*')/))){ out += '<span class="str">' + esc(m[0]) + '</span>'; i += m[0].length; continue; }
+      if((m = rest.match(/^\d+/))){ out += '<span class="num">' + m[0] + '</span>'; i += m[0].length; continue; }
+      if((m = rest.match(/^[A-Za-z_]\w*/))){
+        var w = m[0], nxt = rest.slice(w.length);
+        out += KW.test(w) ? '<span class="kw">' + w + '</span>' : (/^\s*\(/.test(nxt) ? '<span class="fn">' + w + '</span>' : esc(w));
+        i += w.length; continue;
+      }
+      out += esc(rest[0]); i++;
+    }
+    return out;
+  }).join('\n');
+}
+
+/* ===================== mini-Python interpreter (subset) ===================== */
+function PyErr(line, msg){ this.line = line; this.msg = msg; }
+function tokenize(src, line){
+  var toks = [], i = 0, m;
+  while(i < src.length){
+    var c = src[i];
+    if(c === ' ' || c === '\t'){ i++; continue; }
+    if(c === '#') break;
+    var rest = src.slice(i);
+    if((m = rest.match(/^\d+(\.\d+)?/))){ toks.push({t:'num', v:parseFloat(m[0])}); i += m[0].length; continue; }
+    if((m = rest.match(/^("([^"\\]|\\.)*"|'([^'\\]|\\.)*')/))){ toks.push({t:'str', v:m[0].slice(1,-1)}); i += m[0].length; continue; }
+    if(c === '"' || c === "'") throw new PyErr(line, 'A quote mark is not closed.');
+    if((m = rest.match(/^[A-Za-z_]\w*/))){ toks.push({t:'name', v:m[0]}); i += m[0].length; continue; }
+    if((m = rest.match(/^(\/\/|==|!=|<=|>=|\+=|-=|\*=|[+\-*\/%<>=(),.:\[\]])/))){ toks.push({t:'op', v:m[0]}); i += m[0].length; continue; }
+    throw new PyErr(line, 'I don\u2019t understand the symbol \u201c' + c + '\u201d.');
+  }
+  return toks;
+}
+function Parser(toks, line){ this.k = toks; this.p = 0; this.line = line; }
+Parser.prototype.peek = function(){ return this.k[this.p]; };
+Parser.prototype.isOp = function(v){ var t = this.k[this.p]; return t && t.t === 'op' && t.v === v; };
+Parser.prototype.isName = function(v){ var t = this.k[this.p]; return t && t.t === 'name' && t.v === v; };
+Parser.prototype.eat = function(v){ if(!this.isOp(v)) throw new PyErr(this.line, 'Expected \u201c' + v + '\u201d here.'); this.p++; };
+Parser.prototype.expr = function(){ return this.or_(); };
+Parser.prototype.or_ = function(){ var a = this.and_(); while(this.isName('or')){ this.p++; a = {e:'or', a:a, b:this.and_()}; } return a; };
+Parser.prototype.and_ = function(){ var a = this.not_(); while(this.isName('and')){ this.p++; a = {e:'and', a:a, b:this.not_()}; } return a; };
+Parser.prototype.not_ = function(){ if(this.isName('not')){ this.p++; return {e:'not', a:this.not_()}; } return this.cmp(); };
+Parser.prototype.cmp = function(){
+  var a = this.add();
+  while(this.peek() && this.peek().t === 'op' && /^(==|!=|<|>|<=|>=)$/.test(this.peek().v)){ var o = this.k[this.p++].v; a = {e:'bin', o:o, a:a, b:this.add()}; }
+  return a;
+};
+Parser.prototype.add = function(){ var a = this.mul(); while(this.isOp('+') || this.isOp('-')){ var o = this.k[this.p++].v; a = {e:'bin', o:o, a:a, b:this.mul()}; } return a; };
+Parser.prototype.mul = function(){ var a = this.unary(); while(this.isOp('*') || this.isOp('/') || this.isOp('//') || this.isOp('%')){ var o = this.k[this.p++].v; a = {e:'bin', o:o, a:a, b:this.unary()}; } return a; };
+Parser.prototype.unary = function(){ if(this.isOp('-')){ this.p++; return {e:'neg', a:this.unary()}; } return this.postfix(); };
+Parser.prototype.postfix = function(){
+  var a = this.atom();
+  for(;;){
+    if(this.isOp('.')){ this.p++; var t = this.k[this.p++]; if(!t || t.t !== 'name') throw new PyErr(this.line, 'Expected a name after the dot.'); a = {e:'attr', obj:a, name:t.v}; continue; }
+    if(this.isOp('(')){ this.p++; var args = []; if(!this.isOp(')')){ args.push(this.expr()); while(this.isOp(',')){ this.p++; args.push(this.expr()); } } this.eat(')'); a = {e:'call', f:a, args:args}; continue; }
+    return a;
+  }
+};
+Parser.prototype.atom = function(){
+  var t = this.k[this.p++];
+  if(!t) throw new PyErr(this.line, 'This line ends too early.');
+  if(t.t === 'num') return {e:'num', v:t.v};
+  if(t.t === 'str') return {e:'str', v:t.v};
+  if(t.t === 'name'){ if(t.v === 'True') return {e:'num', v:true}; if(t.v === 'False') return {e:'num', v:false}; return {e:'name', v:t.v}; }
+  if(t.t === 'op' && t.v === '('){ var x = this.expr(); this.eat(')'); return x; }
+  throw new PyErr(this.line, 'I didn\u2019t expect \u201c' + t.v + '\u201d here.');
+};
+Parser.prototype.done = function(){ if(this.p < this.k.length) throw new PyErr(this.line, 'I don\u2019t understand \u201c' + this.k[this.p].v + '\u201d here. Check your spelling and punctuation.'); };
+function parseProgram(src){
+  var raw = src.replace(/\t/g, '    ').split('\n'), L = [];
+  raw.forEach(function(s, i){
+    var body = s.replace(/\s+$/, '');
+    if(!body.trim() || body.trim()[0] === '#') return;
+    var ind = body.match(/^ */)[0].length;
+    L.push({ind:ind, text:body.trim(), line:i + 1});
+  });
+  var pos = 0;
+  function block(ind){
+    var out = [];
+    while(pos < L.length){
+      var ln = L[pos];
+      if(ln.ind < ind) break;
+      if(ln.ind > ind) throw new PyErr(ln.line, 'This line is indented (pushed right) but nothing above it ends with a colon \u201c:\u201d.');
+      out.push(stmt(ln, ind));
+    }
+    return out;
+  }
+  function body(ln, ind){
+    pos++;
+    if(pos >= L.length || L[pos].ind <= ind) throw new PyErr(ln.line, 'A line ending with \u201c:\u201d needs at least one indented line under it.');
+    return block(L[pos].ind);
+  }
+  function header(ln, word){
+    if(ln.text[ln.text.length - 1] !== ':') throw new PyErr(ln.line, 'A \u201c' + word + '\u201d line must end with a colon \u201c:\u201d.');
+    var toks = tokenize(ln.text.slice(word.length, -1), ln.line);
+    return new Parser(toks, ln.line);
+  }
+  function stmt(ln, ind){
+    var t = ln.text, m, P;
+    if((m = t.match(/^for\s+([A-Za-z_]\w*)\s+in\s+range\s*\((.*)\)\s*:$/))){
+      P = new Parser(tokenize(m[2], ln.line), ln.line); var args = [P.expr()]; while(P.isOp(',')){ P.p++; args.push(P.expr()); } P.done();
+      if(args.length > 2) throw new PyErr(ln.line, 'Use range(n) or range(start, stop) in these puzzles.');
+      return {s:'for', v:m[1], args:args, line:ln.line, body:body(ln, ind)};
+    }
+    if(/^for\b/.test(t) && !/:\s*$/.test(t)) throw new PyErr(ln.line, 'A \u201cfor\u201d line must end with a colon \u201c:\u201d, like this: for i in range(3):');
+    if(/^for\b/.test(t)) throw new PyErr(ln.line, 'Write a for loop like this: for i in range(3):');
+    if(/^while\b/.test(t)){ P = header(ln, 'while'); var c = P.expr(); P.done(); return {s:'while', c:c, line:ln.line, body:body(ln, ind)}; }
+    if(/^if\b/.test(t)){
+      P = header(ln, 'if'); var node = {s:'if', branches:[], line:ln.line}; var c1 = P.expr(); P.done();
+      node.branches.push({c:c1, body:body(ln, ind)});
+      while(pos < L.length && L[pos].ind === ind && /^(elif\b|else\s*:)/.test(L[pos].text)){
+        var l2 = L[pos];
+        if(/^elif\b/.test(l2.text)){ var P2 = header(l2, 'elif'); var c2 = P2.expr(); P2.done(); node.branches.push({c:c2, body:body(l2, ind)}); }
+        else { node.branches.push({c:null, body:body(l2, ind)}); break; }
+      }
+      return node;
+    }
+    if(/^(elif|else)\b/.test(t)) throw new PyErr(ln.line, '\u201c' + t.split(/[\s:]/)[0] + '\u201d must come right after an if block, lined up with the if.');
+    if((m = t.match(/^def\s+([A-Za-z_]\w*)\s*\(([^)]*)\)\s*:$/))){
+      var params = m[2].split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+      return {s:'def', name:m[1], params:params, line:ln.line, body:body(ln, ind)};
+    }
+    if(/^def\b/.test(t)) throw new PyErr(ln.line, 'Write a function like this: def jump():');
+    pos++;
+    if(t === 'pass') return {s:'pass', line:ln.line};
+    if(t === 'break') return {s:'break', line:ln.line};
+    if(/^return\b/.test(t)){ var rt = t.slice(6).trim(); var rx = null; if(rt){ P = new Parser(tokenize(rt, ln.line), ln.line); rx = P.expr(); P.done(); } return {s:'return', x:rx, line:ln.line}; }
+    if((m = t.match(/^([A-Za-z_]\w*)\s*(=|\+=|-=|\*=)(?!=)\s*(.*)$/))){
+      if(!m[3]) throw new PyErr(ln.line, 'Put a value after \u201c' + m[2] + '\u201d.');
+      P = new Parser(tokenize(m[3], ln.line), ln.line); var x = P.expr(); P.done();
+      return {s:'assign', name:m[1], op:m[2], x:x, line:ln.line};
+    }
+    if(t[t.length - 1] === ':') throw new PyErr(ln.line, 'I don\u2019t understand this line. Lines ending with \u201c:\u201d start with for, while, if, elif, else, or def.');
+    P = new Parser(tokenize(t, ln.line), ln.line); var ex = P.expr(); P.done();
+    if(ex.e !== 'call') throw new PyErr(ln.line, 'This line doesn\u2019t do anything. Did you forget the parentheses () ?');
+    return {s:'expr', x:ex, line:ln.line};
+  }
+  var prog = block(0);
+  if(pos < L.length) throw new PyErr(L[pos].line, 'This line is indented (pushed right) but nothing above it ends with a colon \u201c:\u201d.');
+  return prog;
+}
+function BreakSig(){} function ReturnSig(v){ this.v = v; }
+function pyStr(v){ if(v === true) return 'True'; if(v === false) return 'False'; if(v === null || v === undefined) return 'None'; return String(v); }
+function World(item){
+  this.map = item.map ? item.map.map(function(r){ return r.split(''); }) : null;
+  this.H = this.map ? this.map.length : 0; this.W = this.map ? this.map[0].length : 0;
+  this.gems = {}; this.flag = null; this.x = 0; this.y = 0; this.frames = []; this.out = [];
+  for(var y = 0; y < this.H; y++) for(var x = 0; x < this.W; x++){
+    var c = this.map[y][x];
+    if(c === 'H'){ this.x = x; this.y = y; } if(c === '*') this.gems[x + ',' + y] = true; if(c === 'F') this.flag = [x, y];
+  }
+  this.total = Object.keys(this.gems).length; this.take();
+}
+World.prototype.take = function(){ var k = this.x + ',' + this.y; if(this.gems[k]) delete this.gems[k]; };
+World.prototype.wall = function(x, y){ return !this.map || x < 0 || y < 0 || x >= this.W || y >= this.H || this.map[y][x] === '#'; };
+World.prototype.snap = function(line){ this.frames.push({x:this.x, y:this.y, gems:Object.keys(this.gems), line:line, out:this.out.slice()}); };
+function run(src, item){
+  var w = new World(item), steps = 0, LIMIT = 2000, cur = 0;
+  var globals = {}, funcs = {};
+  var DIRS = {right:[1,0], left:[-1,0], up:[0,-1], down:[0,1]};
+  function tick(line){ cur = line; if(++steps > LIMIT) throw new PyErr(line, 'Your program ran too long. Is there a loop that never stops?'); }
+  function hero(name, args, line){
+    var m;
+    if((m = name.match(/^move_(right|left|up|down)$/))){
+      if(!w.map) throw new PyErr(line, 'There is no robot in this question.');
+      var n = args.length ? args[0] : 1;
+      if(typeof n !== 'number' || n !== Math.floor(n) || n < 0) throw new PyErr(line, name + '() needs a whole number of steps.');
+      var d = DIRS[m[1]];
+      for(var i = 0; i < n; i++){
+        if(w.wall(w.x + d[0], w.y + d[1])){ w.snap(line); throw new PyErr(line, 'Ouch! The robot bumped into a wall moving ' + m[1] + '.'); }
+        w.x += d[0]; w.y += d[1]; w.take(); w.snap(line); tick(line);
+      }
+      return null;
+    }
+    if((m = name.match(/^can_move_(right|left|up|down)$/))){ if(args.length) throw new PyErr(line, name + '() does not take a number.'); var d2 = DIRS[m[1]]; return !w.wall(w.x + d2[0], w.y + d2[1]); }
+    if(name === 'at_flag') return !!(w.flag && w.flag[0] === w.x && w.flag[1] === w.y);
+    if(name === 'gems_left') return Object.keys(w.gems).length;
+    if(name === 'say'){ w.out.push(args.map(pyStr).join(' ')); w.snap(line); return null; }
+    throw new PyErr(line, 'The robot doesn\u2019t know \u201chero.' + name + '()\u201d. Check the spelling.');
+  }
+  function ev(x, env, line){
+    switch(x.e){
+      case 'num': case 'str': return x.v;
+      case 'name':
+        if(env && Object.prototype.hasOwnProperty.call(env, x.v)) return env[x.v];
+        if(Object.prototype.hasOwnProperty.call(globals, x.v)) return globals[x.v];
+        if(x.v === 'hero') throw new PyErr(line, 'Use hero with a dot and a command, like hero.move_right().');
+        throw new PyErr(line, '\u201c' + x.v + '\u201d is not defined. Check the spelling, or give it a value first.');
+      case 'neg': var a0 = ev(x.a, env, line); if(typeof a0 !== 'number') throw new PyErr(line, 'You can only put a minus sign in front of a number.'); return -a0;
+      case 'not': return !truthy(ev(x.a, env, line));
+      case 'and': var l = ev(x.a, env, line); return truthy(l) ? ev(x.b, env, line) : l;
+      case 'or': var l2 = ev(x.a, env, line); return truthy(l2) ? l2 : ev(x.b, env, line);
+      case 'bin':
+        var A = ev(x.a, env, line), B = ev(x.b, env, line);
+        switch(x.o){
+          case '+': if(typeof A === 'string' && typeof B === 'string') return A + B; if(typeof A === 'string' || typeof B === 'string') throw new PyErr(line, 'You can\u2019t add a word and a number. Use str() to turn the number into a word.'); return A + B;
+          case '-': num(A, B, line); return A - B;
+          case '*': if(typeof A === 'string' && typeof B === 'number') return A.repeat(Math.max(0, B)); if(typeof B === 'string' && typeof A === 'number') return B.repeat(Math.max(0, A)); num(A, B, line); return A * B;
+          case '/': num(A, B, line); if(B === 0) throw new PyErr(line, 'You can\u2019t divide by zero.'); return A / B;
+          case '//': num(A, B, line); if(B === 0) throw new PyErr(line, 'You can\u2019t divide by zero.'); return Math.floor(A / B);
+          case '%': num(A, B, line); if(B === 0) throw new PyErr(line, 'You can\u2019t divide by zero.'); return ((A % B) + B) % B;
+          case '==': return A === B; case '!=': return A !== B;
+          case '<': return A < B; case '>': return A > B; case '<=': return A <= B; case '>=': return A >= B;
+        }
+        break;
+      case 'attr': throw new PyErr(line, 'Did you forget the parentheses ()? Write it like hero.' + x.name + '().');
+      case 'call':
+        var args = x.args.map(function(a){ return ev(a, env, line); });
+        if(x.f.e === 'attr'){
+          if(x.f.obj.e !== 'name' || x.f.obj.v !== 'hero') throw new PyErr(line, 'Only the robot (hero) has commands with a dot.');
+          return hero(x.f.name, args, line);
+        }
+        if(x.f.e !== 'name') throw new PyErr(line, 'I don\u2019t understand this call.');
+        var fn = x.f.v;
+        if(fn === 'print'){ w.out.push(args.map(pyStr).join(' ')); w.snap(line); return null; }
+        if(fn === 'str'){ return pyStr(args[0]); }
+        if(fn === 'abs'){ return Math.abs(args[0]); }
+        if(fn === 'range') throw new PyErr(line, 'Use range() inside a for loop: for i in range(3):');
+        if(/^(move_|can_move_)/.test(fn) || fn === 'at_flag') throw new PyErr(line, 'Put \u201chero.\u201d in front: hero.' + fn + '()');
+        if(!Object.prototype.hasOwnProperty.call(funcs, fn)) throw new PyErr(line, '\u201c' + fn + '()\u201d is not defined. Did you spell it the same way as in your def line?');
+        var F = funcs[fn];
+        if(args.length !== F.params.length) throw new PyErr(line, fn + '() needs ' + F.params.length + ' value(s) in the parentheses, but got ' + args.length + '.');
+        var local = {}; F.params.forEach(function(p, i){ local[p] = args[i]; });
+        try{ execBlock(F.body, local); } catch(sig){ if(sig instanceof ReturnSig) return sig.v; throw sig; }
+        return null;
+    }
+    throw new PyErr(line, 'I don\u2019t understand this.');
+  }
+  function num(A, B, line){ if(typeof A !== 'number' || typeof B !== 'number') throw new PyErr(line, 'Math only works with numbers here.'); }
+  function truthy(v){ return !(v === false || v === 0 || v === '' || v === null || v === undefined); }
+  function setv(env, k, v){ if(env) env[k] = v; else globals[k] = v; }
+  function getv(env, k, line){ if(env && Object.prototype.hasOwnProperty.call(env, k)) return env[k]; if(Object.prototype.hasOwnProperty.call(globals, k)) return globals[k]; throw new PyErr(line, '\u201c' + k + '\u201d needs a value before you can change it.'); }
+  function execBlock(list, env){
+    for(var i = 0; i < list.length; i++){
+      var s = list[i]; tick(s.line);
+      switch(s.s){
+        case 'expr': ev(s.x, env, s.line); break;
+        case 'pass': break;
+        case 'break': throw new BreakSig();
+        case 'return': if(!env) throw new PyErr(s.line, '\u201creturn\u201d can only be used inside a function.'); throw new ReturnSig(s.x ? ev(s.x, env, s.line) : null);
+        case 'assign':
+          var v = ev(s.x, env, s.line);
+          if(s.op === '=') setv(env, s.name, v);
+          else { var o = getv(env, s.name, s.line); if(s.op === '+=') v = (typeof o === 'string' || typeof v === 'string') ? (typeof o === 'string' && typeof v === 'string' ? o + v : (function(){ throw new PyErr(s.line, 'You can\u2019t add a word and a number.'); })()) : o + v; else if(s.op === '-=') v = o - v; else v = o * v; setv(env, s.name, v); }
+          break;
+        case 'for':
+          var a = s.args.map(function(x){ return ev(x, env, s.line); });
+          a.forEach(function(n){ if(typeof n !== 'number' || n !== Math.floor(n)) throw new PyErr(s.line, 'range() needs whole numbers.'); });
+          var start = a.length === 2 ? a[0] : 0, stop = a.length === 2 ? a[1] : a[0];
+          try{ for(var k = start; k < stop; k++){ setv(env, s.v, k); tick(s.line); execBlock(s.body, env); } } catch(sig){ if(!(sig instanceof BreakSig)) throw sig; }
+          break;
+        case 'while':
+          try{ while(truthy(ev(s.c, env, s.line))){ tick(s.line); execBlock(s.body, env); } } catch(sig2){ if(!(sig2 instanceof BreakSig)) throw sig2; }
+          break;
+        case 'if':
+          for(var b = 0; b < s.branches.length; b++){ var br = s.branches[b]; if(br.c === null || truthy(ev(br.c, env, s.line))){ execBlock(br.body, env); break; } }
+          break;
+        case 'def': funcs[s.name] = s; break;
+      }
+    }
+  }
+  var err = null;
+  try{ var prog = parseProgram(src); execBlock(prog, null); }
+  catch(e){
+    if(e instanceof PyErr) err = e;
+    else if(e instanceof BreakSig) err = new PyErr(cur, '\u201cbreak\u201d can only be used inside a loop.');
+    else if(e instanceof ReturnSig) err = new PyErr(cur, '\u201creturn\u201d can only be used inside a function.');
+    else err = new PyErr(cur, 'Something went wrong: ' + e.message);
+  }
+  w.snap(0);
+  return { world:w, error:err, out:w.out, gemsLeft:Object.keys(w.gems).length, atFlag:!!(w.flag && w.flag[0] === w.x && w.flag[1] === w.y) };
+}
+function countLines(src){ return src.split('\n').filter(function(s){ var t = s.trim(); return t && t[0] !== '#'; }).length; }
+function checkPuzzle(item, src){
+  var r = run(src, item);
+  if(r.error) return {ok:false, r:r, msg:'Line ' + r.error.line + ': ' + r.error.msg};
+  if(r.gemsLeft > 0) return {ok:false, r:r, msg:'Almost! ' + r.gemsLeft + ' gem' + (r.gemsLeft > 1 ? 's are' : ' is') + ' still left.'};
+  if(r.world.flag && !r.atFlag) return {ok:false, r:r, msg:'You got the gems. Now finish on the flag \ud83d\udea9.'};
+  if(item.expect_out && r.out.join('\n') !== item.expect_out) return {ok:false, r:r, msg:'The robot reached the goal, but the printed words are not what the goal asks for.'};
+  if(item.max_lines && countLines(src) > item.max_lines) return {ok:false, r:r, msg:'You solved the maze with ' + countLines(src) + ' lines. Now do it in ' + item.max_lines + ' lines or fewer \u2014 that\u2019s the real challenge!'};
+  if(item.must_use){ for(var i = 0; i < item.must_use.length; i++){ if(!new RegExp('(^|\\n)\\s*' + item.must_use[i] + '\\b').test(src)) return {ok:false, r:r, msg:'Good path! But this puzzle asks you to use \u201c' + item.must_use[i] + '\u201d.'}; } }
+  return {ok:true, r:r, msg:'\ud83c\udf89 You solved it!'};
+}
+window.__coding = { run: run, checkPuzzle: checkPuzzle, countLines: countLines };
+
+/* ===================== quiz UI ===================== */
+var anim = null, hintOn = false;
+function origNum(qi){ return order.indexOf(qi) + 1; } /* keep-orig-num */
+function isOk(qi){ var a = state.answers[qi]; return a && a.ok; }
+function boardHTML(item, fr){
+  var w = new World(item); if(!w.map) return '';
+  var gems = {}; (fr ? fr.gems : Object.keys(w.gems)).forEach(function(k){ gems[k] = true; });
+  var hx = fr ? fr.x : w.x, hy = fr ? fr.y : w.y;
+  var h = '<div class="board" style="grid-template-columns:repeat(' + w.W + ',auto)">';
+  for(var y = 0; y < w.H; y++) for(var x = 0; x < w.W; x++){
+    var c = item.map[y][x], icon = '';
+    if(c === '#'){ h += '<div class="cell wall"></div>'; continue; }
+    if(gems[x + ',' + y]) icon = '\ud83d\udc8e';
+    if(w.flag && w.flag[0] === x && w.flag[1] === y) icon = icon || '\ud83d\udea9';
+    if(x === hx && y === hy) icon = '\ud83e\udd16';
+    h += '<div class="cell">' + icon + '</div>';
+  }
+  return h + '</div>';
+}
+function render(){
+  var ao = activeOrder();
+  if(state.cur >= ao.length) state.cur = 0;
+  document.getElementById('results').style.display = state.showResults ? 'block' : 'none';
+  document.getElementById('quiz-card').style.display = state.showResults ? 'none' : 'block';
+  updateNav();
+  if(state.showResults){ renderResults(); return; }
+  var qi = ao[state.cur], it = ITEMS[qi], a = state.answers[qi];
+  var lab = 'Q' + origNum(qi) + ' / ' + N; if(activeSet && activeSet.length) lab += '  (retry ' + (state.cur + 1) + ' of ' + ao.length + ')';
+  document.getElementById('q-pos').textContent = lab;
+  var tg = document.getElementById('q-tag'); tg.textContent = it.tag; tg.style.background = it.tagcolor || '#185FA5';
+  var h = '';
+  if(it.type === 'mc'){
+    h += '<div class="q-text">' + it.stem + '</div>';
+    if(it.code) h += '<pre class="code">' + hl(it.code) + '</pre>';
+    if(it.map) h += boardHTML(it, null);
+    h += '<div class="opts">';
+    it.opts.forEach(function(o, i){
+      var cls = 'opt-btn';
+      if(a){ if(i === a.pick) cls += (a.ok ? ' sel-ok' : ' sel-bad'); else if(i === it.ci) cls += ' rev-ok'; }
+      var inner = it.opts_code ? '<pre class="opt-code">' + esc(o) + '</pre>' : o;
+      h += '<button class="' + cls + '" ' + (a ? 'disabled' : '') + ' onclick="pick(' + i + ')">' + inner + '</button>';
+    });
+    h += '</div><div class="exp-box' + (a ? ' show' : '') + '">' + it.exp + '</div>';
+  } else {
+    h += '<div class="q-title">' + it.title + '</div>';
+    h += '<div class="goal-box">\ud83c\udfaf ' + it.goal + (it.max_lines ? '<br>\ud83d\udccf Use <b>' + it.max_lines + ' lines or fewer</b>.' : '') + '</div>';
+    h += '<div id="board-wrap">' + boardHTML(it, null) + '</div>';
+    h += '<div class="palette">' + (it.palette || []).map(function(p, i){ return '<button class="pal-btn' + (/^(for|if|elif|else|while|def)\b/.test(p) ? ' kw2' : '') + '" ' + (a ? 'disabled' : '') + ' onclick="insertCode(' + i + ')">' + esc(p) + '</button>'; }).join('') + '</div>';
+    var code = state.codes[qi] !== undefined ? state.codes[qi] : (it.start_code || '');
+    h += '<textarea class="editor" id="editor" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" ' + (a ? 'readonly' : '') + '>' + esc(code) + '</textarea>';
+    h += '<div class="ed-btns">';
+    if(!a){ h += '<button class="run-btn" id="run-btn" onclick="runCode()">\u25b6 Run</button><button class="small-btn" onclick="toggleHint()">Hint</button><button class="small-btn" onclick="resetCode()">Reset code</button><button class="giveup-btn" onclick="openGiveUp()">Show solution</button>'; }
+    else { h += '<button class="run-btn" onclick="replay()">\u25b6 Watch again</button>'; }
+    h += '</div><div class="hint-box" id="hint-box" style="display:' + (hintOn && !a ? 'block' : 'none') + '">\ud83d\udca1 ' + it.hint + '</div>';
+    h += '<div class="console" id="console" style="display:none"></div>';
+    var msgCls = a ? (a.ok ? 'msg ok' : 'msg bad') : 'msg';
+    var msgTxt = a ? (a.ok ? '\ud83c\udf89 Solved' + (state.runs[qi] ? ' in ' + state.runs[qi] + ' run' + (state.runs[qi] > 1 ? 's' : '') : '') + '!' : 'You looked at the solution. Study it, then try a puzzle like this again in Retry.') : '';
+    h += '<div class="' + msgCls + '" id="msg">' + msgTxt + '</div>';
+    if(a) h += '<div class="exp-box show"><b>A good solution:</b><pre class="code">' + hl(it.solution) + '</pre>' + it.explain + '</div>';
+  }
+  document.getElementById('item').innerHTML = h;
+  var ed = document.getElementById('editor');
+  if(ed && !a){ ed.addEventListener('input', function(){ state.codes[qi] = ed.value; saveState(); }); ed.addEventListener('keydown', edKey); }
+  var nb = document.getElementById('next-btn'); nb.textContent = state.cur === ao.length - 1 ? 'Finish' : 'Next';
+  document.getElementById('prev-btn').disabled = state.cur === 0;
+}
+function edKey(e){
+  var ed = e.target, s = ed.selectionStart, v = ed.value;
+  if(e.key === 'Tab'){ e.preventDefault(); ed.value = v.slice(0, s) + '    ' + v.slice(ed.selectionEnd); ed.selectionStart = ed.selectionEnd = s + 4; ed.dispatchEvent(new Event('input')); }
+  else if(e.key === 'Enter'){
+    e.preventDefault();
+    var ls = v.lastIndexOf('\n', s - 1) + 1, line = v.slice(ls, s), ind = line.match(/^ */)[0];
+    if(/:\s*$/.test(line)) ind += '    ';
+    var ins = '\n' + ind; ed.value = v.slice(0, s) + ins + v.slice(ed.selectionEnd); ed.selectionStart = ed.selectionEnd = s + ins.length; ed.dispatchEvent(new Event('input'));
+  }
+}
+function insertCode(i){
+  var it = ITEMS[activeOrder()[state.cur]], ed = document.getElementById('editor'); if(!ed || ed.readOnly) return;
+  var v = ed.value, s = (typeof ed.selectionStart === 'number') ? ed.selectionStart : v.length;
+  var ls = v.lastIndexOf('\n', s - 1) + 1, line = v.slice(ls, s), snippet = it.palette[i];
+  var ins;
+  if(line.trim() === ''){ ins = snippet; }
+  else { var ind = line.match(/^ */)[0]; if(/:\s*$/.test(line)) ind += '    '; ins = '\n' + ind + snippet; }
+  if(/:$/.test(snippet)){ var bi = ((line.trim() === '' ? line : (ins.match(/\n( *)/) || ['',''])[1])) + '    '; ins += '\n' + bi; }
+  ed.value = v.slice(0, s) + ins + v.slice(s); ed.selectionStart = ed.selectionEnd = s + ins.length; ed.focus();
+  ed.dispatchEvent(new Event('input'));
+}
+function toggleHint(){ hintOn = !hintOn; var b = document.getElementById('hint-box'); if(b) b.style.display = hintOn ? 'block' : 'none'; }
+function resetCode(){ var qi = activeOrder()[state.cur]; delete state.codes[qi]; saveState(); render(); }
+function animate(item, frames, done){
+  if(anim){ clearTimeout(anim); anim = null; }
+  var bw = document.getElementById('board-wrap'), con = document.getElementById('console'), i = 0;
+  if(window.__fast || !frames.length){ var f = frames[frames.length - 1]; if(bw && f) bw.innerHTML = boardHTML(item, f); if(con && f && f.out.length){ con.style.display = 'block'; con.textContent = f.out.join('\n'); } done(); return; }
+  (function step(){
+    var f = frames[i]; if(bw) bw.innerHTML = boardHTML(item, f);
+    if(con && f.out.length){ con.style.display = 'block'; con.textContent = f.out.join('\n'); }
+    i++; if(i < frames.length) anim = setTimeout(step, 260); else { anim = null; done(); }
+  })();
+}
+function runCode(){
+  var qi = activeOrder()[state.cur], it = ITEMS[qi], ed = document.getElementById('editor'); if(!ed || state.answers[qi]) return;
+  var src = ed.value; state.codes[qi] = src; state.runs[qi] = (state.runs[qi] || 0) + 1; saveState();
+  var res = checkPuzzle(it, src), rb = document.getElementById('run-btn'); if(rb) rb.disabled = true;
+  var msg = document.getElementById('msg'); msg.className = 'msg info'; msg.textContent = 'Running\u2026';
+  animate(it, res.r.world.frames, function(){
+    if(rb) rb.disabled = false;
+    if(res.ok){ state.answers[qi] = {ok:true, code:src}; saveState(); render(); }
+    else { msg.className = 'msg bad'; msg.textContent = res.msg + (state.runs[qi] >= 3 ? '  (Stuck? Try the Hint.)' : ''); }
+  });
+}
+function replay(){ var qi = activeOrder()[state.cur], it = ITEMS[qi], a = state.answers[qi]; var r = run(a && a.ok ? a.code : it.solution, it); animate(it, r.world.frames, function(){}); }
+function openGiveUp(){ document.getElementById('giveup-modal').style.display = 'flex'; }
+function closeGiveUp(){ document.getElementById('giveup-modal').style.display = 'none'; }
+function confirmGiveUp(){ closeGiveUp(); var qi = activeOrder()[state.cur]; var ed = document.getElementById('editor'); state.answers[qi] = {ok:false, code: ed ? ed.value : (state.codes[qi] || ''), gaveUp:true}; saveState(); render(); }
+function pick(i){ var qi = activeOrder()[state.cur], it = ITEMS[qi]; if(it.type !== 'mc' || state.answers[qi]) return; state.answers[qi] = {pick:i, ok: i === it.ci}; saveState(); render(); }
+function prevQ(){ if(state.cur > 0){ state.cur--; hintOn = false; saveState(); render(); } }
+function finish(){
+  if(state.reported){ state.showResults = true; saveState(); render(); return; } /* no-resend-after-review */
+  state.showResults = true; incAttempts(); saveState(); render(); reportResult(); state.reported = true; saveState();
+}
+function goNext(){ if(state.showResults) return; var ao = activeOrder(); hintOn = false; if(state.cur < ao.length - 1){ state.cur++; saveState(); render(); } else finish(); }
+function showResultsNow(){ if(state.showResults) return; finish(); }
+function goToQ(pos){ state.cur = pos; state.showResults = false; hintOn = false; saveState(); render(); }
+function toggleJump(){ var p = document.getElementById('dot-panel'), b = document.getElementById('jump-btn'); var open = p.style.display !== 'flex'; p.style.display = open ? 'flex' : 'none'; b.innerHTML = open ? 'Hide&#9652;' : 'Jump&#9662;'; }
+function updateNav(){
+  var ao = activeOrder(), done = 0;
+  ao.forEach(function(qi){ if(state.answers[qi]) done++; });
+  document.getElementById('nav-count').textContent = '[' + done + '/' + ao.length + ']';
+  document.getElementById('prog-fill').style.width = (ao.length ? 100 * done / ao.length : 0) + '%';
+  document.getElementById('results-pill').style.display = (done === ao.length && !state.showResults) ? 'inline-block' : 'none';
+  document.getElementById('dot-panel').innerHTML = ao.map(function(qi, p){ var a = state.answers[qi]; return '<button class="dot' + (a ? (a.ok ? ' ok' : ' bad') : '') + (p === state.cur && !state.showResults ? ' cur' : '') + '" onclick="goToQ(' + p + ')">' + origNum(qi) + '</button>'; }).join('');
+}
+function renderResults(){
+  var ao = activeOrder(), c = 0;
+  ao.forEach(function(qi){ if(isOk(qi)) c++; });
+  document.getElementById('res-score').textContent = c + ' / ' + ao.length;
+  var pz = ao.filter(function(qi){ return ITEMS[qi].type === 'puzzle'; }), pzOk = pz.filter(isOk).length;
+  document.getElementById('res-detail').textContent = 'Puzzles solved: ' + pzOk + ' of ' + pz.length + '   \u00b7   Code questions right: ' + (c - pzOk) + ' of ' + (ao.length - pz.length);
+  document.getElementById('res-list').innerHTML = ao.map(function(qi, p){ var it = ITEMS[qi], a = state.answers[qi]; return '<div class="res-row" onclick="goToQ(' + p + ')"><span>Q' + origNum(qi) + '. ' + (it.type === 'puzzle' ? '\ud83e\udd16 ' + it.title : 'Code question') + '</span><span>' + (a ? (a.ok ? '\u2705' : '\u274c') : '\u2014') + '</span></div>'; }).join('');
+  var wrong = ao.filter(function(qi){ return !isOk(qi); }).length;
+  document.getElementById('retry-btn').style.display = wrong ? 'block' : 'none';
+}
+function startRetry(){
+  var wrongIdx = activeOrder().filter(function(qi){ return !isOk(qi); }); if(!wrongIdx.length) return;
+  wrongIdx.forEach(function(qi){ delete state.answers[qi]; delete state.codes[qi]; delete state.runs[qi]; });
+  activeSet = wrongIdx; localStorage.setItem(ACTIVE_KEY, JSON.stringify(activeSet));
+  state.cur = 0; state.showResults = false; state.reported = false; hintOn = false; saveState(); render(); window.scrollTo(0, 0);
+}
+function openFresh(){ document.getElementById('fresh-modal').style.display = 'flex'; }
+function closeFresh(){ document.getElementById('fresh-modal').style.display = 'none'; }
+function confirmFresh(){ closeFresh(); state = blankState(); activeSet = null; localStorage.removeItem(ACTIVE_KEY); saveState(); render(); window.scrollTo(0, 0); }
+function wrongTxt(s){ s = (s===undefined || s===null) ? '' : String(s); return /^\s*</.test(s) ? s : '<span>' + s + '</span>'; }
+function quizDateStr(){ return TODAY_STR; }
+function itemQuestion(it){
+  var idtag = '<span style="display:none">[coding:' + it.id + ']</span>';
+  if(it.type === 'mc') return idtag + it.stem + (it.code ? '<pre>' + esc(it.code) + '</pre>' : '');
+  return idtag + '<b>Robot puzzle: ' + it.title + '</b><br>' + it.goal + (it.max_lines ? ' (' + it.max_lines + ' lines or fewer)' : '') + '<br><pre>' + it.map.join('\n') + '</pre>';
+}
+function wrongDetail(qi, your){
+  var it = ITEMS[qi];
+  var correct = it.type === 'mc' ? (it.opts_code ? '<pre>' + esc(it.opts[it.ci]) + '</pre>' : it.opts[it.ci]) : '<pre>' + esc(it.solution) + '</pre>';
+  return { question: wrongTxt(itemQuestion(it)), yourAnswer: wrongTxt(your), correctAnswer: wrongTxt(correct), explanation: wrongTxt(it.type === 'mc' ? it.exp : it.explain) };
+}
+function yourText(qi){
+  var it = ITEMS[qi], a = state.answers[qi];
+  if(!a) return '(not answered)';
+  if(it.type === 'mc') return it.opts_code ? '<pre>' + esc(it.opts[a.pick]) + '</pre>' : it.opts[a.pick];
+  return '<pre>' + esc(a.code || '') + '</pre>(showed the solution after ' + (state.runs[qi] || 0) + ' run' + ((state.runs[qi] || 0) === 1 ? '' : 's') + ')';
+}
+function reportResult(){
+  try{
+    var ao = activeOrder(), correct = 0, wrong = 0, skipped = 0, wp = [], wd = [], runs = [];
+    ao.forEach(function(qi){
+      var a = state.answers[qi];
+      if(ITEMS[qi].type === 'puzzle') runs.push(origNum(qi) + ':' + (state.runs[qi] || 0) + (a && a.ok ? '' : 'x'));
+      if(!a){ skipped++; return; }
+      if(a.ok) correct++; else { wrong++; wp.push(origNum(qi)); wd.push(wrongDetail(qi, yourText(qi))); }
+    });
+    var total = ao.length;
+    var payload = { child:'Grant', quizTitle:TITLE, quizKey:QUIZ_KEY, attemptNumber:getAttempts(), correct:correct, wrong:wrong, skipped:skipped, total:total,
+      scorePercent: total > 0 ? Math.round(correct / total * 1000) / 10 : 0, wrongNumbers: wp.join(','), quizDate: quizDateStr(), puzzleRuns: runs.join(' ') };
+    var firstKey = STORAGE_KEY + '_wrongsent';
+    if(!(activeSet && activeSet.length) && !localStorage.getItem(firstKey)){ payload.wrongAnswers = wd; localStorage.setItem(firstKey, '1'); }
+    fetch(REPORT_ENDPOINT, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) }).catch(function(){});
+  }catch(e){}
+}
+/* progress-report 2026-10-27 (coding version) */
+var _lastProgressSig = '';
+function reportProgress(){
+  try{
+    if(state.showResults) return;
+    if((activeSet && activeSet.length) || localStorage.getItem(STORAGE_KEY + '_wrongsent')) return;
+    var answered = 0, correct = 0, wd = [];
+    order.forEach(function(qi){ var a = state.answers[qi]; if(!a){ wd.push(wrongDetail(qi, '(not answered)')); return; } answered++; if(a.ok) correct++; else wd.push(wrongDetail(qi, yourText(qi))); });
+    if(answered === 0) return;
+    var sig = answered + '/' + correct; if(sig === _lastProgressSig) return; _lastProgressSig = sig;
+    var body = JSON.stringify({ type:'progress', child:'Grant', quizTitle:TITLE, quizKey:QUIZ_KEY, quizDate:quizDateStr(), answered:answered, total:order.length, correct:correct, wrongAnswers:wd });
+    fetch(REPORT_ENDPOINT, { method:'POST', mode:'no-cors', keepalive: body.length < 60000, headers:{'Content-Type':'text/plain;charset=utf-8'}, body: body }).catch(function(){});
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'hidden') reportProgress(); });
+window.addEventListener('pagehide', reportProgress);
+['pick','prevQ','goNext','showResultsNow','goToQ','toggleJump','startRetry','openFresh','closeFresh','confirmFresh','runCode','replay','insertCode','toggleHint','resetCode','openGiveUp','closeGiveUp','confirmGiveUp'].forEach(function(n){ window[n] = eval(n); });
+document.getElementById('instruction').textContent = INSTRUCTION;
+loadState(); render();
+</script>
+</body>
+</html>
