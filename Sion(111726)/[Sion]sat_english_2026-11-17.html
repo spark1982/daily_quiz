@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT English</title>
+<style>
+.q-position{font-size:0.85rem;font-weight:700;color:#185FA5;margin-bottom:8px;}
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f4f6fa; margin:0; padding: 20px 12px 60px; color:#1a1a2e; }
+  .quiz-wrap { max-width: 680px; margin: 0 auto; }
+  .quiz-title { font-size: 1.4rem; font-weight: 800; text-align:center; margin: 8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom: 14px; min-height: 0; }
+  .nav-bar { background:#fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .nav-summary { display:flex; align-items:center; gap:10px; }
+  #nav-count { font-weight:700; font-size:0.85rem; color:#333; white-space:nowrap; }
+  .progress-track { flex:1; height:6px; background:#d7dde6; border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; width:0%; background:#185FA5; border-radius:3px; transition: width .2s; }
+  .jump-btn { background:#eef2f7; border:none; border-radius:8px; padding:6px 12px; font-size:0.8rem; font-weight:700; color:#185FA5; cursor:pointer; white-space:nowrap; }
+  .dots-panel { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .dot { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; cursor:pointer; background:#d7dde6; color:#555; border:none; }
+  .dot.answered-correct { background:#185FA5; color:#fff; }
+  .dot.answered-wrong { background:#E24B4A; color:#fff; }
+  .results-pill { display:inline-block; margin: 0 auto 14px; padding: 8px 20px; background:#1D9E75; color:#fff; border-radius:20px; font-weight:700; text-align:center; cursor:pointer; width:fit-content; }
+  .results-pill-wrap { text-align:center; }
+  .quiz-card, .results-card { background:#fff; border-radius: 14px; padding: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 16px; }
+  .passage-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:0.92rem; line-height:1.6; color:#222; }
+  .context-label { font-size:0.92rem; font-weight:600; color:#333; margin-bottom:8px; line-height:1.4; }
+  .context-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; }
+  .tag-badge { display:inline-block; font-size:0.72rem; font-weight:700; color:#fff; padding:3px 10px; border-radius:12px; margin-bottom:10px; }
+  .q-text { font-size:1.05rem; font-weight:600; margin-bottom:16px; line-height:1.5; }
+  #options { display:flex; flex-direction:column; gap:10px; }
+  .opt-btn { text-align:left; padding:12px 14px; border-radius:10px; border:1.5px solid #d7dde6; background:#fafbfc; font-size:0.95rem; cursor:pointer; line-height:1.4; }
+  .opt-btn:hover { border-color:#185FA5; }
+  .opt-btn.selected-correct { background:#e6f4ec; border-color:#1D9E75; color:#0d6b3f; font-weight:700; }
+  .opt-btn.selected-wrong { background:#fbeaea; border-color:#E24B4A; color:#a52a2a; font-weight:700; }
+  .opt-btn.reveal-correct { background:#e6f4ec; border-color:#1D9E75; }
+  .opt-btn:disabled { cursor:default; }
+  .exp-box { margin-top:14px; background:#eef7f2; border-left:4px solid #1D9E75; border-radius:8px; padding:12px 14px; font-size:0.88rem; color:#2d4d3f; line-height:1.5; display:none; }
+  .hint-btn { background:#fff8e1;color:#a5720a;border:1.5px solid #f5a623;border-radius:8px;padding:7px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-top:12px;margin-bottom:12px;display:inline-block; }
+  .hint-box { background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.88rem;color:#6b5215;line-height:1.5;display:none; }
+  .hint-box.show { display:block; }
+  .tts-btn { background:#eef2f7; border:none; border-radius:50%; width:34px; height:34px; font-size:1rem; cursor:pointer; margin-left:8px; vertical-align:middle; }
+  .nav-btns { display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .nav-btns button { flex:1; padding:11px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; background:#185FA5; color:#fff; }
+  .nav-btns button:disabled { background:#c9d2dc; cursor:default; }
+  .results-card h2 { text-align:center; margin-top:0; }
+  .score-big { text-align:center; font-size:2.2rem; font-weight:800; color:#185FA5; margin: 6px 0 16px; }
+  .action-row { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .action-row button { padding:12px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; }
+  .btn-retry { background:#f5a623; color:#fff; }
+  .btn-save { background:#7b61ff; color:#fff; }
+  .btn-fresh { background:#E24B4A; color:#fff; }
+  .fresh-btn-bottom { display:block; margin: 6px auto 0; background:none; border:1.5px solid #d7dde6; color:#888; padding:8px 16px; border-radius:20px; font-size:0.8rem; cursor:pointer; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:14px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { font-size:0.95rem; margin-bottom:18px; }
+  .modal-box button { padding:10px 16px; border-radius:8px; border:none; font-weight:700; margin:0 6px; cursor:pointer; }
+  .modal-yes { background:#E24B4A; color:#fff; }
+  .modal-no { background:#eef2f7; color:#333; }
+
+
+  .sat-timer{display:flex;align-items:center;gap:10px;justify-content:space-between;background:#eef3fb;border:1px solid #c9d8ef;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:0.9rem;font-weight:700;color:#185FA5;position:sticky;top:0;z-index:5;}
+  .sat-timer .over{color:#E24B4A;}
+  .sat-timer button{background:#fff;border:1.5px solid #185FA5;color:#185FA5;border-radius:8px;padding:4px 10px;font-weight:700;cursor:pointer;}
+  .sat-pausebox{display:none;text-align:center;background:#fff;border-radius:14px;padding:30px 20px;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);font-weight:700;color:#185FA5;}
+</style>
+</head>
+<body>
+<div class="quiz-wrap">
+  <div class="quiz-title">[Sion] SAT English</div>
+  <div class="instruction" id="instruction"></div>
+
+  <div class="nav-bar">
+    <div class="nav-summary">
+      <span id="nav-count">0/0</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <button class="jump-btn" id="jump-btn" onclick="toggleJump()">Jump&#9662;</button>
+    </div>
+    <div class="dots-panel" id="dots-panel" style="display:none;"></div>
+  </div>
+
+  <div class="results-pill-wrap"><span class="results-pill" id="results-pill" style="display:none;" onclick="showResultsNow()">Results</span></div>
+
+  <div class="quiz-card" id="quiz-card">
+    <div class="q-position" id="q-position"></div>
+    <div class="passage-box" id="passage-box" style="display:none;"></div>
+    <div class="context-label" id="context-label" style="display:none;"></div>
+    <div class="context-box" id="context-box" style="display:none;"></div>
+    <div class="tag-badge" id="tag-badge" style="display:none;"></div>
+    <div class="q-text" id="q-text"></div>
+    <div id="options"></div>
+    <button class="hint-btn" id="hint-btn" onclick="toggleHint()" style="display:none;">Show Hint</button>
+    <div class="hint-box" id="hint-box"></div>
+    <div class="exp-box" id="exp-box"></div>
+    <div class="nav-btns">
+      <button id="prev-btn" onclick="prevQ()">Prev</button>
+      <button id="next-btn" onclick="goNext()">Next</button>
+    </div>
+  </div>
+
+  <div class="results-card" id="results-card" style="display:none;">
+    <h2>Results</h2>
+    <div class="score-big" id="score-big"></div>
+    <div id="score-detail" style="text-align:center;color:#555;font-size:0.9rem;"></div>
+    <div class="action-row">
+      <button class="btn-retry" onclick="startRetry()">Retry Wrong Ones</button>
+      <button class="btn-fresh" onclick="openFreshModal()">Start Fresh</button>
+    </div>
+  </div>
+
+  <button class="fresh-btn-bottom" onclick="openFreshModal()">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="fresh-modal" style="display:none;">
+  <div class="modal-box">
+    <p>Reset all progress and start over?</p>
+    <button class="modal-yes" onclick="confirmFresh()">Yes, Start Fresh</button>
+    <button class="modal-no" onclick="closeFreshModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Sion] SAT English";
+var QUIZ_KEY = "sionsatenglish_10";
+var INSTRUCTION = "Read each text carefully and choose the best answer. Use the timer to practice real SAT pacing.";
+var TODAY_STR = "20261117";
+var RAW_QUESTIONS = [{"passage": "Having tracked the songbirds&rsquo; migration routes for more than a decade, ______", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["the birds&rsquo; arrival, the ornithologist predicted, would be delayed by the early storms.", "the ornithologist predicted that the early storms would delay the birds&rsquo; arrival.", "the early storms, the ornithologist predicted, would delay the birds&rsquo; arrival.", "it was predicted by the ornithologist that the early storms would delay the birds&rsquo; arrival."], "ci": 1, "exp": "<b>What it asks:</b> who did the action in the opening modifier.<br><br><b>Analysis:</b> &ldquo;Having tracked the songbirds&rsquo; migration routes for more than a decade&rdquo; describes a person. The word right after the comma must be that person: <i>the ornithologist</i>.<br><br><b>Why the others fail:</b> the other choices put <i>the early storms</i>, <i>the birds&rsquo; arrival</i>, or <i>it</i> right after the comma, which says that storms, an arrival, or &ldquo;it&rdquo; tracked the migration routes &mdash; dangling modifiers.<br><br><b>Strategy:</b> when a sentence opens with an <i>-ing</i> or <i>Having &hellip;</i> phrase, ask &ldquo;Who did that?&rdquo; and make sure that noun comes immediately after the comma.", "tag": "Standard English Conventions", "tagcolor": "#1D9E75"}, {"passage": "Linguists studying a language spoken in two isolated mountain valleys found that speakers in both valleys use nearly identical words for farming, weather, and family members, but entirely different words for most metal tools. Historical records indicate that both valleys were settled by a single group about 1,200 years ago and that the two communities had little contact with each other afterward. Archaeological evidence shows that metalworking did not reach the region until roughly 600 years ago. These findings suggest that ______", "stem": "Which choice most logically completes the text?", "opts": ["each valley most likely acquired metal tools, and the words for them, separately, after the two communities had already become isolated.", "the original settlers probably brought metal tools with them but stopped using them after the valleys separated.", "words for farming and weather most likely change more quickly over time than words for tools do.", "metal tools probably reached one valley first and then spread to the other through regular trade between them."], "ci": 0, "exp": "<b>What it asks:</b> the conclusion that best explains <i>shared</i> old vocabulary but <i>different</i> tool vocabulary.<br><br><b>Reasoning:</b> (1) The valleys share words for farming, weather, and family &rarr; those words come from the single founding group 1,200 years ago. (2) The groups then had little contact. (3) Metalworking arrived only 600 years ago &mdash; <i>after</i> the split. So each valley met metal tools on its own and named them independently, producing different words.<br><br><b>Why the others fail:</b> spreading through &ldquo;regular trade&rdquo; contradicts &ldquo;little contact&rdquo; and would likely produce <i>shared</i> tool words, not different ones; the claim that farming words change faster is contradicted by the data (those words stayed identical); and settlers could not have brought metal tools 1,200 years ago if metalworking reached the region only 600 years ago.<br><br><b>Strategy:</b> put the facts on a timeline (settlement &rarr; separation &rarr; new technology). The right inference must fit every date; each wrong choice breaks one fact.", "tag": "Information and Ideas", "tagcolor": "#185FA5"}, {"passage": "Although he would later become one of the wealthiest merchants in the colony, as a young apprentice he was so ______ that he often had to borrow coins from friends just to buy candles for reading at night.", "stem": "Which choice completes the text with the most logical and precise word or phrase?", "opts": ["profligate", "impecunious", "parsimonious", "indolent"], "ci": 1, "exp": "<b>What it asks:</b> a word describing his condition as an apprentice, set against his later wealth.<br><br><b>Evidence:</b> <i>Although</i> signals a contrast with &ldquo;wealthiest,&rdquo; and he had to <i>borrow</i> money for candles. The blank must mean &ldquo;having very little money.&rdquo; <i>Impecunious</i> means poor.<br><br><b>Why the others fail:</b> <i>parsimonious</i> means stingy &mdash; unwilling to spend money you have &mdash; but a stingy person would not need to borrow; this is the strongest trap because both words relate to money. <i>Profligate</i> (wastefully spending) does not fit a struggling apprentice with no money to waste. <i>Indolent</i> (lazy) clashes with someone reading late at night.<br><br><b>Vocabulary:</b> impecunious (adj.) &mdash; having little or no money. From Latin <i>im-</i> (not) + <i>pecunia</i> (money); compare <i>pecuniary</i> (about money). Example: <i>The <b>impecunious</b> artist sold sketches to pay the rent.</i><br><br><b>Strategy:</b> when two choices share a topic (money), test the exact meaning: <i>has no money</i> vs. <i>won&rsquo;t spend money</i>.", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"passage": "A biologist hypothesizes that wild crows can remember the faces of specific people who once threatened them. To test this, she and her assistants briefly trapped and released several crows on a college campus while wearing one particular rubber mask. Over the following years, team members walked across campus wearing either that mask or a different, neutral mask that had never been worn during trapping.", "stem": "Which finding, if true, would most directly support the biologist&rsquo;s hypothesis?", "opts": ["The crows that had been trapped avoided the trapping site on campus for several weeks.", "Crows scolded and dive-bombed walkers wearing the trapping mask but mostly ignored walkers wearing the neutral mask, even when the same person wore each mask.", "Crows were more likely to scold people who walked alone than people who walked in groups.", "Crows scolded walkers wearing either mask more often than they scolded walkers without masks."], "ci": 1, "exp": "<b>What it asks:</b> a result that shows crows respond to a <i>specific face</i> linked to a threat.<br><br><b>Why the correct choice works:</b> the only difference between the two conditions is the face (the mask); the person, place, and walk are the same. Crows reacting to the trapping face but not the neutral face isolates face memory.<br><br><b>Why the others fail:</b> reacting to <i>any</i> mask shows crows dislike strange-looking faces, not that they remember a particular one; the group-size result is unrelated to faces; avoiding the site shows memory of a <i>place</i>, not a face.<br><br><b>Strategy:</b> for &ldquo;most directly support,&rdquo; look for the choice that compares two conditions differing only in the variable named in the hypothesis.", "tag": "Information and Ideas", "tagcolor": "#185FA5"}, {"passage": "Many people assume that the soft humming sound of a hummingbird comes from its voice. In fact, the hum is produced by the wings themselves: as they beat dozens of times per second, they push air in rapid pulses that the human ear hears as a steady tone. Because wing size and beat speed differ from species to species, the pitch of the hum differs as well. Some species also make sounds in other ways&mdash;males of Anna&rsquo;s hummingbird, for example, produce a sharp chirp with their tail feathers at the bottom of a steep courtship dive.", "stem": "Which choice best describes the overall structure of the text?", "opts": ["It introduces a puzzling sound and lists several possible causes without choosing one.", "It explains a process step by step and then questions whether the process benefits the birds.", "It describes a debate between two groups of scientists and argues that one group is correct.", "It presents a common belief, corrects it with an explanation, and then notes a related way the birds produce sound."], "ci": 3, "exp": "<b>What it asks:</b> how the whole text is organized, sentence by sentence.<br><br><b>Map the text:</b> (1) &ldquo;Many people assume&rdquo; = a common belief. (2) &ldquo;In fact, the hum is produced by the wings&rdquo; = correction with explanation. (3) pitch differs by species = more explanation. (4) &ldquo;Some species also make sounds in other ways&rdquo; = a related, additional way. The correct choice matches all three moves.<br><br><b>Why the others fail:</b> no scientists or debate appear, so the &ldquo;two groups&rdquo; choice invents content; the text never questions whether the hum benefits the birds; and it does not leave the cause open &mdash; it states one cause clearly (&ldquo;In fact&rdquo;).<br><br><b>Strategy:</b> label each sentence with a job (belief / correction / detail / extension) before reading the choices; reject any choice that adds an element (debate, doubt) the text lacks.", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"passage": "While researching a topic, a student has taken the following notes:<ul style='margin:6px 0 0 18px;padding:0'><li>Mary Anning (1799&ndash;1847) was a fossil collector from Lyme Regis, England.</li><li>As a young woman, she helped uncover one of the first ichthyosaur skeletons to be correctly identified.</li><li>In 1823 she found the first complete plesiosaur skeleton.</li><li>The Geological Society of London, founded in 1807, did not admit women as members during her lifetime.</li><li>Many scientists studied and published on her finds, often without crediting her.</li></ul>", "stem": "The student wants to emphasize a contrast between Anning&rsquo;s discoveries and how she was treated by the scientific community. Which choice most effectively uses relevant information from the notes to accomplish this goal?", "opts": ["In 1823, Mary Anning found the first complete plesiosaur skeleton near Lyme Regis.", "Although Mary Anning found the first complete plesiosaur skeleton in 1823, she was never allowed to join the Geological Society of London.", "The Geological Society of London, which was founded in 1807, did not admit women as members during Anning&rsquo;s lifetime.", "Mary Anning, a fossil collector from Lyme Regis, England, lived from 1799 to 1847."], "ci": 1, "exp": "<b>What it asks:</b> a sentence that (1) mentions a discovery, (2) mentions her treatment, and (3) links them as a contrast.<br><br><b>Why the correct choice works:</b> it pairs a major discovery with exclusion from the Society and uses <i>Although</i> to mark the contrast.<br><br><b>Why the others fail:</b> the biographical sentence has neither a discovery nor treatment; the plesiosaur sentence gives only the discovery; the Geological Society sentence gives only the treatment. Each is accurate, but none creates the contrast.<br><br><b>Strategy:</b> turn the goal into a checklist (discovery + treatment + contrast word) and eliminate any choice missing a box.", "tag": "Expression of Ideas", "tagcolor": "#f5a623"}, {"passage": "Many dishes now celebrated as the ______ expression of a nation&rsquo;s cooking are surprisingly recent. The tomato, for instance, arrived in Europe from the Americas in the 1500s, yet for many years afterward it was grown in parts of Europe mainly as a curiosity rather than as a common food.", "stem": "Which choice completes the text with the most logical and precise word or phrase?", "opts": ["ostentatious", "quintessential", "provisional", "peripheral"], "ci": 1, "exp": "<b>What it asks:</b> a word describing how people now see these dishes &mdash; as the most typical, purest example of a nation&rsquo;s cooking.<br><br><b>Evidence:</b> the text sets up a contrast: dishes are &ldquo;celebrated&rdquo; as central to a cuisine, &ldquo;<i>yet</i>&rdquo; they are &ldquo;surprisingly recent.&rdquo; The surprise only works if the blank means &ldquo;most representative.&rdquo; <i>Quintessential</i> means exactly that.<br><br><b>Why the others fail:</b> <i>provisional</i> (temporary, for now) does not fit &ldquo;celebrated&rdquo; and would remove the surprise; <i>peripheral</i> (on the edge, minor) is the opposite of how the dishes are celebrated; <i>ostentatious</i> (showy) describes style, not how typical a dish is.<br><br><b>Vocabulary:</b> quintessential (adj.) &mdash; the most perfect or typical example of something. Related: quintessence (n.). Example: <i>Apple pie is often called the <b>quintessential</b> American dessert.</i><br><br><b>Strategy:</b> find the contrast word (<i>yet</i>) and ask what the blank must mean for the second half to be surprising.", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"passage": "Rather than tuning the violin in the usual way, the composer asked soloists to retune two of its strings before the piece began. Several critics at the premiere dismissed this ______ approach as a gimmick, but later performers came to see it as essential to the work&rsquo;s eerie, unfamiliar sound.", "stem": "Which choice completes the text with the most logical and precise word or phrase?", "opts": ["unorthodox", "conventional", "meticulous", "perfunctory"], "ci": 0, "exp": "<b>What it asks:</b> a word for an approach that breaks from &ldquo;the usual way.&rdquo;<br><br><b>Evidence:</b> the composer chose something other than the usual tuning, critics called it a &ldquo;gimmick,&rdquo; and the result sounds &ldquo;unfamiliar.&rdquo; The blank must mean &ldquo;not standard; unusual.&rdquo; <i>Unorthodox</i> fits.<br><br><b>Why the others fail:</b> <i>conventional</i> means following the usual way &mdash; the opposite of the text; <i>meticulous</i> (extremely careful) does not explain why critics saw a gimmick; <i>perfunctory</i> (done quickly, without care) clashes with a deliberate, essential choice.<br><br><b>Vocabulary:</b> unorthodox (adj.) &mdash; different from what is usual or accepted. Opposite: orthodox, conventional. Example: <i>Her <b>unorthodox</b> study method&mdash;teaching the lesson to her dog&mdash;actually worked.</i><br><br><b>Strategy:</b> phrases like &ldquo;rather than &hellip; the usual way&rdquo; define the blank for you.", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"passage": "Stretching roughly 7,000 kilometers along the western edge of South ______ the longest continental mountain range in the world.", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["America, the Andes are", "America; the Andes are", "America the Andes, are", "America. The Andes are"], "ci": 0, "exp": "<b>What it asks:</b> how to connect an introductory phrase to the main clause.<br><br><b>Analysis:</b> &ldquo;Stretching roughly 7,000 kilometers along the western edge of South America&rdquo; is a participial phrase, not a complete sentence. It must attach to the main clause with a comma: <i>&hellip; South America, the Andes are the longest continental mountain range in the world.</i><br><br><b>Why the others fail:</b> a semicolon or a period would cut off the opening phrase as if it were a full sentence, leaving a fragment; the last choice drops the needed comma after <i>America</i> and wrongly separates the subject <i>the Andes</i> from its verb <i>are</i> with a comma.<br><br><b>Strategy:</b> semicolons and periods need a complete sentence on <b>both</b> sides. Test the left side &mdash; an <i>-ing</i> phrase alone is never complete.", "tag": "Standard English Conventions", "tagcolor": "#1D9E75"}, {"passage": "A common modern belief holds that people in medieval Europe thought the Earth was flat. A new museum exhibit aims to ______ this belief: it displays medieval manuscripts and maps showing that most educated people of the period understood the Earth to be round.", "stem": "Which choice completes the text with the most logical and precise word or phrase?", "opts": ["dispel", "perpetuate", "corroborate", "articulate"], "ci": 0, "exp": "<b>What it asks:</b> what the exhibit tries to do to a mistaken belief.<br><br><b>Evidence:</b> the exhibit shows that educated people knew the Earth was round, so it proves the common belief wrong. The blank must mean &ldquo;make a false idea go away.&rdquo; <i>Dispel</i> fits.<br><br><b>Why the others fail:</b> <i>corroborate</i> (support with evidence) and <i>perpetuate</i> (keep something going) both point the wrong direction &mdash; the exhibit fights the belief; <i>articulate</i> (express clearly) would mean the exhibit explains the belief, not that it disproves it.<br><br><b>Vocabulary:</b> dispel (v.) &mdash; to make a doubt, fear, or false belief disappear. Example: <i>The coach&rsquo;s calm voice <b>dispelled</b> the team&rsquo;s nerves.</i><br><br><b>Strategy:</b> decide the direction first (support or destroy?), then pick the word.", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"passage": "Many desert plants survive long dry periods by storing water in thick stems or leaves. ______ the saguaro cactus of the Sonoran Desert can swell to hold hundreds of liters of water after a single heavy rain, then slowly use that supply over the following months.", "stem": "Which choice completes the text with the most logical transition?", "opts": ["Nevertheless,", "For instance,", "However,", "In contrast,"], "ci": 1, "exp": "<b>What it asks:</b> the relationship between a general statement and the next sentence.<br><br><b>Evidence:</b> sentence 1 makes a general claim (desert plants store water); sentence 2 gives one specific plant that does this. That is an example, so <i>For instance</i> fits.<br><br><b>Why the others fail:</b> <i>However</i>, <i>In contrast</i>, and <i>Nevertheless</i> all signal a contrast or an unexpected result, but the saguaro agrees with the first sentence.<br><br><b>Strategy:</b> decide whether the second sentence agrees, contrasts, or results &mdash; then choose a transition from that group.", "tag": "Expression of Ideas", "tagcolor": "#f5a623"}, {"passage": "A librarian claims that the rise in e-book borrowing at her town&rsquo;s library did not come at the expense of borrowing printed books.<br><br><table style='border-collapse:collapse;margin:6px 0;font-size:0.9rem'><tr><th style='border:1px solid #999;padding:3px 8px'>Year</th><th style='border:1px solid #999;padding:3px 8px'>Print checkouts</th><th style='border:1px solid #999;padding:3px 8px'>E-book checkouts</th></tr><tr><td style='border:1px solid #999;padding:3px 8px'>2019</td><td style='border:1px solid #999;padding:3px 8px;text-align:right'>41,200</td><td style='border:1px solid #999;padding:3px 8px;text-align:right'>9,800</td></tr><tr><td style='border:1px solid #999;padding:3px 8px'>2020</td><td style='border:1px solid #999;padding:3px 8px;text-align:right'>30,500</td><td style='border:1px solid #999;padding:3px 8px;text-align:right'>18,900</td></tr><tr><td style='border:1px solid #999;padding:3px 8px'>2021</td><td style='border:1px solid #999;padding:3px 8px;text-align:right'>38,700</td><td style='border:1px solid #999;padding:3px 8px;text-align:right'>21,400</td></tr><tr><td style='border:1px solid #999;padding:3px 8px'>2022</td><td style='border:1px solid #999;padding:3px 8px;text-align:right'>42,600</td><td style='border:1px solid #999;padding:3px 8px;text-align:right'>23,100</td></tr><tr><td style='border:1px solid #999;padding:3px 8px'>2023</td><td style='border:1px solid #999;padding:3px 8px;text-align:right'>43,900</td><td style='border:1px solid #999;padding:3px 8px;text-align:right'>24,800</td></tr></table><span style='font-size:0.8rem;color:#666'>(Hypothetical data)</span>", "stem": "Which choice most effectively uses data from the table to support the librarian&rsquo;s claim?", "opts": ["From 2019 to 2020, print checkouts fell by 10,700 while e-book checkouts rose by 9,100.", "In every year shown, print checkouts were greater than e-book checkouts.", "In 2023 the library recorded 43,900 print checkouts, more than in 2019, even though e-book checkouts had risen from 9,800 to 24,800 over the same period.", "E-book checkouts increased every year from 2019 to 2023."], "ci": 2, "exp": "<b>What it asks:</b> data showing e-books grew <i>and</i> print did not lose out.<br><br><b>Why the correct choice works:</b> it compares both columns across the full period: e-books rose (9,800 &rarr; 24,800) while print ended higher than it started (41,200 &rarr; 43,900). Growth in one did not mean a decline in the other.<br><br><b>Why the others fail:</b> the 2019&ndash;2020 drop (41,200 &minus; 30,500 = 10,700) actually <i>weakens</i> the claim by showing print falling as e-books rose; &ldquo;e-books increased every year&rdquo; is true but says nothing about print; &ldquo;print was always greater&rdquo; is true but does not show whether print lost borrowers as e-books grew.<br><br><b>Strategy:</b> a claim with two parts (X rose, Y did not fall) needs a choice that uses <b>both</b> columns. Accurate-but-incomplete choices are the most common trap.", "tag": "Information and Ideas", "tagcolor": "#185FA5"}];
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var ORDER_KEY = STORAGE_KEY + '_order';
+var ACTIVE_KEY = STORAGE_KEY + '_active';
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+function wrongTxt(s){ s = (s===undefined || s===null) ? '' : String(s); return /^\s*</.test(s) ? s : '<span>' + s + '</span>'; }
+function wrongDetail(qi, yourAnswer){
+  var q = RAW_QUESTIONS[qi];
+  var qtext = (q.passage ? q.passage + '<br><br>' : '') + (q.contextLabel ? q.contextLabel + '<br>' : '') + (q.context ? q.context + '<br>' : '') + q.stem;
+  return { question: wrongTxt(qtext), yourAnswer: wrongTxt(yourAnswer), correctAnswer: wrongTxt(q.opts[q.ci]), explanation: wrongTxt(q.exp) };
+}
+function quizDateStr(){ return (typeof TODAY_STR !== 'undefined') ? TODAY_STR : ((String(QUIZ_KEY).match(/\d{8}/) || [''])[0]); }
+function reportResult(){
+  try{
+    var ao = activeOrder();
+    var correct=0, wrong=0, skipped=0;
+    var wrongPositions=[];
+    var wrongDetails=[];
+    for(var pos=0; pos<ao.length; pos++){
+      var qi = ao[pos];
+      if(state.answers[qi]===undefined){ if(window.SAT_TIMEUP && SAT_TIMEUP() && !(activeSet && activeSet.length)){ wrong++; wrongPositions.push(pos+1); wrongDetails.push(wrongDetail(qi, "(time's up)")); } else skipped++; continue; }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else { wrong++; wrongPositions.push(origNum(qi)); wrongDetails.push(wrongDetail(qi, RAW_QUESTIONS[qi].opts[state.answers[qi]])); }
+    }
+    var total = ao.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0,
+      wrongNumbers: wrongPositions.join(','),
+      quizDate: quizDateStr()
+    };
+    var firstKey = STORAGE_KEY + '_wrongsent';
+    if(!(activeSet && activeSet.length) && !localStorage.getItem(firstKey)){
+      payload.wrongAnswers = wrongDetails;
+      localStorage.setItem(firstKey, '1');
+    }
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
+}
+/* progress-report 2026-10-27 */
+var _lastProgressSig = '';
+function reportProgress(){
+  try{
+    if(state.showResults) return;
+    if(!(!(activeSet && activeSet.length) && !localStorage.getItem(STORAGE_KEY + '_wrongsent'))) return;
+    var answered=0, correct=0, wd=[];
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos]; var a = state.answers[qi];
+      if(a===undefined){ wd.push(wrongDetail(qi, '(not answered)')); continue; }
+      answered++;
+      if(a===RAW_QUESTIONS[qi].ci) correct++; else wd.push(wrongDetail(qi, RAW_QUESTIONS[qi].opts[a]));
+    }
+    if(answered===0) return;
+    var sig = answered + '/' + correct; if(sig===_lastProgressSig) return; _lastProgressSig = sig;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var body = JSON.stringify({ type:'progress', child: childName, quizTitle: TITLE, quizKey: QUIZ_KEY, quizDate: quizDateStr(),
+      answered: answered, total: order.length, correct: correct, wrongAnswers: wd });
+    fetch(REPORT_ENDPOINT, { method:'POST', mode:'no-cors', keepalive: body.length < 60000,
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, body: body }).catch(function(){});
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='hidden') reportProgress(); });
+window.addEventListener('pagehide', reportProgress);
+
+
+var ATTEMPTS_KEY = STORAGE_KEY + '_attempts';
+
+var order = [];
+var activeSet = null; // when in retry mode, holds subset of original indices
+var state = { answers:{}, cur:0, showResults:false };
+var hintShown = false;
+
+function loadState(){
+  var raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try{ state = JSON.parse(raw); }catch(e){ state = {answers:{},cur:0,showResults:false}; } }
+  var rawOrder = localStorage.getItem(ORDER_KEY);
+  if(rawOrder){ try{ order = JSON.parse(rawOrder); }catch(e){ order=null; } }
+  if(!order || !order.length){
+    order = RAW_QUESTIONS.map(function(_,i){return i;});
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  }
+  var rawActive = localStorage.getItem(ACTIVE_KEY);
+  if(rawActive){ try{ activeSet = JSON.parse(rawActive); }catch(e){ activeSet = null; } }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function getAttempts(){
+  var a = localStorage.getItem(ATTEMPTS_KEY);
+  return a ? parseInt(a,10) : 0; // 2026-10-24: start at 0 so the first finish reports attempt 1 (was 1 → first finish reported 2)
+}
+function incAttempts(){
+  var a = getAttempts() + 1;
+  localStorage.setItem(ATTEMPTS_KEY, String(a));
+}
+
+function activeOrder(){ return (activeSet && activeSet.length) ? activeSet : order; }
+function origNum(qi){ var i = order.indexOf(qi); return i >= 0 ? i + 1 : 0; } /* keep-orig-num 2026-11-14 */
+
+function render(){
+  document.getElementById('instruction').textContent = INSTRUCTION;
+  var ord = activeOrder();
+  if(state.showResults){
+    document.getElementById('quiz-card').style.display='none';
+    document.getElementById('results-card').style.display='block';
+    renderResults();
+  } else {
+    document.getElementById('quiz-card').style.display='block';
+    document.getElementById('results-card').style.display='none';
+    renderQuestion();
+  }
+  updateNav();
+}
+
+function renderQuestion(){
+  hintShown = false;
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  var qpEl = document.getElementById('q-position');
+  if(qpEl) qpEl.textContent = 'Q' + origNum(ord[state.cur]) + ' / ' + order.length + ((activeSet && activeSet.length) ? '  (retry ' + (state.cur + 1) + ' of ' + ord.length + ')' : '');
+
+  var pb = document.getElementById('passage-box');
+  if(q.passage){ pb.style.display='block'; pb.innerHTML = q.passage; } else { pb.style.display='none'; pb.innerHTML=''; }
+
+  var cl = document.getElementById('context-label');
+  if(q.contextLabel){ cl.style.display='block'; cl.textContent = q.contextLabel; } else { cl.style.display='none'; cl.textContent=''; }
+
+  var cb = document.getElementById('context-box');
+  if(q.context){ cb.style.display='block'; cb.innerHTML = q.context; } else { cb.style.display='none'; cb.innerHTML=''; }
+
+  var tb = document.getElementById('tag-badge');
+  if(q.tag){ tb.style.display='inline-block'; tb.textContent = q.tag; tb.style.background = q.tagcolor || '#185FA5'; } else { tb.style.display='none'; }
+
+  var qt = document.getElementById('q-text');
+  qt.innerHTML = q.stem + (q.tts ? ' <button class="tts-btn" onclick="speak(' + qi + ')" title="Listen">&#128266;</button>' : '');
+
+  var opts = document.getElementById('options');
+  opts.innerHTML = '';
+  var answered = state.answers[qi] !== undefined;
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = optText;
+    if(answered){
+      btn.disabled = true;
+      if(idx === q.ci) btn.className += ' reveal-correct';
+      if(idx === state.answers[qi] && idx !== q.ci) btn.className += ' selected-wrong';
+      if(idx === state.answers[qi] && idx === q.ci) btn.className += ' selected-correct';
+    } else {
+      btn.onclick = function(){ pick(idx); };
+    }
+    opts.appendChild(btn);
+  });
+
+  var hb = document.getElementById('hint-btn');
+  var hx = document.getElementById('hint-box');
+  if(q.hint){
+    hb.style.display='inline-block'; hb.textContent='Show Hint';
+    hx.innerHTML = q.hint; hx.classList.remove('show');
+  } else {
+    hb.style.display='none'; hx.classList.remove('show');
+  }
+
+  var eb = document.getElementById('exp-box');
+  if(answered){
+    eb.style.display='block';
+    eb.innerHTML = '<strong>Explanation:</strong> ' + q.exp;
+  } else {
+    eb.style.display='none'; eb.innerHTML='';
+  }
+
+  document.getElementById('prev-btn').disabled = (state.cur === 0);
+  var ord2 = activeOrder();
+  var isLast = (state.cur === ord2.length - 1);
+  document.getElementById('next-btn').textContent = isLast ? 'Finish' : 'Next';
+}
+
+function toggleHint(){
+  hintShown = !hintShown;
+  var b=document.getElementById('hint-btn'), x=document.getElementById('hint-box');
+  if(hintShown){ x.classList.add('show'); b.textContent='Hide Hint'; }
+  else { x.classList.remove('show'); b.textContent='Show Hint'; }
+}
+window.toggleHint = toggleHint;
+
+function pick(idx){
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState();
+  render();
+}
+window.pick = pick;
+
+function prevQ(){
+  if(state.cur > 0){ state.cur--; saveState(); render(); }
+}
+window.prevQ = prevQ;
+window.go = prevQ;
+
+function goNext(){
+  if(state.showResults) return; // 2026-10-14: ignore double taps / Results tap on the results screen (prevented duplicate result emails)
+    var ord = activeOrder();
+  if(state.cur < ord.length - 1){
+    state.cur++;
+    saveState();
+    render();
+  } else {
+    if(state.reported){ state.showResults=true; saveState(); render(); return; } /* no-resend-after-review 2026-10-28 */
+    state.showResults = true;
+    incAttempts();
+    saveState();
+    render();
+    reportResult(); state.reported = true; saveState();
+  }
+}
+window.goNext = goNext;
+
+function showResultsNow(){
+  if(state.showResults) return; // 2026-10-14: ignore double taps / Results tap on the results screen (prevented duplicate result emails)
+    if(state.reported){ state.showResults=true; saveState(); render(); return; } /* no-resend-after-review 2026-10-28 */
+  state.showResults = true;
+  incAttempts(); // 2026-10-24: count a finish from the Results pill too
+  saveState();
+  render();
+  reportResult(); state.reported = true; saveState();
+}
+window.showResultsNow = showResultsNow;
+
+function goToQ(pos){
+  state.cur = pos;
+  state.showResults = false;
+  saveState();
+  render();
+}
+window.goToQ = goToQ;
+
+function renderResults(){
+  var ord = activeOrder();
+  var correct=0, wrong=0, skipped=0;
+  ord.forEach(function(qi){
+    if(state.answers[qi]===undefined) skipped++;
+    else if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++;
+    else wrong++;
+  });
+  var total = ord.length;
+  document.getElementById('score-big').textContent = correct + ' / ' + total;
+  document.getElementById('score-detail').textContent = 'Correct: ' + correct + '  Wrong: ' + wrong + '  Skipped: ' + skipped;
+}
+
+function updateNav(){
+  var ord = activeOrder();
+  var answeredCount = 0;
+  ord.forEach(function(qi){ if(state.answers[qi]!==undefined) answeredCount++; });
+  document.getElementById('nav-count').textContent = answeredCount + '/' + ord.length;
+  var pct = ord.length ? Math.round(answeredCount/ord.length*100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('results-pill').style.display = (answeredCount === ord.length && ord.length>0 && !state.showResults) ? 'inline-block' : 'none';
+  renderDots();
+}
+
+function renderDots(){
+  var panel = document.getElementById('dots-panel');
+  if(panel.style.display === 'none') { buildDots(); return; }
+  buildDots();
+}
+function buildDots(){
+  var panel = document.getElementById('dots-panel');
+  var ord = activeOrder();
+  panel.innerHTML = '';
+  ord.forEach(function(qi, pos){
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.textContent = origNum(qi);
+    if(state.answers[qi]!==undefined){
+      d.className += (state.answers[qi]===RAW_QUESTIONS[qi].ci) ? ' answered-correct' : ' answered-wrong';
+    }
+    d.onclick = function(){ goToQ(pos); };
+    panel.appendChild(d);
+  });
+}
+
+function toggleJump(){
+  var panel = document.getElementById('dots-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display === 'none'){
+    panel.style.display = 'flex';
+    btn.innerHTML = 'Hide&#9652;';
+    buildDots();
+  } else {
+    panel.style.display = 'none';
+    btn.innerHTML = 'Jump&#9662;';
+  }
+}
+window.toggleJump = toggleJump;
+
+function startRetry(){
+  var ord = activeOrder();
+  var wrongIdx = ord.filter(function(qi){ return (state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci) || (state.answers[qi]===undefined && window.SAT_TIMEUP && SAT_TIMEUP()); });
+  if(!wrongIdx.length) return;
+  activeSet = wrongIdx;
+  localStorage.setItem(ACTIVE_KEY, JSON.stringify(activeSet));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  render();
+}
+window.startRetry = startRetry;
+
+
+
+function openFreshModal(){ document.getElementById('fresh-modal').style.display='flex'; }
+window.openFreshModal = openFreshModal;
+function closeFreshModal(){ document.getElementById('fresh-modal').style.display='none'; }
+window.closeFreshModal = closeFreshModal;
+function confirmFresh(){
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(ORDER_KEY);
+  localStorage.removeItem(ACTIVE_KEY);
+  activeSet = null;
+  order = RAW_QUESTIONS.map(function(_,i){return i;});
+  localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  document.getElementById('fresh-modal').style.display='none';
+  render();
+}
+window.confirmFresh = confirmFresh;
+
+function speak(qi){
+  try{
+    var q = RAW_QUESTIONS[qi];
+    var text = q.tts || q.stem.replace(/<[^>]+>/g,'');
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ko-KR';
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+window.speak = speak;
+
+loadState();
+render();
+</script>
+<script>
+/* sat-timer 2026-11-06 */
+(function(){
+  var PER_Q = 60;
+  var LIMIT = PER_Q * RAW_QUESTIONS.length;
+  var TK = STORAGE_KEY + '_timer';
+  function blank(){ return {el:0, per:{}, up:false}; }
+  function load(){ try{ return JSON.parse(localStorage.getItem(TK)) || blank(); }catch(e){ return blank(); } }
+  var T = load(), paused = false, last = Date.now();
+  function save(){ try{ localStorage.setItem(TK, JSON.stringify(T)); }catch(e){} }
+  function retrying(){ return !!(activeSet && activeSet.length); }
+  window.SAT_TIMEUP = function(){ return !!T.up; };
+  var bar = document.createElement('div'); bar.className = 'sat-timer'; bar.id = 'sat-timer';
+  bar.innerHTML = '<span id="sat-total"></span><span id="sat-q"></span><button id="sat-pause" onclick="satPause()">Pause</button>';
+  var nav = document.querySelector('.nav-bar'); nav.parentNode.insertBefore(bar, nav);
+  var pbox = document.createElement('div'); pbox.className = 'sat-pausebox'; pbox.id = 'sat-pausebox';
+  pbox.innerHTML = 'Paused<br><br><button onclick="satPause()" style="background:#185FA5;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer;">Resume</button>';
+  var card = document.getElementById('quiz-card'); card.parentNode.insertBefore(pbox, card);
+  function fmt(s){ s = Math.max(0, Math.ceil(s)); return Math.floor(s/60) + ':' + ('0' + (s%60)).slice(-2); }
+  function curAnswered(){ if(window.EXAM_ACTIVE && EXAM_ACTIVE()) return false; var q = activeOrder()[state.cur]; return q !== undefined && state.answers[q] !== undefined; } /* sat-timer-pause-on-answer 2026-11-14 */
+  function running(){ return !T.up && !state.showResults && !retrying() && !paused && !curAnswered() && document.visibilityState !== 'hidden'; }
+  function draw(){
+    var show = !retrying() && !state.showResults;
+    bar.style.display = show ? 'flex' : 'none';
+    var left = LIMIT - T.el;
+    var tot = document.getElementById('sat-total');
+    tot.textContent = 'Time left ' + fmt(left) + ((!T.up && curAnswered()) ? ' \u00b7 paused (read the explanation)' : ''); tot.className = left < 60 ? 'over' : '';
+    var qi = activeOrder()[state.cur], used = T.per[qi] || 0;
+    var qs = document.getElementById('sat-q');
+    qs.textContent = 'This question ' + fmt(used) + ' / ' + fmt(PER_Q); qs.className = used > PER_Q ? 'over' : '';
+    document.getElementById('sat-pause').textContent = paused ? 'Resume' : 'Pause';
+    pbox.style.display = (paused && show) ? 'block' : 'none';
+    if(paused && show) card.style.display = 'none';
+    var det = document.getElementById('score-detail');
+    if(T.up && state.showResults && !retrying() && det && det.textContent.indexOf("Time's up") < 0) det.textContent = "Time's up! Unanswered questions count as wrong. " + det.textContent;
+  }
+  function timeUp(){
+    T.up = true; T.el = LIMIT; save(); paused = false;
+    if(!state.showResults) showResultsNow();
+    draw();
+  }
+  function tick(){
+    var now = Date.now(), dt = (now - last) / 1000; last = now;
+    if(dt > 5 || dt < 0) dt = 0;
+    if(running()){
+      T.el += dt;
+      var qi = activeOrder()[state.cur];
+      if(state.answers[qi] === undefined) T.per[qi] = (T.per[qi] || 0) + dt;
+      save();
+      if(T.el >= LIMIT){ timeUp(); return; }
+    }
+    draw();
+  }
+  window.satPause = function(){ paused = !paused; last = Date.now(); if(!paused) render(); draw(); };
+  var _pick = window.pick;
+  window.pick = function(i){ if(T.up && !retrying()) return; if(paused) return; return _pick(i); };
+  var _fresh = window.confirmFresh;
+  window.confirmFresh = function(){ T = blank(); save(); paused = false; last = Date.now(); var r = _fresh.apply(this, arguments); draw(); return r; };
+  var _render = window.render;
+  if(typeof _render === 'function'){ window.render = function(){ var r = _render.apply(this, arguments); try{ draw(); }catch(e){} return r; }; }
+  document.addEventListener('visibilitychange', function(){ last = Date.now(); });
+  if(!T.up && T.el >= LIMIT && !state.showResults) timeUp();
+  window.__satTimer = { tick: tick, get T(){ return T; }, LIMIT: LIMIT };
+  setInterval(tick, 500);
+  draw();
+})();
+</script>
+</body>
+</html>
