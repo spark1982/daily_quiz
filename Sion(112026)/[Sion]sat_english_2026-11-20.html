@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Sion] SAT English</title>
+<style>
+.q-position{font-size:0.85rem;font-weight:700;color:#185FA5;margin-bottom:8px;}
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f4f6fa; margin:0; padding: 20px 12px 60px; color:#1a1a2e; }
+  .quiz-wrap { max-width: 680px; margin: 0 auto; }
+  .quiz-title { font-size: 1.4rem; font-weight: 800; text-align:center; margin: 8px 0 2px; color:#111; }
+  .instruction { text-align:center; color:#555; font-size:0.92rem; margin-bottom: 14px; min-height: 0; }
+  .nav-bar { background:#fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .nav-summary { display:flex; align-items:center; gap:10px; }
+  #nav-count { font-weight:700; font-size:0.85rem; color:#333; white-space:nowrap; }
+  .progress-track { flex:1; height:6px; background:#d7dde6; border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; width:0%; background:#185FA5; border-radius:3px; transition: width .2s; }
+  .jump-btn { background:#eef2f7; border:none; border-radius:8px; padding:6px 12px; font-size:0.8rem; font-weight:700; color:#185FA5; cursor:pointer; white-space:nowrap; }
+  .dots-panel { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .dot { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; cursor:pointer; background:#d7dde6; color:#555; border:none; }
+  .dot.answered-correct { background:#185FA5; color:#fff; }
+  .dot.answered-wrong { background:#E24B4A; color:#fff; }
+  .results-pill { display:inline-block; margin: 0 auto 14px; padding: 8px 20px; background:#1D9E75; color:#fff; border-radius:20px; font-weight:700; text-align:center; cursor:pointer; width:fit-content; }
+  .results-pill-wrap { text-align:center; }
+  .quiz-card, .results-card { background:#fff; border-radius: 14px; padding: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 16px; }
+  .passage-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; font-size:0.92rem; line-height:1.6; color:#222; }
+  .context-label { font-size:0.92rem; font-weight:600; color:#333; margin-bottom:8px; line-height:1.4; }
+  .context-box { background:#f5f7fa; border-left:4px solid #185FA5; border-radius:8px; padding:14px 16px; margin-bottom:16px; }
+  .tag-badge { display:inline-block; font-size:0.72rem; font-weight:700; color:#fff; padding:3px 10px; border-radius:12px; margin-bottom:10px; }
+  .q-text { font-size:1.05rem; font-weight:600; margin-bottom:16px; line-height:1.5; }
+  #options { display:flex; flex-direction:column; gap:10px; }
+  .opt-btn { text-align:left; padding:12px 14px; border-radius:10px; border:1.5px solid #d7dde6; background:#fafbfc; font-size:0.95rem; cursor:pointer; line-height:1.4; }
+  .opt-btn:hover { border-color:#185FA5; }
+  .opt-btn.selected-correct { background:#e6f4ec; border-color:#1D9E75; color:#0d6b3f; font-weight:700; }
+  .opt-btn.selected-wrong { background:#fbeaea; border-color:#E24B4A; color:#a52a2a; font-weight:700; }
+  .opt-btn.reveal-correct { background:#e6f4ec; border-color:#1D9E75; }
+  .opt-btn:disabled { cursor:default; }
+  .exp-box { margin-top:14px; background:#eef7f2; border-left:4px solid #1D9E75; border-radius:8px; padding:12px 14px; font-size:0.88rem; color:#2d4d3f; line-height:1.5; display:none; }
+  .hint-btn { background:#fff8e1;color:#a5720a;border:1.5px solid #f5a623;border-radius:8px;padding:7px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-top:12px;margin-bottom:12px;display:inline-block; }
+  .hint-box { background:#fff8e1;border-left:3px solid #f5a623;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:0.88rem;color:#6b5215;line-height:1.5;display:none; }
+  .hint-box.show { display:block; }
+  .tts-btn { background:#eef2f7; border:none; border-radius:50%; width:34px; height:34px; font-size:1rem; cursor:pointer; margin-left:8px; vertical-align:middle; }
+  .nav-btns { display:flex; justify-content:space-between; margin-top:18px; gap:10px; }
+  .nav-btns button { flex:1; padding:11px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; background:#185FA5; color:#fff; }
+  .nav-btns button:disabled { background:#c9d2dc; cursor:default; }
+  .results-card h2 { text-align:center; margin-top:0; }
+  .score-big { text-align:center; font-size:2.2rem; font-weight:800; color:#185FA5; margin: 6px 0 16px; }
+  .action-row { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .action-row button { padding:12px; border-radius:10px; border:none; font-weight:700; font-size:0.92rem; cursor:pointer; }
+  .btn-retry { background:#f5a623; color:#fff; }
+  .btn-save { background:#7b61ff; color:#fff; }
+  .btn-fresh { background:#E24B4A; color:#fff; }
+  .fresh-btn-bottom { display:block; margin: 6px auto 0; background:none; border:1.5px solid #d7dde6; color:#888; padding:8px 16px; border-radius:20px; font-size:0.8rem; cursor:pointer; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-box { background:#fff; border-radius:14px; padding:24px; max-width:320px; text-align:center; }
+  .modal-box p { font-size:0.95rem; margin-bottom:18px; }
+  .modal-box button { padding:10px 16px; border-radius:8px; border:none; font-weight:700; margin:0 6px; cursor:pointer; }
+  .modal-yes { background:#E24B4A; color:#fff; }
+  .modal-no { background:#eef2f7; color:#333; }
+
+
+  .sat-timer{display:flex;align-items:center;gap:10px;justify-content:space-between;background:#eef3fb;border:1px solid #c9d8ef;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:0.9rem;font-weight:700;color:#185FA5;position:sticky;top:0;z-index:5;}
+  .sat-timer .over{color:#E24B4A;}
+  .sat-timer button{background:#fff;border:1.5px solid #185FA5;color:#185FA5;border-radius:8px;padding:4px 10px;font-weight:700;cursor:pointer;}
+  .sat-pausebox{display:none;text-align:center;background:#fff;border-radius:14px;padding:30px 20px;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);font-weight:700;color:#185FA5;}
+</style>
+</head>
+<body>
+<div class="quiz-wrap">
+  <div class="quiz-title">[Sion] SAT English</div>
+  <div class="instruction" id="instruction"></div>
+
+  <div class="nav-bar">
+    <div class="nav-summary">
+      <span id="nav-count">0/0</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <button class="jump-btn" id="jump-btn" onclick="toggleJump()">Jump&#9662;</button>
+    </div>
+    <div class="dots-panel" id="dots-panel" style="display:none;"></div>
+  </div>
+
+  <div class="results-pill-wrap"><span class="results-pill" id="results-pill" style="display:none;" onclick="showResultsNow()">Results</span></div>
+
+  <div class="quiz-card" id="quiz-card">
+    <div class="q-position" id="q-position"></div>
+    <div class="passage-box" id="passage-box" style="display:none;"></div>
+    <div class="context-label" id="context-label" style="display:none;"></div>
+    <div class="context-box" id="context-box" style="display:none;"></div>
+    <div class="tag-badge" id="tag-badge" style="display:none;"></div>
+    <div class="q-text" id="q-text"></div>
+    <div id="options"></div>
+    <button class="hint-btn" id="hint-btn" onclick="toggleHint()" style="display:none;">Show Hint</button>
+    <div class="hint-box" id="hint-box"></div>
+    <div class="exp-box" id="exp-box"></div>
+    <div class="nav-btns">
+      <button id="prev-btn" onclick="prevQ()">Prev</button>
+      <button id="next-btn" onclick="goNext()">Next</button>
+    </div>
+  </div>
+
+  <div class="results-card" id="results-card" style="display:none;">
+    <h2>Results</h2>
+    <div class="score-big" id="score-big"></div>
+    <div id="score-detail" style="text-align:center;color:#555;font-size:0.9rem;"></div>
+    <div class="action-row">
+      <button class="btn-retry" onclick="startRetry()">Retry Wrong Ones</button>
+      <button class="btn-fresh" onclick="openFreshModal()">Start Fresh</button>
+    </div>
+  </div>
+
+  <button class="fresh-btn-bottom" onclick="openFreshModal()">Start Fresh</button>
+</div>
+
+<div class="modal-overlay" id="fresh-modal" style="display:none;">
+  <div class="modal-box">
+    <p>Reset all progress and start over?</p>
+    <button class="modal-yes" onclick="confirmFresh()">Yes, Start Fresh</button>
+    <button class="modal-no" onclick="closeFreshModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var TITLE = "[Sion] SAT English";
+var QUIZ_KEY = "sionsatenglish_10";
+var INSTRUCTION = "Read each text carefully and choose the best answer. Use the timer to practice real SAT pacing.";
+var TODAY_STR = "20261120";
+var RAW_QUESTIONS = [{"passage": "Roughly two-thirds of an octopus&rsquo;s neurons are located not in its central brain but in its eight arms. Researchers have observed that an arm can carry out complex motions, such as passing a piece of food along its length toward the mouth, with little apparent direction from the brain. Some biologists therefore argue that the octopus&rsquo;s nervous system is best understood not as a single command center issuing orders but as a partnership: the brain sets general goals, while the arms work out many of the details on their own.", "stem": "Which choice best states the main idea of the text?", "opts": ["The octopus&rsquo;s nervous system appears to divide control, with the arms handling much of the detailed work of movement.", "Biologists have proven that octopus arms make all of their decisions without any input from the brain.", "The octopus&rsquo;s central brain is smaller and less complex than the brains of most other invertebrates.", "Octopus arms can survive and move for long periods after being separated from the body."], "ci": 0, "exp": "<b>What it asks:</b> the overall point of the whole text, not one detail.<br><br><b>Why the answer is right:</b> The text moves from a fact (most neurons are in the arms) to an observation (arms do complex motions with little direction) to a conclusion: the system is &ldquo;a partnership: the brain sets general goals, while the arms work out many of the details.&rdquo; The answer restates that conclusion.<br><br><b>Why the others fail:</b><br>&bull; <i>survive &hellip; after being separated</i> &mdash; the text never discusses separated arms or how long they last.<br>&bull; <i>smaller and less complex</i> &mdash; no comparison with other invertebrates appears.<br>&bull; <i>proven &hellip; all of their decisions without any input</i> &mdash; too strong: the text says biologists &ldquo;argue&rdquo; and that the brain still &ldquo;sets general goals.&rdquo;<br><br><b>Strategy:</b> The main idea usually sits in the final claim the evidence builds toward. Eliminate choices that are off-topic or that turn &ldquo;some argue&rdquo; into &ldquo;proven.&rdquo;", "tag": "Information and Ideas", "tagcolor": "#185FA5"}, {"passage": "<strong>Community Garden Data (hypothetical)</strong><table style=\"border-collapse:collapse;margin:8px 0;font-size:0.92rem\"><tr><th style=\"border:1px solid #bbb;padding:4px 8px\">Garden</th><th style=\"border:1px solid #bbb;padding:4px 8px\">Volunteer hours per week</th><th style=\"border:1px solid #bbb;padding:4px 8px\">Produce harvested (pounds per season)</th></tr><tr><td style=\"border:1px solid #bbb;padding:4px 8px\">Elm Street</td><td style=\"border:1px solid #bbb;padding:4px 8px;text-align:center\">22</td><td style=\"border:1px solid #bbb;padding:4px 8px;text-align:center\">640</td></tr><tr><td style=\"border:1px solid #bbb;padding:4px 8px\">Riverside</td><td style=\"border:1px solid #bbb;padding:4px 8px;text-align:center\">35</td><td style=\"border:1px solid #bbb;padding:4px 8px;text-align:center\">590</td></tr><tr><td style=\"border:1px solid #bbb;padding:4px 8px\">Hillcrest</td><td style=\"border:1px solid #bbb;padding:4px 8px;text-align:center\">18</td><td style=\"border:1px solid #bbb;padding:4px 8px;text-align:center\">410</td></tr><tr><td style=\"border:1px solid #bbb;padding:4px 8px\">Oak Park</td><td style=\"border:1px solid #bbb;padding:4px 8px;text-align:center\">41</td><td style=\"border:1px solid #bbb;padding:4px 8px;text-align:center\">980</td></tr></table>A student researcher recorded data for four community gardens in her city. She concluded that the number of volunteer hours a garden received did not, by itself, determine how much food the garden produced.", "stem": "Which choice best describes data from the table that support the researcher&rsquo;s conclusion?", "opts": ["Elm Street harvested more produce than Hillcrest did, and Oak Park harvested more produce than Riverside did.", "Oak Park received the most volunteer hours per week and harvested the most pounds of produce.", "Riverside received more volunteer hours per week than Elm Street did but harvested fewer pounds of produce.", "Hillcrest received the fewest volunteer hours per week and harvested the fewest pounds of produce."], "ci": 2, "exp": "<b>What it asks:</b> which data point shows that more volunteer hours did <i>not</i> always mean more food.<br><br><b>Why the answer is right:</b> To show hours alone do not determine harvest, you need a case where hours and harvest move in opposite directions. Riverside had 35 hours versus Elm Street&rsquo;s 22, yet harvested 590 pounds versus 640. More hours, less food &mdash; exactly the counterexample the conclusion needs.<br><br><b>Why the others fail:</b><br>&bull; <i>Oak Park &hellip; the most &hellip; the most</i> &mdash; true, but it fits the pattern &ldquo;more hours, more food,&rdquo; which weakens the conclusion.<br>&bull; <i>Hillcrest &hellip; the fewest &hellip; the fewest</i> &mdash; also true and also matches the pattern, so it does not support the claim.<br>&bull; <i>Elm Street &gt; Hillcrest and Oak Park &gt; Riverside</i> &mdash; both comparisons pair more hours with more food, so they point the other way.<br><br><b>Strategy:</b> Every answer choice here is accurate to the table. Ask which one actually supports the claim; for a &ldquo;not always&rdquo; claim, look for the exception.", "tag": "Information and Ideas", "tagcolor": "#185FA5"}, {"passage": "Astronomers can estimate a star&rsquo;s age partly from how fast it spins: young stars rotate rapidly, and as they age, magnetized stellar winds carry away angular momentum, gradually slowing them down. This method is called gyrochronology. In a hypothetical survey, a team measured the rotation of sunlike stars in an open cluster whose age had been established independently, at about 2.5 billion years. Most of these stars rotated at the rate gyrochronology predicts for that age, but a small subset rotated noticeably faster. Spectra revealed that every star in the fast-spinning subset has a close companion star orbiting it. Because tidal interactions between close companions can speed up a star&rsquo;s spin, the team concluded that ______", "stem": "Which choice most logically completes the text?", "opts": ["stars with close companions lose angular momentum to magnetized winds more quickly than single stars do.", "ages estimated from rotation alone may be too young for stars that have close companions.", "the cluster is probably younger than 2.5 billion years, since some of its stars rotate quickly.", "gyrochronology cannot be used to estimate the ages of single sunlike stars in open clusters."], "ci": 1, "exp": "<b>What it asks:</b> the conclusion that follows from all the evidence, including the final &ldquo;because&rdquo; clause.<br><br><b>Why the answer is right:</b> Faster spin normally signals youth. These stars are known to be 2.5 billion years old, yet they spin fast &mdash; and tides from a companion explain the extra spin. So if you used rotation alone, you would read their fast spin as youth and underestimate their age: the estimate would be <b>too young</b>.<br><br><b>Why the others fail:</b><br>&bull; <i>the cluster is probably younger</i> &mdash; the cluster&rsquo;s age was &ldquo;established independently,&rdquo; and most stars match it; the fast spinners are explained by companions, not by a younger cluster.<br>&bull; <i>lose angular momentum &hellip; more quickly</i> &mdash; reverses the effect: companions <i>speed up</i> spin, so these stars have lost <i>less</i> net spin, not more.<br>&bull; <i>cannot be used &hellip; single sunlike stars</i> &mdash; contradicted: the single stars rotated &ldquo;at the rate gyrochronology predicts,&rdquo; so the method worked for them.<br><br><b>Strategy:</b> For inference completions, trace the chain: what the method assumes (fast = young), what is unusual (old but fast), and what explains it (companions). The answer names the consequence for the method, limited to the stars the evidence covers.", "tag": "Information and Ideas", "tagcolor": "#185FA5"}, {"passage": "City officials worried that the mayor&rsquo;s silence at the press conference would be ______ as approval of the controversial plan, so they quickly issued a written statement clarifying that she had not yet reached a decision.", "stem": "Which choice completes the text with the most logical and precise word or phrase?", "opts": ["satiated", "deplored", "construed", "kindled"], "ci": 2, "exp": "<b>What it asks:</b> a verb meaning &ldquo;understood or interpreted&rdquo; in a particular way.<br><br><b>Why the answer is right:</b> The officials fear people will take the silence <i>as</i> approval, which is why they clarify that no decision was made. <i>Construe</i> means to interpret a word or action in a particular way, and it naturally pairs with &ldquo;as.&rdquo;<br><br><b>Why the others fail:</b><br>&bull; <i>deplored</i> &mdash; means strongly condemned; silence being &ldquo;condemned as approval&rdquo; makes no sense.<br>&bull; <i>satiated</i> &mdash; means fully satisfied (as with food); it has nothing to do with interpretation.<br>&bull; <i>kindled</i> &mdash; means started or stirred up (a fire, an interest); silence is not &ldquo;kindled as&rdquo; anything.<br><br><b>Strategy:</b> Look for the phrase that frames the blank: &ldquo;be ___ as X&rdquo; signals a word about interpretation. <i>Construe</i> (v.); related: <i>construal</i> (n.), <i>misconstrue</i> (v., to interpret wrongly).", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"passage": "The engineers designed the new bridge&rsquo;s deck to drain rainwater through hundreds of small openings so that water would never pool on the surface and freeze. This feature ______ the costly salt treatments that the old bridge had required every winter, saving the city thousands of dollars a year.", "stem": "Which choice completes the text with the most logical and precise word or phrase?", "opts": ["catalyzed", "obviated", "exacerbated", "underscored"], "ci": 1, "exp": "<b>What it asks:</b> a verb for what the drainage feature did to the need for salt treatments.<br><br><b>Why the answer is right:</b> If water never pools and freezes, there is no ice to melt, so salt is no longer necessary &mdash; and the text confirms the result: it saves the city money. <i>Obviate</i> means to remove a need or prevent a problem in advance.<br><br><b>Why the others fail:</b><br>&bull; <i>underscored</i> &mdash; means emphasized; emphasizing the salt treatments would not save money.<br>&bull; <i>exacerbated</i> &mdash; means made worse; the savings show the opposite happened.<br>&bull; <i>catalyzed</i> &mdash; means caused or sped up; the feature did not speed up salt treatments.<br><br><b>Strategy:</b> Check the result clause: &ldquo;saving the city thousands&rdquo; tells you the treatments disappeared. <i>Obviate</i> (v.) usually takes a need or problem as its object.", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"passage": "Earlier studies of the soil additive had produced mixed results, but the new trial&rsquo;s findings were ______: at every one of the twelve test sites, the treated plots outgrew the untreated plots by a wide margin.", "stem": "Which choice completes the text with the most logical and precise word or phrase?", "opts": ["ambivalent", "tentative", "extraneous", "unequivocal"], "ci": 3, "exp": "<b>What it asks:</b> an adjective describing findings that are clear and consistent everywhere.<br><br><b>Why the answer is right:</b> The colon introduces support: <i>every one</i> of twelve sites showed the same result <i>by a wide margin</i>. That contrasts with the &ldquo;mixed&rdquo; earlier results. <i>Unequivocal</i> means leaving no doubt; completely clear.<br><br><b>Why the others fail:</b><br>&bull; <i>ambivalent</i> &mdash; means having mixed feelings; that describes the earlier studies, not the new one.<br>&bull; <i>tentative</i> &mdash; means uncertain or provisional, which conflicts with a uniform result at all twelve sites.<br>&bull; <i>extraneous</i> &mdash; means irrelevant or unrelated; nothing suggests the findings were off-topic.<br><br><b>Strategy:</b> &ldquo;But&rdquo; signals a contrast with &ldquo;mixed,&rdquo; and the colon gives evidence of total consistency. <i>Unequivocal</i> (adj.); related: <i>equivocal</i> (adj., unclear), <i>equivocate</i> (v.).", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"passage": "The novelist&rsquo;s spelling habits were famously ______: she wrote &ldquo;tho&rdquo; for &ldquo;though,&rdquo; doubled consonants that needed no doubling, and even invented punctuation marks of her own, quirks that her editors came to recognize as unmistakably hers.", "stem": "Which choice completes the text with the most logical and precise word or phrase?", "opts": ["meticulous", "immutable", "idiosyncratic", "conventional"], "ci": 2, "exp": "<b>What it asks:</b> an adjective for habits that are personal and unusual.<br><br><b>Why the answer is right:</b> The examples are odd, personal quirks (her own punctuation, &ldquo;tho&rdquo;), and the text says editors recognized them as &ldquo;unmistakably hers.&rdquo; <i>Idiosyncratic</i> means peculiar to one individual.<br><br><b>Why the others fail:</b><br>&bull; <i>conventional</i> &mdash; means following standard practice, the opposite of inventing your own punctuation.<br>&bull; <i>meticulous</i> &mdash; means extremely careful and precise; unnecessary doubled consonants suggest the reverse.<br>&bull; <i>immutable</i> &mdash; means unchangeable; the text is about how unusual her habits were, not whether they ever changed.<br><br><b>Strategy:</b> When a colon is followed by a list of examples, choose the word that summarizes what the examples have in common. <i>Idiosyncratic</i> (adj.); related: <i>idiosyncrasy</i> (n.).", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"passage": "For centuries, travelers in parts of Africa have described a small bird, the greater honeyguide, leading people to wild bees&rsquo; nests: the people break open the nest for honey, and the bird feeds on the leftover wax. <u>Skeptics long suspected that such accounts exaggerated how deliberately the birds cooperated with people.</u> In 2016, however, researchers working with Yao honey hunters in Mozambique found that the birds responded specifically to a traditional call the hunters use, becoming more likely to guide people who made that call than people who made other sounds.", "stem": "Which choice best describes the function of the underlined sentence in the text as a whole?", "opts": ["It offers evidence that honeyguides respond to particular human calls.", "It presents a doubt that the rest of the text goes on to address.", "It introduces the researchers whose study is described later in the text.", "It explains why honey hunters began using a traditional call."], "ci": 1, "exp": "<b>What it asks:</b> the role the underlined sentence plays in the passage&rsquo;s structure.<br><br><b>Why the answer is right:</b> The first sentence gives traditional accounts; the underlined sentence says skeptics doubted them; the next sentence begins &ldquo;however&rdquo; and reports a study showing the birds really do respond to a specific call. So the underlined sentence sets up a doubt that the study then answers.<br><br><b>Why the others fail:</b><br>&bull; <i>introduces the researchers</i> &mdash; the researchers appear only in the next sentence; the skeptics are a different group.<br>&bull; <i>offers evidence</i> &mdash; the underlined sentence contains no evidence; the evidence comes from the 2016 study.<br>&bull; <i>explains why hunters began using a call</i> &mdash; the text never explains the origin of the call.<br><br><b>Strategy:</b> Look at the word right after the underlined sentence. &ldquo;However&rdquo; tells you the next part pushes back against it, so the underlined part is the claim or doubt being answered.", "tag": "Craft and Structure", "tagcolor": "#E24B4A"}, {"passage": "Many people assume that the Dust Bowl of the 1930s was caused by drought alone. ______ historians point out that farming practices played a major role: decades of intensive plowing had stripped away the deep-rooted prairie grasses that once held the soil in place.", "stem": "Which choice completes the text with the most logical transition?", "opts": ["However,", "Therefore,", "Similarly,", "For example,"], "ci": 0, "exp": "<b>What it asks:</b> the logical relationship between a common assumption and what historians say.<br><br><b>Why the answer is right:</b> The first sentence states a popular belief (drought <i>alone</i>); the second corrects it (farming also mattered). A correction calls for a contrast word: <i>However</i>.<br><br><b>Why the others fail:</b><br>&bull; <i>Therefore</i> &mdash; signals a result, but historians&rsquo; view does not follow from the assumption; it challenges it.<br>&bull; <i>Similarly</i> &mdash; signals a parallel idea, but the two sentences disagree.<br>&bull; <i>For example</i> &mdash; signals an illustration of the first sentence, but the second sentence is not an example of drought being the only cause.<br><br><b>Strategy:</b> Read both sentences without the blank and name their relationship (contrast, cause, addition, example) before looking at the choices.", "tag": "Expression of Ideas", "tagcolor": "#f5a623"}, {"passage": "While researching a topic, a student has taken the following notes:<ul style=\"margin:6px 0 0 18px;padding:0\"><li>Katherine Johnson was a mathematician at NASA.</li><li>In 1961, she calculated the trajectory for Alan Shepard&rsquo;s flight, the first by an American in space.</li><li>Electronic computers were new to NASA in the early 1960s.</li><li>Before his 1962 orbital flight, astronaut John Glenn asked that Johnson personally check the computer&rsquo;s calculations.</li><li>Johnson received the Presidential Medal of Freedom in 2015.</li></ul>", "stem": "The student wants to emphasize the trust that astronauts placed in Johnson&rsquo;s work. Which choice most effectively uses relevant information from the notes to accomplish this goal?", "opts": ["Katherine Johnson was a mathematician at NASA when electronic computers were new to the agency.", "Before his 1962 orbital flight, astronaut John Glenn asked that Katherine Johnson personally verify the calculations made by NASA&rsquo;s new electronic computers.", "In 1961, Katherine Johnson calculated the trajectory for Alan Shepard&rsquo;s flight, the first by an American in space.", "Katherine Johnson, a NASA mathematician, received the Presidential Medal of Freedom in 2015."], "ci": 1, "exp": "<b>What it asks:</b> which sentence shows an <i>astronaut</i> trusting Johnson&rsquo;s work.<br><br><b>Why the answer is right:</b> Glenn, an astronaut, wanted Johnson herself to check the computer before he would fly &mdash; he trusted her math with his life. That directly shows astronauts&rsquo; trust.<br><br><b>Why the others fail:</b><br>&bull; <i>Presidential Medal of Freedom</i> &mdash; shows national recognition, not astronauts&rsquo; trust.<br>&bull; <i>calculated the trajectory for Shepard</i> &mdash; shows her contribution, but not that an astronaut chose to rely on her.<br>&bull; <i>computers were new</i> &mdash; gives background only; no astronaut appears.<br><br><b>Strategy:</b> In rhetorical synthesis, underline the key words of the goal (here: <i>astronauts</i> and <i>trust</i>) and pick the only choice that contains both.", "tag": "Expression of Ideas", "tagcolor": "#f5a623"}, {"passage": "The Svalbard Global Seed Vault, built deep inside a mountain on a remote Norwegian island, stores duplicate samples of crop seeds from around the ______ if a war or natural disaster destroys a country&rsquo;s seed bank, the duplicates can be used to rebuild its collection.", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["world", "world, which", "world,", "world;"], "ci": 3, "exp": "<b>What it asks:</b> how to join two complete sentences.<br><br><b>Why the answer is right:</b> &ldquo;The Svalbard Global Seed Vault &hellip; stores duplicate samples of crop seeds from around the world&rdquo; is a complete sentence, and so is &ldquo;if a war &hellip; destroys &hellip;, the duplicates can be used to rebuild its collection.&rdquo; A semicolon can join two closely related independent clauses.<br><br><b>Why the others fail:</b><br>&bull; <i>world,</i> &mdash; a comma alone between two independent clauses is a comma splice.<br>&bull; <i>world</i> (no punctuation) &mdash; runs the two sentences together (a run-on).<br>&bull; <i>world, which</i> &mdash; makes the second part a relative clause, but &ldquo;which if a war &hellip; the duplicates can be used&rdquo; has no grammatical role for <i>which</i>.<br><br><b>Strategy:</b> Test each side of the blank: if both could stand alone as sentences, you need a period, a semicolon, or a comma plus a conjunction like <i>and</i> or <i>so</i>.", "tag": "Standard English Conventions", "tagcolor": "#1D9E75"}, {"passage": "The collection of letters exchanged between the two rival chemists, now housed in a university archive, ______ how their bitter competition slowly turned into a productive collaboration.", "stem": "Which choice completes the text so that it conforms to the conventions of Standard English?", "opts": ["reveals", "reveal", "are revealing", "have revealed"], "ci": 0, "exp": "<b>What it asks:</b> a verb that agrees with the subject.<br><br><b>Why the answer is right:</b> Strip out the phrases between the subject and the verb: &ldquo;The <b>collection</b> &hellip; ______ how their competition turned &hellip;&rdquo; The subject is the singular noun <i>collection</i>, not <i>letters</i> or <i>chemists</i>, so the verb must be singular: <i>reveals</i>.<br><br><b>Why the others fail:</b><br>&bull; <i>reveal</i> &mdash; plural; it agrees with the nearby noun <i>letters</i>, which is inside the prepositional phrase &ldquo;of letters.&rdquo;<br>&bull; <i>have revealed</i> &mdash; plural helping verb <i>have</i>; would need <i>has</i>.<br>&bull; <i>are revealing</i> &mdash; plural helping verb <i>are</i>; would need <i>is</i>.<br><br><b>Strategy:</b> Cross out prepositional phrases (<i>of letters</i>, <i>between the two rival chemists</i>) and comma-enclosed phrases (<i>now housed in &hellip;</i>) to find the true subject.", "tag": "Standard English Conventions", "tagcolor": "#1D9E75"}];
+var STORAGE_KEY = 'quiz_' + QUIZ_KEY + '_' + TODAY_STR;
+var ORDER_KEY = STORAGE_KEY + '_order';
+var ACTIVE_KEY = STORAGE_KEY + '_active';
+var REPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzRYITi7Q4ttOMcqHPBQ_mfc1m-Oyk_ne-7OKeRGbR_WFEUAe9oCKiC9E7f3ymZWR6i/exec';
+function wrongTxt(s){ s = (s===undefined || s===null) ? '' : String(s); return /^\s*</.test(s) ? s : '<span>' + s + '</span>'; }
+function wrongDetail(qi, yourAnswer){
+  var q = RAW_QUESTIONS[qi];
+  var qtext = (q.passage ? q.passage + '<br><br>' : '') + (q.contextLabel ? q.contextLabel + '<br>' : '') + (q.context ? q.context + '<br>' : '') + q.stem;
+  return { question: wrongTxt(qtext), yourAnswer: wrongTxt(yourAnswer), correctAnswer: wrongTxt(q.opts[q.ci]), explanation: wrongTxt(q.exp) };
+}
+function quizDateStr(){ return (typeof TODAY_STR !== 'undefined') ? TODAY_STR : ((String(QUIZ_KEY).match(/\d{8}/) || [''])[0]); }
+function reportResult(){
+  try{
+    var ao = activeOrder();
+    var correct=0, wrong=0, skipped=0;
+    var wrongPositions=[];
+    var wrongDetails=[];
+    for(var pos=0; pos<ao.length; pos++){
+      var qi = ao[pos];
+      if(state.answers[qi]===undefined){ if(window.SAT_TIMEUP && SAT_TIMEUP() && !(activeSet && activeSet.length)){ wrong++; wrongPositions.push(pos+1); wrongDetails.push(wrongDetail(qi, "(time's up)")); } else skipped++; continue; }
+      if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++; else { wrong++; wrongPositions.push(origNum(qi)); wrongDetails.push(wrongDetail(qi, RAW_QUESTIONS[qi].opts[state.answers[qi]])); }
+    }
+    var total = ao.length;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var payload = {
+      child: childName,
+      quizTitle: TITLE,
+      quizKey: QUIZ_KEY,
+      attemptNumber: getAttempts(),
+      correct: correct, wrong: wrong, skipped: skipped, total: total,
+      scorePercent: total>0 ? Math.round((correct/total)*1000)/10 : 0,
+      wrongNumbers: wrongPositions.join(','),
+      quizDate: quizDateStr()
+    };
+    var firstKey = STORAGE_KEY + '_wrongsent';
+    if(!(activeSet && activeSet.length) && !localStorage.getItem(firstKey)){
+      payload.wrongAnswers = wrongDetails;
+      localStorage.setItem(firstKey, '1');
+    }
+    fetch(REPORT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }catch(e){}
+}
+/* progress-report 2026-10-27 */
+var _lastProgressSig = '';
+function reportProgress(){
+  try{
+    if(state.showResults) return;
+    if(!(!(activeSet && activeSet.length) && !localStorage.getItem(STORAGE_KEY + '_wrongsent'))) return;
+    var answered=0, correct=0, wd=[];
+    for(var pos=0; pos<order.length; pos++){
+      var qi = order[pos]; var a = state.answers[qi];
+      if(a===undefined){ wd.push(wrongDetail(qi, '(not answered)')); continue; }
+      answered++;
+      if(a===RAW_QUESTIONS[qi].ci) correct++; else wd.push(wrongDetail(qi, RAW_QUESTIONS[qi].opts[a]));
+    }
+    if(answered===0) return;
+    var sig = answered + '/' + correct; if(sig===_lastProgressSig) return; _lastProgressSig = sig;
+    var childName = 'Unknown';
+    if(TITLE.indexOf('[Sion]')===0) childName='Sion';
+    else if(TITLE.indexOf('[Grant]')===0) childName='Grant';
+    else if(TITLE.indexOf('[Both]')===0) childName='Both';
+    else if(TITLE.indexOf('[Review]')===0) childName='Review';
+    var body = JSON.stringify({ type:'progress', child: childName, quizTitle: TITLE, quizKey: QUIZ_KEY, quizDate: quizDateStr(),
+      answered: answered, total: order.length, correct: correct, wrongAnswers: wd });
+    fetch(REPORT_ENDPOINT, { method:'POST', mode:'no-cors', keepalive: body.length < 60000,
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, body: body }).catch(function(){});
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='hidden') reportProgress(); });
+window.addEventListener('pagehide', reportProgress);
+
+
+var ATTEMPTS_KEY = STORAGE_KEY + '_attempts';
+
+var order = [];
+var activeSet = null; // when in retry mode, holds subset of original indices
+var state = { answers:{}, cur:0, showResults:false };
+var hintShown = false;
+
+function loadState(){
+  var raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try{ state = JSON.parse(raw); }catch(e){ state = {answers:{},cur:0,showResults:false}; } }
+  var rawOrder = localStorage.getItem(ORDER_KEY);
+  if(rawOrder){ try{ order = JSON.parse(rawOrder); }catch(e){ order=null; } }
+  if(!order || !order.length){
+    order = RAW_QUESTIONS.map(function(_,i){return i;});
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  }
+  var rawActive = localStorage.getItem(ACTIVE_KEY);
+  if(rawActive){ try{ activeSet = JSON.parse(rawActive); }catch(e){ activeSet = null; } }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function getAttempts(){
+  var a = localStorage.getItem(ATTEMPTS_KEY);
+  return a ? parseInt(a,10) : 0; // 2026-10-24: start at 0 so the first finish reports attempt 1 (was 1 → first finish reported 2)
+}
+function incAttempts(){
+  var a = getAttempts() + 1;
+  localStorage.setItem(ATTEMPTS_KEY, String(a));
+}
+
+function activeOrder(){ return (activeSet && activeSet.length) ? activeSet : order; }
+function origNum(qi){ var i = order.indexOf(qi); return i >= 0 ? i + 1 : 0; } /* keep-orig-num 2026-11-14 */
+
+function render(){
+  document.getElementById('instruction').textContent = INSTRUCTION;
+  var ord = activeOrder();
+  if(state.showResults){
+    document.getElementById('quiz-card').style.display='none';
+    document.getElementById('results-card').style.display='block';
+    renderResults();
+  } else {
+    document.getElementById('quiz-card').style.display='block';
+    document.getElementById('results-card').style.display='none';
+    renderQuestion();
+  }
+  updateNav();
+}
+
+function renderQuestion(){
+  hintShown = false;
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  var q = RAW_QUESTIONS[qi];
+  var qpEl = document.getElementById('q-position');
+  if(qpEl) qpEl.textContent = 'Q' + origNum(ord[state.cur]) + ' / ' + order.length + ((activeSet && activeSet.length) ? '  (retry ' + (state.cur + 1) + ' of ' + ord.length + ')' : '');
+
+  var pb = document.getElementById('passage-box');
+  if(q.passage){ pb.style.display='block'; pb.innerHTML = q.passage; } else { pb.style.display='none'; pb.innerHTML=''; }
+
+  var cl = document.getElementById('context-label');
+  if(q.contextLabel){ cl.style.display='block'; cl.textContent = q.contextLabel; } else { cl.style.display='none'; cl.textContent=''; }
+
+  var cb = document.getElementById('context-box');
+  if(q.context){ cb.style.display='block'; cb.innerHTML = q.context; } else { cb.style.display='none'; cb.innerHTML=''; }
+
+  var tb = document.getElementById('tag-badge');
+  if(q.tag){ tb.style.display='inline-block'; tb.textContent = q.tag; tb.style.background = q.tagcolor || '#185FA5'; } else { tb.style.display='none'; }
+
+  var qt = document.getElementById('q-text');
+  qt.innerHTML = q.stem + (q.tts ? ' <button class="tts-btn" onclick="speak(' + qi + ')" title="Listen">&#128266;</button>' : '');
+
+  var opts = document.getElementById('options');
+  opts.innerHTML = '';
+  var answered = state.answers[qi] !== undefined;
+  q.opts.forEach(function(optText, idx){
+    var btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = optText;
+    if(answered){
+      btn.disabled = true;
+      if(idx === q.ci) btn.className += ' reveal-correct';
+      if(idx === state.answers[qi] && idx !== q.ci) btn.className += ' selected-wrong';
+      if(idx === state.answers[qi] && idx === q.ci) btn.className += ' selected-correct';
+    } else {
+      btn.onclick = function(){ pick(idx); };
+    }
+    opts.appendChild(btn);
+  });
+
+  var hb = document.getElementById('hint-btn');
+  var hx = document.getElementById('hint-box');
+  if(q.hint){
+    hb.style.display='inline-block'; hb.textContent='Show Hint';
+    hx.innerHTML = q.hint; hx.classList.remove('show');
+  } else {
+    hb.style.display='none'; hx.classList.remove('show');
+  }
+
+  var eb = document.getElementById('exp-box');
+  if(answered){
+    eb.style.display='block';
+    eb.innerHTML = '<strong>Explanation:</strong> ' + q.exp;
+  } else {
+    eb.style.display='none'; eb.innerHTML='';
+  }
+
+  document.getElementById('prev-btn').disabled = (state.cur === 0);
+  var ord2 = activeOrder();
+  var isLast = (state.cur === ord2.length - 1);
+  document.getElementById('next-btn').textContent = isLast ? 'Finish' : 'Next';
+}
+
+function toggleHint(){
+  hintShown = !hintShown;
+  var b=document.getElementById('hint-btn'), x=document.getElementById('hint-box');
+  if(hintShown){ x.classList.add('show'); b.textContent='Hide Hint'; }
+  else { x.classList.remove('show'); b.textContent='Show Hint'; }
+}
+window.toggleHint = toggleHint;
+
+function pick(idx){
+  var ord = activeOrder();
+  var qi = ord[state.cur];
+  if(state.answers[qi] !== undefined) return;
+  state.answers[qi] = idx;
+  saveState();
+  render();
+}
+window.pick = pick;
+
+function prevQ(){
+  if(state.cur > 0){ state.cur--; saveState(); render(); }
+}
+window.prevQ = prevQ;
+window.go = prevQ;
+
+function goNext(){
+  if(state.showResults) return; // 2026-10-14: ignore double taps / Results tap on the results screen (prevented duplicate result emails)
+    var ord = activeOrder();
+  if(state.cur < ord.length - 1){
+    state.cur++;
+    saveState();
+    render();
+  } else {
+    if(state.reported){ state.showResults=true; saveState(); render(); return; } /* no-resend-after-review 2026-10-28 */
+    state.showResults = true;
+    incAttempts();
+    saveState();
+    render();
+    reportResult(); state.reported = true; saveState();
+  }
+}
+window.goNext = goNext;
+
+function showResultsNow(){
+  if(state.showResults) return; // 2026-10-14: ignore double taps / Results tap on the results screen (prevented duplicate result emails)
+    if(state.reported){ state.showResults=true; saveState(); render(); return; } /* no-resend-after-review 2026-10-28 */
+  state.showResults = true;
+  incAttempts(); // 2026-10-24: count a finish from the Results pill too
+  saveState();
+  render();
+  reportResult(); state.reported = true; saveState();
+}
+window.showResultsNow = showResultsNow;
+
+function goToQ(pos){
+  state.cur = pos;
+  state.showResults = false;
+  saveState();
+  render();
+}
+window.goToQ = goToQ;
+
+function renderResults(){
+  var ord = activeOrder();
+  var correct=0, wrong=0, skipped=0;
+  ord.forEach(function(qi){
+    if(state.answers[qi]===undefined) skipped++;
+    else if(state.answers[qi]===RAW_QUESTIONS[qi].ci) correct++;
+    else wrong++;
+  });
+  var total = ord.length;
+  document.getElementById('score-big').textContent = correct + ' / ' + total;
+  document.getElementById('score-detail').textContent = 'Correct: ' + correct + '  Wrong: ' + wrong + '  Skipped: ' + skipped;
+}
+
+function updateNav(){
+  var ord = activeOrder();
+  var answeredCount = 0;
+  ord.forEach(function(qi){ if(state.answers[qi]!==undefined) answeredCount++; });
+  document.getElementById('nav-count').textContent = answeredCount + '/' + ord.length;
+  var pct = ord.length ? Math.round(answeredCount/ord.length*100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('results-pill').style.display = (answeredCount === ord.length && ord.length>0 && !state.showResults) ? 'inline-block' : 'none';
+  renderDots();
+}
+
+function renderDots(){
+  var panel = document.getElementById('dots-panel');
+  if(panel.style.display === 'none') { buildDots(); return; }
+  buildDots();
+}
+function buildDots(){
+  var panel = document.getElementById('dots-panel');
+  var ord = activeOrder();
+  panel.innerHTML = '';
+  ord.forEach(function(qi, pos){
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.textContent = origNum(qi);
+    if(state.answers[qi]!==undefined){
+      d.className += (state.answers[qi]===RAW_QUESTIONS[qi].ci) ? ' answered-correct' : ' answered-wrong';
+    }
+    d.onclick = function(){ goToQ(pos); };
+    panel.appendChild(d);
+  });
+}
+
+function toggleJump(){
+  var panel = document.getElementById('dots-panel');
+  var btn = document.getElementById('jump-btn');
+  if(panel.style.display === 'none'){
+    panel.style.display = 'flex';
+    btn.innerHTML = 'Hide&#9652;';
+    buildDots();
+  } else {
+    panel.style.display = 'none';
+    btn.innerHTML = 'Jump&#9662;';
+  }
+}
+window.toggleJump = toggleJump;
+
+function startRetry(){
+  var ord = activeOrder();
+  var wrongIdx = ord.filter(function(qi){ return (state.answers[qi]!==undefined && state.answers[qi]!==RAW_QUESTIONS[qi].ci) || (state.answers[qi]===undefined && window.SAT_TIMEUP && SAT_TIMEUP()); });
+  if(!wrongIdx.length) return;
+  activeSet = wrongIdx;
+  localStorage.setItem(ACTIVE_KEY, JSON.stringify(activeSet));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  render();
+}
+window.startRetry = startRetry;
+
+
+
+function openFreshModal(){ document.getElementById('fresh-modal').style.display='flex'; }
+window.openFreshModal = openFreshModal;
+function closeFreshModal(){ document.getElementById('fresh-modal').style.display='none'; }
+window.closeFreshModal = closeFreshModal;
+function confirmFresh(){
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(ORDER_KEY);
+  localStorage.removeItem(ACTIVE_KEY);
+  activeSet = null;
+  order = RAW_QUESTIONS.map(function(_,i){return i;});
+  localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  state = { answers:{}, cur:0, showResults:false };
+  saveState();
+  document.getElementById('fresh-modal').style.display='none';
+  render();
+}
+window.confirmFresh = confirmFresh;
+
+function speak(qi){
+  try{
+    var q = RAW_QUESTIONS[qi];
+    var text = q.tts || q.stem.replace(/<[^>]+>/g,'');
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ko-KR';
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+window.speak = speak;
+
+loadState();
+render();
+</script>
+<script>
+/* sat-timer 2026-11-06 */
+(function(){
+  var PER_Q = 60;
+  var LIMIT = PER_Q * RAW_QUESTIONS.length;
+  var TK = STORAGE_KEY + '_timer';
+  function blank(){ return {el:0, per:{}, up:false}; }
+  function load(){ try{ return JSON.parse(localStorage.getItem(TK)) || blank(); }catch(e){ return blank(); } }
+  var T = load(), paused = false, last = Date.now();
+  function save(){ try{ localStorage.setItem(TK, JSON.stringify(T)); }catch(e){} }
+  function retrying(){ return !!(activeSet && activeSet.length); }
+  window.SAT_TIMEUP = function(){ return !!T.up; };
+  var bar = document.createElement('div'); bar.className = 'sat-timer'; bar.id = 'sat-timer';
+  bar.innerHTML = '<span id="sat-total"></span><span id="sat-q"></span><button id="sat-pause" onclick="satPause()">Pause</button>';
+  var nav = document.querySelector('.nav-bar'); nav.parentNode.insertBefore(bar, nav);
+  var pbox = document.createElement('div'); pbox.className = 'sat-pausebox'; pbox.id = 'sat-pausebox';
+  pbox.innerHTML = 'Paused<br><br><button onclick="satPause()" style="background:#185FA5;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer;">Resume</button>';
+  var card = document.getElementById('quiz-card'); card.parentNode.insertBefore(pbox, card);
+  function fmt(s){ s = Math.max(0, Math.ceil(s)); return Math.floor(s/60) + ':' + ('0' + (s%60)).slice(-2); }
+  function curAnswered(){ if(window.EXAM_ACTIVE && EXAM_ACTIVE()) return false; var q = activeOrder()[state.cur]; return q !== undefined && state.answers[q] !== undefined; } /* sat-timer-pause-on-answer 2026-11-14 */
+  function running(){ return !T.up && !state.showResults && !retrying() && !paused && !curAnswered() && document.visibilityState !== 'hidden'; }
+  function draw(){
+    var show = !retrying() && !state.showResults;
+    bar.style.display = show ? 'flex' : 'none';
+    var left = LIMIT - T.el;
+    var tot = document.getElementById('sat-total');
+    tot.textContent = 'Time left ' + fmt(left) + ((!T.up && curAnswered()) ? ' \u00b7 paused (read the explanation)' : ''); tot.className = left < 60 ? 'over' : '';
+    var qi = activeOrder()[state.cur], used = T.per[qi] || 0;
+    var qs = document.getElementById('sat-q');
+    qs.textContent = 'This question ' + fmt(used) + ' / ' + fmt(PER_Q); qs.className = used > PER_Q ? 'over' : '';
+    document.getElementById('sat-pause').textContent = paused ? 'Resume' : 'Pause';
+    pbox.style.display = (paused && show) ? 'block' : 'none';
+    if(paused && show) card.style.display = 'none';
+    var det = document.getElementById('score-detail');
+    if(T.up && state.showResults && !retrying() && det && det.textContent.indexOf("Time's up") < 0) det.textContent = "Time's up! Unanswered questions count as wrong. " + det.textContent;
+  }
+  function timeUp(){
+    T.up = true; T.el = LIMIT; save(); paused = false;
+    if(!state.showResults) showResultsNow();
+    draw();
+  }
+  function tick(){
+    var now = Date.now(), dt = (now - last) / 1000; last = now;
+    if(dt > 5 || dt < 0) dt = 0;
+    if(running()){
+      T.el += dt;
+      var qi = activeOrder()[state.cur];
+      if(state.answers[qi] === undefined) T.per[qi] = (T.per[qi] || 0) + dt;
+      save();
+      if(T.el >= LIMIT){ timeUp(); return; }
+    }
+    draw();
+  }
+  window.satPause = function(){ paused = !paused; last = Date.now(); if(!paused) render(); draw(); };
+  var _pick = window.pick;
+  window.pick = function(i){ if(T.up && !retrying()) return; if(paused) return; return _pick(i); };
+  var _fresh = window.confirmFresh;
+  window.confirmFresh = function(){ T = blank(); save(); paused = false; last = Date.now(); var r = _fresh.apply(this, arguments); draw(); return r; };
+  var _render = window.render;
+  if(typeof _render === 'function'){ window.render = function(){ var r = _render.apply(this, arguments); try{ draw(); }catch(e){} return r; }; }
+  document.addEventListener('visibilitychange', function(){ last = Date.now(); });
+  if(!T.up && T.el >= LIMIT && !state.showResults) timeUp();
+  window.__satTimer = { tick: tick, get T(){ return T; }, LIMIT: LIMIT };
+  setInterval(tick, 500);
+  draw();
+})();
+</script>
+</body>
+</html>
