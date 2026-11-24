@@ -124,6 +124,58 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;min-height:100vh
   </div>
 </div>
 
+<script>/* mission-grade 2026-11-24 */
+(function(){
+var CFG = {"date": "20261124", "quizzes": [{"key": "grantmathcomp_14", "label": "Math Competition", "limit": 4}, {"key": "quiz_grantspeedquiz_30_20261124_v1", "label": "Speed Quiz", "limit": 4}, {"key": "grantgrammar_edit_20", "label": "Grammar", "limit": 2}, {"key": "grantmentor_tag", "label": "Mentor Sentence", "pct": 85}, {"key": "grantvocab_20", "label": "Advanced Vocabulary", "limit": 5}]};
+var SELF = "quiz_grantspeedquiz_30_20261124_v1";
+function me(){ var k = SELF; for(var i=0;i<CFG.quizzes.length;i++){ if(CFG.quizzes[i].key===k) return CFG.quizzes[i]; } return null; }
+function rk(key){ return 'mission_' + CFG.date + '_' + key; }
+function get(key){ try{ var v = localStorage.getItem(rk(key)); return v ? JSON.parse(v) : null; }catch(e){ return null; } }
+function allowed(q, total){ return (q.pct !== undefined) ? Math.max(0, total - Math.ceil(total * q.pct / 100)) : q.limit; }
+function dayStatus(){ var done=0, fails=0, rows=[]; for(var i=0;i<CFG.quizzes.length;i++){ var q=CFG.quizzes[i], r=get(q.key); if(r){ done++; if(!r.cleared) fails++; } rows.push({q:q, r:r}); } return {done:done, n:CFG.quizzes.length, fails:fails, rows:rows}; }
+function grade(f){ return ['A','B','C','D'][f] || 'F'; }
+var GC = {A:'#1D9E75',B:'#185FA5',C:'#a5720a',D:'#d9480f',F:'#E24B4A'};
+function esc(s){ return String(s).replace(/[&<>]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }); }
+function card(r, q, popup){
+  var ok = r.cleared;
+  var h = '<div style="font-size:1.35rem;font-weight:800;color:' + (ok?'#1D9E75':'#E24B4A') + ';">' + (ok ? '&#127942; Mission cleared!' : '&#9888;&#65039; Mission not cleared') + '</div>'
+        + '<div style="margin-top:6px;font-size:0.95rem;color:#333;">' + esc(q.label) + ' &mdash; first try: ' + r.wrong + ' wrong (goal: ' + r.allowed + ' or fewer)</div>';
+  var d = dayStatus();
+  if(d.done === d.n){
+    var g = grade(d.fails);
+    h += '<div style="margin-top:14px;border-top:1px solid #e3e7ee;padding-top:12px;"><div style="font-size:0.95rem;font-weight:700;color:#333;">Today&rsquo;s grade</div>'
+       + '<div style="font-size:3.2rem;font-weight:900;line-height:1.1;color:' + GC[g] + ';">' + g + '</div>'
+       + '<div style="font-size:0.85rem;color:#555;">' + (d.n - d.fails) + ' of ' + d.n + ' missions cleared</div><div style="text-align:left;margin-top:8px;font-size:0.85rem;">';
+    for(var i=0;i<d.rows.length;i++){ var x=d.rows[i]; h += '<div>' + (x.r.cleared ? '&#9989; ' : '&#10060; ') + esc(x.q.label) + ' (' + x.r.wrong + ' wrong / goal ' + x.r.allowed + ')</div>'; }
+    h += '</div></div>';
+  } else {
+    h += '<div style="margin-top:10px;font-size:0.85rem;color:#555;">Missions finished today: ' + d.done + ' of ' + d.n + '. Finish them all to see today&rsquo;s grade.</div>';
+  }
+  if(popup) h += '<button onclick="this.parentNode.parentNode.style.display=\'none\'" style="margin-top:14px;background:#185FA5;color:#fff;border:none;border-radius:8px;padding:8px 22px;font-weight:700;font-size:0.95rem;cursor:pointer;">OK</button>';
+  return h;
+}
+function show(popup){
+  var q = me(); if(!q) return; var r = get(q.key); if(!r) return;
+  var b = document.getElementById('mission-badge');
+  if(!b){ b = document.createElement('div'); b.id='mission-badge'; b.style.cssText='background:#fff;border:2px solid #d7dde6;border-radius:12px;padding:12px 14px;margin:10px auto;max-width:640px;text-align:center;font-family:inherit;'; var t=document.querySelector('.quiz-title') || document.body.firstChild; if(t && t.parentNode) t.parentNode.insertBefore(b, t.nextSibling); else document.body.insertBefore(b, document.body.firstChild); }
+  b.style.borderColor = r.cleared ? '#1D9E75' : '#E24B4A'; b.innerHTML = card(r, q, false);
+  if(popup){ var o=document.getElementById('mission-pop'); if(!o){ o=document.createElement('div'); o.id='mission-pop'; o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;'; document.body.appendChild(o); }
+    o.style.display='flex'; o.innerHTML='<div style="background:#fff;border-radius:14px;padding:20px 22px;max-width:420px;width:100%;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,0.25);">' + card(r, q, true) + '</div>'; }
+}
+function record(p){
+  var q = me(); if(!q || get(q.key)) return;
+  var total = Number(p.total)||0, correct = Number(p.correct)||0, wrong = Math.max(0, total - correct), al = allowed(q, total);
+  try{ localStorage.setItem(rk(q.key), JSON.stringify({wrong:wrong, total:total, allowed:al, cleared: wrong <= al})); }catch(e){}
+  setTimeout(function(){ show(true); }, 250);
+}
+var of = window.fetch;
+window.fetch = function(u, o){
+  try{ if(o && typeof o.body === 'string' && o.body.indexOf('"wrongAnswers"') >= 0){ var p = JSON.parse(o.body); if(p && p.type!=='progress' && p.type!=='essay' && p.wrongAnswers !== undefined) record(p); } }catch(e){}
+  return of ? of.apply(this, arguments) : Promise.resolve({});
+};
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ show(false); }); else setTimeout(function(){ show(false); }, 0);
+})();
+</script>
 <script>
 var TITLE = "[Grant] Speed Quiz";
 var QUIZ_KEY = "quiz_grantspeedquiz_30_20261124_v1";
