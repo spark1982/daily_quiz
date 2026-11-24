@@ -14,11 +14,11 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 
+# 2026-11-24: split into build + deploy jobs (GitHub's starter layout).
+# Uploading and deploying in the same job intermittently failed with
+# 'No artifacts named "github-pages" were found' (actions/deploy-pages#451).
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout quiz-content
@@ -34,6 +34,13 @@ jobs:
         with:
           path: '.'
 
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
